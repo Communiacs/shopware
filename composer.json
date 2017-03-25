@@ -4,14 +4,11 @@
     "description": "Shopware is the next generation of open source e-commerce software made in Germany",
     "keywords": ["shopware", "shop"],
     "homepage": "http://www.shopware.com",
-    "type": "shopware-source",
+    "type": "shopware-plugin",
     "license": [
         "AGPL-3.0",
         "proprietary"
     ],
-    "extra": {
-        "installer-name": "html"
-    },
     "support": {
         "forum": "http://forum.shopware.com",
         "wiki": "http://wiki.shopware.com",
