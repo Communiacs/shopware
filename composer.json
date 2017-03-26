@@ -1,13 +1,16 @@
 {
-    "name": "wlwwt/shopware",
+    "name": "shopware/shopware",
     "version": "5.2.25",
     "description": "Shopware is the next generation of open source e-commerce software made in Germany",
     "keywords": ["shopware", "shop"],
     "homepage": "http://www.shopware.com",
-    "type": "shopware-plugin",
+    "type": "shopware-core",
     "license": [
         "AGPL-3.0",
         "proprietary"
+    ],
+    "repositories": [
+        {"type": "vcs", "url": "https://github.com/wlwwt/SwComposerInstallers.git"}
     ],
     "support": {
         "forum": "http://forum.shopware.com",
@@ -60,7 +63,8 @@
         "league/flysystem": "1.0.22",
         "paragonie/random_compat": "1.4.1",
         "cocur/slugify": "2.2",
-        "bcremer/line-reader": "^0.2.0"
+        "bcremer/line-reader": "^0.2.0",
+        "wlwwt/shopware-composer-installers": "dev-master"
     },
     "suggest": {
         "ext-apcu": "*",
