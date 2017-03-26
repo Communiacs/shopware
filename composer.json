@@ -64,7 +64,7 @@
         "paragonie/random_compat": "1.4.1",
         "cocur/slugify": "2.2",
         "bcremer/line-reader": "^0.2.0",
-        "wlwwt/shopware-composer-installers": "dev-master"
+        "wlwwt/shopware-composer-installers": "0.1.0"
     },
     "suggest": {
         "ext-apcu": "*",
