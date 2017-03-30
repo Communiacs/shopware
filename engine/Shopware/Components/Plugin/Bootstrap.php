@@ -379,20 +379,28 @@ abstract class Shopware_Components_Plugin_Bootstrap extends Enlight_Plugin_Boots
      */
     public function createPayment($options, $description = null, $action = null)
     {
-        /** @var \Shopware\Components\Plugin\PaymentInstaller $installer */
-        $installer = $this->get('shopware.plugin_payment_installer');
-
         if (is_string($options)) {
             $options = ['name' => $options];
         }
+        $payment = $this->Payments()->findOneBy(['name' => $options['name']]);
+        if ($payment === null) {
+            $payment = new Payment();
+            $payment->setName($options['name']);
+            Shopware()->Models()->persist($payment);
+        }
+        $payment->fromArray($options);
         if ($description !== null) {
-            $options['description'] = $description;
+            $payment->setDescription($description);
         }
         if ($action !== null) {
-            $options['action'] = $action;
+            $payment->setAction($action);
         }
+        $plugin = $this->Plugin();
+        $plugin->getPayments()->add($payment);
+        $payment->setPlugin($plugin);
+        Shopware()->Models()->flush($payment);
 
-        return $installer->createOrUpdate($this->getName(), $options);
+        return $payment;
     }
 
     /**
@@ -808,10 +816,29 @@ abstract class Shopware_Components_Plugin_Bootstrap extends Enlight_Plugin_Boots
      */
     public function createEmotionComponent(array $options)
     {
-        /** @var \Shopware\Components\Emotion\ComponentInstaller $installer */
-        $installer = $this->get('shopware.emotion_component_installer');
+        $config = array_merge([
+            'convertFunction' => null,
+            'description' => '',
+            'cls' => '',
+            'xtype' => 'emotion-components-base'
+        ], $options);
 
-        $component = $installer->createOrUpdate($this->getName(), $options['name'], $options);
+        $component = Shopware()->Models()->getRepository(Component::class)->findOneBy([
+            'name' => $options['name'],
+            'pluginId' => $this->getId()
+        ]);
+
+        if (!$component) {
+            $component = new Component();
+        }
+
+        $component->fromArray($config);
+
+        $component->setPluginId($this->getId());
+        $component->setPlugin($this->Plugin());
+
+        //saves the component automatically if the plugin is saved
+        $this->Plugin()->getEmotionComponents()->add($component);
 
         //register post dispatch of backend and widgets emotion controller to load the template extensions of the plugin
         $this->subscribeEvent('Enlight_Controller_Action_PostDispatchSecure_Widgets_Emotion', 'extendsEmotionTemplates');

@@ -135,7 +135,6 @@ class Shopware_Controllers_Backend_Cache extends Shopware_Controllers_Backend_Ex
         }
         if ($cache['proxy'] == 'on') {
             $this->cacheManager->clearProxyCache();
-            $this->cacheManager->clearOpCache();
         }
 
         $this->View()->assign(array(

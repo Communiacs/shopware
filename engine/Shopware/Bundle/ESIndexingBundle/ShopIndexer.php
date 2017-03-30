@@ -80,7 +80,6 @@ class ShopIndexer implements ShopIndexerInterface
      * @param DataIndexerInterface[] $indexer
      * @param MappingInterface[] $mappings
      * @param SettingsInterface[] $settings
-     * @param array $configuration
      */
     public function __construct(
         Client $client,
@@ -189,6 +188,7 @@ class ShopIndexer implements ShopIndexerInterface
             $indexer->populate($index, $progress);
         }
         $this->client->indices()->refresh(['index' => $index->getName()]);
+        $this->client->indices()->optimize(['index' => $index->getName()]);
     }
 
     /**

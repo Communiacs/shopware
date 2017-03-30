@@ -40,7 +40,6 @@ Ext.define('Shopware.apps.Theme.model.Element', {
         { name: 'id', type: 'int', useNull: true },
         { name: 'type', type: 'string' },
         { name: 'name', type: 'string' },
-        { name: 'helpText', type: 'string', mapping: 'help' },
         { name: 'position', type: 'int' },
         { name: 'defaultValue', useNull: true },
         { name: 'selection', useNull: true },

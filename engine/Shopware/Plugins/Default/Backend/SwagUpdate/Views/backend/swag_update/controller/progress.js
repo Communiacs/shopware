@@ -32,6 +32,7 @@ Ext.define('Shopware.apps.SwagUpdate.controller.Progress', {
         me.control({
             'update-main-progress': {
                 startProcess: me.onStartProcess,
+                cancelProcess: me.onCancelProcess,
                 closeWindow: me.onCloseWindow
             }
         });
@@ -93,6 +94,12 @@ Ext.define('Shopware.apps.SwagUpdate.controller.Progress', {
         }
 
         me.errors = me.errors || [];
+        // if cancel button was pressed
+        if (me.cancelOperation) {
+            win.cancelButton.hide();
+            win.closeButton.enable();
+            return;
+        }
 
         var params = {
             'offset': offset
@@ -107,9 +114,7 @@ Ext.define('Shopware.apps.SwagUpdate.controller.Progress', {
             success: function (response) {
                 var operation = Ext.decode(response.responseText);
                 if (operation.success !== true) {
-                    alert('Some error occured');
-
-                    me.onProcessFailure(win);
+                    alert("Some error occured");
                     return;
                 }
 
@@ -138,8 +143,8 @@ Ext.define('Shopware.apps.SwagUpdate.controller.Progress', {
                 var json = {};
 
                 try {
-                    json = JSON.parse(response.responseText);
-
+                    json = JSON.parse(response.responseText)
+                    
                     Shopware.Msg.createStickyGrowlMessage({
                         title: '{s name=progress/timeOutTitle}An error occured{/s}',
                         text: json.message
@@ -160,19 +165,38 @@ Ext.define('Shopware.apps.SwagUpdate.controller.Progress', {
      * @param win
      */
     onProcessFailure: function (win) {
-        win.destroy();
+        var me = this;
+
+        win.cancelButton.hide();
+        win.closeButton.enable();
     },
 
     /**
      * @param win
      */
     onProcessFinish: function (win) {
+        var me = this;
+
+        win.cancelButton.hide();
+        win.closeButton.enable();
+
         window.location.href = '{url controller="SwagUpdate" action="startUpdate"}';
     },
 
     /**
-     * @param win
+     * Sets cancelOperation to true which will be checked in the
+     * next batch call and will stop.
+     *
+     * @param btn
      */
+    onCancelProcess: function (btn) {
+        var me = this;
+
+        btn.disable();
+
+        me.cancelOperation = true;
+    },
+
     onCloseWindow: function(win) {
         win.destroy();
     }

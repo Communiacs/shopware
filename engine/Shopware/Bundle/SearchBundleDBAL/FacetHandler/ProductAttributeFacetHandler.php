@@ -33,9 +33,9 @@ use Shopware\Bundle\SearchBundle\FacetResult\ValueListFacetResult;
 use Shopware\Bundle\SearchBundle\FacetResult\ValueListItem;
 use Shopware\Bundle\SearchBundleDBAL\FacetHandlerInterface;
 use Shopware\Bundle\SearchBundleDBAL\QueryBuilder;
+use Shopware\Bundle\SearchBundleDBAL\QueryBuilderFactory;
 use Shopware\Bundle\SearchBundle\Facet\ProductAttributeFacet;
 use Shopware\Bundle\SearchBundle\FacetInterface;
-use Shopware\Bundle\SearchBundleDBAL\QueryBuilderFactoryInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct;
 
 /**
@@ -46,7 +46,7 @@ use Shopware\Bundle\StoreFrontBundle\Struct;
 class ProductAttributeFacetHandler implements FacetHandlerInterface
 {
     /**
-     * @var QueryBuilderFactoryInterface
+     * @var QueryBuilderFactory
      */
     private $queryBuilderFactory;
 
@@ -56,11 +56,11 @@ class ProductAttributeFacetHandler implements FacetHandlerInterface
     private $snippetNamespace;
 
     /**
-     * @param QueryBuilderFactoryInterface $queryBuilderFactory
+     * @param QueryBuilderFactory $queryBuilderFactory
      * @param \Shopware_Components_Snippet_Manager $snippetManager
      */
     public function __construct(
-        QueryBuilderFactoryInterface $queryBuilderFactory,
+        QueryBuilderFactory $queryBuilderFactory,
         \Shopware_Components_Snippet_Manager $snippetManager
     ) {
         $this->queryBuilderFactory = $queryBuilderFactory;

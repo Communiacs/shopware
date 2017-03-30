@@ -71,27 +71,19 @@ Ext.define('Shopware.attribute.SelectionFactory', {
     },
 
     createDynamicSearchStore: function(attribute) {
-        return this.createEntitySearchStore(attribute.get('entity'), null);
+        return Ext.create('Ext.data.Store', {
+            model: 'Shopware.model.Dynamic',
+            proxy: {
+                type: 'ajax',
+                url: '{url controller="EntitySearch" action="search"}?model=' + attribute.get('entity'),
+                reader: Ext.create('Shopware.model.DynamicReader')
+            }
+        });
     },
 
     createModelSearchStore: function(attribute, model) {
-        return this.createEntitySearchStore(attribute.get('entity'), model);
-    },
-
-    createEntitySearchStore: function(entity, extJsModel) {
-        if (!extJsModel) {
-            return Ext.create('Ext.data.Store', {
-                model: 'Shopware.model.Dynamic',
-                proxy: {
-                    type: 'ajax',
-                    url: '{url controller="EntitySearch" action="search"}?model=' + entity,
-                    reader: Ext.create('Shopware.model.DynamicReader')
-                }
-            });
-        }
-
         return Ext.create('Ext.data.Store', {
-            model: extJsModel,
+            model: model,
             proxy: {
                 type: 'ajax',
                 url: '{url controller="EntitySearch" action="search"}?model=' + attribute.get('entity'),

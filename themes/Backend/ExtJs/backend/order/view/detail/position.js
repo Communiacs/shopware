@@ -81,15 +81,15 @@ Ext.define('Shopware.apps.Order.view.detail.Position', {
 
 
     /**
-     * The initComponent template method is an important initialization step for a Component.
+	 * The initComponent template method is an important initialization step for a Component.
      * It is intended to be implemented by each subclass of Ext.Component to provide any needed constructor logic.
      * The initComponent method of the class being created is called first,
      * with each initComponent method up the hierarchy to Ext.Component being called thereafter.
      * This makes it easy to implement and, if needed, override the constructor logic of the Component at any step in the hierarchy.
      * The initComponent method must contain a call to callParent in order to ensure that the parent class' initComponent method is also called.
-     *
-     * @return void
-     */
+	 *
+	 * @return void
+	 */
     initComponent:function () {
         var me = this;
 
@@ -385,27 +385,25 @@ Ext.define('Shopware.apps.Order.view.detail.Position', {
                 xtype:'actioncolumn',
                 width:90,
                 items:[
-                    /*{if {acl_is_allowed privilege=update}}*/
-                        {
-                            iconCls:'sprite-minus-circle-frame',
-                            action:'deletePosition',
-                            tooltip: grid.snippets.deletePosition,
-                            /**
-                             * Add button handler to fire the deleteOrder event which is handled
-                             * in the list controller.
-                             */
-                            handler:function (view, rowIndex, colIndex, item) {
-                                var store = view.getStore(),
-                                    position = store.getAt(rowIndex);
+                    {
+                        iconCls:'sprite-minus-circle-frame',
+                        action:'deletePosition',
+                        tooltip: grid.snippets.deletePosition,
+                        /**
+                         * Add button handler to fire the deleteOrder event which is handled
+                         * in the list controller.
+                         */
+                        handler:function (view, rowIndex, colIndex, item) {
+                            var store = view.getStore(),
+                                position = store.getAt(rowIndex);
 
-                                grid.fireEvent('deletePosition', position, store, {
-                                    callback: function(order) {
-                                        me.fireEvent('updateForms', order, me.up('window'));
-                                    }
-                                });
-                            }
-                        },
-                    /*{/if}*/
+                            grid.fireEvent('deletePosition', position, store, {
+                                callback: function(order) {
+                                    me.fireEvent('updateForms', order, me.up('window'));
+                                }
+                            });
+                        }
+                    },
                     {
                         iconCls:'sprite-inbox',
                         action:'openArticle',
@@ -524,9 +522,7 @@ Ext.define('Shopware.apps.Order.view.detail.Position', {
             ui: 'shopware-ui',
             items:[
                 me.addPositionButton,
-                /*{if {acl_is_allowed privilege=save}}*/
-                    me.deletePositionsButton
-                /*{/if}*/
+                me.deletePositionsButton
             ]
         });
     },

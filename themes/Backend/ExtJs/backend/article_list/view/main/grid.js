@@ -384,7 +384,7 @@ Ext.define('Shopware.apps.ArticleList.view.main.Grid', {
      * @returns string
      */
     defaultColumnRenderer: function (value) {
-        return value;
+        return Ext.util.Format.htmlEncode(value);
     },
 
     /**

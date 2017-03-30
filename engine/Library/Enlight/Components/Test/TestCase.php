@@ -20,25 +20,66 @@
  * @author     Heiner Lohaus
  * @author     $Author$
  */
-use PHPUnit\DbUnit\DataSet\XmlDataSet;
 
 /**
  * Basic class for each specified test case.
  *
  * The Enlight_Components_Test_TestCase is the basic class for all specified test cases.
- * The enlight test case basic class extends PHPUnit\Framework\TestCase and sets the database link automatically.
+ * The enlight test case basic class extends PHPUnit_Framework_TestCase and sets the database link automatically.
  *
  * @category   Enlight
  * @package    Enlight_Test
  * @copyright  Copyright (c) 2011, shopware AG (http://www.shopware.de)
  * @license    http://enlight.de/license     New BSD License
  */
-abstract class Enlight_Components_Test_TestCase extends PHPUnit\Framework\TestCase
+abstract class Enlight_Components_Test_TestCase extends PHPUnit_Framework_TestCase
 {
     /**
      * @var PHPUnit_Extensions_Database_ITester The IDatabaseTester for this testCase
      */
     protected $databaseTester;
+
+    /**
+     * Returns a mock object for the specified class.
+     *
+     * @param  string $originalClassName
+     * @param  array $methods
+     * @param  array $arguments
+     * @param  string $mockClassName
+     * @param  boolean $callOriginalConstructor
+     * @param  boolean $callOriginalClone
+     * @param  boolean $callAutoload
+     * @param bool $cloneArguments
+     * @param bool $callOriginalMethods
+     * @return PHPUnit_Framework_MockObject_MockObject
+     * @throws Enlight_Exception
+     * @since  Method available since Release 3.0.0
+     */
+    public function getMock(
+        $originalClassName,
+        $methods = array(),
+        array $arguments = array(),
+        $mockClassName = '',
+        $callOriginalConstructor = true,
+        $callOriginalClone = true,
+        $callAutoload = true,
+        $cloneArguments = false,
+        $callOriginalMethods = false
+    ) {
+        $originalClassName = Enlight_Class::getClassName($originalClassName);
+
+        return parent::getMock(
+            $originalClassName,
+            $methods,
+            $arguments,
+            $mockClassName,
+            $callOriginalConstructor,
+            $callOriginalClone,
+            $callAutoload,
+            $cloneArguments,
+            $callOriginalMethods
+        );
+    }
 
     /**
      * Gets the IDatabaseTester for this testCase. If the IDatabaseTester is
@@ -113,10 +154,10 @@ abstract class Enlight_Components_Test_TestCase extends PHPUnit\Framework\TestCa
      * Creates a new XMLDataSet with the given $xmlFile. (absolute path.)
      *
      * @param string $xmlFile
-     * @return XmlDataSet
+     * @return PHPUnit_Extensions_Database_DataSet_XmlDataSet
      */
     protected function createXMLDataSet($xmlFile)
     {
-        return new XmlDataSet($xmlFile);
+        return new PHPUnit_Extensions_Database_DataSet_XmlDataSet($xmlFile);
     }
 }

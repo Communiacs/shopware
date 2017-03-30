@@ -44,7 +44,7 @@ Ext.define('Shopware.apps.CanceledOrder.view.tabs.baskets.Overview', {
         columns : {
             time: '{s name=columns/date}Date{/s}',
             price: '{s name=columns/amount}Total amount{/s}',
-            average: '{s name=columns/averageItemValue}Ø Price per unit{/s}',
+            average: '{s name=columns/averageBasketValue}Ø Basket Value{/s}',
             number: '{s name=columns/number}Number of Baskets{/s}'
         },
         days: '{s name=days}Days{/s}',
@@ -140,11 +140,11 @@ Ext.define('Shopware.apps.CanceledOrder.view.tabs.baskets.Overview', {
                 dataIndex: 'average',
                 flex: 1,
                 summaryType: 'average',
-                renderer: function(value) {
-                    return Ext.util.Format.currency(value);
+                renderer : function(value){
+                    return value.toFixed(2);
                 },
                 summaryRenderer: function(value) {
-                    return '<b>' + Ext.util.Format.currency(value) + '</b>';
+                    return '<b>' + value.toFixed(2) + '</b>';
                 }
             },
             {

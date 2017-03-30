@@ -25,7 +25,6 @@
 namespace Shopware\Bundle\StoreFrontBundle\Gateway\DBAL\Hydrator;
 
 use Shopware\Bundle\StoreFrontBundle\Struct;
-use Shopware\Bundle\MediaBundle\MediaServiceInterface;
 
 /**
  * @category  Shopware
@@ -40,11 +39,6 @@ class ManufacturerHydrator extends Hydrator
     private $attributeHydrator;
 
     /**
-     * @var MediaServiceInterface
-     */
-    private $mediaService;
-
-    /**
      * @var array
      */
     private $mapping = [
@@ -55,12 +49,10 @@ class ManufacturerHydrator extends Hydrator
 
     /**
      * @param AttributeHydrator $attributeHydrator
-     * @param MediaServiceInterface $mediaService
      */
-    public function __construct(AttributeHydrator $attributeHydrator, MediaServiceInterface $mediaService)
+    public function __construct(AttributeHydrator $attributeHydrator)
     {
         $this->attributeHydrator = $attributeHydrator;
-        $this->mediaService = $mediaService;
     }
 
     /**
@@ -112,11 +104,7 @@ class ManufacturerHydrator extends Hydrator
         }
 
         if (isset($data['__manufacturer_img'])) {
-            $manufacturer->setCoverFile(
-                $this->mediaService->getUrl(
-                    $data['__manufacturer_img']
-                )
-            );
+            $manufacturer->setCoverFile($data['__manufacturer_img']);
         }
 
         if (isset($data['__manufacturerAttribute_id'])) {

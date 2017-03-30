@@ -1,4 +1,3 @@
-<?php
 /**
  * Shopware 5
  * Copyright (c) shopware AG
@@ -20,35 +19,31 @@
  * The licensing of the program under the AGPLv3 does not imply a
  * trademark license. Therefore any rights, title and interest in
  * our trademarks remain entirely with us.
+ *
+ * @category   Shopware
+ * @package    Log
+ * @subpackage Store
+ * @version    $Id$
+ * @author shopware AG
  */
 
-namespace Shopware\Bundle\ESIndexingBundle\TextMapping;
-
-use Shopware\Bundle\ESIndexingBundle\TextMappingInterface;
-
-class TextMappingES2 implements TextMappingInterface
-{
-    /**
-     * {@inheritdoc}
-     */
-    public function getTextField()
-    {
-        return ['type' => 'string'];
-    }
+/**
+ * Shopware - Users store
+ *
+ * This store contains all users.
+ */
+//{block name="backend/log/store/users"}
+Ext.define('Shopware.apps.Log.store.Users', {
 
     /**
-     * {@inheritdoc}
-     */
-    public function getNotAnalyzedField()
-    {
-        return ['type' => 'string', 'index' => 'not_analyzed'];
-    }
-
+    * Extend for the standard ExtJS 4
+    * @string
+    */
+    extend: 'Shopware.apps.Base.store.User',
     /**
-     * {@inheritdoc}
-     */
-    public function getKeywordField()
-    {
-        return ['type' => 'string'];
-    }
-}
+    * Amount of data loaded at once
+    * @integer
+    */
+    pageSize: 2000
+});
+//{/block}

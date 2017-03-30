@@ -304,7 +304,7 @@ class sCategories
      * @param $childrenCounts
      * @return array
      */
-    public function convertCategory(Category $category, $childrenCounts)
+    private function convertCategory(Category $category, $childrenCounts)
     {
         $childrenCount = 0;
         if (isset($childrenCounts[$category->getId()])) {

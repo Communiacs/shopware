@@ -66,8 +66,7 @@ class TableMapping
             throw new \Exception(sprintf("Table %s is no attribute table", $table));
         }
         $config = $this->tables[$table];
-        $identifiers = isset($config['identifiers']) ? $config['identifiers'] : [];
-        $columns = array_map('strtolower', $identifiers);
+        $columns = array_map('strtolower', $config['identifiers']);
         return in_array(strtolower($name), $columns);
     }
 
@@ -83,8 +82,7 @@ class TableMapping
             throw new \Exception(sprintf("Table %s is no attribute table", $table));
         }
         $config = $this->tables[$table];
-        $coreAttributes = isset($config['coreAttributes']) ? $config['coreAttributes'] : [];
-        $columns = array_map('strtolower', $coreAttributes);
+        $columns = array_map('strtolower', $config['coreAttributes']);
         return in_array(strtolower($name), $columns);
     }
 

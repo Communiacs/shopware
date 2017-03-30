@@ -34,10 +34,10 @@ class SubmitButton extends Button implements ClickableInterface
     /**
      * Submits data to the button.
      *
-     * @param null|string $submittedData The data
-     * @param bool        $clearMissing  Not used
+     * @param null|string $submittedData The data.
+     * @param bool        $clearMissing  Not used.
      *
-     * @return $this
+     * @return SubmitButton The button instance
      *
      * @throws Exception\AlreadySubmittedException If the form has already been submitted.
      */

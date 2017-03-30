@@ -23,6 +23,8 @@ use Symfony\Component\Validator\ValidationVisitorInterface;
  *
  * This class supports serialization and cloning.
  *
+ * @since  2.5
+ *
  * @author Bernhard Schussek <bschussek@gmail.com>
  */
 class GenericMetadata implements MetadataInterface
@@ -121,7 +123,7 @@ class GenericMetadata implements MetadataInterface
      *
      * @param Constraint $constraint The constraint to add
      *
-     * @return $this
+     * @return GenericMetadata This object
      *
      * @throws ConstraintDefinitionException When trying to add the
      *                                       {@link Traverse} constraint
@@ -167,7 +169,7 @@ class GenericMetadata implements MetadataInterface
      *
      * @param Constraint[] $constraints The constraints to add
      *
-     * @return $this
+     * @return GenericMetadata This object
      */
     public function addConstraints(array $constraints)
     {

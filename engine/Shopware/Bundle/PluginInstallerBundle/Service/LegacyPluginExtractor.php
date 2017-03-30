@@ -49,8 +49,6 @@ class LegacyPluginExtractor
         $archive->extractTo($destination);
 
         $this->clearOpcodeCache();
-        
-        unlink($archive->filename);
     }
 
     /**

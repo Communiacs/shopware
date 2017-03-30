@@ -54,11 +54,21 @@ function race($promisesOrValues)
                     return;
                 }
 
+                $fulfiller = function ($value) use ($cancellationQueue, $resolve) {
+                    $cancellationQueue();
+                    $resolve($value);
+                };
+
+                $rejecter = function ($reason) use ($cancellationQueue, $reject) {
+                    $cancellationQueue();
+                    $reject($reason);
+                };
+
                 foreach ($array as $promiseOrValue) {
                     $cancellationQueue->enqueue($promiseOrValue);
 
                     resolve($promiseOrValue)
-                        ->done($resolve, $reject, $notify);
+                        ->done($fulfiller, $rejecter, $notify);
                 }
             }, $reject, $notify);
     }, $cancellationQueue);
@@ -105,7 +115,7 @@ function some($promisesOrValues, $howMany)
                 $reasons   = [];
 
                 foreach ($array as $i => $promiseOrValue) {
-                    $fulfiller = function ($val) use ($i, &$values, &$toResolve, $toReject, $resolve) {
+                    $fulfiller = function ($val) use ($i, &$values, &$toResolve, $toReject, $resolve, $cancellationQueue) {
                         if ($toResolve < 1 || $toReject < 1) {
                             return;
                         }
@@ -113,11 +123,12 @@ function some($promisesOrValues, $howMany)
                         $values[$i] = $val;
 
                         if (0 === --$toResolve) {
+                            $cancellationQueue();
                             $resolve($values);
                         }
                     };
 
-                    $rejecter = function ($reason) use ($i, &$reasons, &$toReject, $toResolve, $reject) {
+                    $rejecter = function ($reason) use ($i, &$reasons, &$toReject, $toResolve, $reject, $cancellationQueue) {
                         if ($toResolve < 1 || $toReject < 1) {
                             return;
                         }
@@ -125,6 +136,7 @@ function some($promisesOrValues, $howMany)
                         $reasons[$i] = $reason;
 
                         if (0 === --$toReject) {
+                            $cancellationQueue();
                             $reject($reasons);
                         }
                     };
@@ -156,7 +168,6 @@ function map($promisesOrValues, callable $mapFunc)
 
                 foreach ($array as $i => $promiseOrValue) {
                     $cancellationQueue->enqueue($promiseOrValue);
-                    $values[$i] = null;
 
                     resolve($promiseOrValue)
                         ->then($mapFunc)

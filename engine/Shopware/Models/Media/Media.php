@@ -1677,10 +1677,21 @@ class Media extends ModelEntity
             return;
         }
 
-        $thumbnailSizes = $this->getAllThumbnailSizes();
+        //iterate thumbnails and remove them
+        foreach ($this->thumbnails as $thumbnail) {
+            if ($mediaService->has($thumbnail)) {
+                $mediaService->delete($thumbnail);
+            }
+        }
 
         $this->removeDefaultThumbnails($this->getFileName());
-        $this->removeAlbumThumbnails($thumbnailSizes, $this->getFileName());
+
+        //remove the configured album thumbnail files
+        $settings = $this->album->getSettings();
+        /**@var $settings Settings*/
+        if ($settings !== null) {
+            $this->removeAlbumThumbnails($settings->getThumbnailSize(), $this->getFileName());
+        }
     }
 
     /****************************************************************
@@ -1704,16 +1715,18 @@ class Media extends ModelEntity
             return;
         }
 
-        $defaultSizes = $this->getDefaultThumbnails();
-        $defaultSize = implode('x', $defaultSizes[0]);
         //load the configured album thumbnail sizes
         $sizes = $album->getSettings()->getThumbnailSize();
-        $sizes[]= $defaultSize;
 
         //iterate the sizes and create the thumbnails
         foreach ($sizes as $size) {
             //split the width and height (example: $size = 70x70)
             $data = explode('x', $size);
+
+            //check if the album thumbnail is already configured over the default thumbnails, so we don't have to create the same thumbnail again.
+            if (in_array($data, $this->defaultThumbnails)) {
+                continue;
+            }
 
             // To avoid any confusing, we're mapping the index based to an association based array and remove the index based elements.
             $data['width'] = $data[0];
@@ -2229,29 +2242,5 @@ class Media extends ModelEntity
     public function setArticles($articles)
     {
         $this->articles = $articles;
-    }
-
-    /**
-     * Searches all album settings for thumbnail sizes
-     *
-     * @return array
-     */
-    private function getAllThumbnailSizes()
-    {
-        $joinedSizes = Shopware()->Container()->get('dbal_connection')
-            ->query('SELECT DISTINCT thumbnail_size FROM s_media_album_settings WHERE thumbnail_size != ""')
-            ->fetchAll(\PDO::FETCH_COLUMN);
-
-        $sizes = [];
-        foreach ($joinedSizes as $sizeItem) {
-            $explodedSizes = explode(";", $sizeItem);
-            if (empty($explodedSizes)) {
-                continue;
-            }
-
-            $sizes = array_merge($sizes, array_flip($explodedSizes));
-        }
-
-        return array_keys($sizes);
     }
 }

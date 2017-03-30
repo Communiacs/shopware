@@ -113,9 +113,6 @@ abstract class FileLoader extends Loader
             } catch (\Exception $e) {
                 unset(self::$loading[$resource]);
                 throw $e;
-            } catch (\Throwable $e) {
-                unset(self::$loading[$resource]);
-                throw $e;
             }
 
             unset(self::$loading[$resource]);

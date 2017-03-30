@@ -40,7 +40,6 @@ Ext.define('Shopware.apps.Base.store.OrderStatus', {
     model : 'Shopware.apps.Base.model.OrderStatus',
     pageSize: 1000,
     autoLoad: false,
-    remoteFilter: true,
     proxy:{
         type:'ajax',
         url:'{url action="getOrderStatus"}',

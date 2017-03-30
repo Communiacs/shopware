@@ -210,17 +210,11 @@ Ext.define('Shopware.apps.Article.view.resources.Links', {
                 {
                     header: me.snippets.name,
                     dataIndex: 'name',
-                    flex: 2,
-                    editor: {
-                        xtype: 'textfield'
-                    }
+                    flex: 2
                 }, {
                     header: me.snippets.link,
                     dataIndex: 'link',
-                    flex: 2,
-                    editor: {
-                        xtype: 'textfield'
-                    }
+                    flex: 2
                 }, {
                     xtype: 'booleancolumn',
                     header: me.snippets.grid.external,

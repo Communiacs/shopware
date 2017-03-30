@@ -16,6 +16,8 @@ namespace Symfony\Component\Validator\Util;
  *
  * For more extensive functionality, use Symfony's PropertyAccess component.
  *
+ * @since  2.5
+ *
  * @author Bernhard Schussek <bschussek@gmail.com>
  */
 class PropertyPath
@@ -37,7 +39,7 @@ class PropertyPath
     public static function append($basePath, $subPath)
     {
         if ('' !== (string) $subPath) {
-            if ('[' === $subPath[0]) {
+            if ('[' === $subPath{0}) {
                 return $basePath.$subPath;
             }
 

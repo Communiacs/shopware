@@ -92,22 +92,6 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
     public static $documentRepository = null;
 
     /**
-     * Registers the different acl permission for the different controller actions.
-     *
-     * @return void
-     */
-    public function initAcl()
-    {
-        $this->addAclPermission('loadStores', 'read', 'Insufficient Permissions');
-        $this->addAclPermission('save', 'update', 'Insufficient Permissions');
-        $this->addAclPermission('deletePosition', 'update', 'Insufficient Permissions');
-        $this->addAclPermission('savePosition', 'update', 'Insufficient Permissions');
-        $this->addAclPermission('createDocument', 'update', 'Insufficient Permissions');
-        $this->addAclPermission('batchProcess', 'update', 'Insufficient Permissions');
-        $this->addAclPermission('delete', 'delete', 'Insufficient Permissions');
-    }
-
-    /**
      * Returns the shopware model manager
      *
      * @return Shopware\Components\Model\ModelManager
@@ -279,12 +263,7 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
     }
 
     /**
-     * This class has its own OrderStatusQuery as we need to get rid of states with status.id = -1
-     * @param array|null $filter
-     * @param array|null $order
-     * @param int|null $offset
-     * @param int|null $limit
-     * @return \Doctrine\ORM\Query
+     * This class has its own OrderStatusQuery as we need to get rid of states with satus.id = -1
      */
     public function getOrderStatusQuery($filter = null, $order = null, $offset = null, $limit = null)
     {
@@ -298,8 +277,6 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
         }
         if ($order !== null) {
             $builder->addOrderBy($order);
-        } else {
-            $builder->orderBy('status.position', 'ASC');
         }
 
         if ($offset !== null) {
@@ -1251,7 +1228,6 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
         $response->sendHeaders();
 
         echo readfile($file);
-        exit;
     }
 
     /**

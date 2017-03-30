@@ -11,6 +11,15 @@ Ext.define('Shopware.form.field.Media', {
     alias: 'widget.shopware-media-field',
 
     /**
+     * Defines the component layout.
+     * @type { Object }
+     */
+    layout: {
+        type: 'hbox',
+        align: 'stretch'
+    },
+
+    /**
      * List of classes to mix into this class.
      * @type { Object }
      */
@@ -18,6 +27,9 @@ Ext.define('Shopware.form.field.Media', {
         'Shopware.model.Helper',
         'Ext.form.field.Base'
     ],
+
+    height: 115,
+
 
     /**
      * Contains the shopware base path.
@@ -247,6 +259,7 @@ Ext.define('Shopware.form.field.Media', {
         return me._opts[prop];
     },
 
+
     /**
      * The initComponent template method is an important initialization step for a Component.
      * It is intended to be implemented by each subclass of Ext.Component to provide any needed constructor logic.
@@ -262,30 +275,9 @@ Ext.define('Shopware.form.field.Media', {
         var me = this;
 
         me.items = me.createItems();
-
         me.callParent(arguments);
-
         if (me.value) {
             me.requestMediaData(me.value);
-        }
-    },
-
-    /**
-     * Overwrite to create help text if passed
-     *
-     * @override
-     */
-    afterRender: function() {
-        var me = this;
-
-        me.callParent(arguments);
-
-        if (me.helpText) {
-            me.createHelp();
-        }
-
-        if (me.supportText) {
-            me.createSupport()
         }
     },
 
@@ -297,24 +289,15 @@ Ext.define('Shopware.form.field.Media', {
      * the current select image.
      * This container contains a { @link #Ext.Img } object.
      *
-     * @returns { Ext.container.Container }
+     * @returns { Array }
      */
     createItems: function() {
-        var me = this,
-            mainContainer = Ext.create('Ext.container.Container', {
-                layout: {
-                    type: 'hbox',
-                    align: 'stretch'
-                },
-                items: [
-                    me.createButtonContainer(),
-                    me.createPreviewContainer()
-                ]
-            });
+        var me = this;
 
         return [
-            mainContainer
-        ]
+            me.createButtonContainer(),
+            me.createPreviewContainer()
+        ];
     },
 
     /**

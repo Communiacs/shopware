@@ -41,15 +41,31 @@ class BacklogProcessor implements BacklogProcessorInterface
     private $synchronizer;
 
     /**
+     * @var IndexFactoryInterface
+     */
+    private $indexFactory;
+
+    /**
+     * @var IdentifierSelector
+     */
+    private $identifierSelector;
+
+    /**
      * @param Connection $connection
      * @param SynchronizerInterface $synchronizer
+     * @param IndexFactoryInterface $indexFactory
+     * @param IdentifierSelector $identifierSelector
      */
     public function __construct(
         Connection $connection,
-        SynchronizerInterface $synchronizer
+        SynchronizerInterface $synchronizer,
+        IndexFactoryInterface $indexFactory,
+        IdentifierSelector $identifierSelector
     ) {
         $this->connection = $connection;
         $this->synchronizer = $synchronizer;
+        $this->indexFactory = $indexFactory;
+        $this->identifierSelector = $identifierSelector;
     }
 
     /**

@@ -32,15 +32,7 @@ function smarty_function_getSalutations($params, $smarty)
 
     $result = [];
     foreach ($salutations as $salutation) {
-        if (strlen(trim($salutation)) === 0) {
-            continue;
-        }
-
-        $label = $snippets->getNamespace('frontend/salutation')->get($salutation);
-        if (strlen(trim($label)) === 0) {
-            $label = $salutation;
-        }
-        $result[$salutation] = $label;
+        $result[$salutation] = $snippets->getNamespace('frontend/salutation')->get($salutation);
     }
 
     $smarty->assign($params['variable'], $result);

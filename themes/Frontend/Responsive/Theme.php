@@ -1,26 +1,4 @@
 <?php
-/**
- * Shopware 5
- * Copyright (c) shopware AG
- *
- * According to our dual licensing model, this program can be used either
- * under the terms of the GNU Affero General Public License, version 3,
- * or under a proprietary license.
- *
- * The texts of the GNU Affero General Public License with an additional
- * permission and of our proprietary license can be found at and
- * in the LICENSE file you have received along with this program.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * "Shopware" is a registered trademark of shopware AG.
- * The licensing of the program under the AGPLv3 does not imply a
- * trademark license. Therefore any rights, title and interest in
- * our trademarks remain entirely with us.
- */
 
 namespace Shopware\Themes\Responsive;
 
@@ -30,10 +8,6 @@ use Shopware\Components\Theme\ConfigSet;
 
 class Theme extends \Shopware\Components\Theme
 {
-    /**
-     * Defines the extended Theme
-     * @var string
-     */
     protected $extend = 'Bare';
 
     /**
@@ -46,20 +20,20 @@ class Theme extends \Shopware\Components\Theme
     /**
      * Allows to define a description text
      * for the theme
-     * @var string
+     * @var null
      */
     protected $description = '__theme_description__';
 
     /**
      * Name of the theme author.
-     * @var string
+     * @var null
      */
     protected $author = '__author__';
 
     /**
      * License of the theme source code.
      *
-     * @var string
+     * @var null
      */
     protected $license = '__license__';
 
@@ -135,11 +109,6 @@ class Theme extends \Shopware\Components\Theme
         'src/js/jquery.shopware-responsive.js'
     ];
 
-    /**
-     * Holds default fieldSet configuration
-     *
-     * @var array
-     */
     private $fieldSetDefaults = [
         'layout' => 'column',
         'height' => 170,
@@ -147,11 +116,6 @@ class Theme extends \Shopware\Components\Theme
         'defaults' => ['columnWidth' => 0.5, 'labelWidth' => 180, 'margin' => '3 16 3 0']
     ];
 
-    /**
-     * Holds default theme colors
-     *
-     * @var array
-     */
     private $themeColorDefaults = [
         "brand-primary" => "#D9400B",
         "brand-primary-light" => "saturate(lighten(@brand-primary,12%), 5%)",
@@ -226,31 +190,6 @@ class Theme extends \Shopware\Components\Theme
     ];
 
     /**
-     * Holds default font configuration
-     *
-     * @var array
-     */
-    private $themeFontDefaults = [
-        'font-base-stack' => '"Open Sans", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;',
-        'font-headline-stack' => '@font-base-stack',
-        'font-size-base' => 14,
-        'font-base-weight' => 500,
-        'font-light-weight' => 300,
-        'font-bold-weight' => 700,
-        'font-size-h1' => 26,
-        'font-size-h2' => 21,
-        'font-size-h3' => 18,
-        'font-size-h4' => 16,
-        'font-size-h5' => '@font-size-base',
-        'font-size-h6' => 12,
-        'panel-header-font-size' => 14,
-        'label-font-size' => 14,
-        'input-font-size' => 14,
-        'btn-font-size' => 14,
-        'btn-icon-size' => 10
-    ];
-
-    /**
      * @param Form\Container\TabContainer $container
      */
     public function createConfig(Form\Container\TabContainer $container)
@@ -279,28 +218,28 @@ class Theme extends \Shopware\Components\Theme
             $this->createColorPickerField(
                 'brand-primary',
                 '@brand-primary',
-                $this->themeColorDefaults['brand-primary']
+                '#D9400B'
             )
         );
         $fieldSet->addElement(
             $this->createColorPickerField(
                 'brand-primary-light',
                 '@brand-primary-light',
-                $this->themeColorDefaults['brand-primary-light']
+                'saturate(lighten(@brand-primary, 12%), 5%)'
             )
         );
         $fieldSet->addElement(
             $this->createColorPickerField(
                 'brand-secondary',
                 '@brand-secondary',
-                $this->themeColorDefaults['brand-secondary']
+                '#5F7285'
             )
         );
         $fieldSet->addElement(
             $this->createColorPickerField(
                 'brand-secondary-dark',
                 '@brand-secondary-dark',
-                $this->themeColorDefaults['brand-secondary-dark']
+                'darken(@brand-secondary, 15%)'
             )
         );
 
@@ -358,28 +297,28 @@ class Theme extends \Shopware\Components\Theme
             $this->createColorPickerField(
                 'gray',
                 '@gray',
-                $this->themeColorDefaults['gray']
+                '#F5F5F8'
             )
         );
         $fieldSetGrey->addElement(
             $this->createColorPickerField(
                 'gray-light',
                 '@gray-light',
-                $this->themeColorDefaults['gray-light']
+                'lighten(@gray, 1%)'
             )
         );
         $fieldSetGrey->addElement(
             $this->createColorPickerField(
                 'gray-dark',
                 '@gray-dark',
-                $this->themeColorDefaults['gray-dark']
+                'darken(@gray-light, 10%)'
             )
         );
         $fieldSetGrey->addElement(
             $this->createColorPickerField(
                 'border-color',
                 '@border-color',
-                $this->themeColorDefaults['border-color']
+                '@gray-dark'
             )
         );
 
@@ -398,28 +337,28 @@ class Theme extends \Shopware\Components\Theme
             $this->createColorPickerField(
                 'highlight-success',
                 '@highlight-success',
-                $this->themeColorDefaults['highlight-success']
+                '#2ECC71'
             )
         );
         $fieldSetHighlights->addElement(
             $this->createColorPickerField(
                 'highlight-error',
                 '@highlight-error',
-                $this->themeColorDefaults['highlight-error']
+                '#E74C3C'
             )
         );
         $fieldSetHighlights->addElement(
             $this->createColorPickerField(
                 'highlight-notice',
                 '@highlight-notice',
-                $this->themeColorDefaults['highlight-notice']
+                '#F1C40F'
             )
         );
         $fieldSetHighlights->addElement(
             $this->createColorPickerField(
                 'highlight-info',
                 '@highlight-info',
-                $this->themeColorDefaults['highlight-info']
+                '#4AA3DF'
             )
         );
 
@@ -436,56 +375,56 @@ class Theme extends \Shopware\Components\Theme
             $this->createColorPickerField(
                 'body-bg',
                 '@body-bg',
-                $this->themeColorDefaults['body-bg']
+                'darken(@gray-light, 5%)'
             )
         );
         $fieldSetScaffolding->addElement(
             $this->createColorPickerField(
                 'text-color',
                 '@text-color',
-                $this->themeColorDefaults['text-color']
+                '@brand-secondary'
             )
         );
         $fieldSetScaffolding->addElement(
             $this->createColorPickerField(
                 'text-color-dark',
                 '@text-color-dark',
-                $this->themeColorDefaults['text-color-dark']
+                '@brand-secondary-dark'
             )
         );
         $fieldSetScaffolding->addElement(
             $this->createColorPickerField(
                 'link-color',
                 '@link-color',
-                $this->themeColorDefaults['link-color']
+                '@brand-primary'
             )
         );
         $fieldSetScaffolding->addElement(
             $this->createColorPickerField(
                 'link-hover-color',
                 '@link-hover-color',
-                $this->themeColorDefaults['link-hover-color']
+                'darken(@link-color, 10%)'
             )
         );
         $fieldSetScaffolding->addElement(
             $this->createColorPickerField(
                 'rating-star-color',
                 '@rating-star-color',
-                $this->themeColorDefaults['rating-star-color']
+                '@highlight-notice'
             )
         );
         $fieldSetScaffolding->addElement(
             $this->createColorPickerField(
                 'overlay-bg',
                 '@overlay-bg',
-                $this->themeColorDefaults['overlay-bg']
+                '#000000'
             )
         );
         $fieldSetScaffolding->addElement(
             $this->createColorPickerField(
                 'overlay-opacity',
                 '@overlay-opacity',
-                $this->themeColorDefaults['overlay-opacity']
+                '0.7'
             )
         );
 
@@ -517,42 +456,42 @@ class Theme extends \Shopware\Components\Theme
             $this->createTextField(
                 'font-base-stack',
                 '@font-base-stack',
-                $this->themeFontDefaults['font-base-stack']
+                '"Open Sans", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;'
             )
         );
         $fieldSetBasic->addElement(
             $this->createTextField(
                 'font-headline-stack',
                 '@font-headline-stack',
-                $this->themeFontDefaults['font-headline-stack']
+                '@font-base-stack'
             )
         );
         $fieldSetBasic->addElement(
             $this->createTextField(
                 'font-size-base',
                 '@font-size-base',
-                $this->themeFontDefaults['font-size-base']
+                '14'
             )
         );
         $fieldSetBasic->addElement(
             $this->createTextField(
                 'font-base-weight',
                 '@font-base-weight',
-                $this->themeFontDefaults['font-base-weight']
+                '500'
             )
         );
         $fieldSetBasic->addElement(
             $this->createTextField(
                 'font-light-weight',
                 '@font-light-weight',
-                $this->themeFontDefaults['font-light-weight']
+                '300'
             )
         );
         $fieldSetBasic->addElement(
             $this->createTextField(
                 'font-bold-weight',
                 '@font-bold-weight',
-                $this->themeFontDefaults['font-bold-weight']
+                '700'
             )
         );
 
@@ -569,42 +508,42 @@ class Theme extends \Shopware\Components\Theme
             $this->createTextField(
                 'font-size-h1',
                 '@font-size-h1',
-                $this->themeFontDefaults['font-size-h1']
+                '26'
             )
         );
         $fieldSetHeadlines->addElement(
             $this->createTextField(
                 'font-size-h2',
                 '@font-size-h2',
-                $this->themeFontDefaults['font-size-h2']
+                '21'
             )
         );
         $fieldSetHeadlines->addElement(
             $this->createTextField(
                 'font-size-h3',
                 '@font-size-h3',
-                $this->themeFontDefaults['font-size-h3']
+                '18'
             )
         );
         $fieldSetHeadlines->addElement(
             $this->createTextField(
                 'font-size-h4',
                 '@font-size-h4',
-                $this->themeFontDefaults['font-size-h4']
+                '16'
             )
         );
         $fieldSetHeadlines->addElement(
             $this->createTextField(
                 'font-size-h5',
                 '@font-size-h5',
-                $this->themeFontDefaults['font-size-h5']
+                '@font-size-base'
             )
         );
         $fieldSetHeadlines->addElement(
             $this->createTextField(
                 'font-size-h6',
                 '@font-size-h6',
-                $this->themeFontDefaults['font-size-h6']
+                '12'
             )
         );
 
@@ -640,14 +579,14 @@ class Theme extends \Shopware\Components\Theme
             $this->createTextField(
                 'btn-font-size',
                 '@btn-font-size',
-                $this->themeFontDefaults['btn-font-size']
+                '14'
             )
         );
         $fieldSetButtons->addElement(
             $this->createTextField(
                 'btn-icon-size',
                 '@btn-icon-size',
-                $this->themeFontDefaults['btn-icon-size']
+                '10'
             )
         );
 
@@ -664,49 +603,49 @@ class Theme extends \Shopware\Components\Theme
             $this->createColorPickerField(
                 'btn-default-top-bg',
                 '@btn-default-top-bg',
-                $this->themeColorDefaults['btn-default-top-bg']
+                '#FFFFFF'
             )
         );
         $fieldSetDefaultButtons->addElement(
             $this->createColorPickerField(
                 'btn-default-bottom-bg',
                 '@btn-default-bottom-bg',
-                $this->themeColorDefaults['btn-default-bottom-bg']
+                '@gray-light'
             )
         );
         $fieldSetDefaultButtons->addElement(
             $this->createColorPickerField(
                 'btn-default-hover-bg',
                 '@btn-default-hover-bg',
-                $this->themeColorDefaults['btn-default-hover-bg']
+                '#FFFFFF'
             )
         );
         $fieldSetDefaultButtons->addElement(
             $this->createColorPickerField(
                 'btn-default-text-color',
                 '@btn-default-text-color',
-                $this->themeColorDefaults['btn-default-text-color']
+                '@text-color'
             )
         );
         $fieldSetDefaultButtons->addElement(
             $this->createColorPickerField(
                 'btn-default-hover-text-color',
                 '@btn-default-hover-text-color',
-                $this->themeColorDefaults['btn-default-hover-text-color']
+                '@brand-primary'
             )
         );
         $fieldSetDefaultButtons->addElement(
             $this->createColorPickerField(
                 'btn-default-border-color',
                 '@btn-default-border-color',
-                $this->themeColorDefaults['btn-default-border-color']
+                '@border-color'
             )
         );
         $fieldSetDefaultButtons->addElement(
             $this->createColorPickerField(
                 'btn-default-hover-border-color',
                 '@btn-default-hover-border-color',
-                $this->themeColorDefaults['btn-default-hover-border-color']
+                '@brand-primary'
             )
         );
 
@@ -723,35 +662,35 @@ class Theme extends \Shopware\Components\Theme
             $this->createColorPickerField(
                 'btn-primary-top-bg',
                 '@btn-primary-top-bg',
-                $this->themeColorDefaults['btn-primary-top-bg']
+                '@brand-primary-light'
             )
         );
         $fieldSetPrimaryButtons->addElement(
             $this->createColorPickerField(
                 'btn-primary-bottom-bg',
                 '@btn-primary-bottom-bg',
-                $this->themeColorDefaults['btn-primary-bottom-bg']
+                '@brand-primary'
             )
         );
         $fieldSetPrimaryButtons->addElement(
             $this->createColorPickerField(
                 'btn-primary-hover-bg',
                 '@btn-primary-hover-bg',
-                $this->themeColorDefaults['btn-primary-hover-bg']
+                '@brand-primary'
             )
         );
         $fieldSetPrimaryButtons->addElement(
             $this->createColorPickerField(
                 'btn-primary-text-color',
                 '@btn-primary-text-color',
-                $this->themeColorDefaults['btn-primary-text-color']
+                '#FFFFFF'
             )
         );
         $fieldSetPrimaryButtons->addElement(
             $this->createColorPickerField(
                 'btn-primary-hover-text-color',
                 '@btn-primary-hover-text-color',
-                $this->themeColorDefaults['btn-primary-hover-text-color']
+                '@btn-primary-text-color'
             )
         );
 
@@ -768,35 +707,35 @@ class Theme extends \Shopware\Components\Theme
             $this->createColorPickerField(
                 'btn-secondary-top-bg',
                 '@btn-secondary-top-bg',
-                $this->themeColorDefaults['btn-secondary-top-bg']
+                '@brand-secondary'
             )
         );
         $fieldSetSecondaryButtons->addElement(
             $this->createColorPickerField(
                 'btn-secondary-bottom-bg',
                 '@btn-secondary-bottom-bg',
-                $this->themeColorDefaults['btn-secondary-bottom-bg']
+                '@brand-secondary-dark'
             )
         );
         $fieldSetSecondaryButtons->addElement(
             $this->createColorPickerField(
                 'btn-secondary-hover-bg',
                 '@btn-secondary-hover-bg',
-                $this->themeColorDefaults['btn-secondary-hover-bg']
+                '@brand-secondary-dark'
             )
         );
         $fieldSetSecondaryButtons->addElement(
             $this->createColorPickerField(
                 'btn-secondary-text-color',
                 '@btn-secondary-text-color',
-                $this->themeColorDefaults['btn-secondary-text-color']
+                '#FFFFFF'
             )
         );
         $fieldSetSecondaryButtons->addElement(
             $this->createColorPickerField(
                 'btn-secondary-hover-text-color',
                 '@btn-secondary-hover-text-color',
-                $this->themeColorDefaults['btn-secondary-hover-text-color']
+                '@btn-secondary-text-color'
             )
         );
 
@@ -813,35 +752,35 @@ class Theme extends \Shopware\Components\Theme
             $this->createColorPickerField(
                 'panel-header-bg',
                 '@panel-header-bg',
-                $this->themeColorDefaults['panel-header-bg']
+                '@gray-light'
             )
         );
         $fieldSetPanels->addElement(
             $this->createTextField(
                 'panel-header-font-size',
                 '@panel-header-font-size',
-                $this->themeFontDefaults['panel-header-font-size']
+                '14'
             )
         );
         $fieldSetPanels->addElement(
             $this->createColorPickerField(
                 'panel-header-color',
                 '@panel-header-color',
-                $this->themeColorDefaults['panel-header-color']
+                '@text-color'
             )
         );
         $fieldSetPanels->addElement(
             $this->createColorPickerField(
                 'panel-border',
                 '@panel-border',
-                $this->themeColorDefaults['panel-border']
+                '@border-color'
             )
         );
         $fieldSetPanels->addElement(
             $this->createColorPickerField(
                 'panel-bg',
                 '@panel-bg',
-                $this->themeColorDefaults['panel-bg']
+                '#FFFFFF'
             )
         );
 
@@ -877,14 +816,14 @@ class Theme extends \Shopware\Components\Theme
             $this->createTextField(
                 'label-font-size',
                 '@label-font-size',
-                $this->themeFontDefaults['label-font-size']
+                '14'
             )
         );
         $fieldSetLabels->addElement(
             $this->createColorPickerField(
                 'label-color',
                 '@label-color',
-                $this->themeColorDefaults['label-color']
+                '@text-color'
             )
         );
 
@@ -901,35 +840,35 @@ class Theme extends \Shopware\Components\Theme
             $this->createTextField(
                 'input-font-size',
                 '@input-font-size',
-                $this->themeFontDefaults['input-font-size']
+                '14'
             )
         );
         $fieldSetFormBase->addElement(
             $this->createColorPickerField(
                 'input-bg',
                 '@input-bg',
-                $this->themeColorDefaults['input-bg']
+                '@gray-light'
             )
         );
         $fieldSetFormBase->addElement(
             $this->createColorPickerField(
                 'input-color',
                 '@input-color',
-                $this->themeColorDefaults['input-color']
+                '@brand-secondary'
             )
         );
         $fieldSetFormBase->addElement(
             $this->createColorPickerField(
                 'input-placeholder-color',
                 '@input-placeholder-color',
-                $this->themeColorDefaults['input-placeholder-color']
+                'lighten(@text-color, 15%)'
             )
         );
         $fieldSetFormBase->addElement(
             $this->createColorPickerField(
                 'input-border',
                 '@input-border',
-                $this->themeColorDefaults['input-border']
+                '@border-color'
             )
         );
 
@@ -946,63 +885,63 @@ class Theme extends \Shopware\Components\Theme
             $this->createColorPickerField(
                 'input-focus-bg',
                 '@input-focus-bg',
-                $this->themeColorDefaults['input-focus-bg']
+                '#FFFFFF'
             )
         );
         $fieldSetFormStates->addElement(
             $this->createColorPickerField(
                 'input-focus-border',
                 '@input-focus-border',
-                $this->themeColorDefaults['input-focus-border']
+                '@brand-primary'
             )
         );
         $fieldSetFormStates->addElement(
             $this->createColorPickerField(
                 'input-focus-color',
                 '@input-focus-color',
-                $this->themeColorDefaults['input-focus-color']
+                '@brand-secondary'
             )
         );
         $fieldSetFormStates->addElement(
             $this->createColorPickerField(
                 'input-error-bg',
                 '@input-error-bg',
-                $this->themeColorDefaults['input-error-bg']
+                'desaturate(lighten(@highlight-error, 38%), 20%)'
             )
         );
         $fieldSetFormStates->addElement(
             $this->createColorPickerField(
                 'input-error-border',
                 '@input-error-border',
-                $this->themeColorDefaults['input-error-border']
+                '@highlight-error'
             )
         );
         $fieldSetFormStates->addElement(
             $this->createColorPickerField(
                 'input-error-color',
                 '@input-error-color',
-                $this->themeColorDefaults['input-error-color']
+                '@highlight-error'
             )
         );
         $fieldSetFormStates->addElement(
             $this->createColorPickerField(
                 'input-success-bg',
                 '@input-success-bg',
-                $this->themeColorDefaults['input-success-bg']
+                '#FFFFFF'
             )
         );
         $fieldSetFormStates->addElement(
             $this->createColorPickerField(
                 'input-success-border',
                 '@input-success-border',
-                $this->themeColorDefaults['input-success-border']
+                '@highlight-success'
             )
         );
         $fieldSetFormStates->addElement(
             $this->createColorPickerField(
                 'input-success-color',
                 '@input-success-color',
-                $this->themeColorDefaults['input-success-color']
+                '@brand-secondary-dark'
             )
         );
 
@@ -1038,49 +977,49 @@ class Theme extends \Shopware\Components\Theme
             $this->createColorPickerField(
                 'panel-table-header-bg',
                 '@panel-table-header-bg',
-                $this->themeColorDefaults['panel-table-header-bg']
+                '@panel-bg'
             )
         );
         $fieldSetTables->addElement(
             $this->createColorPickerField(
                 'panel-table-header-color',
                 '@panel-table-header-color',
-                $this->themeColorDefaults['panel-table-header-color']
+                '@text-color-dark'
             )
         );
         $fieldSetTables->addElement(
             $this->createColorPickerField(
                 'table-row-bg',
                 '@table-row-bg',
-                $this->themeColorDefaults['table-row-bg']
+                '#FFFFFF'
             )
         );
         $fieldSetTables->addElement(
             $this->createColorPickerField(
                 'table-row-color',
                 '@table-row-color',
-                $this->themeColorDefaults['table-row-color']
+                '@brand-secondary'
             )
         );
         $fieldSetTables->addElement(
             $this->createColorPickerField(
                 'table-row-highlight-bg',
                 '@table-row-highlight-bg',
-                $this->themeColorDefaults['table-row-highlight-bg']
+                'darken(@table-row-bg, 4%)'
             )
         );
         $fieldSetTables->addElement(
             $this->createColorPickerField(
                 'table-header-bg',
                 '@table-header-bg',
-                $this->themeColorDefaults['table-header-bg']
+                '@brand-secondary'
             )
         );
         $fieldSetTables->addElement(
             $this->createColorPickerField(
                 'table-header-color',
                 '@table-header-color',
-                $this->themeColorDefaults['table-header-color']
+                '#FFFFFF'
             )
         );
 
@@ -1097,56 +1036,56 @@ class Theme extends \Shopware\Components\Theme
             $this->createColorPickerField(
                 'badge-discount-bg',
                 '@badge-discount-bg',
-                $this->themeColorDefaults['badge-discount-bg']
+                '@highlight-error'
             )
         );
         $fieldSetBadges->addElement(
             $this->createColorPickerField(
                 'badge-discount-color',
                 '@badge-discount-color',
-                $this->themeColorDefaults['badge-discount-color']
+                '#FFFFFF'
             )
         );
         $fieldSetBadges->addElement(
             $this->createColorPickerField(
                 'badge-newcomer-bg',
                 '@badge-newcomer-bg',
-                $this->themeColorDefaults['badge-newcomer-bg']
+                '@highlight-notice'
             )
         );
         $fieldSetBadges->addElement(
             $this->createColorPickerField(
                 'badge-newcomer-color',
                 '@badge-newcomer-color',
-                $this->themeColorDefaults['badge-newcomer-color']
+                '#FFFFFF'
             )
         );
         $fieldSetBadges->addElement(
             $this->createColorPickerField(
                 'badge-recommendation-bg',
                 '@badge-recommendation-bg',
-                $this->themeColorDefaults['badge-recommendation-bg']
+                '@highlight-success'
             )
         );
         $fieldSetBadges->addElement(
             $this->createColorPickerField(
                 'badge-recommendation-color',
                 '@badge-recommendation-color',
-                $this->themeColorDefaults['badge-recommendation-color']
+                '#FFFFFF'
             )
         );
         $fieldSetBadges->addElement(
             $this->createColorPickerField(
                 'badge-download-bg',
                 '@badge-download-bg',
-                $this->themeColorDefaults['badge-download-bg']
+                '@highlight-info'
             )
         );
         $fieldSetBadges->addElement(
             $this->createColorPickerField(
                 'badge-download-color',
                 '@badge-download-color',
-                $this->themeColorDefaults['badge-download-color']
+                '#FFFFFF'
             )
         );
 

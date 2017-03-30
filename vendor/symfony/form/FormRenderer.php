@@ -253,11 +253,10 @@ class FormRenderer implements FormRendererInterface
 
         // Escape if no resource exists for this block
         if (!$resource) {
-            if (count($blockNameHierarchy) !== count(array_unique($blockNameHierarchy))) {
-                throw new LogicException(sprintf('Unable to render the form because the block names array contains duplicates: "%s".', implode('", "', array_reverse($blockNameHierarchy))));
-            }
-
-            throw new LogicException(sprintf('Unable to render the form as none of the following blocks exist: "%s".', implode('", "', array_reverse($blockNameHierarchy))));
+            throw new LogicException(sprintf(
+                'Unable to render the form as none of the following blocks exist: "%s".',
+                implode('", "', array_reverse($blockNameHierarchy))
+            ));
         }
 
         // Merge the passed with the existing attributes

@@ -65,7 +65,7 @@ class Command
      *
      * @param Command|null $parent Parent command
      *
-     * @return self
+     * @return Command New Command instance
      */
     public static function create(Command $parent = null)
     {
@@ -101,7 +101,7 @@ class Command
      *
      * @param string|Command $bit
      *
-     * @return $this
+     * @return Command The current Command instance
      */
     public function add($bit)
     {
@@ -115,7 +115,7 @@ class Command
      *
      * @param string|Command $bit
      *
-     * @return $this
+     * @return Command The current Command instance
      */
     public function top($bit)
     {
@@ -133,7 +133,7 @@ class Command
      *
      * @param string $arg
      *
-     * @return $this
+     * @return Command The current Command instance
      */
     public function arg($arg)
     {
@@ -147,7 +147,7 @@ class Command
      *
      * @param string $esc
      *
-     * @return $this
+     * @return Command The current Command instance
      */
     public function cmd($esc)
     {
@@ -161,7 +161,7 @@ class Command
      *
      * @param string $label The unique label
      *
-     * @return self|string
+     * @return Command The current Command instance
      *
      * @throws \RuntimeException If label already exists
      */
@@ -182,7 +182,7 @@ class Command
      *
      * @param string $label
      *
-     * @return self|string
+     * @return Command The labeled command
      *
      * @throws \RuntimeException
      */
@@ -198,7 +198,7 @@ class Command
     /**
      * Returns parent command (if any).
      *
-     * @return self
+     * @return Command Parent command
      *
      * @throws \RuntimeException If command has no parent
      */
@@ -224,7 +224,7 @@ class Command
     /**
      * @param \Closure $errorHandler
      *
-     * @return $this
+     * @return Command
      */
     public function setErrorHandler(\Closure $errorHandler)
     {
@@ -287,7 +287,7 @@ class Command
      * @param string|Command $bit
      * @param int            $index
      *
-     * @return $this
+     * @return Command The current Command instance
      */
     public function addAtIndex($bit, $index)
     {

@@ -72,11 +72,6 @@ class ContainerAwareHttpKernel extends HttpKernel
             $this->container->leaveScope('request');
 
             throw $e;
-        } catch (\Throwable $e) {
-            $this->container->set('request', null, 'request');
-            $this->container->leaveScope('request');
-
-            throw $e;
         }
 
         $this->container->set('request', null, 'request');

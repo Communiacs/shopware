@@ -43,7 +43,7 @@ class DbAdapter extends \Enlight_Config_Adapter_DbTable
      */
     private function overwriteWithDefaultShopValues(\Enlight_Config $config)
     {
-        $section = explode($config->getSectionSeparator(), $config->getSection());
+        $section = $config->getSection();
         foreach ($this->_sectionColumn as $key => $columnName) {
             switch ($columnName) {
                 case 'shopID':

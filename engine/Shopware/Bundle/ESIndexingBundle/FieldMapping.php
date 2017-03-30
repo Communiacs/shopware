@@ -23,7 +23,6 @@
  */
 namespace Shopware\Bundle\ESIndexingBundle;
 
-use Elasticsearch\Client;
 use Shopware\Bundle\StoreFrontBundle\Struct\Shop;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
@@ -39,20 +38,11 @@ class FieldMapping implements FieldMappingInterface
     private $shopAnalyzer;
 
     /**
-     * @var TextMappingInterface
-     */
-    private $textMapping;
-
-    /**
      * @param ShopAnalyzerInterface $shopAnalyzer
-     * @param TextMappingInterface $textMapping
      */
-    public function __construct(
-        ShopAnalyzerInterface $shopAnalyzer,
-        TextMappingInterface $textMapping
-    ) {
+    public function __construct(ShopAnalyzerInterface $shopAnalyzer)
+    {
         $this->shopAnalyzer = $shopAnalyzer;
-        $this->textMapping = $textMapping;
     }
 
     /**
@@ -74,22 +64,12 @@ class FieldMapping implements FieldMappingInterface
     {
         $analyzers = $this->shopAnalyzer->get($shop);
 
-        $fields = [
-            'raw' => $this->textMapping->getNotAnalyzedField(),
-        ];
-
+        $fields = [];
         foreach ($analyzers as $analyzer) {
             $key = $analyzer . '_analyzer';
-
-            $fields[$key] = array_merge(
-                $this->textMapping->getTextField(),
-                ['analyzer' => $analyzer]
-            );
+            $fields[$key] = ['type' => 'string', 'analyzer' => $analyzer];
         }
 
-        return array_merge(
-            $this->textMapping->getTextField(),
-            ['fields' => $fields]
-        );
+        return ['type' => 'string', 'fields' => $fields];
     }
 }

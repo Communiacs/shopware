@@ -22,9 +22,9 @@
  */
 
 Ext.define('Shopware.apps.Theme.view.detail.containers.Tab', {
-    extend: 'Ext.panel.Panel',
+    extend: 'Ext.container.Container',
     alias: 'widget.theme-tab',
-    bodyPadding: 15,
+    style: 'background: #F9FAFA',
     layout: {
         type: 'vbox',
         align: 'stretch'

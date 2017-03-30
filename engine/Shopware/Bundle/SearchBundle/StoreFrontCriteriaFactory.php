@@ -89,7 +89,7 @@ class StoreFrontCriteriaFactory implements StoreFrontCriteriaFactoryInterface
 
         $criteria->addBaseCondition(new CategoryCondition($categoryIds));
 
-        if ($this->config->get('hideNoInStock')) {
+        if ($this->config->get('hideNoInstock')) {
             $criteria->addBaseCondition(new IsAvailableCondition());
         }
 

@@ -4,11 +4,6 @@
             {block name="widget_emotion_component_blog_container"}
                 <div class="blog--container block-group">
                     {foreach $Data.entries as $entry}
-                        {$link = $entry.link}
-                        {if !$link}
-                            {$link = {url controller=blog action=detail sCategory=$entry.categoryId blogArticle=$entry.id}}
-                        {/if}
-
                         {block name="widget_emotion_component_blog_entry"}
                             <div class="blog--entry blog--entry-{$entry@index} block"
                                  style="width:{{"100" / $Data.entries|count}|round:2}%">
@@ -67,11 +62,11 @@
 
                                         <a class="blog--image"
                                            id="teaser--{$Data.objectId}-{$entry@index}"
-                                           href="{$link}"
+                                           href="{url controller=blog action=detail sCategory=$entry.categoryId blogArticle=$entry.id}"
                                            title="{$entry.title|escape}">&nbsp;</a>
                                     {else}
                                         <a class="blog--image"
-                                           href="{$link}"
+                                           href="{url controller=blog action=detail sCategory=$entry.categoryId blogArticle=$entry.id}"
                                            title="{$entry.title|escape}">
                                             {s name="EmotionBlogPreviewNopic"}{/s}
                                         </a>
@@ -80,7 +75,7 @@
 
                                 {block name="widget_emotion_component_blog_entry_title"}
                                     <a class="blog--title"
-                                       href="{$link}"
+                                       href="{url controller=blog action=detail sCategory=$entry.categoryId blogArticle=$entry.id}"
                                        title="{$entry.title|escape}">
                                        {$entry.title|truncate:40}
                                     </a>

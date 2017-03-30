@@ -166,8 +166,7 @@ Ext.define('Shopware.apps.PluginManager.view.detail.Container', {
     },
 
     updateConfiguration: function(plugin) {
-        var me = this,
-            tabIndex = me.tabIndex.description;
+        var me = this;
 
         me.configurationContainer.hide();
         me.configurationContainer.removeAll();
@@ -177,11 +176,7 @@ Ext.define('Shopware.apps.PluginManager.view.detail.Container', {
             me.informationTab.navigationClick(me.tabIndex.configuration);
         } else {
             me.informationTab.hideTab(me.tabIndex.configuration);
-            if (Ext.isEmpty(plugin.get('description'))) {
-                tabIndex = me.tabIndex.localDescription;
-            }
-            me.informationTab.navigationClick(tabIndex);
-
+            me.informationTab.navigationClick(me.tabIndex.description);
             return;
         }
         me.configurationContainer.show();
@@ -196,10 +191,7 @@ Ext.define('Shopware.apps.PluginManager.view.detail.Container', {
                         return;
                     }
                     me.informationTab.hideTab(me.tabIndex.configuration);
-                    if (Ext.isEmpty(plugin.get('description'))) {
-                        tabIndex = me.tabIndex.localDescription;
-                    }
-                    me.informationTab.navigationClick(tabIndex);
+                    me.informationTab.navigationClick(me.tabIndex.description);
                 }
             }
         });

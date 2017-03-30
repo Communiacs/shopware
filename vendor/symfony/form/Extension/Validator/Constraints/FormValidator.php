@@ -13,7 +13,6 @@ namespace Symfony\Component\Form\Extension\Validator\Constraints;
 
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Validator\Constraint;
-use Symfony\Component\Validator\Constraints\GroupSequence;
 use Symfony\Component\Validator\Constraints\Valid;
 use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
@@ -51,12 +50,10 @@ class FormValidator extends ConstraintValidator
 
             // Validate the data against its own constraints
             if (self::allowDataWalking($form)) {
-                if ($validator) {
-                    if (is_array($groups) && count($groups) > 0 || $groups instanceof GroupSequence && count($groups->groups) > 0) {
-                        $validator->atPath('data')->validate($form->getData(), null, $groups);
-                    }
-                } else {
-                    foreach ($groups as $group) {
+                foreach ($groups as $group) {
+                    if ($validator) {
+                        $validator->atPath('data')->validate($form->getData(), null, $group);
+                    } else {
                         // 2.4 API
                         $this->context->validate($form->getData(), 'data', $group, true);
                     }
@@ -156,9 +153,9 @@ class FormValidator extends ConstraintValidator
     /**
      * Returns whether the data of a form may be walked.
      *
-     * @param FormInterface $form The form to test
+     * @param FormInterface $form The form to test.
      *
-     * @return bool Whether the graph walker may walk the data
+     * @return bool Whether the graph walker may walk the data.
      */
     private static function allowDataWalking(FormInterface $form)
     {
@@ -188,9 +185,9 @@ class FormValidator extends ConstraintValidator
     /**
      * Returns the validation groups of the given form.
      *
-     * @param FormInterface $form The form
+     * @param FormInterface $form The form.
      *
-     * @return array The validation groups
+     * @return array The validation groups.
      */
     private static function getValidationGroups(FormInterface $form)
     {
@@ -225,19 +222,15 @@ class FormValidator extends ConstraintValidator
     /**
      * Post-processes the validation groups option for a given form.
      *
-     * @param array|callable $groups The validation groups
-     * @param FormInterface  $form   The validated form
+     * @param array|callable $groups The validation groups.
+     * @param FormInterface  $form   The validated form.
      *
-     * @return array The validation groups
+     * @return array The validation groups.
      */
     private static function resolveValidationGroups($groups, FormInterface $form)
     {
         if (!is_string($groups) && is_callable($groups)) {
             $groups = call_user_func($groups, $form);
-        }
-
-        if ($groups instanceof GroupSequence) {
-            return $groups;
         }
 
         return (array) $groups;

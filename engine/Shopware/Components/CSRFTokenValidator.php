@@ -25,6 +25,7 @@
 namespace Shopware\Components;
 
 use Enlight\Event\SubscriberInterface;
+use Enlight_Components_Session_Namespace as Session;
 use Enlight_Controller_ActionEventArgs as ActionEventArgs;
 use Shopware\Components\DependencyInjection\Container;
 
@@ -81,7 +82,16 @@ class CSRFTokenValidator implements SubscriberInterface
     }
 
     /**
-     * CSRF protection for backend actions
+     * Send invalidate csrf token cookie
+     * @param \Enlight_Controller_Response_Response $response
+     */
+    public function invalidateToken(\Enlight_Controller_Response_Response $response)
+    {
+        $context = $this->container->get('shopware_storefront.context_service')->getShopContext();
+        $response->setCookie('invalidate-xcsrf-token', 1, 0, $context->getShop()->getPath());
+    }
+
+    /**
      * @param ActionEventArgs $args
      * @throws CSRFTokenValidationException
      */
@@ -105,12 +115,11 @@ class CSRFTokenValidator implements SubscriberInterface
         }
 
         if (!hash_equals($expected, $token)) {
-            throw new CSRFTokenValidationException(sprintf('The provided CSRF-Token is invalid. If you\'re sure that the request to path "%s" should be valid, the called controller action needs to be whitelisted using the CSRFWhitelistAware interface.', $controller->Request()->getRequestUri()));
+            throw new CSRFTokenValidationException("The provided CSRF-Token is invalid. If you're sure that the request should be valid, the called controller action needs to be whitelisted using the CSRFWhitelistAware interface.");
         }
     }
 
     /**
-     * CSRF protection for frontend actions
      * @param \Enlight_Event_EventArgs $args
      * @throws CSRFTokenValidationException
      */
@@ -122,6 +131,7 @@ class CSRFTokenValidator implements SubscriberInterface
 
         /** @var \Enlight_Controller_Action $controller */
         $controller = $args->getSubject();
+
         $request = $controller->Request();
 
         // do not check internal subrequests
@@ -129,82 +139,59 @@ class CSRFTokenValidator implements SubscriberInterface
             return;
         }
 
-        // skip if the request has already been validated
-        if ($request->getAttribute('isValidated')) {
-            return;
+        /** @var \Enlight_Controller_Action $controller */
+        $controller = $args->getSubject();
+
+        /** @var \Enlight_Components_Session_Namespace $session */
+        $session = $this->container->get('session');
+        $token = $session->offsetGet('X-CSRF-Token');
+
+        if (!$token) {
+            $token = $this->generateToken($controller->Response());
         }
 
-        // skip whitelisted actions
         if ($this->isWhitelisted($controller)) {
             return;
         }
 
-        if ($request->isPost() && $request->isXmlHttpRequest()) {
-            return;
+        if ($request->isPost()) {
+            $requestToken = $request->getParam('__csrf_token') ? : $request->getHeader('X-CSRF-Token');
+            if (!hash_equals($token, $requestToken)) {
+                $this->generateToken($controller->Response());
+                throw new CSRFTokenValidationException("The provided X-CSRF-Token is invalid. Please go back, reload the page and try again.");
+            }
         }
-
-        if ($request->isGet() && !$this->isProtected($controller)) {
-            return;
-        }
-
-        if (!$this->checkRequest($request)) {
-            throw new CSRFTokenValidationException(sprintf('The provided X-CSRF-Token for path "%s" is invalid. Please go back, reload the page and try again.', $request->getRequestUri()));
-        }
-        // mark request as validated to avoid double validation
-        $request->setAttribute('isValidated', true);
     }
 
     /**
-     * Check if the submitted CSRF token matches with the token stored in the cookie or header
-     * @param \Enlight_Controller_Request_Request $request
-     * @return bool
+     * @param \Enlight_Controller_Response_ResponseHttp $response
+     * @return string
      */
-    private function checkRequest(\Enlight_Controller_Request_Request $request)
+    private function generateToken(\Enlight_Controller_Response_ResponseHttp $response)
     {
-        $context = $this->container->get('shopware_storefront.context_service')->getShopContext();
-        $token = $request->getCookie('__csrf_token-' . $context->getShop()->getId());
-        $requestToken = $request->getParam('__csrf_token') ? : $request->getHeader('X-CSRF-Token');
+        $token = Random::getAlphanumericString(30);
+        $this->container->get('session')->offsetSet('X-CSRF-Token', $token);
+        $this->invalidateToken($response);
 
-        return hash_equals($token, $requestToken);
+        return $token;
     }
 
     /**
-     * Check if the controller has opted in for CSRF whitelisting and if the
-     * called action is on the whitelist
      * @param \Enlight_Controller_Action $controller
      * @return bool
      */
     private function isWhitelisted(\Enlight_Controller_Action $controller)
     {
-        if (!($controller instanceof CSRFWhitelistAware)) {
-            return false;
+        if ($controller instanceof CSRFWhitelistAware) {
+            $calledAction = strtolower($controller->Request()->getActionName());
+            $whitelistedActions = $controller->getWhitelistedCSRFActions();
+            $whitelistedActions = array_map('strtolower', $whitelistedActions);
+
+            if (in_array($calledAction, $whitelistedActions)) {
+                return true;
+            }
         }
 
-        $calledAction = strtolower($controller->Request()->getActionName());
-        $calledAction = str_replace('_', '', $calledAction);
-        $whitelistedActions = $controller->getWhitelistedCSRFActions();
-        $whitelistedActions = array_map('strtolower', $whitelistedActions);
-
-        return in_array($calledAction, $whitelistedActions);
-    }
-
-    /**
-     * Check if a controller has opted in for CSRF protection and if the called action
-     * should be protected
-     * @param \Enlight_Controller_Action $controller
-     * @return bool
-     */
-    private function isProtected(\Enlight_Controller_Action $controller)
-    {
-        if (!($controller instanceof CSRFGetProtectionAware)) {
-            return false;
-        }
-
-        $calledAction = strtolower($controller->Request()->getActionName());
-        $calledAction = str_replace('_', '', $calledAction);
-        $protectedActions = $controller->getCSRFProtectedActions();
-        $protectedActions = array_map('strtolower', $protectedActions);
-
-        return in_array($calledAction, $protectedActions);
+        return false;
     }
 }

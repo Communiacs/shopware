@@ -596,9 +596,7 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
         }
 
         if (in_array($xType, $mediaFields)) {
-            if ($mediaService->isEncoded($value)) {
-                $value = $mediaService->normalize($value);
-            }
+            $value = $mediaService->normalize($value);
         }
 
         return $value;
@@ -1182,7 +1180,7 @@ SELECT `objecttype`,
 `objectlanguage`,
 `dirty`
 FROM `s_core_translations`
-WHERE objectkey = :oldObjectKey AND `objecttype` = 'emotionElement'
+WHERE objectkey = :oldObjectKey
 EOD;
 
         /** @var Element $el */

@@ -30,12 +30,11 @@ use GuzzleHttp\ClientInterface;
 class GuzzleFactory
 {
     /**
-     * @param array $guzzleConfig
      * @return ClientInterface
      */
-    public function createClient(array $guzzleConfig = [])
+    public function createClient()
     {
-        $client = new Client($guzzleConfig);
+        $client = new Client();
 
         $certPath = __DIR__.'/cacert.pem';
         if (is_file($certPath)) {

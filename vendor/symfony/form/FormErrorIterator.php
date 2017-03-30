@@ -27,6 +27,8 @@ use Symfony\Component\Form\Exception\BadMethodCallException;
  * flatten the recursive structure into a flat list of errors.
  *
  * @author Bernhard Schussek <bschussek@gmail.com>
+ *
+ * @since 2.5
  */
 class FormErrorIterator implements \RecursiveIterator, \SeekableIterator, \ArrayAccess, \Countable
 {
@@ -97,7 +99,7 @@ class FormErrorIterator implements \RecursiveIterator, \SeekableIterator, \Array
     /**
      * Returns the iterated form.
      *
-     * @return FormInterface The form whose errors are iterated by this object
+     * @return FormInterface The form whose errors are iterated by this object.
      */
     public function getForm()
     {
@@ -126,7 +128,7 @@ class FormErrorIterator implements \RecursiveIterator, \SeekableIterator, \Array
     /**
      * Returns the current position of the iterator.
      *
-     * @return int The 0-indexed position
+     * @return int The 0-indexed position.
      */
     public function key()
     {
@@ -136,7 +138,7 @@ class FormErrorIterator implements \RecursiveIterator, \SeekableIterator, \Array
     /**
      * Returns whether the iterator's position is valid.
      *
-     * @return bool Whether the iterator is valid
+     * @return bool Whether the iterator is valid.
      */
     public function valid()
     {

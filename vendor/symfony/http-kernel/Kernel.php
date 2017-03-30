@@ -59,11 +59,11 @@ abstract class Kernel implements KernelInterface, TerminableInterface
     protected $startTime;
     protected $loadClassCache;
 
-    const VERSION = '2.8.17';
-    const VERSION_ID = 20817;
+    const VERSION = '2.8.6';
+    const VERSION_ID = 20806;
     const MAJOR_VERSION = 2;
     const MINOR_VERSION = 8;
-    const RELEASE_VERSION = 17;
+    const RELEASE_VERSION = 6;
     const EXTRA_VERSION = '';
 
     const END_OF_MAINTENANCE = '11/2018';
@@ -466,8 +466,8 @@ abstract class Kernel implements KernelInterface, TerminableInterface
                 $hierarchy[] = $name;
             }
 
-            foreach ($hierarchy as $hierarchyBundle) {
-                $this->bundleMap[$hierarchyBundle] = $bundleMap;
+            foreach ($hierarchy as $bundle) {
+                $this->bundleMap[$bundle] = $bundleMap;
                 array_pop($bundleMap);
             }
         }
@@ -532,15 +532,8 @@ abstract class Kernel implements KernelInterface, TerminableInterface
     protected function getKernelParameters()
     {
         $bundles = array();
-        $bundlesMetadata = array();
-
         foreach ($this->bundles as $name => $bundle) {
             $bundles[$name] = get_class($bundle);
-            $bundlesMetadata[$name] = array(
-                'parent' => $bundle->getParent(),
-                'path' => $bundle->getPath(),
-                'namespace' => $bundle->getNamespace(),
-            );
         }
 
         return array_merge(
@@ -552,7 +545,6 @@ abstract class Kernel implements KernelInterface, TerminableInterface
                 'kernel.cache_dir' => realpath($this->getCacheDir()) ?: $this->getCacheDir(),
                 'kernel.logs_dir' => realpath($this->getLogDir()) ?: $this->getLogDir(),
                 'kernel.bundles' => $bundles,
-                'kernel.bundles_metadata' => $bundlesMetadata,
                 'kernel.charset' => $this->getCharset(),
                 'kernel.container_class' => $this->getContainerClass(),
             ),

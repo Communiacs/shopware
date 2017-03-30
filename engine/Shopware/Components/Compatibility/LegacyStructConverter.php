@@ -28,7 +28,7 @@ use Doctrine\DBAL\Connection;
 use Shopware\Bundle\MediaBundle\MediaServiceInterface;
 use Shopware\Bundle\StoreFrontBundle;
 use Shopware\Bundle\StoreFrontBundle\Service\CategoryServiceInterface;
-use Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface;
+use Shopware\Bundle\StoreFrontBundle\Service\Core\ContextService;
 use Shopware\Bundle\StoreFrontBundle\Struct\ListProduct;
 use Shopware\Bundle\StoreFrontBundle\Struct\Product\Price;
 use Shopware\Components\DependencyInjection\Container;
@@ -48,7 +48,7 @@ class LegacyStructConverter
     private $config;
 
     /**
-     * @var ContextServiceInterface
+     * @var ContextService
      */
     private $contextService;
 
@@ -84,7 +84,7 @@ class LegacyStructConverter
 
     /**
      * @param \Shopware_Components_Config $config
-     * @param ContextServiceInterface $contextService
+     * @param ContextService $contextService
      * @param \Enlight_Event_EventManager $eventManager
      * @param MediaServiceInterface $mediaService
      * @param Connection $connection
@@ -94,7 +94,7 @@ class LegacyStructConverter
      */
     public function __construct(
         \Shopware_Components_Config $config,
-        ContextServiceInterface $contextService,
+        ContextService $contextService,
         \Enlight_Event_EventManager $eventManager,
         MediaServiceInterface $mediaService,
         Connection $connection,
@@ -874,6 +874,7 @@ class LegacyStructConverter
             'image' => $manufacturer->getCoverFile(),
             'attributes' => $manufacturer->getAttributes()
         ];
+
         return $this->eventManager->filter('Legacy_Struct_Converter_Convert_Manufacturer', $data, [
             'manufacturer' => $manufacturer
         ]);
@@ -1144,6 +1145,10 @@ class LegacyStructConverter
                 'supplierID' => $product->getManufacturer()->getId(),
                 'supplierDescription' => $product->getManufacturer()->getDescription()
             );
+
+            if (!empty($manufacturer['supplierImg'])) {
+                $manufacturer['supplierImg'] = $this->mediaService->getUrl($manufacturer['supplierImg']);
+            }
 
             $data = array_merge($data, $manufacturer);
             $data['supplier_attributes'] = $product->getManufacturer()->getAttributes();

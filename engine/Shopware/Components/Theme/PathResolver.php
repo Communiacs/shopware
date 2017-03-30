@@ -24,7 +24,7 @@
 namespace Shopware\Components\Theme;
 
 use Shopware\Models\Plugin\Plugin;
-use Shopware\Models\Shop;
+use Shopware\Models\Shop as Shop;
 
 /**
  * The Theme\PathResolver class is a helper
@@ -76,42 +76,6 @@ class PathResolver
     }
 
     /**
-     * @param array $template
-     * @return null|string
-     */
-    public function getDirectoryByArray(array $template)
-    {
-        if ($template['plugin_id'] === null) {
-            return $this->getFrontendThemeDirectory() . DIRECTORY_SEPARATOR . $template['template'];
-        }
-
-        if ($template['plugin_namespace'] == 'ShopwarePlugins') {
-            return implode(
-                DIRECTORY_SEPARATOR,
-                [
-                    $this->pluginDirectories['ShopwarePlugins'] . '/' . $template['plugin_name'] . '/Resources',
-                    'Themes',
-                    'Frontend',
-                    $template['template']
-                ]
-            );
-        }
-
-        return implode(
-            DIRECTORY_SEPARATOR,
-            [
-                $this->pluginDirectories[$template['plugin_source']],
-                $template['plugin_namespace'],
-                $template['plugin_name'],
-                'Themes',
-                'Frontend',
-                $template['template']
-            ]
-        );
-    }
-
-
-    /**
      * Helper function to build the path to the passed plugin.
      *
      * @param Plugin $plugin
@@ -123,7 +87,7 @@ class PathResolver
             return $this->pluginDirectories[$plugin->getSource()] . $plugin->getNamespace() . DIRECTORY_SEPARATOR . $plugin->getName();
         }
 
-        return $this->pluginDirectories['ShopwarePlugins'] . '/' . $plugin->getName() . '/Resources';
+        return $this->rootDir . '/custom/plugins/' . $plugin->getName() . '/resources';
     }
 
     /**
@@ -311,11 +275,11 @@ class PathResolver
      *
      * @param Shop\Shop $shop
      * @param $timestamp
-     * @return string
+     * @return array
      */
     public function getCssFilePath(Shop\Shop $shop, $timestamp)
     {
-        return $this->getCacheDirectory() . '/' . $this->buildTimestampName($timestamp, $shop, 'css');
+        return $this->getCacheDirectory() . "/" . $this->buildTimestampName($timestamp, $shop, 'css');
     }
 
     /**
@@ -327,11 +291,11 @@ class PathResolver
      *
      * @param Shop\Shop $shop
      * @param $timestamp
-     * @return string
+     * @return array
      */
     public function getJsFilePath(Shop\Shop $shop, $timestamp)
     {
-        return $this->getCacheDirectory() . '/' . $this->buildTimestampName($timestamp, $shop, 'js');
+        return $this->getCacheDirectory() . "/" . $this->buildTimestampName($timestamp, $shop, 'js');
     }
 
     /**
@@ -347,9 +311,9 @@ class PathResolver
             $shop = $shop->getMain();
         }
 
-        $filename = $timestamp . '_' . md5($timestamp . $shop->getTemplate()->getId() . $shop->getId() . \Shopware::REVISION);
+        $filname = $timestamp.'_'.md5($timestamp.$shop->getTemplate()->getId().$shop->getId().\Shopware::REVISION);
 
-        return $filename . '.' . $suffix;
+        return $filname.'.'.$suffix;
     }
 
     /**

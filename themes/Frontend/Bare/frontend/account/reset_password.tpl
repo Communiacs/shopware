@@ -55,7 +55,6 @@
                                                     <input placeholder="{s name="AccountLabelNewPassword2" namespace='frontend/account/index'}{/s}{s name="Star" namespace="frontend/listing/box_article"}{/s}"
                                                            name="password[password]"
                                                            type="password"
-                                                           autocomplete="new-password"
                                                            id="newpwd"
                                                            class="password-new--input input--password{if $sErrorFlag.password} has--error{/if}">
                                                 </div>
@@ -68,7 +67,6 @@
                                                            name="password[passwordConfirmation]"
                                                            id="newpwdrepeat"
                                                            type="password"
-                                                           autocomplete="new-password"
                                                            class="password-new--input input--password-confirmation{if $sErrorFlag.passwordConfirmation} has--error{/if}" >
                                                 </div>
                                             {/block}

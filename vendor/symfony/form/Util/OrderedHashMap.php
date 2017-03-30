@@ -63,6 +63,8 @@ namespace Symfony\Component\Form\Util;
  *     }
  *
  * @author Bernhard Schussek <bschussek@gmail.com>
+ *
+ * @since 2.2.6
  */
 class OrderedHashMap implements \ArrayAccess, \IteratorAggregate, \Countable
 {
@@ -90,7 +92,9 @@ class OrderedHashMap implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * Creates a new map.
      *
-     * @param array $elements The elements to insert initially
+     * @param array $elements The elements to insert initially.
+     *
+     * @since 2.2.6
      */
     public function __construct(array $elements = array())
     {
@@ -100,6 +104,8 @@ class OrderedHashMap implements \ArrayAccess, \IteratorAggregate, \Countable
 
     /**
      * {@inheritdoc}
+     *
+     * @since 2.2.6
      */
     public function offsetExists($key)
     {
@@ -108,6 +114,8 @@ class OrderedHashMap implements \ArrayAccess, \IteratorAggregate, \Countable
 
     /**
      * {@inheritdoc}
+     *
+     * @since 2.2.6
      */
     public function offsetGet($key)
     {
@@ -120,6 +128,8 @@ class OrderedHashMap implements \ArrayAccess, \IteratorAggregate, \Countable
 
     /**
      * {@inheritdoc}
+     *
+     * @since 2.2.6
      */
     public function offsetSet($key, $value)
     {
@@ -130,7 +140,7 @@ class OrderedHashMap implements \ArrayAccess, \IteratorAggregate, \Countable
                     ? 0
                     // Imitate PHP's behavior of generating a key that equals
                     // the highest existing integer key + 1
-                    : 1 + (int) max($this->orderedKeys);
+                    : max($this->orderedKeys) + 1;
             }
 
             $this->orderedKeys[] = $key;
@@ -141,6 +151,8 @@ class OrderedHashMap implements \ArrayAccess, \IteratorAggregate, \Countable
 
     /**
      * {@inheritdoc}
+     *
+     * @since 2.2.6
      */
     public function offsetUnset($key)
     {
@@ -158,6 +170,8 @@ class OrderedHashMap implements \ArrayAccess, \IteratorAggregate, \Countable
 
     /**
      * {@inheritdoc}
+     *
+     * @since 2.2.6
      */
     public function getIterator()
     {
@@ -166,6 +180,8 @@ class OrderedHashMap implements \ArrayAccess, \IteratorAggregate, \Countable
 
     /**
      * {@inheritdoc}
+     *
+     * @since 2.2.6
      */
     public function count()
     {

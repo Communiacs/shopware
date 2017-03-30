@@ -28,6 +28,7 @@ use Shopware\Bundle\AccountBundle\Service\Validator\CustomerValidatorInterface;
 use Shopware\Components\Api\Exception\ValidationException;
 use Shopware\Components\Model\ModelManager;
 use Shopware\Models\Customer\Customer;
+use Symfony\Component\Validator\Constraints\Collection;
 
 /**
  * Class CustomerService
@@ -46,6 +47,7 @@ class CustomerService implements CustomerServiceInterface
     private $validator;
 
     /**
+     * AccountService constructor.
      * @param ModelManager $modelManager
      * @param CustomerValidatorInterface $validator
      */
@@ -63,11 +65,7 @@ class CustomerService implements CustomerServiceInterface
     public function update(Customer $customer)
     {
         $this->validator->validate($customer);
-        $entities = [$customer];
-        if ($customer->getAttribute() instanceof \Shopware\Models\Attribute\Customer) {
-            $entities[] = $customer->getAttribute();
-        }
-        $this->modelManager->flush($entities);
+        $this->modelManager->flush($customer);
         $this->modelManager->refresh($customer);
     }
 }

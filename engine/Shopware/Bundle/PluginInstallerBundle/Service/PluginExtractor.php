@@ -83,8 +83,6 @@ class PluginExtractor
             if ($backupFile !== false) {
                 $this->filesystem->remove($backupFile);
             }
-
-            unlink($archive->filename);
         } catch (\Exception $e) {
             if ($backupFile !== false) {
                 $this->filesystem->rename($backupFile, $oldFile);

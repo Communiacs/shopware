@@ -1,5 +1,3 @@
-/* eslint-disable */
-
 /*! jQuery UI - v1.11.0 - 2014-07-06
  * http://jqueryui.com
  * Includes: core.js, datepicker.js

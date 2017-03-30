@@ -185,7 +185,14 @@ Ext.define('Shopware.apps.Emotion.view.components.Base', {
             } else if (xtype == 'combobox') {
                 constructedItem.queryMode = 'local';
                 constructedItem.listeners = {
-                    afterrender: Ext.bind(me.setComboValue, me)
+                    boxready: function(combo) {
+                        this.relayEvents(combo.getStore(), ['load'], 'store');
+                        combo.getStore().load();
+                    },
+                    storeload: function(store) {
+                        var record = store.findRecord(this.valueField, this.getValue());
+                        this.setValue(record);
+                    }
                 };
             } else if (xtype === 'datefield') {
                 try {
@@ -214,25 +221,6 @@ Ext.define('Shopware.apps.Emotion.view.components.Base', {
         });
 
         return items;
-    },
-
-    /**
-     * @param { Ext.form.field.ComboBox } combo
-     */
-    setComboValue: function(combo) {
-        var store = combo.getStore();
-
-        // on initial load read displayField from store
-        store.on('load', function() {
-            var record = store.findRecord(this.valueField, this.getValue());
-            if (record) {
-                this.setValue(record);
-            }
-        }, combo, {
-            single: true
-        });
-
-        store.load();
     },
 
     /**

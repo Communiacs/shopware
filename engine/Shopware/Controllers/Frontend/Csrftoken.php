@@ -37,7 +37,13 @@ class Shopware_Controllers_Frontend_Csrftoken extends Enlight_Controller_Action
      */
     public function indexAction()
     {
-        $token = \Shopware\Components\Random::getAlphanumericString(30);
+        /** @var Enlight_Components_Session_Namespace $session */
+        $session = Shopware()->Session();
+
+        if (!$token = $session->offsetGet('X-CSRF-Token')) {
+            $token = \Shopware\Components\Random::getAlphanumericString(30);
+            $session->offsetSet('X-CSRF-Token', $token);
+        }
 
         $this->Response()->setHeader('X-CSRF-Token', $token);
     }

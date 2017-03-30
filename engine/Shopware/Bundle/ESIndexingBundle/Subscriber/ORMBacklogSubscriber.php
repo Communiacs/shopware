@@ -82,6 +82,11 @@ class ORMBacklogSubscriber implements EventSubscriber
     private $inserts = [];
 
     /**
+     * @var bool
+     */
+    private $eventRegistered = false;
+
+    /**
      * @var Container
      */
     private $container;
@@ -99,13 +104,6 @@ class ORMBacklogSubscriber implements EventSubscriber
      */
     public function getSubscribedEvents()
     {
-        if (!$this->container->getParameter('shopware.es.enabled')) {
-            return [];
-        }
-        if (!$this->container->getParameter('shopware.es.write_backlog')) {
-            return [];
-        }
-
         return array(Events::onFlush, Events::postFlush);
     }
 
@@ -155,9 +153,26 @@ class ORMBacklogSubscriber implements EventSubscriber
             $this->queue[] = $backlog;
         }
         $this->inserts = [];
+
+        $this->registerShutdownListener();
     }
 
-    public function processQueue()
+    private function registerShutdownListener()
+    {
+        if ($this->eventRegistered) {
+            return;
+        }
+
+        $this->eventRegistered = true;
+        $this->container->get('events')->addListener(
+            'Enlight_Controller_Front_DispatchLoopShutdown',
+            function () {
+                $this->processQueue();
+            }
+        );
+    }
+
+    private function processQueue()
     {
         if (empty($this->queue)) {
             return;

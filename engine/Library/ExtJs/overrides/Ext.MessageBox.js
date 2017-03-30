@@ -38,11 +38,5 @@ Ext.override(Ext.MessageBox, {
         });
 
         me.callOverridden(arguments);
-    },
-    reconfigure: function() {
-        var me = this;
-
-        me.msg.allowHtml = true;
-        me.callParent(arguments);
     }
-});
+})

@@ -26,19 +26,6 @@ class ServerParams
     }
 
     /**
-     * Returns true if the POST max size has been exceeded in the request.
-     *
-     * @return bool
-     */
-    public function hasPostMaxSizeBeenExceeded()
-    {
-        $contentLength = $this->getContentLength();
-        $maxContentLength = $this->getPostMaxSize();
-
-        return $maxContentLength && $contentLength > $maxContentLength;
-    }
-
-    /**
      * Returns maximum post size in bytes.
      *
      * @return null|int The maximum post size in bytes
@@ -83,7 +70,7 @@ class ServerParams
     /**
      * Returns the content length of the request.
      *
-     * @return mixed The request content length
+     * @return mixed The request content length.
      */
     public function getContentLength()
     {

@@ -28,7 +28,7 @@
 
 {$sArticle.price|currency:use_shortname}
 
-{$sArticle.linkDetails}
+{$sArticle.linkDetails|rewrite:$sArticle.articleName}
 
 #################################################################
 {/foreach}
@@ -49,7 +49,7 @@
 
 {$sArticle.price|currency:use_shortname}
 
-{$sArticle.linkDetails}
+{$sArticle.linkDetails|rewrite:$sArticle.articleName}
 
 #################################################################
 {/foreach}

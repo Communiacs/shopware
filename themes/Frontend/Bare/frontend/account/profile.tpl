@@ -246,7 +246,6 @@
                                                 <div class="profile--current-password">
                                                     <input name="email[currentPassword]"
                                                            type="password"
-                                                           autocomplete="current-password"
                                                            required="required"
                                                            aria-required="true"
                                                            placeholder="{s name="AccountLabelCurrentPassword2" namespace="frontend/account/index"}{/s}{s name="Star" namespace="frontend/listing/box_article"}{/s}"
@@ -306,12 +305,11 @@
                                             {/if}
                                         {/block}
 
-                                        {* Password *}
+                                        {* Email *}
                                         {block name='frontend_account_profile_password_input_password'}
                                             <div class="profile--password">
                                                 <input name="password[password]"
                                                        type="password"
-                                                       autocomplete="new-password"
                                                        required="required"
                                                        aria-required="true"
                                                        placeholder="{s name="AccountLabelNewPassword2" namespace="frontend/account/index"}{/s}{s name="Star" namespace="frontend/listing/box_article"}{/s}"
@@ -320,12 +318,11 @@
                                             </div>
                                         {/block}
 
-                                        {* Password confirmation *}
+                                        {* Email confirmation *}
                                         {block name='frontend_account_profile_password_input_password_confirmation'}
                                             <div class="profile--password-confirmation">
                                                 <input name="password[passwordConfirmation]"
                                                        type="password"
-                                                       autocomplete="new-password"
                                                        required="required"
                                                        aria-required="true"
                                                        placeholder="{s name="AccountLabelRepeatPassword2" namespace="frontend/account/index"}{/s}{s name="Star" namespace="frontend/listing/box_article"}{/s}"
@@ -339,7 +336,6 @@
                                                 <div class="profile--current-password">
                                                     <input name="password[currentPassword]"
                                                            type="password"
-                                                           autocomplete="current-password"
                                                            required="required"
                                                            aria-required="true"
                                                            placeholder="{s name="AccountLabelCurrentPassword2" namespace="frontend/account/index"}{/s}{s name="Star" namespace="frontend/listing/box_article"}{/s}"

@@ -14,9 +14,11 @@ namespace Symfony\Component\Form\Util;
 /**
  * Iterator for {@link OrderedHashMap} objects.
  *
+ * This class is internal and should not be used.
+ *
  * @author Bernhard Schussek <bschussek@gmail.com>
  *
- * @internal
+ * @since 2.2.6
  */
 class OrderedHashMapIterator implements \Iterator
 {
@@ -67,6 +69,8 @@ class OrderedHashMapIterator implements \Iterator
      *                              This array is managed by the corresponding
      *                              {@link OrderedHashMap} instance to support
      *                              recognizing the deletion of elements.
+     *
+     * @since 2.2.6
      */
     public function __construct(array &$elements, array &$orderedKeys, array &$managedCursors)
     {
@@ -81,6 +85,8 @@ class OrderedHashMapIterator implements \Iterator
     /**
      * Removes the iterator's cursors from the managed cursors of the
      * corresponding {@link OrderedHashMap} instance.
+     *
+     * @since 2.2.6
      */
     public function __destruct()
     {
@@ -90,7 +96,9 @@ class OrderedHashMapIterator implements \Iterator
     }
 
     /**
-     * {@inheritdoc}
+     *{@inheritdoc}
+     *
+     * @since 2.2.6
      */
     public function current()
     {
@@ -99,6 +107,8 @@ class OrderedHashMapIterator implements \Iterator
 
     /**
      * {@inheritdoc}
+     *
+     * @since 2.2.6
      */
     public function next()
     {
@@ -114,7 +124,9 @@ class OrderedHashMapIterator implements \Iterator
     }
 
     /**
-     * {@inheritdoc}
+     *{@inheritdoc}
+     *
+     * @since 2.2.6
      */
     public function key()
     {
@@ -122,7 +134,9 @@ class OrderedHashMapIterator implements \Iterator
     }
 
     /**
-     * {@inheritdoc}
+     *{@inheritdoc}
+     *
+     * @since 2.2.6
      */
     public function valid()
     {
@@ -130,7 +144,9 @@ class OrderedHashMapIterator implements \Iterator
     }
 
     /**
-     * {@inheritdoc}
+     *{@inheritdoc}
+     *
+     * @since 2.2.6
      */
     public function rewind()
     {

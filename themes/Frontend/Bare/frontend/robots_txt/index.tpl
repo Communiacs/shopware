@@ -20,10 +20,6 @@ Disallow: {url controller=listing fullPath=false}
 Disallow: {url controller=ticket fullPath=false}
 {/block}
 
-{block name="frontend_robots_txt_allows"}
-Allow: {url module=widgets controller=emotion fullPath=false}
-{/block}
-
 {block name="frontend_robots_txt_sitemap"}
 Sitemap: {url controller=index}sitemap.xml
 {/block}

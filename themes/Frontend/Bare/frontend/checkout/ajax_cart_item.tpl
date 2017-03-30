@@ -103,7 +103,7 @@
     {block name='frontend_checkout_ajax_cart_articlename'}
         {$useAnchor = ($basketItem.modus != 4 && $basketItem.modus != 2)}
         {if $useAnchor}
-            <a class="item--link" href="{$detailLink}" title="{$basketItem.articlename|escapeHtml}">
+            <a class="item--link" href="{$detailLink}" title="{$basketItem.articlename|escape}">
         {else}
             <div class="item--link">
         {/if}
@@ -116,9 +116,9 @@
                         {s name='AjaxCartInfoBundle'}{/s}
                     {else}
                         {if $theme.offcanvasCart}
-                            {$basketItem.articlename|escapeHtml}
+                            {$basketItem.articlename}
                         {else}
-                            {$basketItem.articlename|truncate:28:"...":true|escapeHtml}
+                            {$basketItem.articlename|truncate:28:"...":true}
                         {/if}
                     {/if}
                 </span>

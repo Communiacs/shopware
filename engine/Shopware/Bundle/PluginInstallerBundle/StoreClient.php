@@ -32,7 +32,6 @@ use Shopware\Bundle\PluginInstallerBundle\Exception\OrderException;
 use Shopware\Bundle\PluginInstallerBundle\Exception\SbpServerException;
 use Shopware\Bundle\PluginInstallerBundle\Exception\ShopSecretException;
 use Shopware\Bundle\PluginInstallerBundle\Exception\StoreException;
-use Shopware\Bundle\PluginInstallerBundle\Service\UniqueIdGeneratorInterface;
 use Shopware\Bundle\PluginInstallerBundle\Struct\AccessTokenStruct;
 use Shopware\Components\HttpClient\HttpClientInterface;
 use Shopware\Components\HttpClient\RequestException;
@@ -65,29 +64,21 @@ class StoreClient
     private $openSSLVerifier;
 
     /**
-     * @var UniqueIdGeneratorInterface
-     */
-    private $uniqueIdGenerator;
-
-    /**
-     * @param HttpClientInterface        $httpClient
-     * @param string                     $apiEndPoint
-     * @param Struct\StructHydrator      $structHydrator
-     * @param OpenSSLVerifier            $openSSLVerifier
-     * @param UniqueIdGeneratorInterface $uniqueIdGenerator
+     * @param HttpClientInterface $httpClient
+     * @param string $apiEndPoint
+     * @param Struct\StructHydrator $structHydrator
+     * @param OpenSSLVerifier $openSSLVerifier
      */
     public function __construct(
         HttpClientInterface $httpClient,
         $apiEndPoint,
         Struct\StructHydrator $structHydrator,
-        OpenSSLVerifier $openSSLVerifier,
-        UniqueIdGeneratorInterface $uniqueIdGenerator
+        OpenSSLVerifier $openSSLVerifier
     ) {
         $this->httpClient = $httpClient;
         $this->apiEndPoint = $apiEndPoint;
         $this->structHydrator = $structHydrator;
         $this->openSSLVerifier = $openSSLVerifier;
-        $this->uniqueIdGenerator = $uniqueIdGenerator;
     }
 
     /**
@@ -260,30 +251,6 @@ class StoreClient
     {
         $response = $this->httpClient->get($this->apiEndPoint.'/ping', ['timeout' => 7]);
         $this->verifyResponseSignature($response);
-
-        return json_decode($response->getBody(), true) ?: false;
-    }
-
-    /**
-     * @param string $eventName
-     * @param array  $additionalData
-     *
-     * @return array|false
-     */
-    public function doTrackEvent($eventName, $additionalData = [])
-    {
-        $payload = [
-            'additionalData' => $additionalData,
-            'instanceId' => $this->uniqueIdGenerator->getUniqueId(),
-            'event' => $eventName,
-        ];
-
-        try {
-            $response = $this->httpClient->post($this->apiEndPoint.'/tracking/events', ['timeout' => 7], json_encode($payload));
-            $this->verifyResponseSignature($response);
-        } catch (RequestException $ex) {
-            return false;
-        }
 
         return json_decode($response->getBody(), true) ?: false;
     }

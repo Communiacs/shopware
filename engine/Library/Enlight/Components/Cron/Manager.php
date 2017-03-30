@@ -213,7 +213,7 @@ class Enlight_Components_Cron_Manager
      */
     public function addJob(Enlight_Components_Cron_Job $job)
     {
-        $this->adapter->createJob($job);
+        $this->adapter->addJob($job);
         return $this;
     }
 
@@ -233,7 +233,6 @@ class Enlight_Components_Cron_Manager
      *
      * @param Enlight_Components_Cron_Job $job
      * @return Enlight_Event_EventArgs
-     * @throws Exception
      * @throw Enlight_Exception
      */
     public function runJob(Enlight_Components_Cron_Job $job)
@@ -246,29 +245,27 @@ class Enlight_Components_Cron_Manager
         }
 
         try {
-            $this->adapter->startJob($job);
-            /** @var Enlight_Components_Cron_EventArgs $jobArgs */
-            $jobArgs = new $this->eventArgsClass([
-                'subject' => $this,
-                'job' => $job
-            ]);
-            $jobArgs->setReturn($job->getData());
+            if ($this->adapter->startJob($job)) {
+                $jobArgs = new $this->eventArgsClass(array(
+                    'subject' => $this,
+                    'job' => $job
+                ));
+                $jobArgs->setReturn($job->getData());
 
-            $jobArgs = $this->eventManager->notifyUntil(
-                $job->getAction(),
-                $jobArgs
-            );
+                $jobArgs = $this->eventManager->notifyUntil(
+                    $job->getAction(),
+                    $jobArgs
+                );
 
-            if ($jobArgs !== null) {
-                $job->setData($jobArgs->getReturn());
-                $this->adapter->updateJob($job);
+                if ($jobArgs !== null) {
+                    $job->setData($jobArgs->getReturn());
+                    $this->adapter->updateJob($job);
+                }
+                $this->endJob($job);
+                return $jobArgs;
             }
-
-            $this->endJob($job);
-
-            return $jobArgs;
         } catch (Exception $e) {
-            $job->setData(['error' => $e->getMessage()]);
+            $job->setData((array('error' => $e->getMessage())));
 
             if ($job->getDisableOnError()) {
                 $this->disableJob($job);
@@ -276,10 +273,10 @@ class Enlight_Components_Cron_Manager
                 $this->endJob($job);
             }
 
-            $this->eventManager->notify('Shopware_CronJob_Error_' . $action, [
+            $this->eventManager->notify('Shopware_CronJob_Error_' . $action, array(
                 'subject' => $this,
                 'job'     => $job,
-            ]);
+            ));
 
             throw $e;
         }

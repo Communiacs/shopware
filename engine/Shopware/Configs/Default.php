@@ -74,7 +74,6 @@ return array_replace_recursive([
     'es' => [
         'prefix' => 'sw_shop',
         'enabled' => false,
-        'write_backlog' => true,
         'number_of_replicas' => null,
         'number_of_shards' => null,
         'wait_for_status' => 'green',
@@ -96,10 +95,9 @@ return array_replace_recursive([
         'apiEndpoint' => 'https://api.shopware.com',
     ],
     'plugin_directories' => [
-        'Default' => $this->AppPath('Plugins_Default'),
-        'Local' => $this->AppPath('Plugins_Local'),
-        'Community' => $this->AppPath('Plugins_Community'),
-        'ShopwarePlugins' => $this->DocPath('custom_plugins'),
+        'Default'   => $this->AppPath('Plugins_' . 'Default'),
+        'Local'     => $this->AppPath('Plugins_' . 'Local'),
+        'Community' => $this->AppPath('Plugins_' . 'Community'),
     ],
     'template' => [
         'compileCheck' => true,
@@ -132,10 +130,9 @@ return array_replace_recursive([
         'cookie_lifetime' => 0,
         'cookie_httponly' => 1,
         'gc_probability' => 1,
-        'gc_divisor' => 200,
+        'gc_divisor' => 100,
         'save_handler' => 'db',
         'use_trans_sid' => 0,
-        'locking' => true,
     ],
     'phpsettings' => [
         'error_reporting' => E_ALL & ~E_USER_DEPRECATED,
@@ -175,6 +172,5 @@ return array_replace_recursive([
         'cookie_lifetime' => 0,
         'cookie_httponly' => 1,
         'use_trans_sid' => 0,
-        'locking' => false,
     ],
 ], $customConfig);

@@ -58,8 +58,6 @@ Ext.define('Shopware.apps.Theme.model.Theme', {
         { name : 'version', type: 'int' },
         { name : 'pluginId', type: 'int' },
 
-        { name : 'themeInfo', type: 'string' },
-
         { name : 'parentId', type: 'int', useNull: true, defaultValue: null },
 
         { name : 'screen', type: 'string' },

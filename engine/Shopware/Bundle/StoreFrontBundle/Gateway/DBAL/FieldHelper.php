@@ -85,16 +85,17 @@ class FieldHelper
             return $columns;
         }
 
-        $tableColumns = $this->connection->fetchAll("SHOW COLUMNS FROM " . $table);
-        $tableColumns = array_column($tableColumns, 'Field');
+        $schemaManager = $this->connection->getSchemaManager();
+        $tableColumns = $schemaManager->listTableColumns($table);
 
         $columns = [];
         foreach ($tableColumns as $column) {
-            $columns[] = $alias . '.' . $column . ' as __' . $alias . '_' . $column;
+            $columns[] = $alias . '.' . $column->getName() . ' as __' . $alias . '_' . $column->getName();
         }
 
         $this->cache->save($key, $columns);
         $this->attributeFields[$key] = $columns;
+
         return $columns;
     }
 
@@ -347,19 +348,12 @@ class FieldHelper
      */
     public function getConfiguratorGroupFields()
     {
-        $fields =  [
+        return [
             'configuratorGroup.id as __configuratorGroup_id',
             'configuratorGroup.name as __configuratorGroup_name',
             'configuratorGroup.description as __configuratorGroup_description',
             'configuratorGroup.position as __configuratorGroup_position'
         ];
-
-        $fields = array_merge(
-            $fields,
-            $this->getTableFields('s_article_configurator_groups_attributes', 'configuratorGroupAttribute')
-        );
-
-        return $fields;
     }
 
     /**
@@ -367,18 +361,11 @@ class FieldHelper
      */
     public function getConfiguratorOptionFields()
     {
-        $fields = [
+        return [
             'configuratorOption.id as __configuratorOption_id',
             'configuratorOption.name as __configuratorOption_name',
             'configuratorOption.position as __configuratorOption_position'
         ];
-
-        $fields = array_merge(
-            $fields,
-            $this->getTableFields('s_article_configurator_options_attributes', 'configuratorOptionAttribute')
-        );
-
-        return $fields;
     }
 
     /**

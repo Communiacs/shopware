@@ -26,7 +26,6 @@ namespace Shopware\Bundle\PluginInstallerBundle\Service;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
-use Shopware\Bundle\PluginInstallerBundle\Context\BaseRequest;
 use Shopware\Bundle\PluginInstallerBundle\Context\ListingRequest;
 use Shopware\Bundle\PluginInstallerBundle\Context\PluginsByTechnicalNameRequest;
 use Shopware\Bundle\PluginInstallerBundle\Struct\ListingResultStruct;
@@ -82,7 +81,7 @@ class PluginLocalService
 
         $data = $statement->fetchAll(\PDO::FETCH_ASSOC);
 
-        $plugins = $this->iteratePlugins($data, $context);
+        $plugins = $this->iteratePlugins($data);
 
         return new ListingResultStruct(
             $plugins,
@@ -139,32 +138,19 @@ class PluginLocalService
 
         $data = $statement->fetchAll(\PDO::FETCH_ASSOC);
 
-        return $this->iteratePlugins($data, $context);
+        return $this->iteratePlugins($data);
     }
 
     /**
      * @param $plugins
-     * @param BaseRequest $context
-     * @return PluginStruct[]
+     * @return \Shopware\Bundle\PluginInstallerBundle\Struct\PluginStruct[]
      */
-    private function iteratePlugins($plugins, BaseRequest $context)
+    private function iteratePlugins($plugins)
     {
-        $locale = substr($context->getLocale(), 0, 2);
-
         foreach ($plugins as &$row) {
             $row['iconPath'] = $this->getIconOfPlugin(
                 $row['name']
             );
-
-            $translations = json_decode($row['translations'], true);
-
-            if (isset($translations[$locale]['label'])) {
-                $row['label'] = $translations[$locale]['label'];
-            }
-
-            if (isset($translations[$locale]['description'])) {
-                $row['description'] = $translations[$locale]['description'];
-            }
         }
 
         return $this->hydrator->hydrateLocalPlugins($plugins);
@@ -227,7 +213,6 @@ class PluginLocalService
             'plugin.capability_enable',
             'plugin.capability_secure_uninstall',
             'plugin.update_version',
-            'plugin.translations',
 
             'plugin.installation_date',
             'forms.id as form_id',

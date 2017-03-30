@@ -39,15 +39,15 @@ The footer element sizes are defined with the unitize mixin.
         .unitize(line-height, 26);
 
         &.is--active::after {
-            content: @sw-icon-minus3;
+            content: '\e68e';
         }
 
         &::after {
             .unitize(font-size, 18);
-            font-family: @sw-icon-fontname;
+            font-family: 'shopware';
             color: @text-color;
             font-weight: 700;
-            content: @sw-icon-plus3;
+            content: '\e68f';
             float: right;
         }
     }

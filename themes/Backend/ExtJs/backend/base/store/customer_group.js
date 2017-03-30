@@ -39,7 +39,6 @@ Ext.define('Shopware.apps.Base.store.CustomerGroup', {
     storeId: 'base.CustomerGroup',
     model : 'Shopware.apps.Base.model.CustomerGroup',
     pageSize: 1000,
-    remoteFilter: true,
 
     proxy:{
         type:'ajax',

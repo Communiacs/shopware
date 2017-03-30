@@ -14,7 +14,6 @@ namespace Symfony\Component\Validator\Validator;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Constraints\GroupSequence;
 use Symfony\Component\Validator\ConstraintValidatorFactoryInterface;
-use Symfony\Component\Validator\Context\ExecutionContext;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use Symfony\Component\Validator\Exception\ConstraintDefinitionException;
 use Symfony\Component\Validator\Exception\NoSuchMetadataException;
@@ -33,6 +32,8 @@ use Symfony\Component\Validator\Util\PropertyPath;
 
 /**
  * Recursive implementation of {@link ContextualValidatorInterface}.
+ *
+ * @since  2.5
  *
  * @author Bernhard Schussek <bschussek@gmail.com>
  */
@@ -111,11 +112,6 @@ class RecursiveContextualValidator implements ContextualValidatorInterface
         $previousMetadata = $this->context->getMetadata();
         $previousPath = $this->context->getPropertyPath();
         $previousGroup = $this->context->getGroup();
-        $previousConstraint = null;
-
-        if ($this->context instanceof ExecutionContext || method_exists($this->context, 'getConstraint')) {
-            $previousConstraint = $this->context->getConstraint();
-        }
 
         // If explicit constraints are passed, validate the value against
         // those constraints
@@ -143,10 +139,6 @@ class RecursiveContextualValidator implements ContextualValidatorInterface
 
             $this->context->setNode($previousValue, $previousObject, $previousMetadata, $previousPath);
             $this->context->setGroup($previousGroup);
-
-            if (null !== $previousConstraint) {
-                $this->context->setConstraint($previousConstraint);
-            }
 
             return $this;
         }
@@ -324,7 +316,6 @@ class RecursiveContextualValidator implements ContextualValidatorInterface
 
         return array($groups);
     }
-
     /**
      * Validates an object against the constraints defined for its class.
      *
@@ -746,7 +737,9 @@ class RecursiveContextualValidator implements ContextualValidatorInterface
         // The $cascadedGroups property is set, if the "Default" group is
         // overridden by a group sequence
         // See validateClassNode()
-        $cascadedGroups = null !== $cascadedGroups && count($cascadedGroups) > 0 ? $cascadedGroups : $groups;
+        $cascadedGroups = count($cascadedGroups) > 0
+            ? $cascadedGroups
+            : $groups;
 
         if (is_array($value)) {
             // Arrays are always traversed, independent of the specified
@@ -799,7 +792,7 @@ class RecursiveContextualValidator implements ContextualValidatorInterface
      * @param int                       $traversalStrategy The strategy used for
      *                                                     traversing the value
      * @param GroupSequence             $groupSequence     The group sequence
-     * @param string|null               $cascadedGroup     The group that should
+     * @param string[]|null             $cascadedGroup     The group that should
      *                                                     be passed to cascaded
      *                                                     objects instead of
      *                                                     the group sequence

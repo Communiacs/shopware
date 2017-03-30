@@ -150,10 +150,8 @@ Ext.define('Shopware.apps.Base.view.element.DateTime', {
 
     setValue: function(value) {
         value = this.formatValue(value);
-        if (value !== null && !isNaN(value)) {
-            this.dateField.setValue(value);
-            this.timeField.setValue(value);
-        }
+        this.dateField.setValue(value);
+        this.timeField.setValue(value);
     },
 
     getSubmitData: function() {

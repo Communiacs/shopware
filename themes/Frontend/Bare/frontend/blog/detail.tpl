@@ -50,13 +50,10 @@
                                 {block name='frontend_blog_detail_category'}{/block}
 
                                 {* Comments *}
-                                {block name='frontend_blog_detail_comments_count'}
-                                    {* @deprecated - will be removed, use block frontend_blog_detail_comments_count *}
-                                    {block name='frontend_blog_detail_comments'}
-                                        <span class="blog--metadata-comments blog--metadata">
-                                            <a data-scroll="true" data-scrollTarget="#blog--comments-start" href="#blog--comments-start" title="{"{s name="BlogLinkComments"}{/s}"|escape}">{$sArticle.comments|count|default:0} {s name="BlogInfoComments"}{/s}</a>
-                                        </span>
-                                    {/block}
+                                {block name='frontend_blog_detail_comments'}
+                                    <span class="blog--metadata-comments blog--metadata">
+                                        <a data-scroll="true" data-scrollTarget="#blog--comments-start" href="#blog--comments-start" title="{"{s name="BlogLinkComments"}{/s}"|escape}">{$sArticle.comments|count|default:0} {s name="BlogInfoComments"}{/s}</a>
+                                    </span>
                                 {/block}
 
                                 {* Rating *}
@@ -122,11 +119,8 @@
         {/block}
 
         {* Comments *}
-        {block name='frontend_blog_detail_comments_list'}
-            {* @deprecated - will be removed, use block frontend_blog_detail_comments_list *}
-            {block name='frontend_blog_detail_comments'}
-                {include file="frontend/blog/comments.tpl"}
-            {/block}
+        {block name='frontend_blog_detail_comments'}
+            {include file="frontend/blog/comments.tpl"}
         {/block}
 
         {* Cross selling *}

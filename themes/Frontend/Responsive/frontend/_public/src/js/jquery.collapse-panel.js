@@ -143,6 +143,7 @@
             me.$el.addClass(opts.activeTriggerCls);
 
             $targetEl.slideDown(opts.animationSpeed, function () {
+
                 $.publish('plugin/swCollapsePanel/onOpen', [ me ]);
             }).addClass(opts.collapsedStateCls);
 
@@ -153,7 +154,7 @@
                 });
             }
 
-            if (tabId !== undefined) {
+            if(tabId !== undefined) {
                 $.publish('onShowContent-' + tabId, [ me ]);
             }
 
@@ -172,6 +173,7 @@
 
             me.$el.removeClass(opts.activeTriggerCls);
             me.$targetEl.slideUp(opts.animationSpeed, function() {
+
                 $.publish('plugin/swCollapsePanel/onClose', [ me ]);
             }).removeClass(opts.collapsedStateCls);
 

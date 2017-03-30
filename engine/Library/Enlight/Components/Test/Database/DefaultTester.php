@@ -21,9 +21,6 @@
  * @author     $Author$
  */
 
-use PHPUnit\DbUnit\AbstractTester;
-use PHPUnit\DbUnit\Database\DefaultConnection;
-
 /**
  * Grants an automatically access on the database, in test cases.
  *
@@ -35,22 +32,22 @@ use PHPUnit\DbUnit\Database\DefaultConnection;
  * @copyright  Copyright (c) 2011, shopware AG (http://www.shopware.de)
  * @license    http://enlight.de/license     New BSD License
  */
-class Enlight_Components_Test_Database_DefaultTester extends AbstractTester
+class Enlight_Components_Test_Database_DefaultTester extends PHPUnit_Extensions_Database_AbstractTester
 {
     /**
      * Instance of the database connection class. Can be set in the class constructor.
      * If no connection is set, the default connection is used.
      *
-     * @var DefaultConnection
+     * @var PHPUnit_Extensions_Database_DB_IDatabaseConnection
      */
     protected $connection;
 
     /**
      * Creates a new default database tester using the given connection.
      *
-     * @param DefaultConnection $connection
+     * @param PHPUnit_Extensions_Database_DB_IDatabaseConnection $connection
      */
-    public function __construct(DefaultConnection $connection = null)
+    public function __construct(PHPUnit_Extensions_Database_DB_IDatabaseConnection $connection = null)
     {
         $this->connection = $connection;
 
@@ -60,7 +57,7 @@ class Enlight_Components_Test_Database_DefaultTester extends AbstractTester
     /**
      * Returns the test database connection.
      *
-     * @return DefaultConnection
+     * @return PHPUnit_Extensions_Database_DB_IDatabaseConnection
      */
     public function getConnection()
     {
@@ -77,11 +74,11 @@ class Enlight_Components_Test_Database_DefaultTester extends AbstractTester
      *
      * @param PDO    $connection
      * @param string $schema
-     * @return DefaultConnection
+     * @return PHPUnit_Extensions_Database_DB_DefaultDatabaseConnection
      */
     protected function createDefaultDBConnection(PDO $connection, $schema = '')
     {
-        return new DefaultConnection($connection, $schema);
+        return new PHPUnit_Extensions_Database_DB_DefaultDatabaseConnection($connection, $schema);
     }
 
     /**

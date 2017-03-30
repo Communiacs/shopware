@@ -25,7 +25,7 @@
 use Shopware\Models\Banner\Banner;
 
 /**
- * Shopware Backend Tracking
+ * Shopware Backend Tacking
  */
 class Shopware_Controllers_Frontend_Tracking extends Enlight_Controller_Action
 {

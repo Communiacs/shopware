@@ -57,7 +57,7 @@ class Regex implements ValueInterface
     /**
      * @param string $expr
      *
-     * @return self
+     * @return Regex
      *
      * @throws \InvalidArgumentException
      */
@@ -175,7 +175,7 @@ class Regex implements ValueInterface
     /**
      * @param string $option
      *
-     * @return $this
+     * @return Regex
      */
     public function addOption($option)
     {
@@ -189,7 +189,7 @@ class Regex implements ValueInterface
     /**
      * @param string $option
      *
-     * @return $this
+     * @return Regex
      */
     public function removeOption($option)
     {
@@ -201,7 +201,7 @@ class Regex implements ValueInterface
     /**
      * @param bool $startFlag
      *
-     * @return $this
+     * @return Regex
      */
     public function setStartFlag($startFlag)
     {
@@ -221,7 +221,7 @@ class Regex implements ValueInterface
     /**
      * @param bool $endFlag
      *
-     * @return $this
+     * @return Regex
      */
     public function setEndFlag($endFlag)
     {
@@ -241,7 +241,7 @@ class Regex implements ValueInterface
     /**
      * @param bool $startJoker
      *
-     * @return $this
+     * @return Regex
      */
     public function setStartJoker($startJoker)
     {
@@ -261,7 +261,7 @@ class Regex implements ValueInterface
     /**
      * @param bool $endJoker
      *
-     * @return $this
+     * @return Regex
      */
     public function setEndJoker($endJoker)
     {
@@ -281,7 +281,7 @@ class Regex implements ValueInterface
     /**
      * @param array $replacement
      *
-     * @return $this
+     * @return Regex
      */
     public function replaceJokers($replacement)
     {

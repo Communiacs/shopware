@@ -25,8 +25,6 @@
 namespace Shopware\Components;
 
 use Doctrine\DBAL\Connection;
-use Shopware\Components\Routing\Router;
-use Shopware\Components\Routing\RouterInterface;
 
 /**
  * Class SitePageMenu
@@ -40,18 +38,11 @@ class SitePageMenu
     private $connection;
 
     /**
-     * @var RouterInterface
-     */
-    private $router;
-
-    /**
      * @param Connection $connection
-     * @param RouterInterface $router
      */
-    public function __construct(Connection $connection, RouterInterface $router)
+    public function __construct(Connection $connection)
     {
         $this->connection = $connection;
-        $this->router = $router;
     }
 
     /**
@@ -71,7 +62,6 @@ class SitePageMenu
         $data = $statement->fetchAll(\PDO::FETCH_ASSOC);
 
         $menu = [];
-        $links = [];
         foreach ($data as $site) {
             $key = !empty($site['mapping']) ? $site['mapping'] : $site['group'];
 
@@ -79,23 +69,8 @@ class SitePageMenu
                 $menu[$key] = [];
             }
 
-            $id = (int) $site['id'];
-            if (!empty($site['link']) && strpos($site['link'], 'shopware.php') !== false) {
-                $links[$id] = $site['link'];
-            } elseif (empty($site['link'])) {
-                $links[$id] = [
-                    'controller' => 'custom',
-                    'action' => 'index',
-                    'sCustom' => $id
-                ];
-            }
-
             $menu[$key][] = $site;
         }
-
-        /** @var Router $router */
-        $seoUrls = $this->router->generateList($links);
-        $menu = $this->assignSeoUrls($menu, $seoUrls);
 
         $result = [];
         foreach ($menu as $key => $group) {
@@ -121,7 +96,7 @@ class SitePageMenu
             if ($site['parentID'] != $parentId) {
                 continue;
             }
-            $id = (int) $site['id'];
+            $id = $site['id'];
 
             //call recursive for tree building
             $site['subPages'] = $this->buildSiteTree(
@@ -213,23 +188,5 @@ class SitePageMenu
     public function overrideExisting($menu, $key, $site)
     {
         return (!empty($site['mapping']) && empty($menu[$key][0]['mapping']));
-    }
-
-    /**
-     * @param array[] $menu
-     * @param string[] $seoUrls
-     * @return array
-     */
-    private function assignSeoUrls($menu, $seoUrls)
-    {
-        foreach ($menu as &$group) {
-            foreach ($group as &$site) {
-                $key = (int) $site['id'];
-                if (array_key_exists($key, $seoUrls)) {
-                    $site['link'] = $seoUrls[$key];
-                }
-            }
-        }
-        return $menu;
     }
 }

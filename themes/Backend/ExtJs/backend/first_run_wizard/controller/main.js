@@ -133,27 +133,24 @@ Ext.define('Shopware.apps.FirstRunWizard.controller.Main', {
                 method: 'POST',
                 params: {
                     value: newStep
-                },
-                callback: function() {
-                    Ext.Ajax.request({
-                        url: '{url controller="Cache" action="clearCache"}',
-                        method: 'POST',
-                        params: {
-                            'cache[config]' : 'on',
-                            'cache[template]' : 'on',
-                            'cache[theme]' : 'on',
-                            'cache[http]' : 'on',
-                            'cache[proxy]' : 'on',
-                            'cache[search]' : 'on',
-                            'cache[router]' : 'on'
-                        },
-                        callback: function() {
-                            location.reload();
-                        }
-                    });
                 }
             });
-
+            Ext.Ajax.request({
+                url: '{url controller="Cache" action="clearCache"}',
+                method: 'POST',
+                params: {
+                    'cache[config]' : 'on',
+                    'cache[template]' : 'on',
+                    'cache[theme]' : 'on',
+                    'cache[http]' : 'on',
+                    'cache[proxy]' : 'on',
+                    'cache[search]' : 'on',
+                    'cache[router]' : 'on'
+                },
+                callback: function() {
+                    location.reload();
+                }
+            });
         } else {
             Ext.util.Cookies.set('firstRunWizardStep', newStep);
         }

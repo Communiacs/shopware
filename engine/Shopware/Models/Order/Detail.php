@@ -24,7 +24,6 @@
 
 namespace Shopware\Models\Order;
 
-use Symfony\Component\Validator\Constraints as Assert;
 use Shopware\Components\Model\ModelEntity;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -65,8 +64,6 @@ class Detail extends ModelEntity
     private $orderId;
 
     /**
-     * @Assert\NotBlank
-     *
      * @var integer $articleId
      *
      * @ORM\Column(name="articleID", type="integer", nullable=false)
@@ -81,8 +78,6 @@ class Detail extends ModelEntity
     private $taxId;
 
     /**
-     * @Assert\NotBlank
-     *
      * @var float $taxRate
      *
       @ORM\Column(name="tax_rate", type="float", nullable=false)
@@ -99,13 +94,11 @@ class Detail extends ModelEntity
     /**
      * @var string $number
      *
-     * @ORM\Column(name="ordernumber", type="string", length=255, nullable=true)
+     * @ORM\Column(name="ordernumber", type="string", length=255, nullable=false)
      */
     private $number;
 
     /**
-     * @Assert\NotBlank
-     *
      * @var string $articleNumber
      *
      * @ORM\Column(name="articleordernumber", type="string", length=255, nullable=false)
@@ -113,8 +106,6 @@ class Detail extends ModelEntity
     private $articleNumber;
 
     /**
-     * @Assert\NotBlank
-     *
      * @var float $price
      *
      * @ORM\Column(name="price", type="float", nullable=false)
@@ -122,8 +113,6 @@ class Detail extends ModelEntity
     private $price;
 
     /**
-     * @Assert\NotBlank
-     *
      * @var integer $quantity
      *
      * @ORM\Column(name="quantity", type="integer", nullable=false)
@@ -131,14 +120,11 @@ class Detail extends ModelEntity
     private $quantity;
 
     /**
-     * @Assert\NotBlank
-     *
      * @var string $articleName
      *
      * @ORM\Column(name="name", type="string", length=255, nullable=false)
      */
     private $articleName;
-
     /**
      * @var integer $shipped
      *
@@ -210,8 +196,6 @@ class Detail extends ModelEntity
     protected $order;
 
     /**
-     * @Assert\NotBlank
-     *
      * @ORM\OneToOne(targetEntity="\Shopware\Models\Order\DetailStatus")
      * @ORM\JoinColumn(name="status", referencedColumnName="id")
      * @var \Shopware\Models\Order\Status

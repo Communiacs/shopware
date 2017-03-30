@@ -39,7 +39,6 @@ Ext.define('Shopware.apps.Base.store.Country', {
     storeId: 'base.Country',
     model : 'Shopware.apps.Base.model.Country',
     pageSize: 1000,
-    remoteFilter: true,
 
     proxy:{
         type:'ajax',

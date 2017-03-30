@@ -1,4 +1,5 @@
 ;(function ($) {
+
     /*! Tiny Pub/Sub - v0.7.0 - 2013-01-29
      * https://github.com/cowboy/jquery-tiny-pubsub
      * Copyright (c) 2014 "Cowboy" Ben Alman; Licensed MIT */
@@ -19,8 +20,8 @@
 ;(function ($, window) {
     'use strict';
 
-    var numberRegex = /^-?\d*\.?\d*$/,
-        objectRegex = /^[[{]/;
+    var numberRegex = /^\-?\d*\.?\d*$/,
+        objectRegex = /^[\[\{]/;
 
     /**
      * Tries to deserialize the given string value and returns the right
@@ -39,7 +40,7 @@
                     : numberRegex.test(value) ? +value
                     : objectRegex.test(value) ? $.parseJSON(value)
                     : value
-            );
+            )
         } catch (e) {
             return value;
         }
@@ -117,6 +118,7 @@
          * @method destroy
          */
         destroy: function () {
+
             if (typeof console !== 'undefined' && typeof console.warn === 'function') {
                 console.warn('Plugin ' + this.getName() + ' should have a custom destroy method!');
             }
@@ -151,12 +153,10 @@
                 name = me.getName();
 
             $.each(me._events, function (i, obj) {
-                if (typeof obj === 'object') {
-                    obj.el.off(obj.event);
-                }
+                obj.el.off(obj.event);
             });
 
-            // remove all references of external plugins
+            // remove all references of extern plugins
             $.each(me.opts, function (o) {
                 delete me.opts[o];
             });
@@ -211,8 +211,8 @@
                     return typeof obj !== 'undefined' && pluginEvent === obj.event && $element[0] === obj.el[0];
                 });
 
-            $.each(filteredEvents, function (index, event) {
-                $element.off(event.event);
+            $.each(filteredEvents, function (event) {
+                $element.off.call($element, event.event);
             });
 
             $.each(eventIds, function (id) {
@@ -364,27 +364,26 @@
      */
     $.plugin = function (name, plugin) {
         var pluginFn = function (options) {
-            return this.each(function () {
-                var element = this,
-                    pluginData = $.data(element, 'plugin_' + name);
+                return this.each(function () {
+                    var element = this,
+                        pluginData = $.data(element, 'plugin_' + name);
 
-                if (!pluginData) {
-                    if (typeof plugin === 'function') {
-                        /* eslint new-cap: "off" */
-                        pluginData = new plugin();
-                    } else {
-                        var Plugin = function () {
-                            PluginBase.call(this, name, element, options);
-                        };
+                    if (!pluginData) {
+                        if (typeof plugin === 'function') {
+                            pluginData = new plugin();
+                        } else {
+                            var Plugin = function () {
+                                PluginBase.call(this, name, element, options);
+                            };
 
-                        Plugin.prototype = $.extend(Object.create(PluginBase.prototype), { constructor: Plugin }, plugin);
-                        pluginData = new Plugin();
+                            Plugin.prototype = $.extend(Object.create(PluginBase.prototype), { constructor: Plugin }, plugin);
+                            pluginData = new Plugin();
+                        }
+
+                        $.data(element, 'plugin_' + name, pluginData);
                     }
-
-                    $.data(element, 'plugin_' + name, pluginData);
-                }
-            });
-        };
+                });
+            };
 
         window.PluginsCollection = window.PluginsCollection || {};
         window.PluginsCollection[name] = plugin;

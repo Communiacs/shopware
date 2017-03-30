@@ -34,7 +34,7 @@
 /**
  *
  */
-//{block name="backend/article_list/controller/suggest"}
+//{block name="backend/article_list/controller/main"}
 Ext.define('Shopware.apps.ArticleList.controller.Suggest', {
 
     /**

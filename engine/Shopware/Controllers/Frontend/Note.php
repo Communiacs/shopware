@@ -22,7 +22,6 @@
  * our trademarks remain entirely with us.
  */
 
-
 /**
  */
 class Shopware_Controllers_Frontend_Note extends Enlight_Controller_Action

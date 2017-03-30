@@ -207,7 +207,6 @@ Ext.define('Shopware.apps.Customer.view.detail.Base', {
             allowBlank:false,
             editable:false,
             anchor:'95%',
-            forceSelection: true,
             labelWidth:155,
             minWidth:250,
             listeners: {

@@ -45,7 +45,7 @@ class ServiceReferenceGraph
      *
      * @param string $id The id to retrieve
      *
-     * @return ServiceReferenceGraphNode
+     * @return ServiceReferenceGraphNode The node matching the supplied identifier
      *
      * @throws InvalidArgumentException if no node matches the supplied identifier
      */
@@ -61,7 +61,7 @@ class ServiceReferenceGraph
     /**
      * Returns all nodes.
      *
-     * @return ServiceReferenceGraphNode[]
+     * @return ServiceReferenceGraphNode[] An array of all ServiceReferenceGraphNode objects
      */
     public function getNodes()
     {

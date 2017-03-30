@@ -33,7 +33,6 @@ use Shopware\Bundle\SearchBundleDBAL\FacetHandlerInterface;
 use Shopware\Bundle\SearchBundleDBAL\QueryBuilderFactory;
 use Shopware\Bundle\SearchBundle\Facet\VoteAverageFacet;
 use Shopware\Bundle\SearchBundle\FacetInterface;
-use Shopware\Bundle\SearchBundleDBAL\QueryBuilderFactoryInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct;
 use Shopware\Components\QueryAliasMapper;
 
@@ -45,7 +44,7 @@ use Shopware\Components\QueryAliasMapper;
 class VoteAverageFacetHandler implements FacetHandlerInterface
 {
     /**
-     * @var QueryBuilderFactoryInterface
+     * @var QueryBuilderFactory
      */
     private $queryBuilderFactory;
 
@@ -65,13 +64,13 @@ class VoteAverageFacetHandler implements FacetHandlerInterface
     private $fieldName;
 
     /**
-     * @param QueryBuilderFactoryInterface $queryBuilderFactory
+     * @param QueryBuilderFactory $queryBuilderFactory
      * @param \Doctrine\DBAL\Connection $connection
      * @param \Shopware_Components_Snippet_Manager $snippetManager
      * @param QueryAliasMapper $queryAliasMapper
      */
     public function __construct(
-        QueryBuilderFactoryInterface $queryBuilderFactory,
+        QueryBuilderFactory $queryBuilderFactory,
         Connection $connection,
         \Shopware_Components_Snippet_Manager $snippetManager,
         QueryAliasMapper $queryAliasMapper

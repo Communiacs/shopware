@@ -39,11 +39,6 @@ Ext.define('Shopware.apps.Base.store.Dispatch', {
     storeId: 'base.Dispatch',
     model : 'Shopware.apps.Base.model.Dispatch',
     pageSize: 1000,
-    remoteFilter: true,
-    filters: [{
-        property: 'active',
-        value: true
-    }],
 
     proxy: {
         type: 'ajax',

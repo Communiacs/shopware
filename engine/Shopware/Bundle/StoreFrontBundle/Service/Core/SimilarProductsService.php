@@ -143,10 +143,10 @@ class SimilarProductsService implements Service\SimilarProductsServiceInterface
             $criteria->limit($limit);
 
             $condition = new SimilarProductCondition($product->getId(), $product->getName());
+            $sorting = new PopularitySorting();
 
             $criteria->addBaseCondition($condition);
-            $criteria->addSorting(new PopularitySorting());
-            $criteria->setFetchCount(false);
+            $criteria->addSorting($sorting);
 
             /** @var \Shopware\Bundle\SearchBundle\ProductSearchResult $searchResult */
             $searchResult = $this->search->search($criteria, $context);

@@ -642,6 +642,7 @@ class sAdmin
 
         Shopware()->Session()->unsetAll();
         $this->regenerateSessionId();
+        Shopware()->Container()->get('shopware.csrftoken_validator')->invalidateToken($this->front->Response());
     }
 
     /**
@@ -778,12 +779,6 @@ class sAdmin
     private function regenerateSessionId()
     {
         $oldSessionId = session_id();
-
-        if ($this->eventManager->notifyUntil('Shopware_Modules_Admin_regenerateSessionId_Start',
-            ['subject' => $this, 'sessionId' => $oldSessionId])) {
-            return;
-        }
-
         session_regenerate_id(true);
         $newSessionId = session_id();
 
@@ -1138,22 +1133,10 @@ class sAdmin
             return false;
         }
 
-        /** @var Shopware\Bundle\StoreFrontBundle\Struct\Shop $shop */
-        $shop = $this->contextService->getShopContext()->getShop();
-        $shopUrl = 'http://' . $shop->getHost() . $shop->getPath();
-        // The -Secure variables don't fall back to the normal values, so we need to do some checks
-        if ($shop->getSecure()) {
-            if ($shop->getSecureHost() && $shop->getSecurePath()) {
-                $shopUrl = 'https://' . $shop->getSecureHost()  . $shop->getSecurePath();
-            } else {
-                $shopUrl = 'https://' . $shop->getHost() . $shop->getPath();
-            }
-        }
-
         $context = array(
             'sMAIL'     => $email,
             'sShop'     => $this->config->get('ShopName'),
-            'sShopURL'  => $shopUrl,
+            'sShopURL'  => 'http://' . $this->config->get('BasePath'),
             'sConfig'   => $this->config,
         );
 
@@ -1701,14 +1684,14 @@ SQL;
         foreach ($queryRules as $rule) {
             if ($rule["rule1"] && !$rule["rule2"]) {
                 $rule["rule1"] = "sRisk".$rule["rule1"];
-                if ($this->executeRiskRule($rule["rule1"], $user, $basket, $rule["value1"], $paymentID)) {
+                if ($this->executeRiskRule($rule["rule1"], $user, $basket, $rule["value1"])) {
                     return true;
                 }
             } elseif ($rule["rule1"] && $rule["rule2"]) {
                 $rule["rule1"] = "sRisk".$rule["rule1"];
                 $rule["rule2"] = "sRisk".$rule["rule2"];
-                if ($this->executeRiskRule($rule["rule1"], $user, $basket, $rule["value1"], $paymentID)
-                    && $this->executeRiskRule($rule["rule2"], $user, $basket, $rule["value2"], $paymentID)
+                if ($this->executeRiskRule($rule["rule1"], $user, $basket, $rule["value1"])
+                    && $this->executeRiskRule($rule["rule2"], $user, $basket, $rule["value2"])
                 ) {
                     return true;
                 }
@@ -1723,10 +1706,9 @@ SQL;
      * @param array $user
      * @param array $basket
      * @param string $value
-     * @param integer $paymentID
      * @return bool
      */
-    public function executeRiskRule($rule, $user, $basket, $value, $paymentID = null)
+    public function executeRiskRule($rule, $user, $basket, $value)
     {
         if ($event = $this->eventManager->notifyUntil(
             'Shopware_Modules_Admin_Execute_Risk_Rule_' . $rule,
@@ -1734,8 +1716,7 @@ SQL;
                 'rule' => $rule,
                 'user' => $user,
                 'basket' => $basket,
-                'value' => $value,
-                'paymentID' => $paymentID
+                'value' => $value
             ]
         )) {
             return $event->getReturn();
@@ -3613,15 +3594,6 @@ SQL;
                 return $result;
             }
         }
-
-        $this->eventManager->notify(
-            'Shopware_Modules_Admin_Newsletter_Registration_Success',
-            [
-                'subject' => $this,
-                'email' => $email,
-                'groupID' => $groupID
-            ]
-        );
 
         $result = array(
             "code" => 3,

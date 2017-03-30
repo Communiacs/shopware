@@ -84,7 +84,7 @@ class WritableCheck implements CheckInterface
             $fixPermissions = true;
             $directories = array_merge(
                 $directories,
-                $this->fileSystem->checkSingleDirectoryPermissions($fullPath, $fixPermissions)
+                $this->fileSystem->checkDirectoryPermissions($fullPath, $fixPermissions)
             );
         }
 

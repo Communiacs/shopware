@@ -6,10 +6,6 @@ namespace Composer\Autoload;
 
 class ComposerStaticInitShopwareRecovery
 {
-    public static $files = array (
-        '5255c38a0faeba867671b61dfda6d864' => __DIR__ . '/..' . '/paragonie/random_compat/lib/random.php',
-    );
-
     public static $prefixLengthsPsr4 = array (
         'S' => 
         array (
@@ -129,9 +125,6 @@ class ComposerStaticInitShopwareRecovery
         'Shopware\\Recovery\\Common\\HttpClient\\CurlClient' => __DIR__ . '/../..' . '/src/HttpClient/CurlClient.php',
         'Shopware\\Recovery\\Common\\HttpClient\\Response' => __DIR__ . '/../..' . '/src/HttpClient/Response.php',
         'Shopware\\Recovery\\Common\\IOHelper' => __DIR__ . '/../..' . '/src/IOHelper.php',
-        'Shopware\\Recovery\\Common\\Service\\Notification' => __DIR__ . '/../..' . '/src/Service/Notification.php',
-        'Shopware\\Recovery\\Common\\Service\\UniqueIdGenerator' => __DIR__ . '/../..' . '/src/Service/UniqueIdGenerator.php',
-        'Shopware\\Recovery\\Common\\Service\\UniqueIdPersister' => __DIR__ . '/../..' . '/src/Service/UniqueIdPersister.php',
         'Shopware\\Recovery\\Common\\SystemLocker' => __DIR__ . '/../..' . '/src/SystemLocker.php',
         'Shopware\\Recovery\\Common\\Utils' => __DIR__ . '/../..' . '/src/Utils.php',
         'Shopware\\Recovery\\Install\\Command\\InstallCommand' => __DIR__ . '/../..' . '/../install/src/Command/InstallCommand.php',
@@ -168,17 +161,14 @@ class ComposerStaticInitShopwareRecovery
         'Shopware\\Recovery\\Install\\Struct\\ShopwareEdition' => __DIR__ . '/../..' . '/../install/src/Struct/ShopwareEdition.php',
         'Shopware\\Recovery\\Install\\Struct\\ShopwareEditionValidationRequest' => __DIR__ . '/../..' . '/../install/src/Struct/ShopwareEditionValidationRequest.php',
         'Shopware\\Recovery\\Install\\Struct\\Struct' => __DIR__ . '/../..' . '/../install/src/Struct/Struct.php',
-        'Shopware\\Recovery\\Update\\Cleanup' => __DIR__ . '/../..' . '/../update/src/Cleanup.php',
         'Shopware\\Recovery\\Update\\CleanupFilesFinder' => __DIR__ . '/../..' . '/../update/src/CleanupFilesFinder.php',
         'Shopware\\Recovery\\Update\\Command\\UpdateCommand' => __DIR__ . '/../..' . '/../update/src/Command/UpdateCommand.php',
         'Shopware\\Recovery\\Update\\Console\\Application' => __DIR__ . '/../..' . '/../update/src/Console/Application.php',
         'Shopware\\Recovery\\Update\\Controller\\BatchController' => __DIR__ . '/../..' . '/../update/src/Controller/BatchController.php',
         'Shopware\\Recovery\\Update\\Controller\\CleanupController' => __DIR__ . '/../..' . '/../update/src/Controller/CleanupController.php',
         'Shopware\\Recovery\\Update\\Controller\\RequirementsController' => __DIR__ . '/../..' . '/../update/src/Controller/RequirementsController.php',
-        'Shopware\\Recovery\\Update\\DeleteResult' => __DIR__ . '/../..' . '/../update/src/Results/DeleteResult.php',
         'Shopware\\Recovery\\Update\\DependencyInjection\\Container' => __DIR__ . '/../..' . '/../update/src/DependencyInjection/Container.php',
         'Shopware\\Recovery\\Update\\DummyPluginFinder' => __DIR__ . '/../..' . '/../update/src/DummyPluginFinder.php',
-        'Shopware\\Recovery\\Update\\FilePermissionChanger' => __DIR__ . '/../..' . '/../update/src/FilePermissionChanger.php',
         'Shopware\\Recovery\\Update\\FilesystemFactory' => __DIR__ . '/../..' . '/../update/src/FilesystemFactory.php',
         'Shopware\\Recovery\\Update\\PathBuilder' => __DIR__ . '/../..' . '/../update/src/PathBuilder.php',
         'Shopware\\Recovery\\Update\\PluginCheck' => __DIR__ . '/../..' . '/../update/src/PluginCheck.php',

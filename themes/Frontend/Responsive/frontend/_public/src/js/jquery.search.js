@@ -471,20 +471,21 @@
                 $results = me.$results,
                 activeClass = opts.activeCls,
                 $selected = $results.find('.' + activeClass),
-                $resultItems;
+                $resultItems,
+                $nextSibling;
 
             $.publish('plugin/swSearch/onKeyboardNavigation', [ me, keyCode ]);
 
             if (keyCode === keyMap.UP || keyCode === keyMap.DOWN) {
                 $resultItems = $results.find(opts.resultItemSelector);
 
-                // First time the user hits the navigation key "DOWN"
+                //First time the user hits the navigation key "DOWN"
                 if (!$selected.length && keyCode == keyMap.DOWN) {
                     me.selectFirstResultItem($resultItems);
                     return;
                 }
 
-                // First time the user hits the navigation key "UP"
+                //First time the user hits the navigation key "UP"
                 if (!$selected.length && keyCode == keyMap.UP) {
                     me.selectLastResultItem($resultItems);
                     return;
@@ -494,19 +495,20 @@
                 if (me.selectResultItem(keyCode, $selected)) {
                     return;
                 }
+
             }
 
-            // Start on top or bottom if the user reached the end of the list
+            //Start on top or bottom if the user reached the end of the list
             switch (keyCode) {
-            case keyMap.DOWN:
-                me.selectFirstResultItem($resultItems);
-                break;
-            case keyMap.UP:
-                me.selectLastResultItem($resultItems);
-                break;
-            case keyMap.ENTER:
-                me.onPressEnter($selected);
-                break;
+                case keyMap.DOWN:
+                    me.selectFirstResultItem($resultItems);
+                    break;
+                case keyMap.UP:
+                    me.selectLastResultItem($resultItems);
+                    break;
+                case keyMap.ENTER:
+                    me.onPressEnter($selected);
+                    break;
             }
         },
 

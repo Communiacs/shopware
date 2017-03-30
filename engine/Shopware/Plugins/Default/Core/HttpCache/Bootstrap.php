@@ -24,11 +24,9 @@
 
 use Doctrine\Common\EventArgs;
 use Shopware\Bundle\StoreFrontBundle\Struct\ProductContextInterface;
-use Shopware\Components\HttpCache\Store;
 use Shopware\Components\Model\ModelManager;
 use Enlight_Controller_Request_Request as Request;
 use Enlight_Controller_Response_ResponseHttp as Response;
-use Symfony\Component\HttpKernel\HttpCache\HttpCache;
 
 /**
  * @category  Shopware
@@ -1015,40 +1013,22 @@ class Shopware_Plugins_Core_HttpCache_Bootstrap extends Shopware_Components_Plug
      * Will send BAN requests to all configured reverse proxies. If cacheId is provided,
      * the corresponding headers will be set.
      *
-     * @param string $cacheId    If set, only pages including these cacheIds will be invalidated
+     * @param null $cacheId    If set, only pages including these cacheIds will be invalidated
      * @return bool            True will be returned, if *all* operations succeeded
      */
     private function invalidate($cacheId = null)
     {
-        $proxyUrl = trim($this->Config()->get('proxy'));
-        if (!empty($proxyUrl)) {
-            return $this->invalidateWithBANRequest($proxyUrl, $cacheId);
-        }
-
-        if ($this->get('service_container')->has('httpCache')) {
-            return $this->invalidateWithStore($cacheId);
-        }
+        $proxy = $this->getProxyUrl($this->request);
 
         // if no explicit proxy was configured + no host is configured
-        $proxyUrl = $this->getProxyUrl($this->request);
-        if ($proxyUrl !== null) {
-            return $this->invalidateWithBANRequest($proxyUrl, $cacheId);
+        if ($proxy === null) {
+            return false;
         }
 
-        return false;
-    }
-
-    /**
-     * @param string $urls Comma separated URLs
-     * @param string $cacheId
-     * @return bool
-     */
-    private function invalidateWithBANRequest($urls, $cacheId)
-    {
         // expand + trim proxies (comma separated)
         $urls = array_map(
             'trim',
-            explode(',', $urls)
+            explode(',', $proxy)
         );
 
         $success = true;
@@ -1064,6 +1044,7 @@ class Shopware_Plugins_Core_HttpCache_Bootstrap extends Shopware_Components_Plug
                 }
 
                 $response = $client->request('BAN');
+
                 if ($response->getStatus() < 200 || $response->getStatus() >= 300) {
                     $this->get('corelogger')->error(
                         'Reverse proxy returned invalid status code',
@@ -1077,25 +1058,6 @@ class Shopware_Plugins_Core_HttpCache_Bootstrap extends Shopware_Components_Plug
         }
 
         return $success;
-    }
-
-    /**
-     * @param string $cacheId
-     * @return bool
-     */
-    private function invalidateWithStore($cacheId = null)
-    {
-        /** @var HttpCache $httpCache */
-        $httpCache = $this->get('httpCache');
-
-        /** @var Store $store */
-        $store = $httpCache->getStore();
-
-        if (!$cacheId) {
-            return $store->purgeAll();
-        }
-
-        return $store->purgeByHeader('x-shopware-cache-id', $cacheId);
     }
 
     /**

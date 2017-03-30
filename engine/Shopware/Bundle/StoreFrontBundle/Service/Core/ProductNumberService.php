@@ -186,7 +186,7 @@ class ProductNumberService implements ProductNumberServiceInterface
             $query->setParameter(':' . $alias, (int) $optionId);
         }
 
-        if ($this->config->get('hideNoInstock')) {
+        if ($this->config->get('hideNoInStock')) {
             $query->innerJoin('variant', 's_articles', 'product', 'product.id = variant.articleID');
             $query->andWhere('(product.laststock * variant.instock) >= (product.laststock * variant.minpurchase)');
         }

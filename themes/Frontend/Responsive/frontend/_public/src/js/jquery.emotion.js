@@ -1,5 +1,5 @@
 ;(function($, window, document, undefined) {
-    'use strict';
+    "use strict";
 
     /**
      * Local private variables.
@@ -49,9 +49,9 @@
              */
             deviceTypes: {
                 'xl': '0',
-                'l': '1',
-                'm': '2',
-                's': '3',
+                'l' : '1',
+                'm' : '2',
+                's' : '3',
                 'xs': '4'
             },
 
@@ -195,6 +195,7 @@
              * If the emotion world was already loaded show it.
              */
             if (me.$emotion.length) {
+
                 (me.opts.showListing) ? me.showFallbackContent() : me.hideFallbackContent();
 
                 me.$overlay.remove();
@@ -218,6 +219,7 @@
                 url: url,
                 method: 'GET',
                 success: function (response) {
+
                     me.isLoading = false;
                     me.$overlay.remove();
 
@@ -323,6 +325,7 @@
             me._destroy();
         }
     });
+
 
     /**
      * Emotion plugin
@@ -504,6 +507,7 @@
             var me = this;
 
             if (me.opts.gridMode !== 'rows') {
+
                 $.each(me.$bannerElements, function(index, item) {
                     $(item).swEmotionBanner();
                 });
@@ -601,7 +605,7 @@
         initRowsGrid: function() {
             var me = this,
                 r, c, rowCls, colCls, element, elementCols, lastCol = 0,
-                colExp = new RegExp(' col' + me.clsPrefix + '-(\\d)', 'i'),
+                colExp = new RegExp(' col'+ me.clsPrefix +'-(\\d)', 'i'),
                 hiddenElements = $('<div>', { 'class': 'hidden-elements' }),
                 rows = [];
 
@@ -609,12 +613,13 @@
             me.$elements.filter('.is--hidden' + me.clsPrefix).appendTo(hiddenElements);
 
             // Iterate through all rows and create wrapper elements for each row
-            for (r = 1; r <= me.rows; r++) {
+            for(r = 1; r <= me.rows; r++) {
+
                 rows[r] = $('<div>', { 'class': 'emotion--row row--' + r });
                 lastCol = 0;
 
                 // Iterate through each column of the row and add the corresponding elements to the row
-                for (c = 1; c <= me.opts.columns; c++) {
+                for(c = 1; c <= me.opts.columns; c++) {
                     rowCls = '.start-row' + me.clsPrefix + '-' + r;
                     colCls = '.start-col' + me.clsPrefix + '-' + c;
 
@@ -767,11 +772,11 @@
                 wrapperHeight = width / ratio;
 
             $.extend(containerStyle, {
-                'MsTransform': 'scale(' + factor + ') translateX(' + -me.remSpacing + 'rem)',
-                'OTransform': 'scale(' + factor + ') translateX(' + -me.remSpacing + 'rem)',
-                'MozTransform': 'scale(' + factor + ') translateX(' + -me.remSpacing + 'rem)',
-                'webkitTransform': 'scale(' + factor + ') translateX(' + -me.remSpacing + 'rem)',
-                'transform': 'scale(' + factor + ') translateX(' + -me.remSpacing + 'rem)'
+                'MsTransform': 'scale('+ factor +') translateX(' + -me.remSpacing + 'rem)',
+                'OTransform': 'scale('+ factor +') translateX(' + -me.remSpacing + 'rem)',
+                'MozTransform': 'scale('+ factor +') translateX(' + -me.remSpacing + 'rem)',
+                'webkitTransform': 'scale('+ factor +') translateX(' + -me.remSpacing + 'rem)',
+                'transform': 'scale('+ factor +') translateX(' + -me.remSpacing + 'rem)'
             });
 
             me.$wrapper.css('height', wrapperHeight);
@@ -804,6 +809,7 @@
             me._destroy();
         }
     });
+
 
     /**
      * Emotion Banner Element
@@ -896,6 +902,7 @@
             me._destroy();
         }
     });
+
 
     /**
      * Emotion Video Element
@@ -1056,7 +1063,7 @@
         onCanPlay: function(event) {
             var me = this;
 
-            if (!me.player.paused || me.player.autoplay) {
+            if(!me.player.paused || me.player.autoplay) {
                 me.$playBtnIcon.addClass(me.opts.pauseIconCls).removeClass(me.opts.playIconCls);
             }
 
@@ -1183,7 +1190,7 @@
             var me = this,
                 x = originX || me.opts.scaleOriginX,
                 y = originY || me.opts.scaleOriginY,
-                origin = x + '% ' + y + '%';
+                origin = x+'% '+y+'%';
 
             me.$video.css({
                 '-ms-transform-origin': origin,
@@ -1225,4 +1232,5 @@
             me._destroy();
         }
     });
+
 })(jQuery, window, document);

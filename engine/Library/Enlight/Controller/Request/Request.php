@@ -593,7 +593,7 @@ interface Enlight_Controller_Request_Request
     /**
      * Get the client's IP addres
      *
-     * @param  boolean $checkProxy @deprecated since 5.2.10, to be removed in 5.3
+     * @param  boolean $checkProxy
      * @return string
      */
     public function getClientIp($checkProxy = false);
@@ -606,13 +606,6 @@ interface Enlight_Controller_Request_Request
      * @return Zend_Controller_Request_Http
      */
     public function setQuery($spec, $value = null);
-
-    /**
-     * Replace POST values
-     *
-     * @param array $data
-     */
-    public function replacePost($data);
 
     /**
      * Set POST values method

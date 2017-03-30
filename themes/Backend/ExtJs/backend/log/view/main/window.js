@@ -19,19 +19,28 @@
  * The licensing of the program under the AGPLv3 does not imply a
  * trademark license. Therefore any rights, title and interest in
  * our trademarks remain entirely with us.
+ *
+ * @category   Shopware
+ * @package    Log
+ * @subpackage View
+ * @version    $Id$
+ * @author shopware AG
  */
 
 //{namespace name=backend/log/main}
 
+/**
+ * todo@all: Documentation
+ */
 //{block name="backend/log/view/main/window"}
 Ext.define('Shopware.apps.Log.view.main.Window', {
-    extend: 'Enlight.app.Window',
+	extend: 'Enlight.app.Window',
     title: '{s name=window_title}Log{/s}',
     cls: Ext.baseCSSPrefix + 'log-window',
     alias: 'widget.log-main-window',
     border: false,
     autoShow: true,
-    layout: 'fit',
+    layout: 'border',
     height: '90%',
     width: 925,
 
@@ -44,27 +53,12 @@ Ext.define('Shopware.apps.Log.view.main.Window', {
      * @return void
      */
     initComponent: function() {
-        var me = this, items = [];
+        var me = this;
 
-        items.push({
-            title: '{s name=tabs/backend}Backend log{/s}',
+        me.items = [{
             xtype: 'log-main-list',
-            store: me.logStore
-        });
-
-        /*{if {acl_is_allowed privilege=system}}*/
-        items.push({
-            title: '{s name=tabs/system}System log{/s}',
-            xtype: 'log-system-list',
-            store: me.systemLogsStore,
-            logFilesStore: me.logFilesStore
-        });
-        /* {/if} */
-
-        me.items = [Ext.create('Ext.tab.Panel', {
-            layout: 'fit',
-            items: items
-        })];
+            logStore: me.logStore
+        }];
 
         me.callParent(arguments);
     }

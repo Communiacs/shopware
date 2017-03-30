@@ -48,12 +48,10 @@ class Shopware_Controllers_Backend_Widgets extends Shopware_Controllers_Backend_
         $userID = (int)$identity->id;
 
         $builder = Shopware()->Container()->get('models')->createQueryBuilder();
-        $builder->select(array('widget', 'view', 'plugin'))
+        $builder->select(array('widget', 'view'))
             ->from('Shopware\Models\Widget\Widget', 'widget')
             ->leftJoin('widget.views', 'view', 'WITH', 'view.authId = ?1')
-            ->leftJoin('widget.plugin', 'plugin')
             ->orderBy('view.position')
-            ->where('widget.plugin IS NULL OR plugin.active = 1')
             ->setParameter(1, $userID);
 
         $data = $builder->getQuery()->getArrayResult();

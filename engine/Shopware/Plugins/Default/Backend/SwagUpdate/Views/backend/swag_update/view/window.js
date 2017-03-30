@@ -39,8 +39,6 @@ Ext.define('Shopware.apps.SwagUpdate.view.Window', {
     width: 755,
     height: 715,
 
-    bodyStyle: 'border-bottom-width: 0 !important; border-radius: 0; -webkit-border-radius: 0; -moz-border-radius: 0;',
-
     title: '{s name="window_title"}Update Check{/s}',
 
     changelog: null,
@@ -97,61 +95,12 @@ Ext.define('Shopware.apps.SwagUpdate.view.Window', {
         });
 
         return Ext.create('Ext.container.Container', {
-            style:{
-                background: '#EBEDEF'
-            },
-            layout: 'vbox',
-            items: [
-                me.backupField,
-                me.createHintContainer()
-            ]
+            height: 30,
+            background: '#fff',
+            items: [ me.backupField ]
         })
     },
 
-    /**
-     * @return { Ext.container.Container }
-     */
-    createHintContainer: function() {
-        var me = this;
-
-        me.hintContainer = Ext.create('Ext.container.Container', {
-            margin: '0 10 10 10',
-            width: '100%',
-            hidden: true
-        });
-
-        return me.hintContainer;
-    },
-
-    /**
-     * @param { number } pluginCount
-     */
-    showHintContainer: function(pluginCount) {
-        var me = this;
-
-        me.hintContainer.tpl = me.createHintContainerTemplate(pluginCount);
-        me.hintContainer.show();
-    },
-
-    /**
-     * @param { number } pluginCount
-     * @return { Ext.XTemplate }
-     */
-    createHintContainerTemplate: function(pluginCount) {
-        var title = '{s name="plugin/update/message/title"}{/s}',
-            message = Ext.String.format('{s name="plugin/update/message"}{/s}', pluginCount);
-
-        return new Ext.XTemplate(
-            '<div class="shopware-ui block-message notice">' +
-            '   <div class="sprite-exclamation" style="float:left; width: 16px; height: 16px; margin: 1px 3px 2px 2px;"></div>' +
-            '   <div style="float:left; width: 85%; margin: 3px 0 2px 10px; font-size: 11px">' + message + '</div>' +
-            '</div>'
-        );
-    },
-
-    /**
-     * @return { Ext.tab.Panel }
-     */
     createTabPanel: function() {
         var me = this;
 
@@ -161,22 +110,12 @@ Ext.define('Shopware.apps.SwagUpdate.view.Window', {
                 me.createChangelogTab(),
                 me.createRequirementsTab(),
                 me.createPluginsTab()
-            ],
-            listeners: {
-                tabchange: function(panel, tab) {
-                    if(tab.isPluginTab) {
-                        me.fireEvent('addPluginTooltips', me);
-                    }
-                }
-            }
+            ]
         });
 
         return me.tabPanel;
     },
 
-    /**
-     * @return { Ext.panel.Panel }
-     */
     createChangelogTab: function() {
         var me = this;
 
@@ -186,9 +125,6 @@ Ext.define('Shopware.apps.SwagUpdate.view.Window', {
         );
 
         return Ext.create('Ext.panel.Panel', {
-            style: {
-                borderBottom: '1px solid #A4B5C0'
-            },
             title: '{s name="tabs/release_notes"}Release Notes{/s}',
             padding: 0,
             cls: 'swag-update-changelog-panel',
@@ -197,9 +133,6 @@ Ext.define('Shopware.apps.SwagUpdate.view.Window', {
         });
     },
 
-    /**
-     * @return { Ext.container.Container }
-     */
     createRequirementsTab: function() {
         var me = this;
 
@@ -211,8 +144,7 @@ Ext.define('Shopware.apps.SwagUpdate.view.Window', {
             {
                 header: '{s name="columns/message"}Message{/s}',
                 dataIndex: 'message',
-                flex: 2,
-                allowHtml: true
+                flex: 2
             }],
             dockedItems: [{
                 xtype: 'pagingtoolbar',
@@ -228,16 +160,21 @@ Ext.define('Shopware.apps.SwagUpdate.view.Window', {
         })
     },
 
-    /**
-     * @return { Ext.container.Container }
-     */
     createPluginsTab: function() {
         var me = this;
 
         me.pluginsGrid = Ext.create('Ext.grid.Panel', {
             border: false,
             store: me.pluginsStore,
-            columns: me.createPluginGridColumns(),
+            columns: [ me.createErrorLevelColumn(), {
+                header: '{s name="columns/plugin"}Plugin{/s}',
+                dataIndex: 'name',
+                flex: 1
+            }, {
+                header: '{s name="columns/message"}Message{/s}',
+                dataIndex: 'message',
+                flex: 3
+            }],
             dockedItems: [{
                 xtype: 'pagingtoolbar',
                 store: me.pluginsStore,
@@ -246,91 +183,10 @@ Ext.define('Shopware.apps.SwagUpdate.view.Window', {
         });
 
         return Ext.create('Ext.container.Container', {
-            isPluginTab: true,
-            itemId: 'update-plugin-tab',
             layout: 'fit',
             title: 'Plugins',
             items: [me.pluginsGrid]
         })
-    },
-
-    /**
-     * @return { Array }
-     */
-    createPluginGridColumns: function() {
-        var me = this;
-
-        return [{
-            header: '{s name="requirements/columns/status"}Compatible{/s}',
-            dataIndex: 'errorLevel',
-            flex: 0.6,
-            renderer: Ext.bind(me.tickRenderer, me)
-        }, {
-            header: '{s name="columns/is_latest_version"}Latest version{/s}',
-            dataIndex: 'updatable',
-            flex: 0.6,
-            renderer: Ext.bind(me.tickRenderer, me)
-        }, {
-            header: '{s name="columns/plugin"}Plugin{/s}',
-            dataIndex: 'name',
-            flex: 1
-        }, {
-            header: '{s name="columns/message"}Message{/s}',
-            dataIndex: 'message',
-            flex: 3
-        }, {
-            xtype: 'actioncolumn',
-            width: 26,
-            items: [{
-                handler: Ext.bind(me.onClickShowPluginUpdateDetails, me),
-                getClass: Ext.bind(me.onGetClass, me)
-            }]
-        }]
-    },
-
-    /**
-     * @param { Ext.grid.Panel } grid
-     * @param { number } index
-     */
-    onClickShowPluginUpdateDetails: function(grid, index) {
-        this.fireEvent('showPluginUpdateDetails', grid, index);
-    },
-
-    /**
-     * @param { string | number } value
-     * @param { object } metadata
-     * @param { Ext.data.Model } record
-     * @return { string | null }
-     */
-    onGetClass: function(value, metadata, record) {
-        if (record.get('updatable')) {
-            metadata.style = 'margin: 0 auto;';
-            return 'sprite-arrow-circle-315'
-        }
-
-        metadata.style = "display:none;"
-    },
-
-    /**
-     * @param { string } value
-     * @param { object } meta
-     * @param { Ext.data.Model } record
-     * @return { string }
-     */
-    tickRenderer: function(value, meta, record) {
-        var divClass,
-            divStyle = 'style="width: 16px; height: 16px; margin: 0 auto;"',
-            divId = value === true ? 'id="' + record.data.technicalName + '"' : null;
-
-        if (value == 20) {
-            divClass = 'class="sprite-cross"';
-        } else if (value === true || value == 10){
-            divClass = 'class="sprite-exclamation"';
-        } else {
-            divClass = 'class="sprite-tick"';
-        }
-
-        return '<div ' + [ divId, divClass, divStyle ].join(' ') + '></div>';
     },
 
     createErrorLevelColumn: function() {
@@ -370,13 +226,11 @@ Ext.define('Shopware.apps.SwagUpdate.view.Window', {
             text: '{s name="start_update"}Start update{/s}',
             disabled: true,
             handler: function() {
-                me.updateButton.disable();
                 me.fireEvent('startUpdate', me);
             }
         });
 
         return Ext.create('Ext.toolbar.Toolbar', {
-            border: false,
             dock: 'bottom',
             items: [ '->', me.cancelButton, me.updateButton ]
         });

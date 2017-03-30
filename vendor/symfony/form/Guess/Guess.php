@@ -70,7 +70,7 @@ abstract class Guess
      *
      * @param Guess[] $guesses An array of guesses
      *
-     * @return self|null
+     * @return Guess|null The guess with the highest confidence
      */
     public static function getBestGuess(array $guesses)
     {

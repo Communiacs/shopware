@@ -71,15 +71,13 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
             ->leftJoin('element.translations', 'elementTranslation', \Doctrine\ORM\Query\Expr\Join::WITH, 'elementTranslation.localeId = :localeId')
             ->leftJoin('form.translations', 'translation', \Doctrine\ORM\Query\Expr\Join::WITH, 'translation.localeId = :localeId')
             ->leftJoin('form.children', 'children')
-            ->leftJoin('form.plugin', 'plugin')
-            ->select([
+            ->select(array(
                 'form.id',
                 'IFNULL(translation.label,IFNULL(form.label, form.name)) as label',
-                'COUNT(children.id) as childrenCount',
-                'plugin.translations'
-            ])
+                'COUNT(children.id) as childrenCount'
+            ))
             ->groupBy('form.id')
-            ->setParameter('localeId', $locale->getId());
+            ->setParameter("localeId", $locale->getId());
 
         // Search forms
         if (isset($filter[0]['property']) && $filter[0]['property'] == 'search') {
@@ -101,28 +99,11 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
         }
 
         $data = $builder->getQuery()->getArrayResult();
-
-        foreach ($data as &$treeItem) {
-            if (!$treeItem['translations']) {
-                unset($treeItem['translations']);
-                continue;
-            }
-
-            $shortLanguage = substr($locale->toString(), 0, 2);
-            $translations = json_decode($treeItem['translations'], true);
-
-            if (isset($translations[$shortLanguage]['label'])) {
-                $treeItem['label'] = $translations[$shortLanguage]['label'];
-            }
-
-            unset($treeItem['translations']);
-        }
-
-        $this->View()->assign([
+        $this->View()->assign(array(
             'success' => true,
             'data' => $data,
             'total' => count($data)
-        ]);
+        ));
     }
 
     /**
@@ -143,29 +124,13 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
             ->leftJoin('form.translations', 'formTranslation', \Doctrine\ORM\Query\Expr\Join::WITH, 'formTranslation.localeId = :localeId')
             ->leftJoin('element.translations', 'elementTranslation', \Doctrine\ORM\Query\Expr\Join::WITH, 'elementTranslation.localeId = :localeId')
             ->leftJoin('element.values', 'value')
-            ->leftJoin('form.plugin', 'plugin')
-            ->select(['form', 'element', 'value', 'elementTranslation', 'formTranslation', 'plugin'])
-            ->setParameter('localeId', $locale->getId());
+            ->select(array('form', 'element', 'value', 'elementTranslation', 'formTranslation'))
+            ->setParameter("localeId", $locale->getId());
 
-        $builder->addOrderBy((array) $this->Request()->getParam('sort', []))
-            ->addFilter((array) $this->Request()->getParam('filter', []));
+        $builder->addOrderBy((array) $this->Request()->getParam('sort', array()))
+            ->addFilter((array) $this->Request()->getParam('filter', array()));
 
         $data = $builder->getQuery()->getOneOrNullResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
-
-        if (isset($data['plugin']['translations'])) {
-            $shortLanguage = substr($language, 0, 2);
-            $translations = json_decode($data['plugin']['translations'], true);
-
-            if (isset($translations[$shortLanguage]['label'])) {
-                $data['label'] = $translations[$shortLanguage]['label'];
-            }
-
-            if (isset($translations[$shortLanguage]['description'])) {
-                $data['description'] = $translations[$shortLanguage]['description'];
-            }
-        }
-
-        unset($data['plugin']);
 
         foreach ($data['elements'] as &$values) {
             foreach ($values['translations'] as $array) {
@@ -177,18 +142,18 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
                 }
             }
 
-            if (!in_array($values['type'], ['select', 'combo'])) {
+            if (!in_array($values['type'], array('select', 'combo'))) {
                 continue;
             }
 
             $values['options']['store'] = $this->translateStore($language, $values['options']['store']);
         }
 
-        $this->View()->assign([
+        $this->View()->assign(array(
             'success' => true,
             'data' => $data,
             'total' => count($data)
-        ]);
+        ));
     }
 
     /**
@@ -1122,10 +1087,8 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
     {
         $connection = Shopware()->Container()->get('dbal_connection');
         $query = $connection->createQueryBuilder();
-        $query->select(['locale_id, IFNULL(main_id, id)']);
+        $query->select(['id, IFNULL(main_id, id)']);
         $query->from('s_core_shops');
-        $query->where('s_core_shops.default = 1');
-        $query->setMaxResults(1);
         return $query->execute()->fetchAll(PDO::FETCH_KEY_PAIR);
     }
 
@@ -1150,10 +1113,6 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
         $date = new DateTime();
         foreach ($shops as $localeId => $shopId) {
             foreach ($salutations as $salutation) {
-                if (strlen(trim($salutation)) === 0) {
-                    continue;
-                }
-
                 $query->execute([
                     ':created' => $date->format('Y-m-d H:i:s'),
                     ':namespace' => 'frontend/salutation',

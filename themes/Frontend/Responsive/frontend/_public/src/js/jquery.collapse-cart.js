@@ -324,6 +324,7 @@
                 'url': url,
                 'dataType': 'jsonp',
                 'success': function(result) {
+
                     me.$el.html(result);
 
                     picturefill();

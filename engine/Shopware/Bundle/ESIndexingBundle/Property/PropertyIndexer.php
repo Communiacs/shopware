@@ -42,7 +42,7 @@ class PropertyIndexer implements DataIndexerInterface
     private $client;
 
     /**
-     * @var PropertyProviderInterface
+     * @var PropertyProvider
      */
     private $provider;
 
@@ -54,12 +54,12 @@ class PropertyIndexer implements DataIndexerInterface
     /**
      * @param Client $client
      * @param PropertyQueryFactory $queryFactory
-     * @param PropertyProviderInterface $provider
+     * @param PropertyProvider $provider
      */
     public function __construct(
         Client $client,
         PropertyQueryFactory $queryFactory,
-        PropertyProviderInterface $provider
+        PropertyProvider $provider
     ) {
         $this->client = $client;
         $this->provider = $provider;

@@ -196,7 +196,7 @@ class ListProductGateway implements Gateway\ListProductGatewayInterface
             ->andWhere('prices.pricegroup = ' . $key)
             ->andWhere('prices.articleID = product.id');
 
-        if ($this->config->get('hideNoInStock')) {
+        if ($this->config->get('hideNoInstock')) {
             $query->andWhere('(product.laststock * priceVariant.instock) >= (product.laststock * priceVariant.minpurchase)');
         }
 

@@ -19,14 +19,7 @@ use Symfony\Component\Form\Exception\TransformationFailedException;
 class DateTimeToRfc3339Transformer extends BaseDateTimeTransformer
 {
     /**
-     * Transforms a normalized date into a localized date.
-     *
-     * @param \DateTime|\DateTimeInterface $dateTime A DateTime object
-     *
-     * @return string The formatted date
-     *
-     * @throws TransformationFailedException If the given value is not an
-     *                                       instance of \DateTime or \DateTimeInterface
+     * {@inheritdoc}
      */
     public function transform($dateTime)
     {
@@ -39,10 +32,7 @@ class DateTimeToRfc3339Transformer extends BaseDateTimeTransformer
         }
 
         if ($this->inputTimezone !== $this->outputTimezone) {
-            if (!$dateTime instanceof \DateTimeImmutable) {
-                $dateTime = clone $dateTime;
-            }
-
+            $dateTime = clone $dateTime;
             $dateTime = $dateTime->setTimezone(new \DateTimeZone($this->outputTimezone));
         }
 
@@ -50,14 +40,7 @@ class DateTimeToRfc3339Transformer extends BaseDateTimeTransformer
     }
 
     /**
-     * Transforms a formatted string following RFC 3339 into a normalized date.
-     *
-     * @param string $rfc3339 Formatted string
-     *
-     * @return \DateTime Normalized date
-     *
-     * @throws TransformationFailedException If the given value is not a string,
-     *                                       if the value could not be transformed
+     * {@inheritdoc}
      */
     public function reverseTransform($rfc3339)
     {
@@ -75,8 +58,12 @@ class DateTimeToRfc3339Transformer extends BaseDateTimeTransformer
             throw new TransformationFailedException($e->getMessage(), $e->getCode(), $e);
         }
 
-        if ($this->inputTimezone !== $dateTime->getTimezone()->getName()) {
-            $dateTime->setTimezone(new \DateTimeZone($this->inputTimezone));
+        if ($this->outputTimezone !== $dateTime->getTimezone()->getName()) {
+            try {
+                $dateTime->setTimezone(new \DateTimeZone($this->inputTimezone));
+            } catch (\Exception $e) {
+                throw new TransformationFailedException($e->getMessage(), $e->getCode(), $e);
+            }
         }
 
         if (preg_match('/(\d{4})-(\d{2})-(\d{2})/', $rfc3339, $matches)) {

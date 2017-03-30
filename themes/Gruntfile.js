@@ -16,12 +16,8 @@ module.exports = function (grunt) {
     jsTargetFile['../' + config.jsTarget] = jsFiles;
 
     config['less'].forEach(function (item) {
-        if (/(\.css)$/.test(item)) {
-            // Entry is a css file and needs to be imported inline
-            content += `@import (inline) "../${item}";`;
-        } else {
-            content += `@import "../${item}";`;
-        }
+        content += '@import "../' + item + '";';
+        content += "\n";
     });
     grunt.file.write('../web/cache/all.less', content);
 
@@ -73,13 +69,10 @@ module.exports = function (grunt) {
             less: {
                 files: [
                     '../engine/Shopware/Plugins/**/*.less',
-                    '../engine/Shopware/Plugins/**/*.css',
                     '../themes/Frontend/**/*.less',
-                    '../themes/Frontend/**/*.css',
-                    '../custom/plugins/**/*.less',
-                    '../custom/plugins/**/*.css'
+                    '../custom/plugins/**/*.less'
                 ],
-                tasks: ['less:development', 'eslint'],
+                tasks: ['less:development'],
                 options: {
                     spawn: false
                 }
@@ -96,20 +89,29 @@ module.exports = function (grunt) {
                 }
             }
         },
-        eslint: {
+        jshint: {
+            options: {
+                browser: true,
+                force: true,
+                globals: {
+                    jQuery: true,
+                    StateManager: true
+                }
+            },
             src: [
                 'Gruntfile.js',
-                'Frontend/Responsive/frontend/_public/src/js/*.js'
+                '../themes/Frontend/**/_public/src/js/*.js',
+                '../engine/Shopware/Plugins/**/frontend/**/src/js/**/*.js'
             ]
         }
     });
 
     grunt.loadNpmTasks('grunt-contrib-less');
     grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-chokidar');
-    grunt.loadNpmTasks('gruntify-eslint');
 
     grunt.renameTask('chokidar', 'watch');
-    grunt.registerTask('production', [ 'eslint', 'less:production', 'uglify:production' ]);
+    grunt.registerTask('production', [ 'jshint', 'less:production', 'uglify:production' ]);
     grunt.registerTask('default', [ 'less:development', 'uglify:development', 'watch' ]);
 };

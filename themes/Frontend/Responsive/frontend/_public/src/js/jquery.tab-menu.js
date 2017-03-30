@@ -1,4 +1,5 @@
 ;(function ($) {
+
     /**
      * Shopware Tab Menu Plugin
      *
@@ -132,7 +133,7 @@
                 if ($container.find(opts.contentSelector).html().trim().length) {
                     $container.addClass(opts.hasContentClass);
                     $tab.addClass(opts.hasContentClass);
-
+                    
                     // When no start index is specified, we take the first tab with content.
                     if (opts.startIndex === -1) {
                         $tab.addClass(opts.activeTabClass);
@@ -153,7 +154,7 @@
 
             me.registerEventListeners();
 
-            me.changeTab(opts.startIndex);
+            me.changeTab(opts.startIndex)
         },
 
         /**

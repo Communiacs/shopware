@@ -112,15 +112,6 @@ class ManufacturerGateway implements Gateway\ManufacturerGatewayInterface
             $manufacturers[$id] = $this->manufacturerHydrator->hydrate($row);
         }
 
-        //sort elements by provided ids, sorting is defined by other queries like `best term match` or `max articles` or `sort alphanumeric`
-        $sorted = [];
-        foreach ($ids as $id) {
-            if (!array_key_exists($id, $manufacturers)) {
-                continue;
-            }
-            $sorted[$id] = $manufacturers[$id];
-        }
-
-        return $sorted;
+        return $manufacturers;
     }
 }

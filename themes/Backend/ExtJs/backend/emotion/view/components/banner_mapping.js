@@ -427,7 +427,7 @@ Ext.define('Shopware.apps.Emotion.view.components.BannerMapping', {
         return ['->', {
             xtype: 'button',
             cls: 'secondary',
-            text: '{s name=banner_mapping/cancel}Cancel{/s}',
+            text: 'Abbrechen',
             action: 'emotion-detail-settings-window-cancel',
             handler: function(button) {
                 var win = button.up('window');
@@ -436,7 +436,7 @@ Ext.define('Shopware.apps.Emotion.view.components.BannerMapping', {
         }, {
             xtype: 'button',
             cls: 'primary',
-            text: '{s name=banner_mapping/save}Save{/s}',
+            text: 'Speichern',
             action: 'emotion-detail-settings-window-save',
             handler: function() {
                 me.fireEvent('saveBannerMapping', me, me.mappingStore, me.element);

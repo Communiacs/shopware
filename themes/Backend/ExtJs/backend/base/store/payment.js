@@ -39,7 +39,6 @@ Ext.define('Shopware.apps.Base.store.Payment', {
     storeId: 'base.Payment',
     model : 'Shopware.apps.Base.model.Payment',
     pageSize: 1000,
-    remoteFilter: true,
 
     proxy:{
         type:'ajax',

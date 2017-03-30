@@ -268,9 +268,11 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
         //load shop repository
         $repository = Shopware()->Models()->getRepository('Shopware\Models\Dispatch\Dispatch');
 
+        $filters = $this->Request()->getParam('filter', array());
+        $filters[] = array('property' => 'dispatches.active', 'value' => 1);
         $query = $repository->getDispatchesQuery(
-            $this->Request()->getParam('filter', []),
-            $this->Request()->getParam('sort', []),
+            $filters,
+            $this->Request()->getParam('sort', array()),
             $this->Request()->getParam('start'),
             $this->Request()->getParam('limit')
         );
@@ -350,8 +352,8 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
         $repository = Shopware()->Models()->getRepository('Shopware\Models\Order\Order');
 
         $query = $repository->getPaymentStatusQuery(
-            $filter = $this->Request()->getParam('filter'),
-            $order = $this->Request()->getParam('sort'),
+            $filter = $this->Request()->getParam('filter', array()),
+            $order = $this->Request()->getParam('sort', array()),
             $offset = $this->Request()->getParam('start'),
             $limit = $this->Request()->getParam('limit')
         );

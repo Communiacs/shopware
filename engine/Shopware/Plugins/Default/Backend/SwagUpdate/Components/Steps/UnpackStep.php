@@ -93,7 +93,6 @@ class UnpackStep
         }
 
         $source->close();
-        unlink($this->source);
 
         return new FinishResult($count, $count);
     }

@@ -922,12 +922,12 @@ class Article extends ModelEntity
     }
 
     /**
-     * @param ArrayCollection $customerGroups
+     * @param ArrayCollection $propertyGroups
      * @return Article
      */
-    public function setCustomerGroups($customerGroups)
+    public function setCustomerGroups($propertyGroups)
     {
-        $this->customerGroups = $customerGroups;
+        $this->customerGroups = $propertyGroups;
         return $this;
     }
 
