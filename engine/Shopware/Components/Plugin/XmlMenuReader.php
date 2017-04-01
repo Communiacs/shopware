@@ -37,7 +37,7 @@ class XmlMenuReader
         try {
             $dom = XmlUtils::loadFile($file, __DIR__.'/schema/menu.xsd');
         } catch (\Exception $e) {
-            throw new \InvalidArgumentException(sprintf('Unable to parse file "%s".', $file), $e->getCode(), $e);
+            throw new \InvalidArgumentException(sprintf('Unable to parse file "%s". Message: ', $file, $e->getMessage()), $e->getCode(), $e);
         }
 
         return $this->parseMenu($dom);
@@ -97,6 +97,7 @@ class XmlMenuReader
             $menuEntry['position'] = (int)$position[0]->nodeValue;
         }
 
+        $menuEntry['children'] = [];
         if ($children = $this->getChildren($entry, 'children')) {
             foreach ($this->getChildren($children[0], 'entry') as $child) {
                 $menuEntry['children'][] = $this->parseEntry($child);

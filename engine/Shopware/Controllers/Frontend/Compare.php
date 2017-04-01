@@ -22,6 +22,7 @@
  * our trademarks remain entirely with us.
  */
 
+
 /**
  * Compare controller
  */

@@ -28,6 +28,7 @@ class ComposerStaticInitShopware
             'Symfony\\Component\\Translation\\' => 30,
             'Symfony\\Component\\Serializer\\' => 29,
             'Symfony\\Component\\PropertyAccess\\' => 33,
+            'Symfony\\Component\\Process\\' => 26,
             'Symfony\\Component\\OptionsResolver\\' => 34,
             'Symfony\\Component\\Intl\\' => 23,
             'Symfony\\Component\\HttpKernel\\' => 29,
@@ -45,6 +46,10 @@ class ComposerStaticInitShopware
         'R' => 
         array (
             'React\\Promise\\' => 14,
+        ),
+        'P' => 
+        array (
+            'Psr\\Log\\' => 8,
         ),
         'O' => 
         array (
@@ -72,11 +77,16 @@ class ComposerStaticInitShopware
         array (
             'Doctrine\\Instantiator\\' => 22,
             'Doctrine\\Common\\Cache\\' => 22,
+            'Doctrine\\Common\\Annotations\\' => 28,
             'Doctrine\\Common\\' => 16,
         ),
         'C' => 
         array (
             'Cocur\\Slugify\\' => 14,
+        ),
+        'B' => 
+        array (
+            'Bcremer\\LineReader\\' => 19,
         ),
     );
 
@@ -104,6 +114,10 @@ class ComposerStaticInitShopware
         'Symfony\\Component\\PropertyAccess\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/property-access',
+        ),
+        'Symfony\\Component\\Process\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/symfony/process',
         ),
         'Symfony\\Component\\OptionsResolver\\' => 
         array (
@@ -161,6 +175,10 @@ class ComposerStaticInitShopware
         array (
             0 => __DIR__ . '/..' . '/react/promise/src',
         ),
+        'Psr\\Log\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/log/Psr/Log',
+        ),
         'ONGR\\ElasticsearchDSL\\' => 
         array (
             0 => __DIR__ . '/..' . '/ongr/elasticsearch-dsl/src',
@@ -197,6 +215,10 @@ class ComposerStaticInitShopware
         array (
             0 => __DIR__ . '/..' . '/doctrine/cache/lib/Doctrine/Common/Cache',
         ),
+        'Doctrine\\Common\\Annotations\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/doctrine/annotations/lib/Doctrine/Common/Annotations',
+        ),
         'Doctrine\\Common\\' => 
         array (
             0 => __DIR__ . '/..' . '/doctrine/common/lib/Doctrine/Common',
@@ -204,6 +226,10 @@ class ComposerStaticInitShopware
         'Cocur\\Slugify\\' => 
         array (
             0 => __DIR__ . '/..' . '/cocur/slugify/src',
+        ),
+        'Bcremer\\LineReader\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/bcremer/line-reader/src',
         ),
     );
 
@@ -220,13 +246,6 @@ class ComposerStaticInitShopware
             'Shopware' => 
             array (
                 0 => __DIR__ . '/../..' . '/engine',
-            ),
-        ),
-        'P' => 
-        array (
-            'Psr\\Log\\' => 
-            array (
-                0 => __DIR__ . '/..' . '/psr/log',
             ),
         ),
         'L' => 
@@ -284,10 +303,6 @@ class ComposerStaticInitShopware
             array (
                 0 => __DIR__ . '/..' . '/doctrine/collections/lib',
             ),
-            'Doctrine\\Common\\Annotations\\' => 
-            array (
-                0 => __DIR__ . '/..' . '/doctrine/annotations/lib',
-            ),
         ),
         'A' => 
         array (
@@ -305,6 +320,7 @@ class ComposerStaticInitShopware
         'Assert\\InvalidArgumentException' => __DIR__ . '/..' . '/beberlei/assert/lib/Assert/InvalidArgumentException.php',
         'Assert\\LazyAssertion' => __DIR__ . '/..' . '/beberlei/assert/lib/Assert/LazyAssertion.php',
         'Assert\\LazyAssertionException' => __DIR__ . '/..' . '/beberlei/assert/lib/Assert/LazyAssertionException.php',
+        'Bcremer\\LineReader\\LineReader' => __DIR__ . '/..' . '/bcremer/line-reader/src/LineReader.php',
         'Cocur\\Slugify\\Bridge\\Laravel\\SlugifyFacade' => __DIR__ . '/..' . '/cocur/slugify/src/Bridge/Laravel/SlugifyFacade.php',
         'Cocur\\Slugify\\Bridge\\Laravel\\SlugifyServiceProvider' => __DIR__ . '/..' . '/cocur/slugify/src/Bridge/Laravel/SlugifyServiceProvider.php',
         'Cocur\\Slugify\\Bridge\\Latte\\SlugifyHelper' => __DIR__ . '/..' . '/cocur/slugify/src/Bridge/Latte/SlugifyHelper.php',
@@ -1853,6 +1869,7 @@ class ComposerStaticInitShopware
         'Shopware\\Bundle\\ESIndexingBundle\\DependencyInjection\\CompilerPass\\SynchronizerCompilerPass' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/ESIndexingBundle/DependencyInjection/CompilerPass/SynchronizerCompilerPass.php',
         'Shopware\\Bundle\\ESIndexingBundle\\DependencyInjection\\Factory\\CompositeSynchronizerFactory' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/ESIndexingBundle/DependencyInjection/Factory/CompositeSynchronizerFactory.php',
         'Shopware\\Bundle\\ESIndexingBundle\\DependencyInjection\\Factory\\ShopIndexerFactory' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/ESIndexingBundle/DependencyInjection/Factory/ShopIndexerFactory.php',
+        'Shopware\\Bundle\\ESIndexingBundle\\DependencyInjection\\Factory\\TextMappingFactory' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/ESIndexingBundle/DependencyInjection/Factory/TextMappingFactory.php',
         'Shopware\\Bundle\\ESIndexingBundle\\FieldMapping' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/ESIndexingBundle/FieldMapping.php',
         'Shopware\\Bundle\\ESIndexingBundle\\FieldMappingInterface' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/ESIndexingBundle/FieldMappingInterface.php',
         'Shopware\\Bundle\\ESIndexingBundle\\IdentifierSelector' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/ESIndexingBundle/IdentifierSelector.php',
@@ -1883,9 +1900,13 @@ class ComposerStaticInitShopware
         'Shopware\\Bundle\\ESIndexingBundle\\Struct\\Product' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/ESIndexingBundle/Struct/Product.php',
         'Shopware\\Bundle\\ESIndexingBundle\\Struct\\ShopIndex' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/ESIndexingBundle/Struct/ShopIndex.php',
         'Shopware\\Bundle\\ESIndexingBundle\\Subscriber\\DomainBacklogSubscriber' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/ESIndexingBundle/Subscriber/DomainBacklogSubscriber.php',
+        'Shopware\\Bundle\\ESIndexingBundle\\Subscriber\\ORMBacklogSaveSubscriber' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/ESIndexingBundle/Subscriber/ORMBacklogSaveSubscriber.php',
         'Shopware\\Bundle\\ESIndexingBundle\\Subscriber\\ORMBacklogSubscriber' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/ESIndexingBundle/Subscriber/ORMBacklogSubscriber.php',
         'Shopware\\Bundle\\ESIndexingBundle\\Subscriber\\ServiceSubscriber' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/ESIndexingBundle/Subscriber/ServiceSubscriber.php',
         'Shopware\\Bundle\\ESIndexingBundle\\SynchronizerInterface' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/ESIndexingBundle/SynchronizerInterface.php',
+        'Shopware\\Bundle\\ESIndexingBundle\\TextMappingInterface' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/ESIndexingBundle/TextMappingInterface.php',
+        'Shopware\\Bundle\\ESIndexingBundle\\TextMapping\\TextMappingES2' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/ESIndexingBundle/TextMapping/TextMappingES2.php',
+        'Shopware\\Bundle\\ESIndexingBundle\\TextMapping\\TextMappingES5' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/ESIndexingBundle/TextMapping/TextMappingES5.php',
         'Shopware\\Bundle\\FormBundle\\Constraints\\Exists' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/FormBundle/Constraints/Exists.php',
         'Shopware\\Bundle\\FormBundle\\Constraints\\ExistsValidator' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/FormBundle/Constraints/ExistsValidator.php',
         'Shopware\\Bundle\\FormBundle\\Constraints\\Unique' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/FormBundle/Constraints/Unique.php',
@@ -1898,14 +1919,31 @@ class ComposerStaticInitShopware
         'Shopware\\Bundle\\FormBundle\\Extension\\EventExtension' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/FormBundle/Extension/EventExtension.php',
         'Shopware\\Bundle\\FormBundle\\FormFactory' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/FormBundle/FormFactory.php',
         'Shopware\\Bundle\\FormBundle\\Transformer\\EntityTransformer' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/FormBundle/Transformer/EntityTransformer.php',
+        'Shopware\\Bundle\\MediaBundle\\Adapters\\AdapterFactoryInterface' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/Adapters/AdapterFactoryInterface.php',
+        'Shopware\\Bundle\\MediaBundle\\Adapters\\FtpAdapterFactory' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/Adapters/FtpAdapterFactory.php',
+        'Shopware\\Bundle\\MediaBundle\\Adapters\\LocalAdapterFactory' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/Adapters/LocalAdapterFactory.php',
+        'Shopware\\Bundle\\MediaBundle\\CacheOptimizerService' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/CacheOptimizerService.php',
         'Shopware\\Bundle\\MediaBundle\\Commands\\ImageMigrateCommand' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/Commands/ImageMigrateCommand.php',
         'Shopware\\Bundle\\MediaBundle\\Commands\\MediaCleanupCommand' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/Commands/MediaCleanupCommand.php',
+        'Shopware\\Bundle\\MediaBundle\\Commands\\MediaOptimizeCommand' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/Commands/MediaOptimizeCommand.php',
+        'Shopware\\Bundle\\MediaBundle\\DependencyInjection\\Compiler\\MediaAdapterCompilerPass' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/DependencyInjection/Compiler/MediaAdapterCompilerPass.php',
+        'Shopware\\Bundle\\MediaBundle\\DependencyInjection\\Compiler\\MediaOptimizerCompilerPass' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/DependencyInjection/Compiler/MediaOptimizerCompilerPass.php',
+        'Shopware\\Bundle\\MediaBundle\\Exception\\OptimizerNotFoundException' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/Exception/OptimizerNotFoundException.php',
         'Shopware\\Bundle\\MediaBundle\\GarbageCollector' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/GarbageCollector.php',
         'Shopware\\Bundle\\MediaBundle\\GarbageCollectorFactory' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/GarbageCollectorFactory.php',
         'Shopware\\Bundle\\MediaBundle\\MediaMigration' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/MediaMigration.php',
         'Shopware\\Bundle\\MediaBundle\\MediaService' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/MediaService.php',
         'Shopware\\Bundle\\MediaBundle\\MediaServiceFactory' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/MediaServiceFactory.php',
         'Shopware\\Bundle\\MediaBundle\\MediaServiceInterface' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/MediaServiceInterface.php',
+        'Shopware\\Bundle\\MediaBundle\\OptimizerService' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/OptimizerService.php',
+        'Shopware\\Bundle\\MediaBundle\\OptimizerServiceInterface' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/OptimizerServiceInterface.php',
+        'Shopware\\Bundle\\MediaBundle\\Optimizer\\BinaryOptimizer' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/Optimizer/BinaryOptimizer.php',
+        'Shopware\\Bundle\\MediaBundle\\Optimizer\\JpegoptimOptimizer' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/Optimizer/JpegoptimOptimizer.php',
+        'Shopware\\Bundle\\MediaBundle\\Optimizer\\JpegtranOptimizer' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/Optimizer/JpegtranOptimizer.php',
+        'Shopware\\Bundle\\MediaBundle\\Optimizer\\OptimizerInterface' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/Optimizer/OptimizerInterface.php',
+        'Shopware\\Bundle\\MediaBundle\\Optimizer\\OptipngOptimizer' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/Optimizer/OptipngOptimizer.php',
+        'Shopware\\Bundle\\MediaBundle\\Optimizer\\PngcrushOptimizer' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/Optimizer/PngcrushOptimizer.php',
+        'Shopware\\Bundle\\MediaBundle\\Optimizer\\PngoutOptimizer' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/Optimizer/PngoutOptimizer.php',
         'Shopware\\Bundle\\MediaBundle\\Strategy\\Md5Strategy' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/Strategy/Md5Strategy.php',
         'Shopware\\Bundle\\MediaBundle\\Strategy\\PlainStrategy' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/Strategy/PlainStrategy.php',
         'Shopware\\Bundle\\MediaBundle\\Strategy\\StrategyFactory' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/Strategy/StrategyFactory.php',
@@ -1938,6 +1976,7 @@ class ComposerStaticInitShopware
         'Shopware\\Bundle\\PluginInstallerBundle\\Service\\LegacyPluginExtractor' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/PluginInstallerBundle/Service/LegacyPluginExtractor.php',
         'Shopware\\Bundle\\PluginInstallerBundle\\Service\\LegacyPluginInstaller' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/PluginInstallerBundle/Service/LegacyPluginInstaller.php',
         'Shopware\\Bundle\\PluginInstallerBundle\\Service\\PluginExtractor' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/PluginInstallerBundle/Service/PluginExtractor.php',
+        'Shopware\\Bundle\\PluginInstallerBundle\\Service\\PluginInitializer' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/PluginInstallerBundle/Service/PluginInitializer.php',
         'Shopware\\Bundle\\PluginInstallerBundle\\Service\\PluginInstaller' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/PluginInstallerBundle/Service/PluginInstaller.php',
         'Shopware\\Bundle\\PluginInstallerBundle\\Service\\PluginLicenceService' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/PluginInstallerBundle/Service/PluginLicenceService.php',
         'Shopware\\Bundle\\PluginInstallerBundle\\Service\\PluginLocalService' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/PluginInstallerBundle/Service/PluginLocalService.php',
@@ -1946,6 +1985,8 @@ class ComposerStaticInitShopware
         'Shopware\\Bundle\\PluginInstallerBundle\\Service\\PluginZipDetector' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/PluginInstallerBundle/Service/PluginZipDetector.php',
         'Shopware\\Bundle\\PluginInstallerBundle\\Service\\StoreOrderService' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/PluginInstallerBundle/Service/StoreOrderService.php',
         'Shopware\\Bundle\\PluginInstallerBundle\\Service\\SubscriptionService' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/PluginInstallerBundle/Service/SubscriptionService.php',
+        'Shopware\\Bundle\\PluginInstallerBundle\\Service\\UniqueIdGeneratorInterface' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/PluginInstallerBundle/Service/UniqueIdGeneratorInterface.php',
+        'Shopware\\Bundle\\PluginInstallerBundle\\Service\\UniqueIdGenerator\\UniqueIdGenerator' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/PluginInstallerBundle/Service/UniqueIdGenerator/UniqueIdGenerator.php',
         'Shopware\\Bundle\\PluginInstallerBundle\\Service\\ZipUtils' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/PluginInstallerBundle/Service/ZipUtils.php',
         'Shopware\\Bundle\\PluginInstallerBundle\\StoreClient' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/PluginInstallerBundle/StoreClient.php',
         'Shopware\\Bundle\\PluginInstallerBundle\\Struct\\AccessTokenStruct' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/PluginInstallerBundle/Struct/AccessTokenStruct.php',
@@ -2313,6 +2354,7 @@ class ComposerStaticInitShopware
         'Shopware\\Commands\\FirstRunWizardEnableCommand' => __DIR__ . '/../..' . '/engine/Shopware/Commands/FirstRunWizardEnableCommand.php',
         'Shopware\\Commands\\GenerateAttributesCommand' => __DIR__ . '/../..' . '/engine/Shopware/Commands/GenerateAttributesCommand.php',
         'Shopware\\Commands\\GenerateProductFeedCommand' => __DIR__ . '/../..' . '/engine/Shopware/Commands/GenerateProductFeedCommand.php',
+        'Shopware\\Commands\\MigrateArticleAttributeTranslationsCommand' => __DIR__ . '/../..' . '/engine/Shopware/Commands/MigrateArticleAttributeTranslationsCommand.php',
         'Shopware\\Commands\\MigrationsMigrateCommand' => __DIR__ . '/../..' . '/engine/Shopware/Commands/MigrationsMigrateCommand.php',
         'Shopware\\Commands\\PluginActivateCommand' => __DIR__ . '/../..' . '/engine/Shopware/Commands/PluginActivateCommand.php',
         'Shopware\\Commands\\PluginConfigListCommand' => __DIR__ . '/../..' . '/engine/Shopware/Commands/PluginConfigListCommand.php',
@@ -2326,7 +2368,9 @@ class ComposerStaticInitShopware
         'Shopware\\Commands\\PluginUninstallCommand' => __DIR__ . '/../..' . '/engine/Shopware/Commands/PluginUninstallCommand.php',
         'Shopware\\Commands\\PluginUpdateCommand' => __DIR__ . '/../..' . '/engine/Shopware/Commands/PluginUpdateCommand.php',
         'Shopware\\Commands\\RebuildCategoryTreeCommand' => __DIR__ . '/../..' . '/engine/Shopware/Commands/RebuildCategoryTreeCommand.php',
+        'Shopware\\Commands\\RebuildSeoIndexCommand' => __DIR__ . '/../..' . '/engine/Shopware/Commands/RebuildSeoIndexCommand.php',
         'Shopware\\Commands\\RefreshSearchIndexCommand' => __DIR__ . '/../..' . '/engine/Shopware/Commands/RefreshSearchIndexCommand.php',
+        'Shopware\\Commands\\SessionCleanupCommand' => __DIR__ . '/../..' . '/engine/Shopware/Commands/SessionCleanupCommand.php',
         'Shopware\\Commands\\SettingsLabelsFindMissingCommand' => __DIR__ . '/../..' . '/engine/Shopware/Commands/SettingsLabelsFindMissingCommand.php',
         'Shopware\\Commands\\ShopwareCommand' => __DIR__ . '/../..' . '/engine/Shopware/Commands/ShopwareCommand.php',
         'Shopware\\Commands\\SnippetsFindMissingCommand' => __DIR__ . '/../..' . '/engine/Shopware/Commands/SnippetsFindMissingCommand.php',
@@ -2373,6 +2417,7 @@ class ComposerStaticInitShopware
         'Shopware\\Components\\Api\\Resource\\Translation' => __DIR__ . '/../..' . '/engine/Shopware/Components/Api/Resource/Translation.php',
         'Shopware\\Components\\Api\\Resource\\Variant' => __DIR__ . '/../..' . '/engine/Shopware/Components/Api/Resource/Variant.php',
         'Shopware\\Components\\AttributeSubscriber' => __DIR__ . '/../..' . '/engine/Shopware/Components/AttributeSubscriber.php',
+        'Shopware\\Components\\CSRFGetProtectionAware' => __DIR__ . '/../..' . '/engine/Shopware/Components/CSRFGetProtectionAware.php',
         'Shopware\\Components\\CSRFTokenValidationException' => __DIR__ . '/../..' . '/engine/Shopware/Components/CSRFTokenValidationException.php',
         'Shopware\\Components\\CSRFTokenValidator' => __DIR__ . '/../..' . '/engine/Shopware/Components/CSRFTokenValidator.php',
         'Shopware\\Components\\CSRFWhitelistAware' => __DIR__ . '/../..' . '/engine/Shopware/Components/CSRFWhitelistAware.php',
@@ -2409,7 +2454,9 @@ class ComposerStaticInitShopware
         'Shopware\\Components\\DependencyInjection\\Compiler\\TagReplaceTrait' => __DIR__ . '/../..' . '/engine/Shopware/Components/DependencyInjection/Compiler/TagReplaceTrait.php',
         'Shopware\\Components\\DependencyInjection\\Container' => __DIR__ . '/../..' . '/engine/Shopware/Components/DependencyInjection/Container.php',
         'Shopware\\Components\\DependencyInjection\\ContainerAwareInterface' => __DIR__ . '/../..' . '/engine/Shopware/Components/DependencyInjection/ContainerAwareInterface.php',
+        'Shopware\\Components\\Emotion\\ComponentInstaller' => __DIR__ . '/../..' . '/engine/Shopware/Components/Emotion/ComponentInstaller.php',
         'Shopware\\Components\\Emotion\\DeviceConfiguration' => __DIR__ . '/../..' . '/engine/Shopware/Components/Emotion/DeviceConfiguration.php',
+        'Shopware\\Components\\Emotion\\EmotionComponentViewSubscriber' => __DIR__ . '/../..' . '/engine/Shopware/Components/Emotion/EmotionComponentViewSubscriber.php',
         'Shopware\\Components\\ErrorSubscriber' => __DIR__ . '/../..' . '/engine/Shopware/Components/ErrorSubscriber.php',
         'Shopware\\Components\\Escaper\\Escaper' => __DIR__ . '/../..' . '/engine/Shopware/Components/Escaper/Escaper.php',
         'Shopware\\Components\\Escaper\\EscaperInterface' => __DIR__ . '/../..' . '/engine/Shopware/Components/Escaper/EscaperInterface.php',
@@ -2466,6 +2513,7 @@ class ComposerStaticInitShopware
         'Shopware\\Components\\Log\\Handler\\DoctrineDBALHandler' => __DIR__ . '/../..' . '/engine/Shopware/Components/Log/Handler/DoctrineDBALHandler.php',
         'Shopware\\Components\\Log\\Handler\\EnlightMailHandler' => __DIR__ . '/../..' . '/engine/Shopware/Components/Log/Handler/EnlightMailHandler.php',
         'Shopware\\Components\\Log\\Handler\\FirePHPHandler' => __DIR__ . '/../..' . '/engine/Shopware/Components/Log/Handler/FirePHPHandler.php',
+        'Shopware\\Components\\Log\\Parser\\LogfileParser' => __DIR__ . '/../..' . '/engine/Shopware/Components/Log/Parser/LogfileParser.php',
         'Shopware\\Components\\Log\\Processor\\ShopwareEnvironmentProcessor' => __DIR__ . '/../..' . '/engine/Shopware/Components/Log/Processor/ShopwareEnvironmentProcessor.php',
         'Shopware\\Components\\Logger' => __DIR__ . '/../..' . '/engine/Shopware/Components/Logger.php',
         'Shopware\\Components\\MemoryLimit' => __DIR__ . '/../..' . '/engine/Shopware/Components/MemoryLimit.php',
@@ -2520,11 +2568,15 @@ class ComposerStaticInitShopware
         'Shopware\\Components\\Plugin\\Context\\InstallContext' => __DIR__ . '/../..' . '/engine/Shopware/Components/Plugin/Context/InstallContext.php',
         'Shopware\\Components\\Plugin\\Context\\UninstallContext' => __DIR__ . '/../..' . '/engine/Shopware/Components/Plugin/Context/UninstallContext.php',
         'Shopware\\Components\\Plugin\\Context\\UpdateContext' => __DIR__ . '/../..' . '/engine/Shopware/Components/Plugin/Context/UpdateContext.php',
+        'Shopware\\Components\\Plugin\\CronjobSynchronizer' => __DIR__ . '/../..' . '/engine/Shopware/Components/Plugin/CronjobSynchronizer.php',
         'Shopware\\Components\\Plugin\\DBALConfigReader' => __DIR__ . '/../..' . '/engine/Shopware/Components/Plugin/DBALConfigReader.php',
         'Shopware\\Components\\Plugin\\FormSynchronizer' => __DIR__ . '/../..' . '/engine/Shopware/Components/Plugin/FormSynchronizer.php',
         'Shopware\\Components\\Plugin\\MenuSynchronizer' => __DIR__ . '/../..' . '/engine/Shopware/Components/Plugin/MenuSynchronizer.php',
+        'Shopware\\Components\\Plugin\\PaymentInstaller' => __DIR__ . '/../..' . '/engine/Shopware/Components/Plugin/PaymentInstaller.php',
         'Shopware\\Components\\Plugin\\RequirementValidator' => __DIR__ . '/../..' . '/engine/Shopware/Components/Plugin/RequirementValidator.php',
+        'Shopware\\Components\\Plugin\\ResourceSubscriber' => __DIR__ . '/../..' . '/engine/Shopware/Components/Plugin/ResourceSubscriber.php',
         'Shopware\\Components\\Plugin\\XmlConfigDefinitionReader' => __DIR__ . '/../..' . '/engine/Shopware/Components/Plugin/XmlConfigDefinitionReader.php',
+        'Shopware\\Components\\Plugin\\XmlCronjobReader' => __DIR__ . '/../..' . '/engine/Shopware/Components/Plugin/XmlCronjobReader.php',
         'Shopware\\Components\\Plugin\\XmlMenuReader' => __DIR__ . '/../..' . '/engine/Shopware/Components/Plugin/XmlMenuReader.php',
         'Shopware\\Components\\Plugin\\XmlPluginInfoReader' => __DIR__ . '/../..' . '/engine/Shopware/Components/Plugin/XmlPluginInfoReader.php',
         'Shopware\\Components\\ProductStream\\CriteriaFactory' => __DIR__ . '/../..' . '/engine/Shopware/Components/ProductStream/CriteriaFactory.php',
@@ -2553,6 +2605,7 @@ class ComposerStaticInitShopware
         'Shopware\\Components\\Routing\\PreFilterInterface' => __DIR__ . '/../..' . '/engine/Shopware/Components/Routing/PreFilterInterface.php',
         'Shopware\\Components\\Routing\\Router' => __DIR__ . '/../..' . '/engine/Shopware/Components/Routing/Router.php',
         'Shopware\\Components\\Routing\\RouterInterface' => __DIR__ . '/../..' . '/engine/Shopware/Components/Routing/RouterInterface.php',
+        'Shopware\\Components\\Session\\PdoSessionHandler' => __DIR__ . '/../..' . '/engine/Shopware/Components/Session/PdoSessionHandler.php',
         'Shopware\\Components\\SitePageMenu' => __DIR__ . '/../..' . '/engine/Shopware/Components/SitePageMenu.php',
         'Shopware\\Components\\SitemapXMLRepository' => __DIR__ . '/../..' . '/engine/Shopware/Components/SitemapXMLRepository.php',
         'Shopware\\Components\\Slug\\CocurSlugifyAdapter' => __DIR__ . '/../..' . '/engine/Shopware/Components/Slug/CocurSlugifyAdapter.php',
@@ -2577,6 +2630,8 @@ class ComposerStaticInitShopware
         'Shopware\\Components\\Theme\\Generator' => __DIR__ . '/../..' . '/engine/Shopware/Components/Theme/Generator.php',
         'Shopware\\Components\\Theme\\Inheritance' => __DIR__ . '/../..' . '/engine/Shopware/Components/Theme/Inheritance.php',
         'Shopware\\Components\\Theme\\Installer' => __DIR__ . '/../..' . '/engine/Shopware/Components/Theme/Installer.php',
+        'Shopware\\Components\\Theme\\JavascriptCollector' => __DIR__ . '/../..' . '/engine/Shopware/Components/Theme/JavascriptCollector.php',
+        'Shopware\\Components\\Theme\\LessCollector' => __DIR__ . '/../..' . '/engine/Shopware/Components/Theme/LessCollector.php',
         'Shopware\\Components\\Theme\\LessCompiler' => __DIR__ . '/../..' . '/engine/Shopware/Components/Theme/LessCompiler.php',
         'Shopware\\Components\\Theme\\LessCompiler\\Oyejorge' => __DIR__ . '/../..' . '/engine/Shopware/Components/Theme/LessCompiler/Oyejorge.php',
         'Shopware\\Components\\Theme\\LessDefinition' => __DIR__ . '/../..' . '/engine/Shopware/Components/Theme/LessDefinition.php',
@@ -3402,6 +3457,7 @@ class ComposerStaticInitShopware
         'Symfony\\Component\\Form\\Extension\\Validator\\Type\\FormTypeValidatorExtension' => __DIR__ . '/..' . '/symfony/form/Extension/Validator/Type/FormTypeValidatorExtension.php',
         'Symfony\\Component\\Form\\Extension\\Validator\\Type\\RepeatedTypeValidatorExtension' => __DIR__ . '/..' . '/symfony/form/Extension/Validator/Type/RepeatedTypeValidatorExtension.php',
         'Symfony\\Component\\Form\\Extension\\Validator\\Type\\SubmitTypeValidatorExtension' => __DIR__ . '/..' . '/symfony/form/Extension/Validator/Type/SubmitTypeValidatorExtension.php',
+        'Symfony\\Component\\Form\\Extension\\Validator\\Type\\UploadValidatorExtension' => __DIR__ . '/..' . '/symfony/form/Extension/Validator/Type/UploadValidatorExtension.php',
         'Symfony\\Component\\Form\\Extension\\Validator\\Util\\ServerParams' => __DIR__ . '/..' . '/symfony/form/Extension/Validator/Util/ServerParams.php',
         'Symfony\\Component\\Form\\Extension\\Validator\\ValidatorExtension' => __DIR__ . '/..' . '/symfony/form/Extension/Validator/ValidatorExtension.php',
         'Symfony\\Component\\Form\\Extension\\Validator\\ValidatorTypeGuesser' => __DIR__ . '/..' . '/symfony/form/Extension/Validator/ValidatorTypeGuesser.php',
@@ -3583,6 +3639,7 @@ class ComposerStaticInitShopware
         'Symfony\\Component\\HttpKernel\\EventListener\\SurrogateListener' => __DIR__ . '/..' . '/symfony/http-kernel/EventListener/SurrogateListener.php',
         'Symfony\\Component\\HttpKernel\\EventListener\\TestSessionListener' => __DIR__ . '/..' . '/symfony/http-kernel/EventListener/TestSessionListener.php',
         'Symfony\\Component\\HttpKernel\\EventListener\\TranslatorListener' => __DIR__ . '/..' . '/symfony/http-kernel/EventListener/TranslatorListener.php',
+        'Symfony\\Component\\HttpKernel\\EventListener\\ValidateRequestListener' => __DIR__ . '/..' . '/symfony/http-kernel/EventListener/ValidateRequestListener.php',
         'Symfony\\Component\\HttpKernel\\Event\\FilterControllerEvent' => __DIR__ . '/..' . '/symfony/http-kernel/Event/FilterControllerEvent.php',
         'Symfony\\Component\\HttpKernel\\Event\\FilterResponseEvent' => __DIR__ . '/..' . '/symfony/http-kernel/Event/FilterResponseEvent.php',
         'Symfony\\Component\\HttpKernel\\Event\\FinishRequestEvent' => __DIR__ . '/..' . '/symfony/http-kernel/Event/FinishRequestEvent.php',
@@ -3738,6 +3795,22 @@ class ComposerStaticInitShopware
         'Symfony\\Component\\OptionsResolver\\Options' => __DIR__ . '/..' . '/symfony/options-resolver/Options.php',
         'Symfony\\Component\\OptionsResolver\\OptionsResolver' => __DIR__ . '/..' . '/symfony/options-resolver/OptionsResolver.php',
         'Symfony\\Component\\OptionsResolver\\OptionsResolverInterface' => __DIR__ . '/..' . '/symfony/options-resolver/OptionsResolverInterface.php',
+        'Symfony\\Component\\Process\\Exception\\ExceptionInterface' => __DIR__ . '/..' . '/symfony/process/Exception/ExceptionInterface.php',
+        'Symfony\\Component\\Process\\Exception\\InvalidArgumentException' => __DIR__ . '/..' . '/symfony/process/Exception/InvalidArgumentException.php',
+        'Symfony\\Component\\Process\\Exception\\LogicException' => __DIR__ . '/..' . '/symfony/process/Exception/LogicException.php',
+        'Symfony\\Component\\Process\\Exception\\ProcessFailedException' => __DIR__ . '/..' . '/symfony/process/Exception/ProcessFailedException.php',
+        'Symfony\\Component\\Process\\Exception\\ProcessTimedOutException' => __DIR__ . '/..' . '/symfony/process/Exception/ProcessTimedOutException.php',
+        'Symfony\\Component\\Process\\Exception\\RuntimeException' => __DIR__ . '/..' . '/symfony/process/Exception/RuntimeException.php',
+        'Symfony\\Component\\Process\\ExecutableFinder' => __DIR__ . '/..' . '/symfony/process/ExecutableFinder.php',
+        'Symfony\\Component\\Process\\PhpExecutableFinder' => __DIR__ . '/..' . '/symfony/process/PhpExecutableFinder.php',
+        'Symfony\\Component\\Process\\PhpProcess' => __DIR__ . '/..' . '/symfony/process/PhpProcess.php',
+        'Symfony\\Component\\Process\\Pipes\\AbstractPipes' => __DIR__ . '/..' . '/symfony/process/Pipes/AbstractPipes.php',
+        'Symfony\\Component\\Process\\Pipes\\PipesInterface' => __DIR__ . '/..' . '/symfony/process/Pipes/PipesInterface.php',
+        'Symfony\\Component\\Process\\Pipes\\UnixPipes' => __DIR__ . '/..' . '/symfony/process/Pipes/UnixPipes.php',
+        'Symfony\\Component\\Process\\Pipes\\WindowsPipes' => __DIR__ . '/..' . '/symfony/process/Pipes/WindowsPipes.php',
+        'Symfony\\Component\\Process\\Process' => __DIR__ . '/..' . '/symfony/process/Process.php',
+        'Symfony\\Component\\Process\\ProcessBuilder' => __DIR__ . '/..' . '/symfony/process/ProcessBuilder.php',
+        'Symfony\\Component\\Process\\ProcessUtils' => __DIR__ . '/..' . '/symfony/process/ProcessUtils.php',
         'Symfony\\Component\\PropertyAccess\\Exception\\AccessException' => __DIR__ . '/..' . '/symfony/property-access/Exception/AccessException.php',
         'Symfony\\Component\\PropertyAccess\\Exception\\ExceptionInterface' => __DIR__ . '/..' . '/symfony/property-access/Exception/ExceptionInterface.php',
         'Symfony\\Component\\PropertyAccess\\Exception\\InvalidArgumentException' => __DIR__ . '/..' . '/symfony/property-access/Exception/InvalidArgumentException.php',
@@ -3761,6 +3834,7 @@ class ComposerStaticInitShopware
         'Symfony\\Component\\Serializer\\Annotation\\MaxDepth' => __DIR__ . '/..' . '/symfony/serializer/Annotation/MaxDepth.php',
         'Symfony\\Component\\Serializer\\Encoder\\ChainDecoder' => __DIR__ . '/..' . '/symfony/serializer/Encoder/ChainDecoder.php',
         'Symfony\\Component\\Serializer\\Encoder\\ChainEncoder' => __DIR__ . '/..' . '/symfony/serializer/Encoder/ChainEncoder.php',
+        'Symfony\\Component\\Serializer\\Encoder\\CsvEncoder' => __DIR__ . '/..' . '/symfony/serializer/Encoder/CsvEncoder.php',
         'Symfony\\Component\\Serializer\\Encoder\\DecoderInterface' => __DIR__ . '/..' . '/symfony/serializer/Encoder/DecoderInterface.php',
         'Symfony\\Component\\Serializer\\Encoder\\EncoderInterface' => __DIR__ . '/..' . '/symfony/serializer/Encoder/EncoderInterface.php',
         'Symfony\\Component\\Serializer\\Encoder\\JsonDecode' => __DIR__ . '/..' . '/symfony/serializer/Encoder/JsonDecode.php',
@@ -3769,6 +3843,7 @@ class ComposerStaticInitShopware
         'Symfony\\Component\\Serializer\\Encoder\\NormalizationAwareInterface' => __DIR__ . '/..' . '/symfony/serializer/Encoder/NormalizationAwareInterface.php',
         'Symfony\\Component\\Serializer\\Encoder\\SerializerAwareEncoder' => __DIR__ . '/..' . '/symfony/serializer/Encoder/SerializerAwareEncoder.php',
         'Symfony\\Component\\Serializer\\Encoder\\XmlEncoder' => __DIR__ . '/..' . '/symfony/serializer/Encoder/XmlEncoder.php',
+        'Symfony\\Component\\Serializer\\Encoder\\YamlEncoder' => __DIR__ . '/..' . '/symfony/serializer/Encoder/YamlEncoder.php',
         'Symfony\\Component\\Serializer\\Exception\\BadMethodCallException' => __DIR__ . '/..' . '/symfony/serializer/Exception/BadMethodCallException.php',
         'Symfony\\Component\\Serializer\\Exception\\CircularReferenceException' => __DIR__ . '/..' . '/symfony/serializer/Exception/CircularReferenceException.php',
         'Symfony\\Component\\Serializer\\Exception\\ExceptionInterface' => __DIR__ . '/..' . '/symfony/serializer/Exception/ExceptionInterface.php',

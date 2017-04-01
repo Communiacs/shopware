@@ -30,6 +30,8 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\BirthdayType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Constraints\NotBlank;
@@ -80,6 +82,14 @@ class ProfileUpdateFormType extends AbstractType
      */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
+        $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) {
+            $data = $event->getData();
+            array_walk_recursive($data, function (&$item, $key) {
+                $item = strip_tags($item);
+            });
+            $event->setData($data);
+        });
+
         $builder->add('salutation', SalutationType::class, [
             'constraints' => [new NotBlank(['message' => null])]
         ]);
@@ -96,6 +106,10 @@ class ProfileUpdateFormType extends AbstractType
 
         $builder->add('birthday', BirthdayType::class, [
             'constraints' => $this->getBirthdayConstraints()
+        ]);
+
+        $builder->add('attribute', AttributeFormType::class, [
+            'data_class' => \Shopware\Models\Attribute\Customer::class
         ]);
     }
 

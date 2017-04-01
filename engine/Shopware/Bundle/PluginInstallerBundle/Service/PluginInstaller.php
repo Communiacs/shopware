@@ -38,9 +38,11 @@ use Shopware\Kernel;
 use Shopware\Models\Plugin\Plugin;
 use Shopware\Components\Plugin\FormSynchronizer;
 use Shopware\Components\Plugin\MenuSynchronizer;
+use Shopware\Components\Plugin\CronjobSynchronizer;
 use Shopware\Components\Plugin\XmlMenuReader;
 use Shopware\Components\Plugin\XmlConfigDefinitionReader;
 use Shopware\Components\Plugin\XmlPluginInfoReader;
+use Shopware\Components\Plugin\XmlCronjobReader;
 
 class PluginInstaller
 {
@@ -65,19 +67,35 @@ class PluginInstaller
     private $requirementValidator;
 
     /**
+     * @var \PDO
+     */
+    private $pdo;
+
+    /**
+     * @var string
+     */
+    private $pluginDirectory;
+
+    /**
      * @param ModelManager $em
      * @param DatabaseHandler $snippetHandler
      * @param RequirementValidator $requirementValidator
+     * @param \PDO $pdo
+     * @param $pluginDirectory
      */
     public function __construct(
         ModelManager $em,
         DatabaseHandler $snippetHandler,
-        RequirementValidator $requirementValidator
+        RequirementValidator $requirementValidator,
+        \PDO $pdo,
+        $pluginDirectory
     ) {
         $this->em = $em;
         $this->connection = $this->em->getConnection();
         $this->snippetHandler = $snippetHandler;
         $this->requirementValidator = $requirementValidator;
+        $this->pdo = $pdo;
+        $this->pluginDirectory = $pluginDirectory;
     }
 
     /**
@@ -199,6 +217,10 @@ class PluginInstaller
             $this->installMenu($plugin, $bootstrap->getPath().'/Resources/menu.xml');
         }
 
+        if (is_file($bootstrap->getPath().'/Resources/cronjob.xml')) {
+            $this->installCronjob($plugin, $bootstrap->getPath().'/Resources/cronjob.xml');
+        }
+
         if (file_exists($bootstrap->getPath() . '/Resources/snippets')) {
             $this->installSnippets($bootstrap);
         }
@@ -250,9 +272,11 @@ class PluginInstaller
      */
     public function refreshPluginList(\DateTimeInterface $refreshDate)
     {
-        /** @var Kernel $kernel */
-        $kernel = Shopware()->Container()->get('kernel');
-        $plugins = $kernel->getPlugins();
+        $initializer = new PluginInitializer(
+            $this->pdo,
+            $this->pluginDirectory
+        );
+        $plugins = $initializer->initializePlugins();
 
         foreach ($plugins as $plugin) {
             $pluginInfoPath = $plugin->getPath().'/plugin.xml';
@@ -268,18 +292,23 @@ class PluginInstaller
                 [$plugin->getName()]
             );
 
-            $description = '';
-            if (isset($info['description'])) {
-                foreach ($info['description'] as $locale => $string) {
-                    $description .= sprintf('<div lang="%s">%s</div>', $locale, $string);
+            $translations = [];
+            $translatableInfoKeys = ['label', 'description'];
+            foreach ($info as $key => $value) {
+                if (!in_array($key, $translatableInfoKeys, true)) {
+                    continue;
+                }
+
+                foreach ($value as $lang => $translation) {
+                    $translations[$lang][$key] = $translation;
                 }
             }
 
-            $info['description'] = $description;
+            $info['label'] = isset($info['label']['en']) ? $info['label']['en'] : $plugin->getName();
+            $info['description'] = isset($info['description']['en']) ? $info['description']['en'] : null;
             $info['version'] = isset($info['version']) ? $info['version'] : '0.0.1';
             $info['author'] = isset($info['author']) ? $info['author'] : null;
             $info['link'] = isset($info['link']) ? $info['link'] : null;
-            $info['label'] = isset($info['label']) && isset($info['label']['en']) ? $info['label']['en'] : $plugin->getName();
 
             $data = [
                 'namespace' => 'ShopwarePlugins',
@@ -293,7 +322,8 @@ class PluginInstaller
                 'capability_install' => true,
                 'capability_enable' => true,
                 'capability_secure_uninstall' => true,
-                'refresh_date' => $refreshDate
+                'refresh_date' => $refreshDate,
+                'translations' => $translations ? json_encode($translations) : null,
             ];
 
             if ($currentPluginInfo) {
@@ -349,6 +379,19 @@ class PluginInstaller
     }
 
     /**
+     * @param Plugin $plugin
+     * @param string $file
+     */
+    private function installCronjob(Plugin $plugin, $file)
+    {
+        $cronjobReader = new XmlCronjobReader();
+        $cronjobs = $cronjobReader->read($file);
+
+        $cronjobSynchronizer = new CronjobSynchronizer($this->em->getConnection());
+        $cronjobSynchronizer->synchronize($plugin, $cronjobs);
+    }
+
+    /**
      * @param string $updateVersion
      * @param string $currentVersion
      * @return boolean
@@ -393,21 +436,21 @@ class PluginInstaller
     private function removeEmotionComponents($pluginId)
     {
         // Remove emotion-components
-        $sql = "DELETE s_emotion_element_value, s_emotion_element
+        $sql = 'DELETE s_emotion_element_value, s_emotion_element
                 FROM s_emotion_element_value
                 RIGHT JOIN s_emotion_element
                     ON s_emotion_element.id = s_emotion_element_value.elementID
                 INNER JOIN s_library_component
                     ON s_library_component.id = s_emotion_element.componentID
-                    AND s_library_component.pluginID = :pluginId";
+                    AND s_library_component.pluginID = :pluginId';
 
         $this->connection->executeUpdate($sql, [':pluginId' => $pluginId]);
 
-        $sql = "DELETE s_library_component_field, s_library_component
+        $sql = 'DELETE s_library_component_field, s_library_component
                 FROM s_library_component_field
                 INNER JOIN s_library_component
                     ON s_library_component.id = s_library_component_field.componentID
-                    AND s_library_component.pluginID = :pluginId";
+                    AND s_library_component.pluginID = :pluginId';
 
         $this->connection->executeUpdate($sql, [':pluginId' => $pluginId]);
     }

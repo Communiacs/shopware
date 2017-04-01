@@ -22,6 +22,7 @@
  * our trademarks remain entirely with us.
  */
 
+use Shopware\Bundle\AttributeBundle\Service\CrudService;
 use Shopware\Bundle\StoreFrontBundle;
 use Shopware\Bundle\StoreFrontBundle\Service\AdditionalTextServiceInterface;
 use Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface;
@@ -195,7 +196,7 @@ class sExport
     }
 
     /**
-     * @param $id
+     * @param int $id
      * @return mixed
      */
     private function getShopData($id)
@@ -207,11 +208,11 @@ class sExport
         }
 
         if (empty($id)) {
-            $sql = "s.`default`=1";
+            $sql = 's.`default`=1';
         } elseif (is_numeric($id)) {
-            $sql = "s.id=".$id;
+            $sql = 's.id=' . $id;
         } elseif (is_string($id)) {
-            $sql = "s.name=".$this->db->quote(trim($id));
+            $sql = 's.name=' . $this->db->quote(trim($id));
         }
 
         $cache[$id] = $this->db->fetchRow("
@@ -224,7 +225,8 @@ class sExport
               COALESCE (s.base_path, m.base_path) AS base_path,
               COALESCE (s.base_url, m.base_url) AS base_url,
               COALESCE (s.hosts, m.hosts) AS hosts,
-              COALESCE (s.secure, m.secure) AS secure,
+              GREATEST (COALESCE (s.secure, 0), COALESCE (m.secure, 0)) AS secure,
+              GREATEST (COALESCE (s.always_secure, 0), COALESCE (m.always_secure, 0)) AS always_secure,
               COALESCE (s.secure_host, m.secure_host) AS secure_host,
               COALESCE (s.secure_base_path, m.secure_base_path) AS secure_base_path,
               COALESCE (s.template_id, m.template_id) AS template_id,
@@ -235,8 +237,7 @@ class sExport
               s.fallback_id,
               s.customer_scope,
               s.`default`,
-              s.active,
-              s.always_secure
+              s.active
             FROM s_core_shops s
             LEFT JOIN s_core_shops m
               ON m.id=s.main_id
@@ -588,10 +589,15 @@ class sExport
         return Shopware()->Modules()->Core()->sRewriteLink($this->sSYSTEM->sCONFIG["sBASEFILE"]."?sViewport=detail&sArticle=$articleID", $title).(empty($this->sSettings["partnerID"])?"":"?sPartner=".urlencode($this->sSettings["partnerID"]));
     }
 
+    /**
+     * @param string $hash
+     * @param null|string $imageSize
+     * @return null|string
+     */
     public function sGetImageLink($hash, $imageSize = null)
     {
         if (empty($hash)) {
-            return "";
+            return '';
         }
 
         $mediaService = Shopware()->Container()->get('shopware_media.media_service');
@@ -601,7 +607,7 @@ class sExport
 
         // if no imageSize was set, return the full image
         if (null === $imageSize) {
-            return $mediaService->getUrl($imageDir . $hash);
+            return $this->fixShopHost($mediaService->getUrl($imageDir . $hash), $mediaService->getAdapterType());
         }
 
         // get filename and extension in order to insert thumbnail size later
@@ -621,10 +627,13 @@ class sExport
         }
 
         if (isset($sizes[$imageSize])) {
-            return $mediaService->getUrl($thumbDir . $fileName . '_' . $sizes[(int) $imageSize] . '.' . $extension);
+            return $this->fixShopHost(
+                $mediaService->getUrl($thumbDir . $fileName . '_' . $sizes[(int) $imageSize] . '.' . $extension),
+                $mediaService->getAdapterType()
+            );
         }
 
-        return "";
+        return '';
     }
 
     /**
@@ -681,8 +690,13 @@ class sExport
                     "txtArtikel" => "name",
                     "txtzusatztxt" => "additionaltext"
                 );
-                for ($i=1; $i<=20; $i++) {
-                    $map["attr$i"] = "attr$i";
+
+                $attributes = Shopware()->Container()->get('shopware_attribute.crud_service')->getList('s_articles_attributes');
+                foreach ($attributes as $attribute) {
+                    if ($attribute->isIdentifier()) {
+                        continue;
+                    }
+                    $map[CrudService::EXT_JS_PREFIX . $attribute->getColumnName()] = $attribute->getColumnName();
                 }
                 break;
             case "link":
@@ -866,7 +880,7 @@ class sExport
         if (!empty($this->sSettings["own_filter"])&&trim($this->sSettings["own_filter"])) {
             $sql_add_where[] = "(".$this->sSettings["own_filter"].")";
         }
-        if ($this->config->offsetGet('hideNoInstock')) {
+        if ($this->config->offsetGet('hideNoInStock')) {
             $sql_add_where[] = "(
                 (a.laststock * v.instock >= a.laststock * v.minpurchase)
                 OR
@@ -902,6 +916,7 @@ class sExport
                 d.shippingfree,
                 a.topseller,
                 a.keywords,
+                d.active as variantActive,
                 d.minpurchase,
                 d.purchasesteps,
                 d.maxpurchase,
@@ -985,7 +1000,7 @@ class sExport
 
             LEFT JOIN s_core_pricegroups_discounts pd
             ON a.pricegroupActive=1
-            AND	a.pricegroupID=groupID
+            AND a.pricegroupID=groupID
             AND customergroupID = 1
             AND discountstart=1
 
@@ -1057,6 +1072,12 @@ class sExport
         if ($result === false) {
             return;
         }
+
+        $result = Shopware()->Container()->get('events')->filter(
+            'Shopware_Modules_Export_ExportResult_Filter',
+            $result,
+            ['feedId' => $this->sFeedID, 'subject' => $this]
+        );
 
         // Update db with the latest values
         $count = (int) $result->rowCount();
@@ -1309,10 +1330,10 @@ class sExport
         }
 
         if (!empty($sql_where)) {
-            $sql_from = " s_premium_dispatch_countries sc,	s_core_countries c";
+            $sql_from = ' s_premium_dispatch_countries sc, s_core_countries c';
             $sql_where = "AND $sql_where AND c.id=sc.countryID";
         } else {
-            $sql_from = "";
+            $sql_from = '';
         }
         $sql = "
             SELECT sd.id, name, sd.description, sd.shippingfree
@@ -1320,7 +1341,7 @@ class sExport
                 s_premium_dispatch sd,
                 $sql_from
             WHERE sd.active = 1
-            AND	sd.id = sc.dispatchID
+            AND sd.id = sc.dispatchID
             $sql_where
             ORDER BY $sql_order sd.position ASC LIMIT 1
         ";
@@ -1422,10 +1443,12 @@ class sExport
         if (empty($basket)) {
             return false;
         }
+        $mainID = $this->shopData['main_id'];
+        $shopID = $this->shopData['id'];
         $basket['countryID'] = $countryID;
         $basket['paymentID'] = $paymentID;
         $basket['customergroupID'] = $this->sCustomergroup['id'];
-        $basket['multishopID'] = $this->sMultishop['id'];
+        $basket['multishopID'] = $mainID === null ? $shopID : $mainID;
         $basket['sessionID'] = null;
         return $basket;
     }
@@ -1658,7 +1681,7 @@ class sExport
                 } elseif ($dispatch['calculation']==2) {
                     $from = round($basket['count_article']);
                 } elseif ($dispatch['calculation']==3) {
-                    $from = round($basket['calculation_value_'.$dispatch['id']]);
+                    $from = round($basket['calculation_value_'.$dispatch['id']], 2);
                 } else {
                     continue;
                 }
@@ -1712,7 +1735,7 @@ class sExport
         } elseif ($dispatch['calculation']==2) {
             $from = round($basket['count_article']);
         } elseif ($dispatch['calculation']==3) {
-            $from = round($basket['calculation_value_'.$dispatch['id']]);
+            $from = round($basket['calculation_value_'.$dispatch['id']], 2);
         } else {
             return false;
         }
@@ -1745,7 +1768,28 @@ class sExport
             $result['shippingcosts'] += $payment['surcharge'];
         }
 
-
         return $result['shippingcosts'];
+    }
+
+    /**
+     * Makes sure the given URL contains the correct host for the selected (sub-)shop
+     *
+     * @param string $url
+     * @param string $adapterType
+     * @return string
+     */
+    private function fixShopHost($url, $adapterType)
+    {
+        if ($adapterType !== 'local') {
+            return $url;
+        }
+
+        $url = str_replace(parse_url($url, PHP_URL_HOST), $this->shopData['host'], $url);
+
+        if ($this->shopData['always_secure']) {
+            return str_replace('http:', 'https:', $url);
+        }
+
+        return $url;
     }
 }
