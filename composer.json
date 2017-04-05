@@ -60,7 +60,7 @@
         "paragonie/random_compat": "1.4.1",
         "cocur/slugify": "2.2",
         "bcremer/line-reader": "^0.2.0",
-        "wlwwt/sw-composer-installers": "0.3.x-dev"
+        "wlwwt/sw-composer-installers": "0.4.x-dev"
     },
     "suggest": {
         "ext-apcu": "*",
