@@ -118,7 +118,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "5.2.21"
+            "dev-master": "5.2.x-dev"
         }
     },
     "scripts": {
