@@ -1300,6 +1300,14 @@ class Media extends ModelEntity
      ****************************************************************/
 
     /**
+     * @return array
+     */
+    public function getTypeMapping()
+    {
+        return $this->typeMapping;
+    }
+
+    /**
      * Returns the identifier "id"
      *
      * @return int
@@ -1849,8 +1857,9 @@ class Media extends ModelEntity
         if ($this->name !== '') {
             return $this->removeSpecialCharacters($this->name) . '.' . $this->extension;
         }
-            // do whatever you want to generate a unique name
-            return uniqid() . '.' . $this->extension;
+
+        // do whatever you want to generate a unique name
+        return uniqid() . '.' . $this->extension;
     }
 
     /**
@@ -2045,6 +2054,14 @@ class Media extends ModelEntity
             Shopware()->Models()->persist($article);
         }
         Shopware()->Models()->flush();
+    }
+
+    public function removeThumbnails()
+    {
+        $thumbnailSizes = $this->getAllThumbnailSizes();
+
+        $this->removeDefaultThumbnails($this->getFileName());
+        $this->removeAlbumThumbnails($thumbnailSizes, $this->getFileName());
     }
 
     /****************************************************************

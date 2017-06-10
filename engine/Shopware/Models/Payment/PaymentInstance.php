@@ -42,6 +42,12 @@ use Shopware\Components\Model\ModelEntity;
 class PaymentInstance extends ModelEntity
 {
     /**
+     * @var int
+     * @ORM\Column(name="order_id", type="integer")
+     */
+    protected $orderId;
+
+    /**
      * @ORM\ManyToOne(targetEntity="Shopware\Models\Payment\Payment", inversedBy="paymentInstances")
      * @ORM\JoinColumn(name="payment_mean_id", referencedColumnName="id")
      */

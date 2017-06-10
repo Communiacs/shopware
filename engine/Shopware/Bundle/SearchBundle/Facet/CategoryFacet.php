@@ -34,10 +34,46 @@ use Shopware\Bundle\SearchBundle\FacetInterface;
 class CategoryFacet implements FacetInterface
 {
     /**
+     * @var null|string
+     */
+    private $label;
+
+    /**
+     * @var int
+     */
+    private $depth;
+
+    /**
+     * @param string|null $label
+     * @param int         $depth
+     */
+    public function __construct($label = null, $depth = 2)
+    {
+        $this->label = $label;
+        $this->depth = $depth;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getLabel()
+    {
+        return $this->label;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function getName()
     {
         return 'category';
+    }
+
+    /**
+     * @return int
+     */
+    public function getDepth()
+    {
+        return $this->depth;
     }
 }

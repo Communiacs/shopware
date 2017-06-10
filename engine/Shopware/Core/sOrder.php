@@ -765,6 +765,7 @@ class sOrder
         $this->eventManager->notify('Shopware_Modules_Order_SaveOrder_ProcessDetails', [
             'subject' => $this,
             'details' => $this->sBasketData['content'],
+            'orderId' => $orderID,
         ]);
 
         // Save Billing and Shipping-Address to retrace in future
@@ -1437,7 +1438,7 @@ class sOrder
      */
     public function getOrderById($orderId)
     {
-        $sql = <<<EOT
+        $sql = <<<'EOT'
 SELECT
     `o`.`id` as `orderID`,
     `o`.`ordernumber`,
@@ -1510,7 +1511,7 @@ EOT;
      */
     public function getOrderDetailsByOrderId($orderId)
     {
-        $sql = <<<EOT
+        $sql = <<<'EOT'
 SELECT
     `d`.`id` as `orderdetailsID`,
     `d`.`orderID` as `orderID`,
@@ -1557,7 +1558,7 @@ EOT;
      */
     public function getCustomerInformationByOrderId($orderId)
     {
-        $sql = <<<EOT
+        $sql = <<<'EOT'
 SELECT
     `b`.`company` AS `billing_company`,
     `b`.`department` AS `billing_department`,
@@ -1615,10 +1616,11 @@ FROM
     `s_order_billingaddress` as `b`
 LEFT JOIN `s_order_shippingaddress` as `s`
     ON `s`.`orderID` = `b`.`orderID`
-LEFT JOIN `s_user_billingaddress` as `ub`
-    ON `ub`.`userID` = `b`.`userID`
 LEFT JOIN `s_user` as `u`
     ON `b`.`userID` = `u`.`id`
+LEFT JOIN `s_user_addresses` as `ub`
+    ON `u`.`default_billing_address_id`=`ub`.`id`
+    AND `u`.`id`=`ub`.`user_id`
 LEFT JOIN `s_core_countries` as `bc`
     ON `bc`.`id` = `b`.`countryID`
 LEFT JOIN `s_core_countries` as `sc`

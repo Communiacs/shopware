@@ -673,7 +673,7 @@ class Shop extends ModelEntity
     }
 
     /**
-     * @param null $bootstrap Deprecated since 5.2 will be removed in 5.3
+     * @param null $bootstrap Deprecated since 5.2 will be removed in 6.0
      *
      * @return DetachedShop
      */

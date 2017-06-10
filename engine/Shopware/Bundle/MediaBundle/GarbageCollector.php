@@ -41,7 +41,7 @@ class GarbageCollector
     /**
      * @var Connection
      */
-    private $connection = null;
+    private $connection;
 
     /**
      * @var MediaServiceInterface
@@ -98,9 +98,12 @@ class GarbageCollector
      */
     public function getCount()
     {
-        $query = $this->connection->query('SELECT count(*) AS cnt FROM `s_media` WHERE albumID = -13');
-
-        return $query->fetchColumn();
+        return $this->connection->createQueryBuilder()
+            ->select('count(*) as cnt')
+            ->from('s_media')
+            ->where('albumID = -13')
+            ->execute()
+            ->fetchColumn();
     }
 
     /**
@@ -122,7 +125,6 @@ class GarbageCollector
             ON u.mediaId = m.id
             SET albumID=-13
             WHERE u.id IS NULL
-            AND albumID = -1
         ';
         $this->connection->exec($sql);
     }
@@ -145,6 +147,10 @@ class GarbageCollector
 
             case MediaPosition::PARSE_HTML:
                 $this->handleHtmlTable($mediaPosition);
+                break;
+
+            case MediaPosition::PARSE_PIPES:
+                $this->handlePipeTable($mediaPosition);
                 break;
 
             default:
@@ -225,6 +231,25 @@ class GarbageCollector
     }
 
     /**
+     * Handles tables with IDs separated by pipes
+     *
+     * @param MediaPosition $mediaPosition
+     */
+    private function handlePipeTable($mediaPosition)
+    {
+        $values = $this->fetchColumn($mediaPosition);
+
+        foreach ($values as $value) {
+            /** @var array $mediaIds */
+            $mediaIds = array_filter(explode('|', $value));
+
+            foreach ($mediaIds as $id) {
+                $this->addMediaById($id);
+            }
+        }
+    }
+
+    /**
      * @param MediaPosition $mediaPosition
      *
      * @throws \Doctrine\DBAL\DBALException
@@ -277,21 +302,17 @@ class GarbageCollector
             $sql = 'INSERT INTO s_media_used SELECT DISTINCT NULL, m.id FROM s_media m WHERE m.path IN (:mediaPaths)';
             $this->connection->executeQuery(
                 $sql,
-                [
-                    ':mediaPaths' => $paths,
-                ],
-                [
-                    ':mediaPaths' => Connection::PARAM_INT_ARRAY,
-                ]
+                [':mediaPaths' => $paths],
+                [':mediaPaths' => Connection::PARAM_INT_ARRAY]
             );
         }
 
         // process ids
         if (!empty($this->queue['id'])) {
-            $ids = array_unique($this->queue['id']);
-            $idString = '(' . implode('),(', $ids) . ')';
-            $sql = sprintf('INSERT INTO s_media_used (mediaId) VALUES %s', $idString);
-            $this->connection->executeQuery($sql);
+            $ids = array_keys(array_flip($this->queue['id']));
+            $this->connection->executeQuery(
+                sprintf('INSERT INTO s_media_used (mediaId) VALUES (%s)', implode('),(', $ids))
+            );
         }
     }
 

@@ -57,7 +57,7 @@ class PluginInstallCommand extends ShopwareCommand
                 InputOption::VALUE_NONE,
                 'Activate plugin after intallation.'
             )
-            ->setHelp(<<<EOF
+            ->setHelp(<<<'EOF'
 The <info>%command.name%</info> installs a plugin.
 EOF
             );

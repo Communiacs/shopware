@@ -123,6 +123,7 @@
 {include file='backend/base/model/position_status.js'}
 {include file='backend/base/model/doc_type.js'}
 {include file='backend/base/model/password_encoder.js'}
+{include file='backend/base/model/captcha.js'}
 {include file='backend/base/model/product_box_layout.js'}
 {include file='backend/base/model/page_not_found_destination_options.js'}
 {include file='backend/base/model/attribute_config.js'}
@@ -153,7 +154,9 @@
 {include file='backend/base/store/form.js'}
 {include file='backend/base/store/position_status.js'}
 {include file='backend/base/store/password_encoder.js'}
+{include file='backend/base/store/captcha.js'}
 {include file='backend/base/store/product_box_layout.js'}
+{include file='backend/base/store/listing_filter_mode.js'}
 {include file='backend/base/store/page_not_found_destination_options.js'}
 {include file='backend/base/store/attribute_config.js'}
 {include file='backend/base/store/salutation.js'}
@@ -166,13 +169,13 @@
 {include file='backend/base/component/Shopware.VTypes.js'}
 {include file='backend/base/component/Shopware.form.field.TinyMCE.js'}
 {include file='backend/base/component/Shopware.form.plugin.Translation.js'}
+{include file='backend/base/component/Shopware.form.plugin.SnippetTranslation.js'}
 {include file='backend/base/component/Shopware.grid.HeaderToolTip.js'}
 {include file='backend/base/component/Shopware.Notification.js'}
 {include file='backend/base/component/Shopware.form.PasswordStrengthMeter.js'}
 {include file='backend/base/component/Shopware.form.field.CodeMirror.js'}
 {include file='backend/base/component/Shopware.form.field.ArticleSearch.js'}
 {include file='backend/base/component/Shopware.form.field.PagingComboBox.js'}
-{include file='backend/base/component/Shopware.form.field.ProductStreamSelection.js'}
 {include file='backend/base/component/Shopware.container.Viewport.js'}
 {include file='backend/base/component/Shopware.DragAndDropSelector.js'}
 {include file='backend/base/component/Shopware.DataView.GooglePreview.js'}
@@ -209,10 +212,9 @@
 {include file='backend/base/component/element/time.js'}
 {include file='backend/base/component/element/media_selection.js'}
 {include file='backend/base/component/element/product_box_layout_select.js'}
+{include file='backend/base/component/element/listing_filter_mode_select.js'}
 {include file='backend/base/component/element/media_text_selection.js'}
-
 {include file='backend/base/component/Shopware.ModuleManager.js'}
-
 
 
 // Shopware attribute components
@@ -260,6 +262,8 @@
 {include file='backend/base/attribute/field/Shopware.form.field.FormSingleSelection.js'}
 {include file='backend/base/attribute/field/Shopware.form.field.CustomerGrid.js'}
 {include file='backend/base/attribute/field/Shopware.form.field.CustomerSingleSelection.js'}
+{include file='backend/base/attribute/field/Shopware.form.field.CustomerStreamGrid.js'}
+{include file='backend/base/attribute/field/Shopware.form.field.CustomerStreamSingleSelection.js'}
 {include file='backend/base/attribute/field/Shopware.form.field.DispatchGrid.js'}
 {include file='backend/base/attribute/field/Shopware.form.field.PaymentGrid.js'}
 {include file='backend/base/attribute/field/Shopware.form.field.PaymentSingleSelection.js'}
@@ -272,7 +276,10 @@
 {include file='backend/base/attribute/field/Shopware.form.field.ProductStreamGrid.js'}
 {include file='backend/base/attribute/field/Shopware.form.field.ProductStreamSingleSelection.js'}
 {include file='backend/base/attribute/field/Shopware.form.field.ShopGrid.js'}
-
+{include file='backend/base/attribute/field/Shopware.form.field.CustomSortingGrid.js'}
+{include file='backend/base/attribute/field/Shopware.form.field.CustomFacetGrid.js'}
+{include file='backend/base/attribute/field/Shopware.form.field.AttributeSingleSelection.js'}
+{include file='backend/base/component/Shopware.form.field.ProductStreamSelection.js'}
 
 {include file='backend/base/attribute/field_handler/Shopware.attribute.AbstractEntityFieldHandler.js'}
 {include file='backend/base/attribute/field_handler/Shopware.attribute.CategoryFieldHandler.js'}
@@ -286,6 +293,7 @@
 {include file='backend/base/attribute/field_handler/Shopware.attribute.PartnerFieldHandler.js'}
 {include file='backend/base/attribute/field_handler/Shopware.attribute.FormFieldHandler.js'}
 {include file='backend/base/attribute/field_handler/Shopware.attribute.CustomerFieldHandler.js'}
+{include file='backend/base/attribute/field_handler/Shopware.attribute.CustomerStreamFieldHandler.js'}
 {include file='backend/base/attribute/field_handler/Shopware.attribute.DispatchFieldHandler.js'}
 {include file='backend/base/attribute/field_handler/Shopware.attribute.PaymentFieldHandler.js'}
 {include file='backend/base/attribute/field_handler/Shopware.attribute.MailFieldHandler.js'}
@@ -299,3 +307,10 @@
 {include file='backend/base/attribute/Shopware.attribute.Window.js'}
 {include file='backend/base/attribute/Shopware.attribute.Button.js'}
 {include file='backend/base/attribute/Shopware.grid.plugin.Attribute.js'}
+
+{include file='backend/base/model/custom_sorting.js'}
+{include file='backend/base/store/custom_sorting.js'}
+{include file='backend/base/model/custom_facet.js'}
+{include file='backend/base/store/custom_facet.js'}
+
+{include file='backend/base/application/Shopware.helper.BatchRequests.js'}

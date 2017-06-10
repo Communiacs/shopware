@@ -71,7 +71,6 @@ class Shopware_Controllers_Frontend_Campaign extends Enlight_Controller_Action
             'landingPage' => $landingPage,
             'hasEmotion' => true,
             'isEmotionLandingPage' => true,
-            'hasEscapedFragment' => $this->Request()->has('_escaped_fragment_'),
         ]);
     }
 }

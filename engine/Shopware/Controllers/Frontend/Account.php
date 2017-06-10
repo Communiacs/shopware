@@ -57,10 +57,19 @@ class Shopware_Controllers_Frontend_Account extends Enlight_Controller_Action
      */
     public function preDispatch()
     {
+        if (Shopware()->Session()->offsetGet('sOneTimeAccount')) {
+            $this->logoutAction();
+
+            return $this->redirect(['controller' => 'register']);
+        }
+
         $this->View()->setScope(Enlight_Template_Manager::SCOPE_PARENT);
         if (!in_array($this->Request()->getActionName(), ['login', 'logout', 'password', 'resetPassword'])
             && !$this->admin->sCheckUser()) {
-            return $this->forward('index', 'register');
+            return $this->forward('index', 'register', 'frontend', [
+                'sTarget' => $this->Request()->getControllerName(),
+                'sTargetAction' => $this->Request()->getActionName(),
+            ]);
         }
         $userData = $this->admin->sGetUserData();
 
@@ -79,14 +88,6 @@ class Shopware_Controllers_Frontend_Account extends Enlight_Controller_Action
      */
     public function indexAction()
     {
-        if (
-            $this->View()->sUserData['additional']['user']['accountmode'] == 1
-        ) {
-            $this->logoutAction();
-
-            return $this->redirect(['controller' => 'register']);
-        }
-
         if ($this->Request()->getParam('success')) {
             $this->View()->sSuccessAction = $this->Request()->getParam('success');
         }
@@ -132,6 +133,8 @@ class Shopware_Controllers_Frontend_Account extends Enlight_Controller_Action
     {
         $destinationPage = (int) $this->Request()->sPage;
         $orderData = $this->admin->sGetOpenOrderData($destinationPage);
+        $orderData = $this->applyTrackingUrl($orderData);
+
         $this->View()->sOpenOrders = $orderData['orderData'];
         $this->View()->sNumberPages = $orderData['numberOfPages'];
         $this->View()->sPages = $orderData['pages'];
@@ -195,7 +198,7 @@ class Shopware_Controllers_Frontend_Account extends Enlight_Controller_Action
         $fromDate = $this->Request()->fromDate;
 
         //if a to date passed, format it over the \DateTime object. Otherwise create a new date with today
-        if (empty($fromDate) || !Zend_Date::isDate($fromDate)) {
+        if (empty($fromDate) || !Zend_Date::isDate($fromDate, 'Y-m-d')) {
             $fromDate = new \DateTime();
             $fromDate = $fromDate->sub(new DateInterval('P1M'));
         } else {
@@ -203,14 +206,14 @@ class Shopware_Controllers_Frontend_Account extends Enlight_Controller_Action
         }
 
         //if a to date passed, format it over the \DateTime object. Otherwise create a new date with today
-        if (empty($toDate) || !Zend_Date::isDate($toDate)) {
+        if (empty($toDate) || !Zend_Date::isDate($toDate, 'Y-m-d')) {
             $toDate = new \DateTime();
         } else {
             $toDate = new \DateTime($toDate);
         }
 
-        $this->View()->partnerStatisticToDate = $toDate->format('d.m.Y');
-        $this->View()->partnerStatisticFromDate = $fromDate->format('d.m.Y');
+        $this->View()->partnerStatisticToDate = $toDate->format('Y-m-d');
+        $this->View()->partnerStatisticFromDate = $fromDate->format('Y-m-d');
 
         //to get the right value cause 2012-02-02 is smaller than 2012-02-02 15:33:12
         $toDate = $toDate->add(new DateInterval('P1D'));
@@ -693,6 +696,38 @@ class Shopware_Controllers_Frontend_Account extends Enlight_Controller_Action
     protected function refreshBasket()
     {
         Shopware()->Modules()->Basket()->sRefreshBasket();
+    }
+
+    /**
+     * @param array $orderData
+     *
+     * @return array
+     */
+    private function applyTrackingUrl(array $orderData)
+    {
+        foreach ($orderData['orderData'] as &$order) {
+            if (!empty($order['trackingcode']) && !empty($order['dispatch']) && !empty($order['dispatch']['status_link'])) {
+                $order['dispatch']['status_link'] = $this->renderTrackingLink(
+                    $order['dispatch']['status_link'],
+                    $order['trackingcode']
+                );
+            }
+        }
+
+        return $orderData;
+    }
+
+    /**
+     * @param string $link
+     * @param string $trackingCode
+     *
+     * @return string
+     */
+    private function renderTrackingLink($link, $trackingCode)
+    {
+        $regEx = '/(\{\$offerPosition.trackingcode\})/';
+
+        return preg_replace($regEx, $trackingCode, $link);
     }
 
     /**

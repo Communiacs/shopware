@@ -135,7 +135,6 @@ class LegacyStructConverter
             'countryiso' => $country->getIso(),
             'countryen' => $country->getEn(),
             'position' => $country->getPosition(),
-            'shippingfree' => $country->isShippingFree(),
             'taxfree' => $country->isTaxFree(),
             'taxfree_ustid' => $country->isTaxFreeForVatId(),
             'taxfree_ustid_checked' => $country->checkVatId(),
@@ -229,7 +228,7 @@ class LegacyStructConverter
             $productStream = $this->convertRelatedProductStreamStruct($category->getProductStream());
         }
 
-        $categoryPath = '|' . join('|', $category->getPath()) . '|';
+        $categoryPath = '|' . implode('|', $category->getPath()) . '|';
 
         $blogBaseUrl = $this->config->get('baseFile') . '?sViewport=blog&sCategory=';
         $baseUrl = $this->config->get('baseFile') . '?sViewport=cat&sCategory=';
@@ -281,6 +280,7 @@ class LegacyStructConverter
             'sSelf' => $detailUrl,
             'sSelfCanonical' => $canonical,
             'canonicalParams' => $canonicalParams,
+            'hide_sortings' => $category->hideSortings(),
             'rssFeed' => $detailUrl . '&sRss=1',
             'atomFeed' => $detailUrl . '&sAtom=1',
         ];
@@ -313,11 +313,7 @@ class LegacyStructConverter
             return [];
         }
 
-        if ($this->config->get('calculateCheapestPriceWithMinPurchase')) {
-            $cheapestPrice = $product->getCheapestPrice();
-        } else {
-            $cheapestPrice = $product->getCheapestUnitPrice();
-        }
+        $cheapestPrice = $product->getListingPrice();
 
         $promotion = $this->getListProductData($product);
         $promotion = array_merge($promotion, $this->convertProductPriceStruct($cheapestPrice));
@@ -327,7 +323,7 @@ class LegacyStructConverter
             $promotion['pricegroupID'] = $product->getPriceGroup()->getId();
         }
 
-        if (count($product->getPrices()) > 1 || $product->hasDifferentPrices()) {
+        if ($product->displayFromPrice()) {
             $promotion['priceStartingFrom'] = $promotion['price'];
         }
 
@@ -348,7 +344,7 @@ class LegacyStructConverter
             '?sViewport=basket&sAdd=' . $promotion['ordernumber'];
 
         $promotion['linkDetails'] = $this->config->get('baseFile') .
-            '?sViewport=detail&sArticle=' . $promotion['articleID'];
+            '?sViewport=detail&sArticle=' . $promotion['articleID'] . '&number=' . $promotion['ordernumber'];
 
         return $this->eventManager->filter('Legacy_Struct_Converter_Convert_List_Product', $promotion, [
             'product' => $product,
@@ -635,7 +631,7 @@ class LegacyStructConverter
      *
      * @return array
      */
-    public function convertMediaStruct(StoreFrontBundle\Struct\Media $media)
+    public function convertMediaStruct(StoreFrontBundle\Struct\Media $media = null)
     {
         if (!$media instanceof StoreFrontBundle\Struct\Media) {
             return [];
@@ -773,9 +769,10 @@ class LegacyStructConverter
                 }
             }
 
-            $result[$group->getId()] = [
-                'id' => $group->getId(),
-                'optionID' => $group->getId(),
+            $groupId = $group->getId();
+            $result[$groupId] = [
+                'id' => $groupId,
+                'optionID' => $groupId,
                 'name' => $group->getName(),
                 'groupID' => $set->getId(),
                 'groupName' => $set->getName(),
@@ -922,10 +919,7 @@ class LegacyStructConverter
         $data = [];
 
         $variantPrice = $product->getVariantPrice();
-        $cheapestPrice = $product->getCheapestUnitPrice();
-        if ($this->config->get('calculateCheapestPriceWithMinPurchase')) {
-            $cheapestPrice = $product->getCheapestPrice();
-        }
+        $cheapestPrice = $product->getListingPrice();
 
         if (count($product->getPrices()) > 1 || $product->hasDifferentPrices()) {
             $data['priceStartingFrom'] = $this->sFormatPrice($cheapestPrice->getCalculatedPrice());
@@ -1006,6 +1000,38 @@ class LegacyStructConverter
         return $this->eventManager->filter('Legacy_Struct_Converter_Convert_Configurator_Option', $data, [
             'configurator_group' => $group,
             'configurator_options' => $option,
+        ]);
+    }
+
+    /**
+     * @param StoreFrontBundle\Struct\Blog\Blog $blog
+     *
+     * @return array
+     */
+    public function convertBlogStruct(StoreFrontBundle\Struct\Blog\Blog $blog)
+    {
+        $data = [
+            'id' => $blog->getId(),
+            'title' => $blog->getTitle(),
+            'authorId' => $blog->getAuthorId(),
+            'active' => $blog->isActive(),
+            'shortDescription' => $blog->getShortDescription(),
+            'description' => $blog->getDescription(),
+            'displayDate' => $blog->getDisplayDate(),
+            'categoryId' => $blog->getCategoryId(),
+            'template' => $blog->getTemplate(),
+            'metaKeyWords' => $blog->getMetaKeywords(),
+            'metaKeywords' => $blog->getMetaKeywords(),
+            'metaDescription' => $blog->getMetaDescription(),
+            'metaTitle' => $blog->getMetaTitle(),
+            'views' => $blog->getViews(),
+            'mediaList' => array_map([$this, 'convertMediaStruct'], $blog->getMedias()),
+        ];
+
+        $data['media'] = reset($data['mediaList']);
+
+        return $this->eventManager->filter('Legacy_Struct_Converter_Convert_Blog', $data, [
+            'blog' => $blog,
         ]);
     }
 
@@ -1163,6 +1189,7 @@ class LegacyStructConverter
             'sReleasedate' => $this->dateToString($product->getReleaseDate()),
             'template' => $product->getTemplate(),
             'attributes' => $product->getAttributes(),
+            'allowBuyInListing' => $product->allowBuyInListing(),
         ];
 
         if ($product->hasAttribute('core')) {

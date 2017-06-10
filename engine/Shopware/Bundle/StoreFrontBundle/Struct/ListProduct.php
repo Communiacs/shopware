@@ -40,7 +40,7 @@ use Shopware\Bundle\StoreFrontBundle\Struct\Product\VoteAverage;
 class ListProduct extends BaseProduct implements \JsonSerializable
 {
     /**
-     * State for a calculated product price
+     * State for a calculated product price.
      */
     const STATE_PRICE_CALCULATED = 'price_calculated';
 
@@ -321,7 +321,7 @@ class ListProduct extends BaseProduct implements \JsonSerializable
     protected $voteAverage;
 
     /**
-     * Flag if the product has an available variant
+     * Flag if the product has an available variant.
      *
      * @var bool
      */
@@ -353,6 +353,21 @@ class ListProduct extends BaseProduct implements \JsonSerializable
     protected $categories = [];
 
     /**
+     * @var Price
+     */
+    protected $listingPrice;
+
+    /**
+     * @var bool
+     */
+    protected $allowBuyInListing;
+
+    /**
+     * @var bool
+     */
+    protected $displayFromPrice;
+
+    /**
      * Adds a new product state.
      *
      * @param $state
@@ -371,7 +386,7 @@ class ListProduct extends BaseProduct implements \JsonSerializable
     }
 
     /**
-     * Resets the struct states
+     * Resets the struct states.
      */
     public function resetStates()
     {
@@ -379,7 +394,7 @@ class ListProduct extends BaseProduct implements \JsonSerializable
     }
 
     /**
-     * Checks if the product has a specify state
+     * Checks if the product has a specify state.
      *
      * @param $state
      *
@@ -1157,5 +1172,53 @@ class ListProduct extends BaseProduct implements \JsonSerializable
     public function setCategories(array $categories)
     {
         $this->categories = $categories;
+    }
+
+    /**
+     * @param Price $price
+     */
+    public function setListingPrice(Price $price)
+    {
+        $this->listingPrice = $price;
+    }
+
+    /**
+     * @return Price
+     */
+    public function getListingPrice()
+    {
+        return $this->listingPrice;
+    }
+
+    /**
+     * @return bool
+     */
+    public function displayFromPrice()
+    {
+        return $this->displayFromPrice;
+    }
+
+    /**
+     * @return bool
+     */
+    public function allowBuyInListing()
+    {
+        return $this->allowBuyInListing;
+    }
+
+    /**
+     * @param bool $allowBuyInListing
+     */
+    public function setAllowBuyInListing($allowBuyInListing)
+    {
+        $this->allowBuyInListing = $allowBuyInListing;
+    }
+
+    /**
+     * @param bool $displayFromPrice
+     */
+    public function setDisplayFromPrice($displayFromPrice)
+    {
+        $this->displayFromPrice = $displayFromPrice;
     }
 }

@@ -138,8 +138,7 @@
                     window.controller = window.snippets = window.themeConfig = window.lastSeenProductsConfig = window.csrfConfig = null;
                     $(me.opts.footerJavascriptInlineSelector).replaceWith($response.filter(me.opts.footerJavascriptInlineSelector));
 
-                    StateManager.addPlugin('select:not([data-no-fancy-select="true"])', 'swSelectboxReplacement')
-                        .addPlugin('*[data-image-slider="true"]', 'swImageSlider', { touchControls: true })
+                    StateManager.addPlugin('*[data-image-slider="true"]', 'swImageSlider', { touchControls: true })
                         .addPlugin('.product--image-zoom', 'swImageZoom', 'xl')
                         .addPlugin('*[data-image-gallery="true"]', 'swImageGallery')
                         .addPlugin('*[data-add-article="true"]', 'swAddArticle')
@@ -241,15 +240,15 @@
          * @private
          */
         _getUrlParams: function() {
-            var url = window.decodeURIComponent(window.location.search.substring(1)),
-                urlParams = url.split('&'),
+            var search = window.location.search.substring(1),
+                urlParams = search.split('&'),
                 params = {};
 
             $.each(urlParams, function(i, param) {
                 param = param.split('=');
 
                 if (param[0].length && param[1].length && !params.hasOwnProperty(param[0])) {
-                    params[param[0]] = param[1];
+                    params[decodeURIComponent(param[0])] = decodeURIComponent(param[1]);
                 }
             });
 

@@ -34,9 +34,9 @@ use Doctrine\DBAL\Connection;
 class CategoryReader extends GenericReader
 {
     /**
-     * @param \int[]|\string[] $identifiers
+     * @param int[]|string[] $identifiers
      *
-     * @return \array[]
+     * @return array[]
      */
     public function getList($identifiers)
     {

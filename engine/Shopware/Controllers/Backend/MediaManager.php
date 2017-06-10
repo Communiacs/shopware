@@ -24,10 +24,12 @@
 
 use Doctrine\ORM\AbstractQuery;
 use Shopware\Components\CSRFWhitelistAware;
+use Shopware\Components\Thumbnail\Manager;
 use Shopware\Models\Media\Album as Album;
 use Shopware\Models\Media\Media as Media;
 use Shopware\Models\Media\Settings as Settings;
 use Symfony\Component\HttpFoundation\File\UploadedFile as UploadedFile;
+use Symfony\Component\HttpFoundation\FileBag;
 
 /**
  * Shopware MediaManager Controller
@@ -98,9 +100,9 @@ class Shopware_Controllers_Backend_MediaManager extends Shopware_Controllers_Bac
         $albumId = $this->Request()->getParam('albumId', null);
 
         $builder->select(['album'])
-                ->from('Shopware\Models\Media\Album', 'album')
-                ->where('album.parentId IS NULL')
-                ->orderBy('album.position', 'ASC');
+            ->from('Shopware\Models\Media\Album', 'album')
+            ->where('album.parentId IS NULL')
+            ->orderBy('album.position', 'ASC');
 
         if (!empty($albumId)) {
             if (strpos($albumId, ',') !== false) {
@@ -109,7 +111,7 @@ class Shopware_Controllers_Backend_MediaManager extends Shopware_Controllers_Bac
                 $albumId = [$albumId];
             }
             $builder->andWhere('album.id IN(:albumId)')
-                    ->setParameter('albumId', $albumId);
+                ->setParameter('albumId', $albumId);
         }
 
         $albums = $builder->getQuery()->getResult();
@@ -211,6 +213,7 @@ class Shopware_Controllers_Backend_MediaManager extends Shopware_Controllers_Bac
             if (!empty($thumbnails) && $mediaService->has($thumbnails['140x140'])) {
                 $media['thumbnail'] = $mediaService->getUrl($thumbnails['140x140']);
             }
+            $media['timestamp'] = time();
         }
 
         $this->View()->assign(['success' => true, 'data' => $mediaList, 'total' => $totalResult]);
@@ -266,7 +269,10 @@ class Shopware_Controllers_Backend_MediaManager extends Shopware_Controllers_Bac
             $this->Request()->getParam('id', null)
         );
 
-        $path = $this->Request()->getParam('path', null);
+        $path = $this->Request()->getParam(
+            'path',
+            $this->Request()->getParam('virtualPath', null)
+        );
 
         if (empty($id) && empty($path)) {
             $this->View()->assign(['success' => false, 'error' => 'No id or path passed']);
@@ -276,8 +282,8 @@ class Shopware_Controllers_Backend_MediaManager extends Shopware_Controllers_Bac
 
         $builder = Shopware()->Models()->createQueryBuilder();
         $builder->select(['media'])
-               ->from('Shopware\Models\Media\Media', 'media')
-               ->setMaxResults(1);
+            ->from('Shopware\Models\Media\Media', 'media')
+            ->setMaxResults(1);
 
         if (!empty($id)) {
             $builder->where('media.id = :id');
@@ -378,7 +384,7 @@ class Shopware_Controllers_Backend_MediaManager extends Shopware_Controllers_Bac
             $file['name'] = $fileInfo['filename'] . '.' . $fileExtension;
             $_FILES['fileId']['name'] = $file['name'];
 
-            $fileBag = new \Symfony\Component\HttpFoundation\FileBag($_FILES);
+            $fileBag = new FileBag($_FILES);
 
             /** @var $file UploadedFile */
             $file = $fileBag->get('fileId');
@@ -609,6 +615,39 @@ class Shopware_Controllers_Backend_MediaManager extends Shopware_Controllers_Bac
         ]);
     }
 
+    public function singleReplaceAction()
+    {
+        $file = $_FILES['file'];
+        $fileInfo = pathinfo($file['name']);
+        $fileExtension = strtolower($fileInfo['extension']);
+        $file['name'] = $fileInfo['filename'] . '.' . $fileExtension;
+        $_FILES['file']['name'] = $file['name'];
+
+        if (in_array($fileExtension, self::$fileUploadBlacklist)) {
+            unlink($file);
+
+            $this->View()->assign(['success' => false, 'message' => 'file type is in blacklist']);
+
+            return;
+        }
+
+        $fileBag = new FileBag($_FILES);
+        $file = $fileBag->get('file');
+        $mediaId = $this->request->get('mediaId');
+
+        $mediaReplaceService = $this->container->get('shopware_media.replace_service');
+
+        try {
+            $mediaReplaceService->replace($mediaId, $file);
+        } catch (\Exception $exception) {
+            $this->View()->assign(['success' => false, 'message' => $exception->getMessage()]);
+
+            return;
+        }
+
+        $this->View()->assign(['success' => true]);
+    }
+
     protected function initAcl()
     {
         // read
@@ -837,9 +876,9 @@ class Shopware_Controllers_Backend_MediaManager extends Shopware_Controllers_Bac
         $builder = Shopware()->Models()->createQueryBuilder();
 
         return $builder->select(['media'])
-                ->from('Shopware\Models\Media\Media', 'media')
-                ->where('media.id = ?1')
-                ->setParameter(1, $id);
+            ->from('Shopware\Models\Media\Media', 'media')
+            ->where('media.id = ?1')
+            ->setParameter(1, $id);
     }
 
     /**

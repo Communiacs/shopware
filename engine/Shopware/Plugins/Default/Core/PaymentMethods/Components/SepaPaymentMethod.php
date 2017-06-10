@@ -52,7 +52,7 @@ class SepaPaymentMethod extends GenericPaymentMethod
 
         $sErrorFlag = Shopware()->Container()->get('events')->filter('Sepa_Payment_Method_Validate_Data_Required', $sErrorFlag, [
             'subject' => $this,
-            'paymentData' => $paymentData,
+            'paymentData' => $paymentData
         ]);
 
         if (count($sErrorFlag)) {
@@ -82,7 +82,7 @@ class SepaPaymentMethod extends GenericPaymentMethod
         $lastPayment = $this->getCurrentPaymentDataAsArray($userId);
 
         $paymentMean = Shopware()->Models()->getRepository('\Shopware\Models\Payment\Payment')->
-            getPaymentsQuery(['name' => 'Sepa'])->getOneOrNullResult(AbstractQuery::HYDRATE_ARRAY);
+        getPaymentsQuery(['name' => 'Sepa'])->getOneOrNullResult(AbstractQuery::HYDRATE_ARRAY);
 
         $data = [
             'use_billing_data' => ($request->getParam('sSepaUseBillingData') === 'true' ? 1 : 0),
@@ -93,7 +93,7 @@ class SepaPaymentMethod extends GenericPaymentMethod
 
         $data = Shopware()->Container()->get('events')->filter('Sepa_Payment_Method_Save_Payment_Data', $data, [
             'subject' => $this,
-            'params' => $request->getParams(),
+            'params' => $request->getParams()
         ]);
 
         if (!$lastPayment) {
@@ -130,7 +130,7 @@ class SepaPaymentMethod extends GenericPaymentMethod
 
             $arrayData = Shopware()->Container()->get('events')->filter('Sepa_Payment_Method_Current_Payment_Data_Array', $arrayData, [
                 'subject' => $this,
-                'paymentData' => $paymentData,
+                'paymentData' => $paymentData
             ]);
 
             return $arrayData;
@@ -152,8 +152,8 @@ class SepaPaymentMethod extends GenericPaymentMethod
             ->getQuery()
             ->getOneOrNullResult(AbstractQuery::HYDRATE_ARRAY);
 
-        $addressData = Shopware()->Models()->getRepository('Shopware\Models\Customer\Billing')->
-            getUserBillingQuery($userId)->getOneOrNullResult(AbstractQuery::HYDRATE_ARRAY);
+        $addressData = Shopware()->Models()->getRepository('Shopware\Models\Customer\Customer')
+            ->find($userId)->getDefaultBillingAddress();
         $paymentData = $this->getCurrentPaymentDataAsArray($userId);
 
         $date = new \DateTime();
@@ -162,14 +162,14 @@ class SepaPaymentMethod extends GenericPaymentMethod
             'order_id' => $orderId,
             'user_id' => $userId,
 
-            'firstname' => $paymentData['sSepaUseBillingData'] ? $addressData['firstName'] : null,
-            'lastname' => $paymentData['sSepaUseBillingData'] ? $addressData['lastName'] : null,
-            'address' => $paymentData['sSepaUseBillingData'] ? $addressData['street'] : null,
-            'zipcode' => $paymentData['sSepaUseBillingData'] ? $addressData['zipCode'] : null,
-            'city' => $paymentData['sSepaUseBillingData'] ? $addressData['city'] : null,
+            'firstname' => $paymentData['sSepaUseBillingData'] ? $addressData->getFirstname() : null,
+            'lastname' => $paymentData['sSepaUseBillingData'] ? $addressData->getLastname() : null,
+            'address' => $paymentData['sSepaUseBillingData'] ? $addressData->getStreet() : null,
+            'zipcode' => $paymentData['sSepaUseBillingData'] ? $addressData->getZipcode() : null,
+            'city' => $paymentData['sSepaUseBillingData'] ? $addressData->getCity() : null,
 
             'bank_name' => $paymentData['sSepaBankName'],
-            'account_holder' => $paymentData['sSepaUseBillingData'] ? ($addressData['firstName'] . ' ' . $addressData['lastName']) : null,
+            'account_holder' => $paymentData['sSepaUseBillingData'] ? ($addressData->getFirstname() . ' ' . $addressData->getLastname()) : null,
             'bic' => $paymentData['sSepaBic'],
             'iban' => $paymentData['sSepaIban'],
 
@@ -179,7 +179,7 @@ class SepaPaymentMethod extends GenericPaymentMethod
 
         $data = Shopware()->Container()->get('events')->filter('Sepa_Payment_Method_Create_Payment_Instance_Data', $data, [
             'subject' => $this,
-            'paymentData' => $paymentData,
+            'paymentData' => $paymentData
         ]);
 
         Shopware()->Db()->insert('s_core_payment_instance', $data);

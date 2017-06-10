@@ -132,7 +132,7 @@ class PluginCheck
      */
     private function getCustomPluginNames()
     {
-        $sql = <<<EOT
+        $sql = <<<'EOT'
 SELECT name FROM s_core_plugins
 WHERE source != "Default"
 AND name != "PluginManager"

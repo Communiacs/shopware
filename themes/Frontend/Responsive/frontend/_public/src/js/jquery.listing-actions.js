@@ -82,6 +82,12 @@
             filterContainerSelector: '.action--filter-options',
 
             /**
+             * The selector for the inner filter container which used to for the loading indicator
+             * if the off canvas menu is active
+             */
+            filterInnerContainerSelector: '.filter--container',
+
+            /**
              * The selector for additional listing action forms.
              */
             actionFormSelector: '*[data-action-form="true"]',
@@ -159,7 +165,114 @@
             /**
              * The time in ms for animations.
              */
-            animationSpeed: 400
+            animationSpeed: 400,
+
+            /** Css class which will be added when the user uses instant filter results */
+            instantFilterActiveCls: 'is--instant-filter-active',
+
+            /**
+             * class to select the listing div
+             */
+            listingSelector: '.listing--container > .listing',
+
+            /**
+             * class to select the pagination bars
+             */
+            paginationSelector: '.listing--paging.panel--paging',
+
+            /**
+             * data attribute which indicates whether infinite scrolling is used or not
+             */
+            infiniteScrollingAttribute: 'data-infinite-scrolling',
+
+            /**
+             * selector for the page size select box
+             */
+            paginationBarPerPageSelector: '.per-page--field.action--field',
+
+            /**
+             * selector for the hidden input field of the filter form which stores the current page
+             */
+            pageInputSelector: 'input[name=p]',
+
+            /**
+             * selector for the hidden input field of the filter form which stores the current sorting
+             */
+            sortInputSelector: 'input[name=o]',
+
+            /**
+             * selector for the hidden input field of the filter form which stores the current amount of products per page
+             */
+            perPageInputSelector: 'input[name=n]',
+
+            /**
+             * selector for the sorting select box
+             */
+            sortActionFormSelector: '.action--sort',
+
+            /**
+             * selector for the products per page select box
+             */
+            perPageActionFormSelector: '.action--per-page',
+
+            /**
+             * selector for the wrapper of the whole listing
+             */
+            listingWrapperSelector: '.listing--wrapper',
+
+            /**
+             * The selector for the element which get the loading indicator after customer activates a filter
+             */
+            loadingIndSelector: '.listing--wrapper',
+
+            /**
+             * The selector for "no filter result found" container
+             */
+            noResultContainerSelector: '.listing-no-filter-result .alert',
+
+            /**
+             * Class for loading indicator, added and removed on the configurable `listingSelector` element
+             */
+            isLoadingCls: 'is--loading',
+
+            /**
+             * Configuration for the loading indicator
+             */
+            loadingIndConfig: {
+                theme: 'light',
+                animationSpeed: 100,
+                closeOnClick: false
+            },
+
+            /**
+             * selector for the filter close button, which is only visible in off canvas
+             */
+            filterCloseBtnSelector: '.filter--close-btn',
+
+            /**
+             * icon for the filter close button
+             */
+            closeFilterOffCanvasBtnIcon: '<i class="icon--arrow-right"></i>',
+
+            /**
+             * selector for the search page headline
+             */
+            searchHeadlineProductCountSelector: '.search--headline .headline--product-count',
+
+            /**
+             * selector for the filter facet container
+             */
+            filterFacetContainerSelector: '.filter--facet-container',
+
+            /**
+             * selector for the filter action button bottom
+             */
+            filterActionButtonBottomSelector: '.filter--actions.filter--actions-bottom',
+
+            /**
+             * selector for the parent of the loading indicator in if the filters in sidebar mode
+             */
+            sidebarLoadingIndicatorParentSelector: '.content-main--inner'
         },
 
         /**
@@ -171,17 +284,34 @@
 
             me.applyDataAttributes();
 
+            $('.sidebar-filter--loader').appendTo('.sidebar-filter--content');
             me.$filterForm = $(me.opts.filterFormSelector);
-            me.$filterComponents = me.$el.find(me.opts.filterComponentSelector);
+            me.$filterComponents = me.$filterForm.find(me.opts.filterComponentSelector);
             me.$filterTrigger = me.$el.find(me.opts.filterTriggerSelector);
             me.$filterTriggerIcon = me.$filterTrigger.find(me.opts.filterTriggerIconSelector);
-            me.$filterCont = me.$el.find(me.opts.filterContainerSelector);
+            me.$filterCont = $(me.opts.filterContainerSelector);
             me.$actionForms = $(me.opts.actionFormSelector);
             me.$actionLinks = $(me.opts.actionLinkSelector);
-            me.$activeFilterCont = me.$el.find(me.opts.activeFilterContSelector);
-            me.$applyFilterBtn = me.$el.find(me.opts.applyFilterBtnSelector);
+            me.$activeFilterCont = me.$filterForm.find(me.opts.activeFilterContSelector);
+            me.$applyFilterBtn = me.$filterForm.find(me.opts.applyFilterBtnSelector);
+            me.$listing = $(me.opts.listingSelector);
+            me.$pageInput = $(me.$filterForm.find(me.opts.pageInputSelector));
+            me.$sortInput = $(me.$filterForm.find(me.opts.sortInputSelector));
+            me.$perPageInput = $(me.$filterForm.find(me.opts.perPageInputSelector));
+            me.$listingWrapper = me.$el.parent(me.opts.listingWrapperSelector);
+            me.$closeFilterOffCanvasBtn = $(me.opts.filterCloseBtnSelector);
+            me.$filterFacetContainer = me.$filterForm.find(me.opts.filterFacetContainerSelector);
+            me.$filterActionButtonBottom = me.$filterForm.find(me.opts.filterActionButtonBottomSelector);
+            me.$sidebarModeLoadionIndicator = $(me.opts.sidebarLoadingIndicatorParentSelector);
+            me.$noFilterResultContainer = $(me.opts.noResultContainerSelector);
 
-            me.resultCountURL = me.$filterForm.attr('data-count-ctrl');
+            me.searchHeadlineProductCount = $(me.opts.searchHeadlineProductCountSelector);
+            me.listingUrl = me.$filterForm.attr('data-listing-url');
+            me.loadFacets = $.parseJSON(me.$filterForm.attr('data-load-facets'));
+            me.showInstantFilterResult = $.parseJSON(me.$filterForm.attr('data-instant-filter-result'));
+            me.isInfiniteScrolling = me.$listing.attr(me.opts.infiniteScrollingAttribute);
+            me.isFilterpanelInSidebar = $.parseJSON(me.$filterForm.attr('data-is-in-sidebar'));
+
             me.controllerURL = window.location.href.split('?')[0];
             me.resetLabel = me.$activeFilterCont.attr('data-reset-label');
             me.propertyFieldNames = [];
@@ -189,6 +319,8 @@
             me.categoryParams = {};
             me.urlParams = '';
             me.bufferTimeout = 0;
+            me.closeFilterOffCanvasBtnText = me.$closeFilterOffCanvasBtn.html();
+            me.closeFilterOffCanvasBtnTextWithProducts = me.$closeFilterOffCanvasBtn.attr('data-show-products-text');
 
             me.getPropertyFieldNames();
             me.setCategoryParamsFromTopLocation();
@@ -198,9 +330,20 @@
             filterCount = Object.keys(me.activeFilterElements).length;
 
             me.updateFilterTriggerButton(filterCount > 1 ? filterCount - 1 : filterCount);
-
             me.initStateHandling();
             me.registerEvents();
+
+            me.$loadingIndicatorElement = $(me.opts.loadingIndSelector);
+            me.$offCanvasLoadingIndicator = $(me.opts.filterInnerContainerSelector);
+
+            $.subscribe('action/fetchListing', $.proxy(me.onSendListingRequest, me));
+
+            me.disableActiveFilterContainer(true);
+
+            var isFiltered = me.$filterForm.attr('data-is-filtered');
+            if (isFiltered > 0 && me.loadFacets) {
+                me.getFilterResult(me.urlParams, true, false);
+            }
         },
 
         /**
@@ -231,13 +374,15 @@
          * Called when entering the xs or s viewport.
          * Removes/Clears style attributes that were set in higher viewports.
          */
-        onEnterMobile: function () {
+        onEnterMobile: function() {
             var me = this,
                 opts = me.opts;
 
             me.$filterForm.removeAttr('style');
+            me.$filterFacetContainer.removeAttr('style');
+            me.$filterActionButtonBottom.removeAttr('style');
 
-            me.$activeFilterCont.removeAttr('style').removeClass(opts.disabledCls);
+            me.disableActiveFilterContainer(false);
 
             me.$filterCont.removeClass(opts.collapsedCls);
 
@@ -246,20 +391,34 @@
             $.publish('plugin/swListingActions/onEnterMobile', [ me ]);
         },
 
+        disableActiveFilterContainer: function(disabled) {
+            var me = this;
+
+            if (me.showInstantFilterResult || me.isFilterpanelInSidebar) {
+                return;
+            }
+
+            if (disabled) {
+                me.$activeFilterCont.addClass(me.opts.disabledCls);
+            } else if (me.$activeFilterCont.hasClass(me.opts.disabledCls)) {
+                me.$activeFilterCont.removeClass(me.opts.disabledCls);
+            }
+        },
+
         /**
          * Called when exiting the xs or s viewport.
          * Add the disabled class to the active filter container
          * when it has active filter elements.
          */
-        onExitMobile: function () {
+        onExitMobile: function() {
             var me = this;
 
             if (StateManager.isCurrentState(['xs', 's'])) {
                 return;
             }
 
-            if (Object.keys(me.activeFilterElements).length) {
-                me.$activeFilterCont.addClass(me.opts.disabledCls);
+            if (Object.keys(me.activeFilterElements).length && !me.isFilterpanelInSidebar) {
+                me.disableActiveFilterContainer(true);
             }
 
             $.publish('plugin/swListingActions/onExitMobile', [ me ]);
@@ -279,7 +438,9 @@
 
             me._on($body, 'click', $.proxy(me.onBodyClick, me));
 
-            me.$el.on(me.getEventName('click'), '.' + me.opts.activeFilterCls, $.proxy(me.onActiveFilterClick, me));
+            me.$activeFilterCont.on(me.getEventName('click'), '.' + me.opts.activeFilterCls, $.proxy(me.onActiveFilterClick, me));
+            me.$listingWrapper.on(me.getEventName('submit'), me.opts.actionFormSelector, $.proxy(me.onActionSubmit, me));
+            me.$listingWrapper.on(me.getEventName('click'), me.opts.actionLinkSelector, $.proxy(me.onActionLink, me));
 
             $.publish('plugin/swListingActions/onRegisterEvents', [ me ]);
         },
@@ -306,6 +467,9 @@
          * Called by event listener on submitting an action form.
          * Gets the serialized form data and applies it to the category params.
          *
+         * Depending on which action is submitted the hidden input fields
+         * of the form filter are set to the new value if instantFilterResult is active.
+         *
          * @param event
          */
         onActionSubmit: function(event) {
@@ -316,9 +480,86 @@
                 formData = $form.serializeArray(),
                 categoryParams = me.setCategoryParamsFromData(formData, true);
 
+            if (me.showInstantFilterResult) {
+                // first array element is always page number
+                me.setPageInput(me.getFormValue(formData, 'p'));
+
+                // second array element is always whether sorting or products per pages
+                if (me.isSortAction($form)) {
+                    me.setSortInput(me.getFormValue(formData, 'o'));
+                } else if (me.isPerPageAction($form)) {
+                    me.setPerPageInput(me.getFormValue(formData, 'n'));
+                }
+            }
+
             me.applyCategoryParams(categoryParams);
 
             $.publish('plugin/swListingActions/onActionSubmit', [ me, event ]);
+        },
+
+        getFormValue: function(data, key) {
+            var value = '';
+            $.each(data, function(index, item) {
+                if (item.name == key) {
+                    value = item.value;
+                }
+            });
+            return value;
+        },
+
+        /**
+         *
+         * @param {Object} $form
+         * @return {boolean}
+         */
+        isSortAction: function($form) {
+            var me = this;
+
+            return $form.is(me.opts.sortActionFormSelector);
+        },
+
+        /**
+         *
+         * @param {Object} $form
+         * @return {boolean}
+         */
+        isPerPageAction: function($form) {
+            var me = this;
+
+            return $form.is(me.opts.perPageActionFormSelector);
+        },
+
+        /**
+         * Helper method to set the hidden input field for the current page of the filter form
+         *
+         * @param {int} value
+         */
+        setPageInput: function(value) {
+            var me = this;
+
+            me.$pageInput.val(value);
+        },
+
+        /**
+         * Helper method to set the hidden input field for the current sorting of the filter form
+         *
+         * @param {int} value
+         */
+        setSortInput: function(value) {
+            var me = this;
+
+            me.$sortInput.val(value);
+        },
+
+        /**
+         * Helper method to set the hidden input field for products per page of the filter form
+         *
+         * @param {int} value
+         */
+        setPerPageInput: function(value) {
+            var me = this;
+
+            me.$perPageInput.val(value);
         },
 
         /**
@@ -333,7 +574,12 @@
 
             var me = this,
                 $link = $(event.currentTarget),
-                linkParams = $link.attr('href').split('?')[1];
+                linkParams = $link.attr('href').split('?')[1],
+                linkParamsArray = linkParams.split('');
+
+            if (me.showInstantFilterResult && linkParamsArray[0] === 'p') {
+                me.setPageInput(linkParamsArray[2]);
+            }
 
             me.applyCategoryParams(
                 me.setCategoryParamsFromUrlParams(linkParams)
@@ -393,15 +639,23 @@
          */
         onComponentChange: function(event) {
             var me = this,
-                formData = me.$filterForm.serializeArray(),
-                categoryParams = me.setCategoryParamsFromData(formData),
-                urlParams = me.createUrlParams(categoryParams);
+                urlParams,
+                formData,
+                categoryParams;
+
+            if (me.showInstantFilterResult) {
+                me.setPageInput(1);
+            }
+
+            formData = me.$filterForm.serializeArray();
+            categoryParams = me.setCategoryParamsFromData(formData);
+
+            urlParams = me.createUrlParams(categoryParams);
 
             me.createActiveFiltersFromCategoryParams(categoryParams);
 
-            me.$applyFilterBtn.addClass(me.opts.loadingClass);
-
-            me.buffer($.proxy(me.getFilterResult, me, urlParams), me.opts.bufferTime);
+            me.enableButtonLoading();
+            me.buffer($.proxy(me.getFilterResult, me, urlParams, me.loadFacets, me.showInstantFilterResult), me.opts.bufferTime);
 
             $.publish('plugin/swListingActions/onComponentChange', [ me, event ]);
         },
@@ -428,7 +682,7 @@
                 if (!isMobile && !me.$filterCont.hasClass(me.opts.collapsedCls)) {
                     me.applyCategoryParams();
                 }
-            } else if (isMobile || !me.$activeFilterCont.hasClass(me.opts.disabledCls)) {
+            } else if (!me.$activeFilterCont.hasClass(me.opts.disabledCls)) {
                 me.removeActiveFilter(param);
                 me.resetFilterProperty(param);
             }
@@ -441,11 +695,11 @@
 
             $.each(me.$filterComponents, function(index, item) {
                 var $comp = $(item),
+                    types = ['value-list', 'value-list-single', 'value-tree', 'media', 'value-tree-single', 'date'],
                     type = $comp.attr('data-filter-type'),
                     fieldName = $comp.attr('data-field-name');
 
-                if ((type == 'value-list' || type == 'value-tree' || type == 'media') &&
-                    me.propertyFieldNames.indexOf(fieldName) == -1) {
+                if (types.indexOf(type) >= 0 && me.propertyFieldNames.indexOf(fieldName) == -1) {
                     me.propertyFieldNames.push(fieldName);
                 }
             });
@@ -468,7 +722,9 @@
                 tempParams = {};
 
             $.each(formData, function(index, item) {
-                if (item['value']) tempParams[item['name']] = item['value'];
+                if (item['value']) {
+                    tempParams[item['name']] = item['value'];
+                }
             });
 
             if (extend) {
@@ -487,7 +743,7 @@
          *
          * @returns {*}
          */
-        setCategoryParamsFromTopLocation: function () {
+        setCategoryParamsFromTopLocation: function() {
             var me = this,
                 urlParams = window.location.search.substr(1),
                 categoryParams = me.setCategoryParamsFromUrlParams(urlParams);
@@ -503,7 +759,7 @@
          * @param urlParamString
          * @returns {{}|*}
          */
-        setCategoryParamsFromUrlParams: function (urlParamString) {
+        setCategoryParamsFromUrlParams: function(urlParamString) {
             var me = this,
                 categoryParams,
                 params;
@@ -519,10 +775,10 @@
             categoryParams = me.categoryParams;
             params = urlParamString.split('&');
 
-            $.each(params, function (index, item) {
+            $.each(params, function(index, item) {
                 var param = item.split('=');
 
-                param = $.map(param, function (val) {
+                param = $.map(param, function(val) {
                     val = val.replace(/\+/g, '%20');
                     return decodeURIComponent(val);
                 });
@@ -532,7 +788,7 @@
                 } else if (me.propertyFieldNames.indexOf(param[0]) != -1) {
                     var properties = param[1].split('|');
 
-                    $.each(properties, function (index, property) {
+                    $.each(properties, function(index, property) {
                         categoryParams[me.opts.propertyPrefixChar + param[0] + me.opts.propertyPrefixChar + property] = property;
                     });
                 } else {
@@ -612,11 +868,23 @@
          */
         applyUrlParams: function(urlParams) {
             var me = this,
-                params = urlParams || me.urlParams;
+                params = urlParams || me.urlParams,
+                formData,
+                categoryParams,
+                paramsForFilterResult;
 
-            window.location.href = me.getListingUrl(params, false);
+            if (me.showInstantFilterResult) {
+                formData = me.$filterForm.serializeArray();
+                categoryParams = me.setCategoryParamsFromData(formData);
+                paramsForFilterResult = me.createUrlParams(categoryParams);
 
-            $.publish('plugin/swListingActions/onApplyUrlParams', [ me, urlParams ]);
+                me.enableButtonLoading();
+                me.buffer($.proxy(me.getFilterResult, me, paramsForFilterResult, false, me.showInstantFilterResult), me.opts.bufferTime);
+            } else {
+                window.location.href = me.getListingUrl(params, false);
+            }
+
+            $.publish('plugin/swListingActions/onApplyUrlParams', [me, urlParams]);
         },
 
         /**
@@ -673,31 +941,274 @@
         },
 
         /**
-         * Gets the counted result of found products
-         * with the current applied category parameters.
-         * Updates the filter submit button on success.
+         * Event listener which allows to send listing ajax request to load facets, total count and/or listings
          *
-         * @param urlParams
+         * @param {object} event
+         * @param {object} params
+         * @param {boolean} loadFacets
+         * @param {boolean} loadProducts
+         * @param {function} callback
          */
-        getFilterResult: function(urlParams) {
+        onSendListingRequest: function(event, params, loadFacets, loadProducts, callback) {
             var me = this,
-                params = urlParams || me.urlParams;
+                formData = me.$filterForm.serializeArray();
+
+            $.each(formData, function(index, item) {
+                if (!params.hasOwnProperty(item.name)) {
+                    params[item.name] = item.value;
+                }
+            });
+
+            me.sendListingRequest(params, loadFacets, loadProducts, callback, true);
+        },
+
+        /**
+         * @param {string|object} params
+         * @param {boolean} loadFacets
+         * @param {boolean} loadProducts
+         * @param {function} callback
+         * @param {boolean} appendDefaults
+         */
+        sendListingRequest: function(params, loadFacets, loadProducts, callback, appendDefaults) {
+            var me = this;
+
+            if (typeof params == 'object') {
+                params = '?' + $.param(params);
+            }
 
             me.resetBuffer();
 
             $.ajax({
                 type: 'get',
-                url: me.resultCountURL + params,
-                success: function(response) {
-                    me.$applyFilterBtn.removeClass(me.opts.loadingClass);
-
-                    me.updateFilterButton(response.totalCount);
-
-                    $.publish('plugin/swListingActions/onGetFilterResultFinished', [ me, response, params ]);
-                }
+                url: me.buildListingUrl(params, loadFacets, loadProducts),
+                success: $.proxy(callback, me)
             });
-
             $.publish('plugin/swListingActions/onGetFilterResult', [ me, params ]);
+        },
+
+        /**
+         * Gets the counted result of found products
+         * with the current applied category parameters.
+         * Updates the filter submit button on success.
+         *
+         * @param {string} urlParams
+         * @param {boolean} loadFacets
+         * @param {boolean} loadProducts
+         */
+        getFilterResult: function(urlParams, loadFacets, loadProducts) {
+            var me = this,
+                params = urlParams || me.urlParams,
+                loadingIndicator = me.$loadingIndicatorElement;
+
+            if (me.$filterCont.is('.off-canvas.is--open')) {
+                loadingIndicator = me.$offCanvasLoadingIndicator;
+            } else if (me.isFilterpanelInSidebar) {
+                loadingIndicator = me.$sidebarModeLoadionIndicator;
+            }
+
+            me.resetBuffer();
+            me.enableLoading(loadingIndicator, loadProducts, function() {
+                // send ajax request to load products and facets
+                me.sendListingRequest(params, loadFacets, loadProducts, function(response) {
+                    me.disableLoading(loadingIndicator, loadProducts, response, function() {
+                        me.updateListing(response);
+
+                        // publish finish event to update filter panels
+                        $.publish('plugin/swListingActions/onGetFilterResultFinished', [ me, response, params ]);
+                    });
+                });
+            });
+        },
+
+        /**
+         * Enables the loading animation in the listing
+         *
+         * @param {object} loadingIndicator
+         * @param {boolean} loadProducts
+         * @param {function} callback
+         */
+        enableLoading: function(loadingIndicator, loadProducts, callback) {
+            var me = this;
+            callback = $.isFunction(callback) ? callback : $.noop;
+
+            if (loadProducts) {
+                me.$listing.addClass(me.opts.isLoadingCls);
+
+                loadingIndicator.setLoading(
+                    true,
+                    me.opts.loadingIndConfig
+                ).then(
+                    $.proxy(callback, me)
+                );
+            } else {
+                me.enableButtonLoading();
+                callback.call(me);
+            }
+        },
+
+        /**
+         * Enables the button reload animation
+         */
+        enableButtonLoading: function() {
+            var me = this;
+
+            if (!me.showInstantFilterResult) {
+                me.$applyFilterBtn.addClass(me.opts.loadingClass);
+            }
+        },
+
+        /**
+         * Disables the loading animation for the listing
+         * @param {object} loadingIndicator
+         * @param {boolean} loadProducts
+         * @param {object} response
+         * @param {function} callback
+         */
+        disableLoading: function(loadingIndicator, loadProducts, response, callback) {
+            var me = this;
+            callback = $.isFunction(callback) ? callback : $.noop;
+
+            if (loadProducts) {
+                // disable loading indicator
+                loadingIndicator.setLoading(false).then(
+                    $.proxy(callback, me)
+                );
+            } else {
+                me.$applyFilterBtn.removeClass(me.opts.loadingClass);
+                me.updateFilterButton(response.totalCount);
+                callback.call(me);
+            }
+        },
+
+        /**
+         *
+         * @param formParams
+         * @param loadProducts
+         * @param loadFacets
+         * @returns {string}
+         */
+        buildListingUrl: function(formParams, loadFacets, loadProducts) {
+            var me = this, url;
+
+            url = me.listingUrl + formParams;
+
+            if (loadProducts) {
+                url += '&loadProducts=1';
+            }
+            if (loadFacets) {
+                url += '&loadFacets=1';
+            }
+            return url;
+        },
+
+        /**
+         * updates the listing with new products
+         *
+         * @param {object} response
+         */
+        updateListing: function(response) {
+            var me = this,
+                html,
+                pages;
+
+            if (!response.hasOwnProperty('listing')) {
+                me.$listing.removeClass(me.opts.isLoadingCls);
+                return;
+            }
+
+            me.updateFilterCloseButton(response.totalCount);
+            me.updateSearchHeadline(response.totalCount);
+            me.updateNoResultContainer(response.totalCount);
+
+            html = response.listing.trim();
+
+            me.$listing.html(html);
+            me.$listing.removeClass(me.opts.isLoadingCls);
+
+            window.history.pushState('data', '', window.location.href.split('?')[0] + me.urlParams);
+
+            $.publish('plugin/swListingActions/updateListing', [me, html]);
+
+            if (me.isInfiniteScrolling) {
+                pages = Math.ceil(response.totalCount / me.$perPageInput.val());
+
+                // update infinite scrolling plugin and data attributes for infinite scrolling
+                me.$listing.attr('data-pages', pages);
+                me.$listing.data('plugin_swInfiniteScrolling').destroy();
+                StateManager.addPlugin(me.opts.listingSelector, 'swInfiniteScrolling');
+                StateManager.addPlugin('*[data-add-article="true"]', 'swAddArticle');
+                $.publish('plugin/swListingActions/updateInfiniteScrolling', [me, html, pages]);
+            } else {
+                me.updatePagination(response);
+            }
+        },
+
+        /**
+         * updates the off canvas filter close button with the amount of products
+         *
+         * @param {int} totalCount
+         */
+        updateFilterCloseButton: function(totalCount) {
+            var me = this,
+                filterCount = Object.keys(me.activeFilterElements).length;
+
+            if (filterCount > 0) {
+                me.$closeFilterOffCanvasBtn.html(me.closeFilterOffCanvasBtnTextWithProducts.replace('%s', totalCount) + me.opts.closeFilterOffCanvasBtnIcon);
+
+                $.publish('plugin/swListingActions/updateFilterCloseBtnWithProductsCount', [me, totalCount]);
+            } else {
+                me.$closeFilterOffCanvasBtn.html(me.closeFilterOffCanvasBtnText);
+
+                $.publish('plugin/swListingActions/updateFilterCloseBtnDefault', [me]);
+            }
+
+            me.updateFilterTriggerButton(filterCount > 1 ? filterCount - 1 : filterCount);
+        },
+
+        /**
+         * updates the head line of the search page with the new total count
+         *
+         * @param {int} totalCount
+         */
+        updateSearchHeadline: function(totalCount) {
+            var me = this;
+
+            if (me.searchHeadlineProductCount.length > 0) {
+                me.searchHeadlineProductCount.html(totalCount);
+            }
+        },
+
+        /**
+         *
+         * @param {int} totalCount
+         */
+        updateNoResultContainer: function(totalCount) {
+            var me = this;
+
+            if (totalCount > 0) {
+                if (!me.$noFilterResultContainer.hasClass('is--hidden')) {
+                    me.$noFilterResultContainer.addClass('is--hidden');
+                }
+                return;
+            }
+            if (me.$noFilterResultContainer.hasClass('is--hidden')) {
+                me.$noFilterResultContainer.removeClass('is--hidden');
+            }
+        },
+
+        /**
+         * Updates the html for the listing pagination in case infinite scrolling is disabled
+         *
+         * @param {object} response
+         */
+        updatePagination: function(response) {
+            var me = this,
+                html = response.pagination.trim();
+
+            $(me.opts.paginationSelector).replaceWith(html);
+            StateManager.updatePlugin(me.opts.paginationBarPerPageSelector, 'swAutoSubmit');
+
+            $.publish('plugin/swListingActions/updatePagination', [me, html]);
         },
 
         /**
@@ -763,7 +1274,16 @@
             }
 
             me.$filterCont.toggleClass(me.opts.hasActiveFilterCls, (count > 0));
-            me.$activeFilterCont.toggleClass(me.opts.disabledCls, !me.$filterCont.hasClass(me.opts.collapsedCls));
+            if (me.showInstantFilterResult && count > 0) {
+                me.$filterCont.addClass(me.opts.instantFilterActiveCls);
+            }
+
+            if (!me.opts.isFilterpanelInSidebar) {
+                me.$activeFilterCont.toggleClass(
+                    me.opts.collapsedCls,
+                    me.$filterCont.hasClass(me.opts.collapsedCls)
+                );
+            }
 
             $.publish('plugin/swListingActions/onCreateActiveFiltersFromCategoryParams', [ me, categoryParams ]);
         },
@@ -850,12 +1370,15 @@
                 rangeSlider;
 
             if (param == 'rating') {
-                me.$el.find('#star--reset').prop('checked', true).trigger('change');
+                $input = me.$filterForm.find('.filter--rating .is--active input[name="rating"]');
+                $input.removeAttr('checked').trigger('change');
             } else {
-                $input = me.$el.find('[name="' + me.escapeDoubleQuotes(param) + '"]');
+                $input = me.$filterForm.find('[name="' + me.escapeDoubleQuotes(param) + '"]');
                 if ($input.is('[data-range-input]')) {
                     rangeSlider = $input.parents('[data-range-slider="true"]').data('plugin_swRangeSlider');
                     rangeSlider.reset($input.attr('data-range-input'));
+                } else if ($input.is('[data-datepicker="true"]') || $input.is('[data-date-range-input]')) {
+                    $input.trigger('clear');
                 } else {
                     $input.removeAttr('checked').trigger('change');
                 }
@@ -885,6 +1408,8 @@
 
                 if ($label.is('[data-range-label]')) {
                     labelText = $label.prev('span').html() + $label.html();
+                } else if ($label.is('[data-date-range-label]')) {
+                    labelText = $label.html() + ' ' + $label.next('[data-date-range-input]').attr('data-display-value');
                 } else if ($label.find('img').length) {
                     labelText = $label.find('img').attr('alt');
                 } else if (value > 0 || valueString.length > 0) {
@@ -899,10 +1424,10 @@
 
         /**
          * Only escapes a " if it's not already escaped
-         * @param string str
+         * @param {string} str
          * @returns string
          */
-        escapeDoubleQuotes: function (str) {
+        escapeDoubleQuotes: function(str) {
             return str.replace(/\\([\s\S])|(")/g, '\\$1$2');
         },
 
@@ -955,8 +1480,10 @@
                 me.$activeFilterCont.slideDown(me.opts.animationSpeed);
             }
 
-            me.$filterForm.slideDown(me.opts.animationSpeed);
-            me.$activeFilterCont.removeClass(me.opts.disabledCls);
+            me.$filterFacetContainer.slideDown(me.opts.animationSpeed);
+            me.$filterActionButtonBottom.slideDown(me.opts.animationSpeed);
+
+            me.disableActiveFilterContainer(false);
             me.$filterCont.addClass(me.opts.collapsedCls);
             me.$filterTrigger.addClass(me.opts.activeCls);
 
@@ -973,8 +1500,10 @@
                 me.$activeFilterCont.slideUp(me.opts.animationSpeed);
             }
 
-            me.$filterForm.slideUp(me.opts.animationSpeed);
-            me.$activeFilterCont.addClass(me.opts.disabledCls);
+            me.$filterFacetContainer.slideUp(me.opts.animationSpeed);
+            me.$filterActionButtonBottom.slideUp(me.opts.animationSpeed);
+
+            me.disableActiveFilterContainer(true);
             me.$filterCont.removeClass(me.opts.collapsedCls);
             me.$filterTrigger.removeClass(me.opts.activeCls);
 
@@ -988,6 +1517,8 @@
             var me = this;
 
             me.$el.off(me.getEventName('click'), '.' + me.opts.activeFilterCls);
+            me.$listingWrapper.off(me.getEventName('submit'), me.opts.actionFormSelector);
+            me.$listingWrapper.off(me.getEventName('click'), me.opts.actionLinkSelector);
 
             me._destroy();
         }

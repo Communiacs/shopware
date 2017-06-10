@@ -56,7 +56,7 @@ class Value
      * Suggests values for a given attribute. Optionally we'd be able to filter the suggested values
      * by the operator the user put in front.
      */
-    public function getValuesFor($attribute, $operator = null, $queryConfig)
+    public function getValuesFor($attribute, $operator, $queryConfig)
     {
         // Get the entity for the attribute, e.g. Shopware\Models\Article\Detail
         $entity = $this->getDqlHelper()->getEntityForAttribute($attribute);

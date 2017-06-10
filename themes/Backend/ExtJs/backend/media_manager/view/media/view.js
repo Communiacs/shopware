@@ -47,14 +47,19 @@ Ext.define('Shopware.apps.MediaManager.view.media.View', {
     createInfoPanel: true,
     createDeleteButton: true,
     createMediaQuantitySelection: true,
+    thumbnailSize: 70,
+    /**
+     * Button section
+     */
     deleteBtn: null,
+    displayTypeBtn: null,
     selectedLayout: 'grid',
-
     snippets: {
         noMediaFound: '{s name=noMediaFound}No Media found{/s}',
         uploadDataDragDrop: '{s name=uploadDataDragDrop}Upload your Data via <strong>Drag & Drop</strong> here{/s}',
         noAdditionalInfo: '{s name=noAdditionalInfo}No additional informations found{/s}',
         moreInfoTitle:'{s name=moreInfoTitle}More information{/s}',
+        previewSize: '{s name=previewSizeFieldLabel}Preview size{/s}',
         mediaInfo: {
             name: '{s name=mediaInfo/name}Name:{/s}',
             uploadedon: '{s name=mediaInfo/uploadedOn}Uploaded on:{/s}',
@@ -94,11 +99,22 @@ Ext.define('Shopware.apps.MediaManager.view.media.View', {
         me.tbar = me.createActionToolbar();
         me.bbar = me.createPagingToolbar();
 
+        me.createPreviewSizeComboBox(me.bbar);
+
         // Are we're having file extensions which should filter the store?
         if(me.validTypes) {
             var proxy = me.mediaStore.getProxy();
             proxy.extraParams.validTypes = me.setValidTypes();
         }
+
+        me.mediaViewContainer = Ext.create('Ext.container.Container', {
+            style: 'overflow-y: scroll',
+            items: [
+                /* {if {acl_is_allowed privilege=upload}} */
+                me.createDropZone(),
+                /* {/if} */
+            ]
+        });
 
         me.cardContainer = Ext.create('Ext.panel.Panel', {
             layout: 'card',
@@ -106,19 +122,13 @@ Ext.define('Shopware.apps.MediaManager.view.media.View', {
             region: 'center',
             unstyled: true,
             style: 'background: #fff',
-            items: [{
-                xtype: 'container',
-                style: 'overflow-y: scroll',
-                items: [
-                /* {if {acl_is_allowed privilege=upload}} */
-                    me.createDropZone(),
-                /* {/if} */
-                    me.createMediaView()
-                ]
-            }, {
-                xtype: 'mediamanager-media-grid',
-                mediaStore: me.mediaStore
-            }]
+            items: [
+                me.mediaViewContainer,
+                {
+                    xtype: 'mediamanager-media-grid',
+                    mediaStore: me.mediaStore
+                }
+            ]
         });
 
         // Create the items of the container
@@ -162,26 +172,29 @@ Ext.define('Shopware.apps.MediaManager.view.media.View', {
      * @return { object } generated Ext.XTemplate
      */
     createMediaViewTemplate: function() {
-        var me = this;
+        var me = this,
+            tSize = me.thumbnailSize,
+            tStyle = Ext.String.format('style="width:[0]px;height:[0]px;"',tSize),
+            imgStyle = Ext.String.format('style="max-width:[0]px;max-height:[0]px"',tSize-2);
 
         return new Ext.XTemplate(
             '{literal}<tpl for=".">',
-                '<div class="thumb-wrap" id="{name}">',
+            Ext.String.format('<div class="thumb-wrap" id="{name}" [0]>',tStyle),
+            // If the type is image, then show the image
+            '<tpl if="this.isImage(type, extension)">',
+            Ext.String.format('<div class="thumb" [0]>',tStyle),
+            Ext.String.format('<div class="inner-thumb" [0]>',tStyle),
+            Ext.String.format('<img src="{thumbnail}?{timestamp}" title="{name}" [0] /></div>', imgStyle),
+            '</div>',
+            '</tpl>',
 
-                // If the type is image, then show the image
-                '<tpl if="this.isImage(type, extension)">',
-                '<div class="thumb">',
-                    '<div class="inner-thumb"><img src="{thumbnail}" title="{name}" /></div>',
-                '</div>',
-                '</tpl>',
-
-                // All other types should render an icon
-                '<tpl if="!this.isImage(type, extension)">',
-                    '<div class="thumb icon">',
-                        '<div class="icon-{[values.type.toLowerCase()]}">&nbsp;</div>',
-                    '</div>',
-                '</tpl>',
-                '<span class="x-editable">{[Ext.util.Format.ellipsis(values.name, 9)]}.{extension}</span></div>',
+            // All other types should render an icon
+            '<tpl if="!this.isImage(type, extension)">',
+            Ext.String.format('<div class="thumb icon" [0]>',tStyle),
+            '<div class="icon-{[values.type.toLowerCase()]}">&nbsp;</div>',
+            '</div>',
+            '</tpl>',
+            '<span class="x-editable">{[Ext.util.Format.ellipsis(values.name, 9)]}.{extension}</span></div>',
             '</tpl>',
             '<div class="x-clear"></div>{/literal}',
             {
@@ -448,6 +461,27 @@ Ext.define('Shopware.apps.MediaManager.view.media.View', {
     },
 
     /**
+     * Event handler for the replace button. Open a new replace media window.
+     */
+    onClickReplaceButton: function() {
+        var me = this,
+            selection = me.dataView.getSelectionModel().getSelection(),
+            replaceWindow, grid;
+
+        if (me.selectedLayout === 'table') {
+            grid = me.down('mediamanager-media-grid');
+            selection = grid.selModel.getSelection();
+        }
+
+        replaceWindow = Ext.create('Shopware.apps.MediaManager.view.replace.Window', {
+            selectedMedias: selection,
+            mediaManager: me
+        });
+
+        replaceWindow.show();
+    },
+
+    /**
      * Creates the action toolbar for the media view. The toolbar
      * contains 2 buttons ("add item" and "delete marked items")
      * and a search field to filter the media view.
@@ -504,12 +538,25 @@ Ext.define('Shopware.apps.MediaManager.view.media.View', {
             action: 'mediamanager-media-view-search'
         });
 
+        /*{if {acl_is_allowed privilege=update}}*/
+        me.replaceButton = Ext.create('Ext.button.Button', {
+            text: '{s name="replace/media/button/text"}{/s}',
+            iconCls:'sprite-blue-document-convert',
+            disabled: true,
+            handler: Ext.bind(me.onClickReplaceButton, me)
+        });
+        /* {/if} */
+
         var toolbar = Ext.create('Ext.toolbar.Toolbar', {
             ui: 'shopware-ui',
             items: [
-        /* {if {acl_is_allowed privilege=create}} */
-                this.addBtn
-        /* {/if} */
+
+                /* {if {acl_is_allowed privilege=create}} */
+                this.addBtn,
+                /* {/if} */
+                /*{if {acl_is_allowed privilege=update}}*/
+                me.replaceButton
+                /* {/if} */
             ]
         });
 
@@ -528,11 +575,17 @@ Ext.define('Shopware.apps.MediaManager.view.media.View', {
         }
         /* {/if} */
 
-        toolbar.add({
+        /**
+         * Initialize the display type button
+         */
+
+        me.displayTypeBtn = Ext.create('Ext.button.Cycle',{
             showText: true,
-            xtype: 'cycle',
             prependText: '{s name=toolbar/view}Display as{/s} ',
             action: 'mediamanager-media-view-layout',
+            handler: function(btn) {
+                btn.fireEvent('layout-button-click', btn, btn.getActiveItem());
+            },
             menu: {
                 items: [{
                     text: '{s name=toolbar/view_chart}Grid{/s}',
@@ -546,6 +599,8 @@ Ext.define('Shopware.apps.MediaManager.view.media.View', {
                 }]
             }
         });
+
+        toolbar.add(me.displayTypeBtn);
 
         toolbar.add(
             '->',
@@ -569,6 +624,8 @@ Ext.define('Shopware.apps.MediaManager.view.media.View', {
             labelWidth: 110,
             cls: Ext.baseCSSPrefix + 'page-size',
             queryMode: 'local',
+            action: 'perPageComboBox',
+            editable: false,
             width: 210,
             listeners: {
                 scope: me,
@@ -590,35 +647,46 @@ Ext.define('Shopware.apps.MediaManager.view.media.View', {
             displayField: 'name',
             valueField: 'value'
         });
+
         pageSize.setValue(me.mediaStore.pageSize + '');
 
         var toolbar = Ext.create('Ext.toolbar.Paging', {
-            store: me.mediaStore
+            store: me.mediaStore,
+            height: 35
         });
 
         if(me.createMediaQuantitySelection) {
             toolbar.add('->', pageSize, { xtype: 'tbspacer', width: 6 });
         }
 
-        // Create the data for the preview image size
-        var imageSizeData = [], i = 1;
-        for( ; i < 9; i++) {
-            var size = 16 * i;
-            imageSizeData.push({ value: size, name: size + 'x' + size + 'px' });
-        }
+        me.pageSize = pageSize;
+
+        return toolbar;
+    },
+
+    /**
+     * @param { object } toolbar
+     */
+    createPreviewSizeComboBox: function(toolbar) {
+        var me = this;
+
+        me.tableImageSizes = me.createPreviewSizeStoreData(16);
+        me.gridImageSizes = me.createPreviewSizeStoreData(36, 5);
+        me.gridImageSizes.shift();
 
         // Preview image size selection, especially for the list view
         me.imageSize = Ext.create('Ext.form.field.ComboBox', {
-            fieldLabel: 'Preview-Größe',
+            fieldLabel: me.snippets.previewSize,
             queryMode: 'local',
-            labelWidth: 90,
-            width: 190,
-            hidden: true,
+            labelWidth: 120,
+            width: 220,
+            hidden: false,
+            editable: false,
             displayField: 'name',
             valueField: 'value',
             store: Ext.create('Ext.data.Store', {
                 fields: [ 'value', 'name' ],
-                data: imageSizeData
+                data: me.gridImageSizes
             }),
             listeners: {
                 scope: me,
@@ -628,9 +696,28 @@ Ext.define('Shopware.apps.MediaManager.view.media.View', {
             }
         });
         me.imageSize.setValue(16);
-        toolbar.add(me.imageSize, { xtype: 'tbspacer', width: 6 });
-        return toolbar;
 
+        toolbar.add(me.imageSize, { xtype: 'tbspacer', width: 6 });
+    },
+
+    /**
+     * @param { int } imageSize
+     * @param { int? } iterations
+     * @returns { Array }
+     */
+    createPreviewSizeStoreData: function(imageSize, iterations) {
+        var imageSizeData = [],
+            i = 1,
+            size;
+
+        iterations = iterations || 9;
+
+        for( ; i < iterations; i++) {
+            size = imageSize * i;
+            imageSizeData.push({ value: size, name: size + 'x' + size + 'px' });
+        }
+
+        return imageSizeData;
     },
 
     /**
@@ -649,6 +736,8 @@ Ext.define('Shopware.apps.MediaManager.view.media.View', {
             record = rowModel.getLastSelected();
 
         me.onUnlockDeleteButton();
+        me.unlockReplaceMediaButton();
+
         if(me.infoView) {
             me.infoView.update(record.data);
             me.attributeButton.setRecord(record);
@@ -663,6 +752,32 @@ Ext.define('Shopware.apps.MediaManager.view.media.View', {
     onUnlockDeleteButton: function() {
         if(this.deleteBtn) {
             this.deleteBtn.setDisabled(false);
+        }
+    },
+
+    /**
+     * Unlocks the replace media button
+     *
+     * @return void
+     */
+    unlockReplaceMediaButton: function() {
+        var me = this;
+
+        if (me.replaceButton) {
+            me.replaceButton.setDisabled(false);
+        }
+    },
+
+    /**
+     * Locks the replace medie button
+     *
+     * @param rowModel
+     */
+    lockReplaceMediaButton: function(rowModel) {
+        var me = this;
+
+        if (me.replaceButton) {
+            me.replaceButton.setDisabled(!rowModel.getSelection().length);
         }
     },
 
@@ -691,11 +806,14 @@ Ext.define('Shopware.apps.MediaManager.view.media.View', {
      * @return void
      */
     onChangeMediaQuantity: function(combo, records) {
+
         var record = records[0],
             me = this;
 
         me.mediaStore.pageSize = record.get('value');
         me.mediaStore.loadPage(1);
+
+        me.fireEvent('media-view-media-quantity-changed', me, record.get('value'));
     },
 
     /**

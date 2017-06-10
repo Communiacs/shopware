@@ -46,7 +46,7 @@ class DBALTimestampPersistor implements TimestampPersistor
      */
     public function getCurrentTimestamp($shopId)
     {
-        $sql = <<<sql
+        $sql = <<<'sql'
 SELECT s_core_config_values.value FROM s_core_config_values
 INNER JOIN s_core_config_elements 
     ON s_core_config_values.element_id = s_core_config_elements.id 
@@ -71,7 +71,7 @@ sql;
      */
     public function updateTimestamp($shopId, $timestamp)
     {
-        $sql = <<<sql
+        $sql = <<<'sql'
 INSERT INTO s_core_config_values (`element_id`, `shop_id`, `value`) VALUES (
     (SELECT id FROM s_core_config_elements WHERE `name` LIKE 'assetTimestamp' LIMIT 1),
     :shopId, 

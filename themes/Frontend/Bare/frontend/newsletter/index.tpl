@@ -28,9 +28,12 @@
 
         {* Error messages *}
         {block name="frontend_newsletter_error_messages"}
+
             {if $sStatus.code != 0}
                 <div class="newsletter--error-messages">
-                    {if $sStatus.code==3}
+                    {if $sStatus.code === 7}
+                        {include file="frontend/_includes/messages.tpl" type='error' content="{s namespace="widgets/captcha/custom_captcha" name="invalidCaptchaMessage"}{/s}"}
+                    {elseif $sStatus.code==3}
                         {include file="frontend/_includes/messages.tpl" type='success' content=$sStatus.message}
                     {elseif $sStatus.code==5}
                         {include file="frontend/_includes/messages.tpl" type='error' content=$sStatus.message}
@@ -73,7 +76,7 @@
 
                             {* Subscription option *}
                             {block name="frontend_newsletter_form_input_subscription"}
-                                <div class="newsletter--subscription">
+                                <div class="newsletter--subscription select-field">
                                     <select name="subscribeToNewsletter" required="required" class="field--select newsletter--checkmail">
                                         <option value="1">{s name="sNewsletterOptionSubscribe"}{/s}</option>
                                         <option value="-1"{if $_POST.subscribeToNewsletter eq -1 || (!$_POST.subscribeToNewsletter && $sUnsubscribe == true)} selected="selected"{/if}>{s name="sNewsletterOptionUnsubscribe"}{/s}</option>
@@ -97,8 +100,8 @@
 
                                         {* Salutation *}
                                         {block name="frontend_newsletter_form_input_salutation"}
-                                            <div class="newsletter--salutation">
-                                                <select name="salutation" class="field--select{if $sStatus.sErrorFlag.salutation} has--error{/if}">
+                                            <div class="newsletter--salutation select-field">
+                                                <select name="salutation" class="field--select">
                                                     <option value=""{if $_POST.salutation eq ""} selected="selected"{/if}>{s name='NewsletterRegisterPlaceholderSalutation'}{/s}</option>
                                                     {foreach $salutations as $key => $label}
                                                         <option value="{$key}"{if $_POST.salutation eq $key} selected="selected"{/if}>{$label}</option>
@@ -138,10 +141,6 @@
                                                     <input name="city" type="text" placeholder="{s name="NewsletterRegisterBillingPlaceholderCityname"}{/s}" value="{$_POST.city|escape}" size="25" class="input--field input--field-city input--spacer{if $sStatus.sErrorFlag.city} has--error{/if}"/>
                                                     <input name="zipcode" type="text" placeholder="{s name="NewsletterRegisterBillingPlaceholderZipcode"}{/s}" value="{$_POST.zipcode|escape}" class="input--field input--field-zipcode{if $sStatus.sErrorFlag.zipcode} has--error{/if}"/>
                                                 {/if}
-
-
-
-
                                             </div>
                                         {/block}
 
@@ -155,6 +154,15 @@
                                 <div class="newsletter--required-info">
                                     {s name='RegisterPersonalRequiredText' namespace="frontend/register/personal_fieldset"}{/s}
                                 </div>
+                            {/block}
+
+                            {* Captcha *}
+                            {block name='frontend_newsletter_form_captcha'}
+                                {$captchaName = {config name=newsletterCaptcha}}
+                                {if $captchaName !== "nocaptcha"}
+                                    {$captchaHasError = $errors.captcha}
+                                    {include file="widgets/captcha/newsletter_captcha.tpl" captchaName=$captchaName captchaHasError=$captchaHasError}
+                                {/if}
                             {/block}
 
                             {* Submit button *}

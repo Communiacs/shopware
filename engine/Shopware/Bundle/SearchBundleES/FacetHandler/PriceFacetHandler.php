@@ -113,11 +113,14 @@ class PriceFacetHandler implements HandlerInterface, ResultHydratorInterface
         if ($data['count'] <= 0) {
             return;
         }
+        if ($data['min'] == $data['max']) {
+            return;
+        }
 
         $criteriaPart = $this->createFacet(
             $criteria,
-            (float) $data['min'],
-            (float) $data['max']
+            round((float) $data['min'], 2),
+            round((float) $data['max'], 2)
         );
         $result->addFacet($criteriaPart);
     }
@@ -140,15 +143,21 @@ class PriceFacetHandler implements HandlerInterface, ResultHydratorInterface
             $activeMax = $condition->getMaxPrice();
         }
 
-        $label = $this->snippetManager
-            ->getNamespace('frontend/listing/facet_labels')
-            ->get('price', 'Price');
-
         if (!$minFieldName = $this->queryAliasMapper->getShortAlias('priceMin')) {
             $minFieldName = 'priceMin';
         }
         if (!$maxFieldName = $this->queryAliasMapper->getShortAlias('priceMax')) {
             $maxFieldName = 'priceMax';
+        }
+
+        /** @var PriceFacet $facet */
+        $facet = $criteria->getFacet('price');
+        if ($facet && !empty($facet->getLabel())) {
+            $label = $facet->getLabel();
+        } else {
+            $label = $this->snippetManager
+                ->getNamespace('frontend/listing/facet_labels')
+                ->get('price', 'Price');
         }
 
         return new RangeFacetResult(
@@ -162,6 +171,8 @@ class PriceFacetHandler implements HandlerInterface, ResultHydratorInterface
             $minFieldName,
             $maxFieldName,
             [],
+            null,
+            2,
             'frontend/listing/filter/facet-currency-range.tpl'
         );
     }

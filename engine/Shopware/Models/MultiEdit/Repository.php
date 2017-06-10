@@ -74,7 +74,7 @@ class Repository extends ModelRepository
      *
      * @return \Doctrine\ORM\Query
      */
-    public function getBackupListQuery($offset = null, $limit)
+    public function getBackupListQuery($offset, $limit)
     {
         $builder = $this->getBackupListQueryBuilder();
 

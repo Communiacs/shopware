@@ -25,6 +25,7 @@
 namespace Shopware\Bundle\SearchBundle;
 
 use Assert\Assertion;
+use Shopware\Bundle\StoreFrontBundle\Struct\Extendable;
 
 /**
  * The criteria object is used for the search gateway.
@@ -39,7 +40,7 @@ use Assert\Assertion;
  *
  * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
-class Criteria implements \JsonSerializable
+class Criteria extends Extendable implements \JsonSerializable
 {
     /**
      * Offset for the limitation
@@ -74,6 +75,11 @@ class Criteria implements \JsonSerializable
      * @var SortingInterface[]
      */
     private $sortings = [];
+
+    /**
+     * @var bool
+     */
+    private $generatePartialFacets = false;
 
     /**
      * @var bool
@@ -451,6 +457,30 @@ class Criteria implements \JsonSerializable
     public function getBaseConditions()
     {
         return $this->baseConditions;
+    }
+
+    /**
+     * @return bool
+     */
+    public function generatePartialFacets()
+    {
+        return $this->generatePartialFacets;
+    }
+
+    /**
+     * @param bool $generatePartialFacets
+     */
+    public function setGeneratePartialFacets($generatePartialFacets)
+    {
+        $this->generatePartialFacets = $generatePartialFacets;
+    }
+
+    /**
+     * @return ConditionInterface[]
+     */
+    public function getUserConditions()
+    {
+        return $this->conditions;
     }
 
     /**

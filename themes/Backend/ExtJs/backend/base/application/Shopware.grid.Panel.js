@@ -480,6 +480,11 @@ Ext.define('Shopware.grid.Panel', {
             rowEditing: false,
 
             /**
+             * If enabled, shows progress window when delete column will be used to delete a single item
+             */
+            displayProgressOnSingleDelete: true,
+
+            /**
              * Column configuration object.
              * This object can contains different configuration for
              * the single grid columns.
@@ -1312,9 +1317,7 @@ Ext.define('Shopware.grid.Panel', {
         column = {
             action: 'delete',
             iconCls: 'sprite-minus-circle-frame',
-            handler: function (view, rowIndex, colIndex, item, opts, record) {
-                me.fireEvent(me.eventAlias + '-delete-item', me, record, rowIndex, colIndex, item, opts);
-            }
+            handler: Ext.bind(me._onDelete, me)
         };
 
         me.fireEvent(me.eventAlias + '-delete-action-column-created', me, column);
@@ -1337,9 +1340,7 @@ Ext.define('Shopware.grid.Panel', {
         column = {
             action: 'edit',
             iconCls: 'sprite-pencil',
-            handler: function (view, rowIndex, colIndex, item, opts, record) {
-                me.fireEvent(me.eventAlias + '-edit-item', me, record, rowIndex, colIndex, item, opts);
-            }
+            handler: Ext.bind(me._onEdit, me)
         };
 
         me.fireEvent(me.eventAlias + '-edit-action-column-created', me, column);
@@ -1460,9 +1461,7 @@ Ext.define('Shopware.grid.Panel', {
 
         selModel = Ext.create('Ext.selection.CheckboxModel', {
             listeners: {
-                selectionchange: function (selModel, selection) {
-                    return me.fireEvent(me.eventAlias + '-selection-changed', me, selModel, selection);
-                }
+                selectionchange: Ext.bind(me.onSelectionChange, me)
             }
         });
 
@@ -1696,9 +1695,7 @@ Ext.define('Shopware.grid.Panel', {
         me.addButton = Ext.create('Ext.button.Button', {
             text: me.addButtonText,
             iconCls: 'sprite-plus-circle-frame',
-            handler: function () {
-                me.fireEvent(me.eventAlias + '-add-item', me, me.createNewRecord());
-            }
+            handler: Ext.bind(me.onAddItem, me)
         });
 
         me.fireEvent(me.eventAlias + '-add-button-created', me, me.addButton);
@@ -1725,10 +1722,7 @@ Ext.define('Shopware.grid.Panel', {
             text: me.deleteButtonText,
             disabled: true,
             iconCls: 'sprite-minus-circle-frame',
-            handler: function () {
-                var selModel = me.getSelectionModel();
-                me.fireEvent(me.eventAlias + '-delete-items', me, selModel.getSelection(), this);
-            }
+            handler: Ext.bind(me._onMultiDelete, me)
         });
 
         me.fireEvent(me.eventAlias + '-delete-button-created', me, me.deleteButton);
@@ -1855,6 +1849,36 @@ Ext.define('Shopware.grid.Panel', {
         if (result) return result;
 
         return value;
+    },
+
+    onAddItem: function() {
+        var me = this;
+        me.fireEvent(me.eventAlias + '-add-item', me, me.createNewRecord());
+    },
+
+    _onMultiDelete: function () {
+        var me = this;
+        var selModel = me.getSelectionModel();
+        me.fireEvent(me.eventAlias + '-delete-items', me, selModel.getSelection(), this);
+    },
+
+    /**
+     * @param selModel
+     * @param selection
+     */
+    onSelectionChange: function(selModel, selection) {
+        var me = this;
+        return me.fireEvent(me.eventAlias + '-selection-changed', me, selModel, selection);
+    },
+
+    _onDelete: function (view, rowIndex, colIndex, item, opts, record) {
+        var me = this;
+        me.fireEvent(me.eventAlias + '-delete-item', me, record, rowIndex, colIndex, item, opts);
+    },
+
+    _onEdit: function (view, rowIndex, colIndex, item, opts, record) {
+        var me = this;
+        me.fireEvent(me.eventAlias + '-edit-item', me, record, rowIndex, colIndex, item, opts);
     }
 });
 

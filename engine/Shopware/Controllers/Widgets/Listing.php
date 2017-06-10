@@ -22,7 +22,12 @@
  * our trademarks remain entirely with us.
  */
 
-use Shopware\Bundle\SearchBundle\ProductNumberSearchResult;
+use Shopware\Bundle\SearchBundle\ProductSearchInterface;
+use Shopware\Bundle\SearchBundle\ProductSearchResult;
+use Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface;
+use Shopware\Bundle\StoreFrontBundle\Struct\Search\CustomFacet;
+use Shopware\Components\Compatibility\LegacyStructConverter;
+use Shopware\Components\Routing\RouterInterface;
 
 /**
  * Shopware Listing Widgets
@@ -96,10 +101,10 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
     public function topSellerAction()
     {
         $perPage = (int) $this->Request()->getParam('perPage', 4);
-        $this->View()->sCharts = Shopware()->Modules()->Articles()->sGetArticleCharts(
+        $this->View()->assign('sCharts', Shopware()->Modules()->Articles()->sGetArticleCharts(
             $this->Request()->getParam('sCategory')
-        );
-        $this->View()->perPage = $perPage;
+        ));
+        $this->View()->assign('perPage', $perPage);
     }
 
     /**
@@ -116,48 +121,42 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
         $controller = $this->Request()->getParam('sController', $this->Request()->getControllerName());
 
         if (strpos($config->controller, $controller) !== false) {
-            $this->View()->sCloud = Shopware()->Modules()->Marketing()->sBuildTagCloud(
+            $this->View()->assign('sCloud', Shopware()->Modules()->Marketing()->sBuildTagCloud(
                 $this->Request()->getParam('sCategory')
-            );
+            ));
         }
     }
 
+    /**
+     * Loads the listing count for the provided listing parameters.
+     * Sets a json response with: `facets`, `totalCount` and `products`.
+     */
     public function listingCountAction()
     {
-        $this->Front()->Plugins()->ViewRenderer()->setNoRender();
+        if ($this->Request()->getParam('sSearch')) {
+            $result = $this->fetchSearchListing();
+            $this->setSearchResultResponse($result);
 
-        $context = $this->get('shopware_storefront.context_service')->getShopContext();
+            return;
+        }
 
         $categoryId = $this->Request()->getParam('sCategory');
         $productStreamId = $this->findStreamIdByCategoryId($categoryId);
 
         if ($productStreamId) {
-            /** @var \Shopware\Components\ProductStream\CriteriaFactoryInterface $factory */
-            $factory = $this->get('shopware_product_stream.criteria_factory');
-            $criteria = $factory->createCriteria($this->Request(), $context);
+            $result = $this->fetchStreamListing($categoryId, $productStreamId);
+            $this->setSearchResultResponse($result);
 
-            /** @var \Shopware\Components\ProductStream\RepositoryInterface $streamRepository */
-            $streamRepository = $this->get('shopware_product_stream.repository');
-            $streamRepository->prepareCriteria($criteria, $productStreamId);
-
-            $criteria->resetSorting();
-        } else {
-            $criteria = $this->get('shopware_search.store_front_criteria_factory')
-                ->createAjaxCountCriteria($this->Request(), $context);
+            return;
         }
 
-        /** @var $result ProductNumberSearchResult */
-        $result = $this->get('shopware_search.product_number_search')->search(
-            $criteria,
-            $context
-        );
-
-        $body = json_encode(['totalCount' => $result->getTotalCount()]);
-        $this->Response()->setBody($body);
-        $this->Response()->setHeader('Content-type', 'application/json', true);
+        $result = $this->fetchCategoryListing();
+        $this->setSearchResultResponse($result);
     }
 
     /**
+     * @deprecated since 5.3, remove in 5.5. Use \Shopware_Controllers_Widgets_Listing::listingCountAction instead
+     *
      * listing action for asynchronous fetching listing pages
      * by infinite scrolling plugin
      */
@@ -195,6 +194,7 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
             'sArticles' => $articles,
             'pageIndex' => $pageIndex,
             'productBoxLayout' => $layout,
+            'sCategoryCurrent' => $categoryId,
         ]);
     }
 
@@ -204,7 +204,7 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
     public function getCategoryAction()
     {
         $categoryId = $this->Request()->getParam('categoryId');
-        $categoryId = intval($categoryId);
+        $categoryId = (int) $categoryId;
 
         $category = $this->getCategoryById($categoryId);
 
@@ -272,9 +272,7 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
             ->andWhere('category.active = 1')
             ->setParameter(':parentId', $categoryId);
 
-        $childrenIds = $query->execute()->fetchAll(PDO::FETCH_COLUMN);
-
-        return $childrenIds;
+        return $query->execute()->fetchAll(PDO::FETCH_COLUMN);
     }
 
     /**
@@ -294,5 +292,258 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
         }
 
         return null;
+    }
+
+    /**
+     * @param ProductSearchResult $result
+     */
+    private function setSearchResultResponse(ProductSearchResult $result)
+    {
+        $body = [
+            'totalCount' => $result->getTotalCount(),
+        ];
+
+        if ($this->Request()->getParam('loadFacets')) {
+            $body['facets'] = array_values($result->getFacets());
+        }
+        if ($this->Request()->getParam('loadProducts')) {
+            $body['listing'] = $this->fetchListing($result);
+            $body['pagination'] = $this->fetchPagination($result);
+        }
+
+        $this->Front()->Plugins()->ViewRenderer()->setNoRender();
+        $this->Response()->setBody(json_encode($body));
+        $this->Response()->setHeader('Content-type', 'application/json', true);
+    }
+
+    /**
+     * @param int $productStreamId
+     *
+     * @return ProductSearchResult
+     */
+    private function fetchStreamListing($categoryId, $productStreamId)
+    {
+        /** @var ContextServiceInterface $contextService */
+        $contextService = $this->get('shopware_storefront.context_service');
+        $context = $contextService->getShopContext();
+
+        /** @var \Shopware\Components\ProductStream\CriteriaFactoryInterface $factory */
+        $factory = $this->get('shopware_product_stream.criteria_factory');
+        $criteria = $factory->createCriteria($this->Request(), $context);
+
+        /** @var \Shopware\Components\ProductStream\RepositoryInterface $streamRepository */
+        $streamRepository = $this->get('shopware_product_stream.repository');
+        $streamRepository->prepareCriteria($criteria, $productStreamId);
+
+        /** @var \Shopware\Bundle\StoreFrontBundle\Service\CustomFacetServiceInterface $facetService */
+        $facetService = $this->get('shopware_storefront.custom_facet_service');
+        $facets = $facetService->getFacetsOfCategories([$categoryId], $context);
+
+        /** @var CustomFacet[] $facets */
+        $facets = array_shift($facets);
+        foreach ($facets as $facet) {
+            $criteria->addFacet($facet->getFacet());
+        }
+
+        /** @var \Shopware\Components\ProductStream\FacetFilter $facetFilter */
+        $facetFilter = $this->get('shopware_product_stream.facet_filter');
+        $facetFilter->add($criteria);
+
+        $criteria->setGeneratePartialFacets(
+            $this->container->get('config')->get('listingMode') === 'filter_ajax_reload'
+        );
+
+        if (!$this->Request()->get('loadFacets')) {
+            $criteria->resetFacets();
+        }
+
+        /** @var ProductSearchInterface $search */
+        $search = $this->get('shopware_search.product_search');
+
+        if (!$this->Request()->getParam('loadProducts')) {
+            $criteria->limit(1);
+        }
+
+        $result = $search->search($criteria, $context);
+
+        if (!$this->Request()->get('loadFacets')) {
+            return $result;
+        }
+
+        return new ProductSearchResult(
+            $result->getProducts(),
+            $result->getTotalCount(),
+            $facetFilter->filter($result->getFacets(), $criteria)
+        );
+    }
+
+    /**
+     * @return ProductSearchResult
+     */
+    private function fetchCategoryListing()
+    {
+        /** @var ContextServiceInterface $contextService */
+        $contextService = $this->get('shopware_storefront.context_service');
+        $context = $contextService->getShopContext();
+
+        /** @var \Shopware\Bundle\SearchBundle\StoreFrontCriteriaFactoryInterface $factory */
+        $factory = $this->get('shopware_search.store_front_criteria_factory');
+        $criteria = $factory->createListingCriteria($this->Request(), $context);
+
+        $criteria->setGeneratePartialFacets(
+            $this->container->get('config')->get('listingMode') === 'filter_ajax_reload'
+        );
+
+        if (!$this->Request()->get('loadFacets')) {
+            $criteria->resetFacets();
+        }
+
+        /** @var ProductSearchInterface $search */
+        $search = $this->get('shopware_search.product_search');
+
+        if (!$this->Request()->getParam('loadProducts')) {
+            $criteria->limit(1);
+        }
+
+        return $search->search($criteria, $context);
+    }
+
+    /**
+     * @return ProductSearchResult
+     */
+    private function fetchSearchListing()
+    {
+        /** @var ContextServiceInterface $contextService */
+        $contextService = $this->get('shopware_storefront.context_service');
+        $context = $contextService->getShopContext();
+
+        /** @var \Shopware\Bundle\SearchBundle\StoreFrontCriteriaFactoryInterface $factory */
+        $factory = $this->get('shopware_search.store_front_criteria_factory');
+        $criteria = $factory->createSearchCriteria($this->Request(), $context);
+
+        $criteria->setGeneratePartialFacets(
+            $this->container->get('config')->get('listingMode') === 'filter_ajax_reload'
+        );
+
+        if (!$this->Request()->get('loadFacets')) {
+            $criteria->resetFacets();
+        }
+
+        /** @var ProductSearchInterface $search */
+        $search = $this->get('shopware_search.product_search');
+
+        if (!$this->Request()->getParam('loadProducts')) {
+            $criteria->limit(1);
+        }
+
+        return $search->search($criteria, $context);
+    }
+
+    /**
+     * @param ProductSearchResult $result
+     *
+     * @return string
+     */
+    private function fetchListing(ProductSearchResult $result)
+    {
+        $categoryId = $this->Request()->getParam('sCategory', null);
+
+        if ($this->Request()->has('productBoxLayout')) {
+            $boxLayout = $this->Request()->get('productBoxLayout');
+        } else {
+            $boxLayout = $categoryId ? Shopware()->Modules()->Categories()
+                ->getProductBoxLayout($categoryId) : $this->get('config')->get('searchProductBoxLayout');
+        }
+
+        $articles = $this->convertArticlesResult($result, $categoryId);
+
+        $this->View()->assign($this->Request()->getParams());
+
+        $this->loadThemeConfig();
+
+        $this->View()->assign([
+            'sArticles' => $articles,
+            'pageIndex' => $this->Request()->getParam('sPage'),
+            'productBoxLayout' => $boxLayout,
+            'sCategoryCurrent' => $categoryId,
+        ]);
+
+        return $this->View()->fetch('frontend/listing/listing_ajax.tpl');
+    }
+
+    /**
+     * @param ProductSearchResult $result
+     *
+     * @return string
+     */
+    private function fetchPagination(ProductSearchResult $result)
+    {
+        $sPerPage = $this->Request()->getParam('sPerPage');
+        $this->View()->assign([
+            'sPage' => $this->Request()->getParam('sPage'),
+            'pages' => ceil($result->getTotalCount() / $sPerPage),
+            'baseUrl' => $this->Request()->getBaseUrl() . $this->Request()->getPathInfo(),
+            'pageSizes' => explode('|', $this->container->get('config')->get('numberArticlesToShow')),
+            'shortParameters' => $this->container->get('query_alias_mapper')->getQueryAliases(),
+            'limit' => $sPerPage,
+        ]);
+
+        return $this->View()->fetch('frontend/listing/actions/action-pagination.tpl');
+    }
+
+    /**
+     * @param ProductSearchResult $result
+     * @param null|int            $categoryId
+     *
+     * @return array
+     */
+    private function convertArticlesResult(ProductSearchResult $result, $categoryId)
+    {
+        /** @var LegacyStructConverter $converter */
+        $converter = $this->get('legacy_struct_converter');
+        /** @var RouterInterface $router */
+        $router = $this->get('router');
+
+        $articles = $converter->convertListProductStructList($result->getProducts());
+
+        if (empty($articles)) {
+            return $articles;
+        }
+
+        $urls = array_map(function ($article) use ($categoryId) {
+            if ($categoryId !== null) {
+                return $article['linkDetails'] . '&sCategory=' . (int) $categoryId;
+            }
+
+            return $article['linkDetails'];
+        }, $articles);
+
+        $rewrite = $router->generateList($urls);
+
+        foreach ($articles as $key => &$article) {
+            if (!array_key_exists($key, $rewrite)) {
+                continue;
+            }
+            $article['linkDetails'] = $rewrite[$key];
+        }
+
+        return $articles;
+    }
+
+    private function loadThemeConfig()
+    {
+        $inheritance = $this->container->get('theme_inheritance');
+
+        /** @var \Shopware\Models\Shop\Shop $shop */
+        $shop = $this->container->get('Shop');
+
+        $config = $inheritance->buildConfig($shop->getTemplate(), $shop, false);
+
+        $this->get('template')->addPluginsDir(
+            $inheritance->getSmartyDirectories(
+                $shop->getTemplate()
+            )
+        );
+        $this->View()->assign('theme', $config);
     }
 }

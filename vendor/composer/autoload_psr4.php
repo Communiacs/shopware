@@ -27,6 +27,7 @@ return array(
     'Symfony\\Component\\Config\\' => array($vendorDir . '/symfony/config'),
     'Symfony\\Component\\ClassLoader\\' => array($vendorDir . '/symfony/class-loader'),
     'React\\Promise\\' => array($vendorDir . '/react/promise/src'),
+    'Ramsey\\Uuid\\' => array($vendorDir . '/ramsey/uuid/src'),
     'Psr\\Log\\' => array($vendorDir . '/psr/log/Psr/Log'),
     'ONGR\\ElasticsearchDSL\\' => array($vendorDir . '/ongr/elasticsearch-dsl/src'),
     'Monolog\\' => array($vendorDir . '/monolog/monolog/src/Monolog'),

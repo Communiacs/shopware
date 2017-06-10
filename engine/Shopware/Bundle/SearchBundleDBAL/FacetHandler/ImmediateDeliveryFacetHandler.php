@@ -28,9 +28,11 @@ use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundle\Facet;
 use Shopware\Bundle\SearchBundle\FacetInterface;
 use Shopware\Bundle\SearchBundle\FacetResult\BooleanFacetResult;
+use Shopware\Bundle\SearchBundle\FacetResultInterface;
 use Shopware\Bundle\SearchBundleDBAL\ConditionHandler\ImmediateDeliveryConditionHandler;
-use Shopware\Bundle\SearchBundleDBAL\FacetHandlerInterface;
+use Shopware\Bundle\SearchBundleDBAL\PartialFacetHandlerInterface;
 use Shopware\Bundle\SearchBundleDBAL\QueryBuilderFactoryInterface;
+use Shopware\Bundle\SearchBundleDBAL\VariantHelper;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 use Shopware\Components\QueryAliasMapper;
 
@@ -39,7 +41,7 @@ use Shopware\Components\QueryAliasMapper;
  *
  * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
-class ImmediateDeliveryFacetHandler implements FacetHandlerInterface
+class ImmediateDeliveryFacetHandler implements PartialFacetHandlerInterface
 {
     /**
      * @var QueryBuilderFactoryInterface
@@ -57,6 +59,11 @@ class ImmediateDeliveryFacetHandler implements FacetHandlerInterface
     private $fieldName;
 
     /**
+     * @var VariantHelper
+     */
+    private $variantHelper;
+
+    /**
      * @param QueryBuilderFactoryInterface         $queryBuilderFactory
      * @param \Shopware_Components_Snippet_Manager $snippetManager
      * @param QueryAliasMapper                     $queryAliasMapper
@@ -64,7 +71,8 @@ class ImmediateDeliveryFacetHandler implements FacetHandlerInterface
     public function __construct(
         QueryBuilderFactoryInterface $queryBuilderFactory,
         \Shopware_Components_Snippet_Manager $snippetManager,
-        QueryAliasMapper $queryAliasMapper
+        QueryAliasMapper $queryAliasMapper,
+        VariantHelper $variantHelper
     ) {
         $this->queryBuilderFactory = $queryBuilderFactory;
         $this->snippetNamespace = $snippetManager->getNamespace('frontend/listing/facet_labels');
@@ -72,42 +80,31 @@ class ImmediateDeliveryFacetHandler implements FacetHandlerInterface
         if (!$this->fieldName = $queryAliasMapper->getShortAlias('immediateDelivery')) {
             $this->fieldName = 'immediateDelivery';
         }
+        $this->variantHelper = $variantHelper;
     }
 
     /**
-     * Generates the facet data for the passed query, criteria and context object.
+     * @param FacetInterface       $facet
+     * @param Criteria             $reverted
+     * @param Criteria             $criteria
+     * @param ShopContextInterface $context
      *
-     * @param FacetInterface|Facet\ShippingFreeFacet $facet
-     * @param Criteria                               $criteria
-     * @param ShopContextInterface                   $context
-     *
-     * @return BooleanFacetResult
+     * @return FacetResultInterface
      */
-    public function generateFacet(
+    public function generatePartialFacet(
         FacetInterface $facet,
+        Criteria $reverted,
         Criteria $criteria,
         ShopContextInterface $context
     ) {
-        $queryCriteria = clone $criteria;
-        $queryCriteria->resetConditions();
-        $queryCriteria->resetSorting();
-
-        $query = $this->queryBuilderFactory->createQuery($queryCriteria, $context);
-
+        $query = $this->queryBuilderFactory->createQuery($reverted, $context);
         $query->resetQueryPart('orderBy');
         $query->resetQueryPart('groupBy');
 
-        if (!$query->hasState(ImmediateDeliveryConditionHandler::STATE_INCLUDES_ALL_VARIANTS)) {
-            $query->innerJoin(
-                'product',
-                's_articles_details',
-                'allVariants',
-                'allVariants.articleID = product.id
-                 AND allVariants.active = 1
-                 AND allVariants.instock >= allVariants.minpurchase'
-            );
-
-            $query->addState(ImmediateDeliveryConditionHandler::STATE_INCLUDES_ALL_VARIANTS);
+        $this->variantHelper->joinVariants($query);
+        if (!$query->hasState(ImmediateDeliveryConditionHandler::STATE_INCLUDES_IMMEDIATE_DELIVERY_VARIANTS)) {
+            $query->andWhere('allVariants.instock >= allVariants.minpurchase');
+            $query->addState(ImmediateDeliveryConditionHandler::STATE_INCLUDES_IMMEDIATE_DELIVERY_VARIANTS);
         }
 
         $query->select('product.id')
@@ -122,11 +119,18 @@ class ImmediateDeliveryFacetHandler implements FacetHandlerInterface
             return null;
         }
 
+        /** @var Facet\ImmediateDeliveryFacet $facet */
+        if (!empty($facet->getLabel())) {
+            $label = $facet->getLabel();
+        } else {
+            $label = $this->snippetNamespace->get($facet->getName(), 'Immediate delivery');
+        }
+
         return new BooleanFacetResult(
             $facet->getName(),
             $this->fieldName,
             $criteria->hasCondition($facet->getName()),
-            $this->snippetNamespace->get($facet->getName(), 'Immediate delivery')
+            $label
         );
     }
 

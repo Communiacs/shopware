@@ -283,6 +283,7 @@ class FieldHelper
             'category.hidefilter as __category_hidefilter',
             'category.hidetop as __category_hidetop',
             'category.stream_id as __category_stream_id',
+            'category.hide_sortings as __category_hide_sortings',
         ];
 
         $fields = array_merge(
@@ -412,7 +413,6 @@ class FieldHelper
             'country.countryen as __country_countryen',
             'country.position as __country_position',
             'country.notice as __country_notice',
-            'country.shippingfree as __country_shippingfree',
             'country.taxfree as __country_taxfree',
             'country.taxfree_ustid as __country_taxfree_ustid',
             'country.taxfree_ustid_checked as __country_taxfree_ustid_checked',
@@ -818,6 +818,247 @@ class FieldHelper
     }
 
     /**
+     * Returns an array with all required emotion fields.
+     * Requires that the s_emotion table is included with table alias 'emotion'
+     *
+     * @return array
+     */
+    public function getEmotionFields()
+    {
+        $fields = [
+            'emotion.id AS __emotion_id',
+            'emotion.active AS __emotion_active',
+            'emotion.name AS __emotion_name',
+            'emotion.cols AS __emotion_cols',
+            'emotion.cell_spacing AS __emotion_cell_spacing',
+            'emotion.cell_height AS __emotion_cell_height',
+            'emotion.article_height AS __emotion_article_height',
+            'emotion.rows AS __emotion_rows',
+            'emotion.valid_from AS __emotion_valid_from',
+            'emotion.valid_to AS __emotion_valid_to',
+            'emotion.userID AS __emotion_user_id',
+            'emotion.show_listing AS __emotion_show_listing',
+            'emotion.is_landingpage AS __emotion_is_landingpage',
+            'emotion.seo_title AS __emotion_seo_title',
+            'emotion.seo_keywords AS __emotion_seo_keywords',
+            'emotion.seo_description AS __emotion_seo_description',
+            'emotion.create_date AS __emotion_create_date',
+            'emotion.modified AS __emotion_modified',
+            'emotion.template_id AS __emotion_template_id',
+            'emotion.device AS __emotion_device',
+            'emotion.fullscreen AS __emotion_fullscreen',
+            'emotion.mode AS __emotion_mode',
+            'emotion.position AS __emotion_position',
+            'emotion.parent_id AS __emotion_parent_id',
+            'emotion.preview_id AS __emotion_preview_id',
+            'emotion.preview_secret AS __emotion_preview_secret',
+        ];
+
+        $fields = array_merge(
+            $fields,
+            $this->getTableFields('s_emotion_attributes', 'emotionAttribute')
+        );
+
+        return $fields;
+    }
+
+    /**
+     * Returns an array with all required emotion fields.
+     * Requires that the s_emotion_templates table is included with table alias 'emotionTemplate'
+     *
+     * @return array
+     */
+    public function getEmotionTemplateFields()
+    {
+        $fields = [
+            'emotionTemplate.id AS __emotionTemplate_id',
+            'emotionTemplate.name AS __emotionTemplate_name',
+            'emotionTemplate.file AS __emotionTemplate_file',
+        ];
+
+        return $fields;
+    }
+
+    /**
+     * Returns an array with all required emotion element fields.
+     * Requires that the s_emotion_element table is included with table alias 'emotionElement'
+     *
+     * @return array
+     */
+    public function getEmotionElementFields()
+    {
+        $fields = [
+            'emotionElement.id AS __emotionElement_id',
+            'emotionElement.emotionID AS __emotionElement_emotion_id',
+            'emotionElement.componentID AS __emotionElement_component_id',
+            'emotionElement.start_row AS __emotionElement_start_row',
+            'emotionElement.start_col AS __emotionElement_start_col',
+            'emotionElement.end_row AS __emotionElement_end_row',
+            'emotionElement.end_col AS __emotionElement_end_col',
+            'emotionElement.css_class AS __emotionElement_css_class',
+        ];
+
+        return $fields;
+    }
+
+    /**
+     * Returns an array with all required emotion element value fields.
+     * Requires that the s_emotion_element_value table is included with table alias 'emotionElementValue'
+     *
+     * @return array
+     */
+    public function getEmotionElementValueFields()
+    {
+        $fields = [
+            'emotionElementValue.id AS __emotionElementValue_id',
+            'emotionElementValue.emotionID AS __emotionElementValue_emotion_id',
+            'emotionElementValue.elementID AS __emotionElementValue_element_id',
+            'emotionElementValue.componentID AS __emotionElementValue_component_id',
+            'emotionElementValue.fieldID AS __emotionElementValue_field_id',
+            'emotionElementValue.value AS __emotionElementValue_value',
+        ];
+
+        return $fields;
+    }
+
+    /**
+     * Returns an array with all required emotion component fields.
+     * Requires that the s_library_component table is included with table alias 'emotionLibraryComponent'
+     *
+     * @return array
+     */
+    public function getEmotionElementLibraryFields()
+    {
+        $fields = [
+            'emotionLibraryComponent.id AS __emotionLibraryComponent_id',
+            'emotionLibraryComponent.name AS __emotionLibraryComponent_name',
+            'emotionLibraryComponent.x_type AS __emotionLibraryComponent_x_type',
+            'emotionLibraryComponent.convert_function AS __emotionLibraryComponent_convert_function',
+            'emotionLibraryComponent.description AS __emotionLibraryComponent_description',
+            'emotionLibraryComponent.template AS __emotionLibraryComponent_template',
+            'emotionLibraryComponent.cls AS __emotionLibraryComponent_cls',
+            'emotionLibraryComponent.pluginID AS __emotionLibraryComponent_plugin_id',
+        ];
+
+        return $fields;
+    }
+
+    /**
+     * Returns an array with all required emotion component settings fields.
+     * Requires that the s_library_component_fields table is included with table alias 'emotionLibraryComponentField'
+     *
+     * @return array
+     */
+    public function getEmotionElementLibraryFieldFields()
+    {
+        $fields = [
+            'emotionLibraryComponentField.id AS __emotionLibraryComponentField_id',
+            'emotionLibraryComponentField.componentID AS __emotionLibraryComponentField_component_id',
+            'emotionLibraryComponentField.name AS __emotionLibraryComponentField_name',
+            'emotionLibraryComponentField.x_type AS __emotionLibraryComponentField_x_type',
+            'emotionLibraryComponentField.value_type AS __emotionLibraryComponentField_value_type',
+            'emotionLibraryComponentField.field_label AS __emotionLibraryComponentField_field_label',
+            'emotionLibraryComponentField.support_text AS __emotionLibraryComponentField_support_text',
+            'emotionLibraryComponentField.help_title AS __emotionLibraryComponentField_help_title',
+            'emotionLibraryComponentField.help_text AS __emotionLibraryComponentField_help_text',
+            'emotionLibraryComponentField.store AS __emotionLibraryComponentField_store',
+            'emotionLibraryComponentField.display_field AS __emotionLibraryComponentField_display_field',
+            'emotionLibraryComponentField.value_field AS __emotionLibraryComponentField_value_field',
+            'emotionLibraryComponentField.default_value AS __emotionLibraryComponentField_default_value',
+            'emotionLibraryComponentField.allow_blank AS __emotionLibraryComponentField_allow_blank',
+            'emotionLibraryComponentField.translatable AS __emotionLibraryComponentField_translatable',
+            'emotionLibraryComponentField.position AS __emotionLibraryComponentField_position',
+        ];
+
+        return $fields;
+    }
+
+    /**
+     * Returns an array with all required emotion element viewport fields.
+     * Requires that the s_emotion_element_viewport table is included with table alias 'emotionElementViewport'
+     *
+     * @return array
+     */
+    public function getEmotionElementViewportFields()
+    {
+        $fields = [
+            'emotionElementViewport.id AS __emotionElementViewport_id',
+            'emotionElementViewport.emotionID AS __emotionElementViewport_emotion_id',
+            'emotionElementViewport.elementID AS __emotionElementViewport_element_id',
+            'emotionElementViewport.alias AS __emotionElementViewport_alias',
+            'emotionElementViewport.start_row AS __emotionElementViewport_start_row',
+            'emotionElementViewport.start_col AS __emotionElementViewport_start_col',
+            'emotionElementViewport.end_row AS __emotionElementViewport_end_row',
+            'emotionElementViewport.end_col AS __emotionElementViewport_end_col',
+            'emotionElementViewport.visible AS __emotionElementViewport_visible',
+        ];
+
+        return $fields;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getCustomFacetFields()
+    {
+        return [
+            'customFacet.id as __customFacet_id',
+            'customFacet.unique_key as __customFacet_unique_key',
+            'customFacet.active as __customFacet_active',
+            'customFacet.position as __customFacet_position',
+            'customFacet.name as __customFacet_name',
+            'customFacet.facet as __customFacet_facet',
+        ];
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getCustomSortingFields()
+    {
+        return [
+            'customSorting.id as __customSorting_id',
+            'customSorting.label as __customSorting_label',
+            'customSorting.active as __customSorting_active',
+            'customSorting.display_in_categories as __customSorting_display_in_categories',
+            'customSorting.position as __customSorting_position',
+            'customSorting.sortings as __customSorting_sortings',
+        ];
+    }
+
+    /**
+     * Returns an array with all required blog fields.
+     * Requires that the s_blog table is included with table alias 'blog'
+     *
+     * @return array
+     */
+    public function getBlogFields()
+    {
+        $fields = [
+            'blog.id AS __blog_id',
+            'blog.title AS __blog_title',
+            'blog.author_id AS __blog_author_id',
+            'blog.active AS __blog_active',
+            'blog.short_description AS __blog_short_description',
+            'blog.description AS __blog_description',
+            'blog.views AS __blog_views',
+            'blog.display_date AS __blog_display_date',
+            'blog.category_id AS __blog_category_id',
+            'blog.template AS __blog_template',
+            'blog.meta_keywords AS __blog_meta_keywords',
+            'blog.meta_description AS __blog_meta_description',
+            'blog.meta_title AS __blog_meta_title',
+        ];
+
+        $fields = array_merge(
+            $fields,
+            $this->getTableFields('s_blog_attributes', 'blogAttribute')
+        );
+
+        return $fields;
+    }
+
+    /**
      * Joins the translation table and selects the objectdata for the provided join conditions
      *
      * @param string               $fromPart        Table which uses as from part
@@ -1030,6 +1271,134 @@ class FieldHelper
     public function addProductStreamTranslation(QueryBuilder $query, ShopContextInterface $context)
     {
         $this->addTranslation('stream', 'productStream', $query, $context);
+    }
+
+    /**
+     * @param QueryBuilder         $query
+     * @param ShopContextInterface $context
+     */
+    public function addEmotionElementTranslation(QueryBuilder $query, ShopContextInterface $context)
+    {
+        $this->addTranslation('emotionElementValue', 'emotionElement', $query, $context, 'emotionElementValue.elementID');
+    }
+
+    /**
+     * @param QueryBuilder         $query
+     * @param ShopContextInterface $context
+     */
+    public function addCustomSortingTranslation(QueryBuilder $query, ShopContextInterface $context)
+    {
+        $this->addTranslation('customSorting', 'custom_sorting', $query, $context, 1);
+    }
+
+    /**
+     * @param QueryBuilder         $query
+     * @param ShopContextInterface $context
+     */
+    public function addCustomFacetTranslation($query, $context)
+    {
+        $this->addTranslation('customFacet', 'custom_facet', $query, $context, 1);
+    }
+
+    public function getCustomerFields()
+    {
+        $fields = [
+            'customer.id as __customer_id',
+            'customer.password as __customer_password',
+            'customer.encoder as __customer_encoder',
+            'customer.email as __customer_email',
+            'customer.active as __customer_active',
+            'customer.accountmode as __customer_accountmode',
+            'customer.confirmationkey as __customer_confirmationkey',
+            'customer.paymentID as __customer_paymentID',
+            'customer.firstlogin as __customer_firstlogin',
+            'customer.lastlogin as __customer_lastlogin',
+            'customer.sessionID as __customer_sessionID',
+            'customer.newsletter as __customer_newsletter',
+            'customer.validation as __customer_validation',
+            'customer.affiliate as __customer_affiliate',
+            'customer.customergroup as __customer_customergroup',
+            'customer.paymentpreset as __customer_paymentpreset',
+            'customer.language as __customer_language',
+            'customer.subshopID as __customer_subshopID',
+            'customer.referer as __customer_referer',
+            'customer.pricegroupID as __customer_pricegroupID',
+            'customer.internalcomment as __customer_internalcomment',
+            'customer.failedlogins as __customer_failedlogins',
+            'customer.lockeduntil as __customer_lockeduntil',
+            'customer.default_billing_address_id as __customer_default_billing_address_id',
+            'customer.default_shipping_address_id as __customer_default_shipping_address_id',
+            'customer.title as __customer_title',
+            'customer.salutation as __customer_salutation',
+            'customer.firstname as __customer_firstname',
+            'customer.lastname as __customer_lastname',
+            'customer.birthday as __customer_birthday',
+            'customer.customernumber as __customer_customernumber',
+        ];
+
+        return array_merge(
+            $fields,
+            $this->getTableFields('s_user_attributes', 'customerAttribute')
+        );
+    }
+
+    public function getPaymentFields()
+    {
+        $fields = [
+            'payment.id as __payment_id',
+            'payment.name as __payment_name',
+            'payment.description as __payment_description',
+            'payment.template as __payment_template',
+            'payment.class as __payment_class',
+            'payment.table as __payment_table',
+            'payment.hide as __payment_hide',
+            'payment.additionaldescription as __payment_additionaldescription',
+            'payment.debit_percent as __payment_debit_percent',
+            'payment.surcharge as __payment_surcharge',
+            'payment.surchargestring as __payment_surchargestring',
+            'payment.position as __payment_position',
+            'payment.active as __payment_active',
+            'payment.esdactive as __payment_esdactive',
+            'payment.embediframe as __payment_embediframe',
+            'payment.hideprospect as __payment_hideprospect',
+            'payment.action as __payment_action',
+            'payment.pluginID as __payment_pluginID',
+            'payment.source as __payment_source',
+            'payment.mobile_inactive as __payment_mobile_inactive',
+        ];
+
+        return array_merge(
+            $fields,
+            $this->getTableFields('s_core_paymentmeans_attributes', 'paymentAttribute')
+        );
+    }
+
+    public function getAddressFields()
+    {
+        $fields = [
+            'address.id as __address_id',
+            'address.user_id as __address_user_id',
+            'address.company as __address_company',
+            'address.department as __address_department',
+            'address.salutation as __address_salutation',
+            'address.title as __address_title',
+            'address.firstname as __address_firstname',
+            'address.lastname as __address_lastname',
+            'address.street as __address_street',
+            'address.zipcode as __address_zipcode',
+            'address.city as __address_city',
+            'address.country_id as __address_country_id',
+            'address.state_id as __address_state_id',
+            'address.ustid as __address_ustid',
+            'address.phone as __address_phone',
+            'address.additional_address_line1 as __address_additional_address_line1',
+            'address.additional_address_line2 as __address_additional_address_line2',
+        ];
+
+        return array_merge(
+            $fields,
+            $this->getTableFields('s_user_addresses_attributes', 'addressAttribute')
+        );
     }
 
     /**

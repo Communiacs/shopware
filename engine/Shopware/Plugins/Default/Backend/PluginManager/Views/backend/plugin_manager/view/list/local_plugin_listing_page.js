@@ -211,6 +211,22 @@ Ext.define('Shopware.apps.PluginManager.view.list.LocalPluginListingPage', {
         return items;
     },
 
+    createPagingbar: function () {
+        var me = this,
+            pagingBar = me.callParent(arguments);
+
+        /* {if {acl_is_allowed privilege=install}} */
+        pagingBar.insert(12, me.createSafeModeCheckbox());
+        /* {/if} */
+
+        pagingBar.insert(13, {
+            xtype: 'tbseparator',
+            cls: 'separator-first'
+        });
+
+        return pagingBar;
+    },
+
     nameRenderer: function(value, metaData, record) {
         var name = record.get('label');
 
@@ -308,6 +324,85 @@ Ext.define('Shopware.apps.PluginManager.view.list.LocalPluginListingPage', {
         });
 
         return me.uploadButton;
+    },
+
+    createSafeModeCheckbox: function () {
+        var me = this,
+            inSafeMode = me.checkInSafeMode(),
+            label = '{s name="safe_mode"}Safe Mode{/s}';
+
+        me.safeModeCheckbox = Ext.create('Ext.form.field.Checkbox', {
+            fieldLabel: label,
+            labelStyle: 'width:65px; margin-top: 2px;',
+            checked: inSafeMode,
+            dock: 'bottom',
+            handler: Ext.bind(me.onToggleSafeMode, me)
+        });
+
+        return me.safeModeCheckbox;
+    },
+
+    onToggleSafeMode: function () {
+        var me = this,
+            inSafeMode;
+
+        inSafeMode = me.checkInSafeMode();
+
+        if (inSafeMode) {
+            me.toggleSafeMode();
+            return;
+        }
+
+        Ext.Msg.confirm(
+            '{s name="safemodepopup/title"}{/s}',
+            '{s name="safemodepopup/warning"}{/s}',
+            function (button) {
+                if (button == 'yes') {
+                    me.toggleSafeMode();
+                    return;
+                } else {
+                    me.safeModeCheckbox.setRawValue(false);
+                    me.safeModeCheckbox.lastValue = false;
+                }
+            }
+        );
+    },
+
+    toggleSafeMode: function () {
+        var content,
+            msg = Shopware.Notification;
+
+        var toggleSafeMode = Ext.Ajax.request({
+            async: false,
+            url: '{url controller=PluginManager action=toggleSafeMode}',
+            method: 'GET',
+            params: { }
+        });
+
+        var response = Ext.decode(toggleSafeMode.responseText);
+
+        var title = '{s name="title/safe_mode"}{/s}';
+        if (response.inSafeMode) {
+            content = '{s name="content/safe_mode_on"}{/s}';
+        } else {
+            content = '{s name="content/safe_mode_off"}{/s}';
+        }
+        Shopware.app.Application.fireEvent('clear-all-cache');
+        msg.createGrowlMessage(title, content);
+        Shopware.app.Application.fireEvent('reload-local-listing');
+    },
+
+    checkInSafeMode: function () {
+        var checkInSafeMode = Ext.Ajax.request({
+            async: false,
+            url: '{url controller=PluginManager action=isInSafeMode}',
+            method: 'GET',
+            params: { }
+        });
+
+        var response = Ext.decode(checkInSafeMode.responseText);
+
+        return response.inSafeMode;
     },
 
     createActionColumnItems: function() {

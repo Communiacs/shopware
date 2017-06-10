@@ -5,6 +5,10 @@
            xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <services>
+        <service id="shopware_search_es.handler_collection" class="Doctrine\Common\Collections\ArrayCollection">
+            <factory service="shopware_search_es.product_number_search_factory" method="registerHandlerCollection" />
+            <argument type="service" id="service_container" />
+        </service>
 
         <service id="shopware_search_es.struct_hydrator" class="Shopware\Bundle\SearchBundleES\StructHydrator" />
 
@@ -142,14 +146,15 @@
         </service>
 
         <service id="shopware_search_es.product_attribute_facet_handler" class="Shopware\Bundle\SearchBundleES\FacetHandler\ProductAttributeFacetHandler">
+            <argument type="service" id="shopware_attribute.crud_service" />
             <tag name="shopware_search_es.search_handler" />
         </service>
 
         <service id="shopware_search_es.category_facet_handler" class="Shopware\Bundle\SearchBundleES\FacetHandler\CategoryFacetHandler">
             <argument type="service" id="shopware_storefront.category_service" />
-            <argument type="service" id="snippets" />
-            <argument type="service" id="query_alias_mapper" />
-            <argument type="service" id="dbal_connection" />
+            <argument type="service" id="shopware_storefront.category_depth_service" />
+            <argument type="service" id="config" />
+            <argument type="service" id="shopware_search.category_tree_facet_result_builder" />
             <tag name="shopware_search_es.search_handler" />
         </service>
 
@@ -181,6 +186,40 @@
         <service id="shopware_search_es.service_subscriber" class="Shopware\Bundle\SearchBundleES\Subscriber\ServiceSubscriber">
             <argument type="service" id="service_container" />
             <tag name="shopware.event_subscriber" />
+        </service>
+
+        <service id="shopware_search_es.combined_condition_query_builder" class="Shopware\Bundle\SearchBundleES\CombinedConditionQueryBuilder">
+            <argument type="service" id="service_container" />
+        </service>
+
+        <service id="shopware_search_es.combined_condition_facet_handler" class="Shopware\Bundle\SearchBundleES\FacetHandler\CombinedConditionFacetHandler">
+            <argument type="service" id="shopware_search_es.combined_condition_query_builder" />
+            <tag name="shopware_search_es.search_handler" />
+        </service>
+
+        <service id="shopware_search_es.combined_condition_handler" class="Shopware\Bundle\SearchBundleES\ConditionHandler\CombinedConditionHandler">
+            <argument type="service" id="shopware_search_es.combined_condition_query_builder" />
+            <tag name="shopware_search_es.search_handler" />
+        </service>
+
+        <service id="shopware_search_es.width_condition_handler" class="Shopware\Bundle\SearchBundleES\ConditionHandler\WidthConditionHandler">
+            <tag name="shopware_search_es.search_handler"/>
+        </service>
+
+        <service id="shopware_search_es.height_condition_handler" class="Shopware\Bundle\SearchBundleES\ConditionHandler\HeightConditionHandler" >
+            <tag name="shopware_search_es.search_handler"/>
+        </service>
+
+        <service id="shopware_search_es.length_condition_handler" class="Shopware\Bundle\SearchBundleES\ConditionHandler\LengthConditionHandler" >
+            <tag name="shopware_search_es.search_handler"/>
+        </service>
+
+        <service id="shopware_search_es.weight_condition_handler" class="Shopware\Bundle\SearchBundleES\ConditionHandler\WeightConditionHandler" >
+            <tag name="shopware_search_es.search_handler"/>
+        </service>
+
+        <service id="shopware_search_es.product_dimensions_facet_handler" class="Shopware\Bundle\SearchBundleES\FacetHandler\ProductDimensionsFacetHandler" >
+            <tag name="shopware_search_es.search_handler"/>
         </service>
     </services>
 </container>

@@ -50,7 +50,7 @@ class DBALConfigReader implements ConfigReader
      */
     public function getByPluginName($pluginName, Shop $shop = null)
     {
-        $sql = <<<SQL
+        $sql = <<<'SQL'
 SELECT
   ce.name,
   COALESCE(currentShop.value, parentShop.value, fallbackShop.value, ce.value) as value

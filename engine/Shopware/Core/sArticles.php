@@ -330,7 +330,7 @@ class sArticles
         $sVoteName = strip_tags($request->getPost('sVoteName'));
         $sVoteSummary = strip_tags($request->getPost('sVoteSummary'));
         $sVoteComment = strip_tags($request->getPost('sVoteComment'));
-        $sVoteStars = doubleval($request->getPost('sVoteStars'));
+        $sVoteStars = floatval($request->getPost('sVoteStars'));
         $sVoteMail = strip_tags($request->getPost('sVoteMail'));
 
         if ($sVoteStars < 1 || $sVoteStars > 10) {
@@ -356,27 +356,45 @@ class sArticles
 
         $date = date('Y-m-d H:i:s');
 
-        $sql = '
-            INSERT INTO s_articles_vote (articleID, name, headline, comment, points, datum, active, email)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ';
+        $container = Shopware()->Container();
+        $shopId = null;
+        if ($container->initialized('Shop')) {
+            $shopId = $container->get('Shop')->getId();
+        }
 
-        $insertComment = $this->db->executeUpdate($sql, [
-            $article,
-            $sVoteName,
-            $sVoteSummary,
-            $sVoteComment,
-            $sVoteStars,
-            $date,
-            $active,
-            $sVoteMail,
+        $connection = $container->get('dbal_connection');
+        $query = $connection->createQueryBuilder();
+        $query->insert('s_articles_vote');
+        $query->values([
+            'articleID' => ':articleID',
+            'name' => ':name',
+            'headline' => ':headline',
+            'comment' => ':comment',
+            'points' => ':points',
+            'datum' => ':datum',
+            'active' => ':active',
+            'email' => ':email',
+            'shop_id' => ':shopId',
         ]);
 
-        if (empty($insertComment)) {
+        $query->setParameters([
+            ':articleID' => $article,
+            ':name' => $sVoteName,
+            ':headline' => $sVoteSummary,
+            ':comment' => $sVoteComment,
+            ':points' => $sVoteStars,
+            ':datum' => $date,
+            ':active' => $active,
+            ':email' => $sVoteMail,
+            ':shopId' => $shopId,
+        ]);
+
+        $success = $query->execute();
+        if (empty($success)) {
             throw new Enlight_Exception('sSaveComment #00: Could not save comment');
         }
 
-        $insertId = $this->db->lastInsertId();
+        $insertId = $connection->lastInsertId();
         if (!isset($this->session['sArticleCommentInserts'])) {
             $this->session['sArticleCommentInserts'] = new ArrayObject();
         }
@@ -421,9 +439,9 @@ class sArticles
     public function sGetArticlesByCategory($categoryId = null, SearchBundle\Criteria $criteria = null)
     {
         if (Shopware()->Events()->notifyUntil('Shopware_Modules_Articles_sGetArticlesByCategory_Start', [
-                'subject' => $this,
-                'id' => $categoryId,
-            ])) {
+            'subject' => $this,
+            'id' => $categoryId,
+        ])) {
             return false;
         }
 
@@ -477,6 +495,8 @@ class sArticles
 
     /**
      * Get all available suppliers from a specific category
+     *
+     * @deprecated since 5.3, will be removed with 5.5 without replacement
      *
      * @param int $id    - category id
      * @param int $limit
@@ -1517,7 +1537,7 @@ class sArticles
             WHERE ordernumber = :orderNumber
                 AND s_articles.id = s_articles_details.articleID
         ', [
-            'orderNumber' => $orderNumber,
+                'orderNumber' => $orderNumber,
             ]
         );
 
@@ -2375,12 +2395,14 @@ class sArticles
         }
 
         $pageSizes = explode('|', $this->config->get('numberArticlesToShow'));
+        $sPage = (int) $request->getParam('sPage', 1);
 
         return [
             'sArticles' => $articles,
             'criteria' => $criteria,
             'facets' => $searchResult->getFacets(),
-            'sPage' => (int) $request->getParam('sPage', 1),
+            'sPage' => $sPage,
+            'pageIndex' => $sPage,
             'pageSizes' => $pageSizes,
             'sPerPage' => $criteria->getLimit(),
             'sNumberArticles' => $searchResult->getTotalCount(),

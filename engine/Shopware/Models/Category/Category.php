@@ -90,6 +90,24 @@ class Category extends ModelEntity
      * @ORM\JoinColumn(name="mediaID", referencedColumnName="id")
      */
     protected $media;
+
+    /**
+     * @var string
+     * @ORM\Column(name="sorting_ids", type="string", nullable=true)
+     */
+    protected $sortingIds;
+
+    /**
+     * @var bool
+     * @ORM\Column(name="hide_sortings", type="boolean", nullable=false)
+     */
+    protected $hideSortings = false;
+
+    /**
+     * @var string
+     * @ORM\Column(name="facet_ids", type="string", nullable=true)
+     */
+    protected $facetIds;
     /**
      * Identifier for a single category. This is an autoincrement value.
      *
@@ -997,6 +1015,54 @@ class Category extends ModelEntity
     public function getMediaId()
     {
         return $this->mediaId;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSortingIds()
+    {
+        return $this->sortingIds;
+    }
+
+    /**
+     * @param string $sortingIds
+     */
+    public function setSortingIds($sortingIds)
+    {
+        $this->sortingIds = $sortingIds;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hideSortings()
+    {
+        return $this->hideSortings;
+    }
+
+    /**
+     * @param bool $hideSortings
+     */
+    public function setHideSortings($hideSortings)
+    {
+        $this->hideSortings = $hideSortings;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFacetIds()
+    {
+        return $this->facetIds;
+    }
+
+    /**
+     * @param string $facetIds
+     */
+    public function setFacetIds($facetIds)
+    {
+        $this->facetIds = $facetIds;
     }
 
     /**

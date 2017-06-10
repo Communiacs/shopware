@@ -38,7 +38,7 @@ class Repository extends ModelRepository
      *
      * @return \Doctrine\ORM\Query
      */
-    public function getListQuery($filter = null, $orderBy = null, $offset, $limit)
+    public function getListQuery($filter, $orderBy, $offset, $limit)
     {
         $builder = $this->getListQueryBuilder($filter, $orderBy);
         $builder->setFirstResult($offset)

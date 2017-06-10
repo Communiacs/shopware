@@ -106,7 +106,7 @@ class Database
     {
         $this->connection->query(sprintf('use `%s`', $dbName));
 
-        $sql = <<<SQL
+        $sql = <<<'SQL'
 SET FOREIGN_KEY_CHECKS = 0;
 SET GROUP_CONCAT_MAX_LEN=32768;
 SET @tables = NULL;

@@ -133,7 +133,7 @@ class Repository extends ModelRepository
      *
      * @return \Doctrine\ORM\Query
      */
-    public function getStatisticListQuery($order = null, $offset = null, $limit = null, $partnerId, $summary = false, $fromDate, $toDate, $userCurrencyFactor = 1)
+    public function getStatisticListQuery($order, $offset, $limit, $partnerId, $summary, $fromDate, $toDate, $userCurrencyFactor = 1)
     {
         $builder = $this->getStatisticListQueryBuilder($order, $partnerId, $summary, $fromDate, $toDate, $userCurrencyFactor);
         if (!$summary && !empty($limit)) {
@@ -157,7 +157,7 @@ class Repository extends ModelRepository
      *
      * @return \Doctrine\ORM\QueryBuilder
      */
-    public function getStatisticListQueryBuilder($order = null, $partnerId, $summary = false, $fromDate, $toDate, $userCurrencyFactor = 1)
+    public function getStatisticListQueryBuilder($order, $partnerId, $summary, $fromDate, $toDate, $userCurrencyFactor = 1)
     {
         $builder = $this->getEntityManager()->createQueryBuilder();
         $expr = $this->getEntityManager()->getExpressionBuilder();
@@ -171,8 +171,8 @@ class Repository extends ModelRepository
                 'SUM((o.invoiceAmountNet - o.invoiceShippingNet) / (o.currencyFactor / :userCurrencyFactor) / 100 * partner.percent) as provision',
                 'customer.email as customerEmail',
                 'billing.company as customerCompany',
-                'billing.firstName as customerFirstName',
-                'billing.lastName as customerLastName',
+                'customer.firstname as customerFirstName',
+                'customer.lastname as customerLastName',
                 'customer.number as customerNumber',
                 'orderState.description as orderStatus',
                 'orderState.id as orderStatusId',
@@ -181,7 +181,7 @@ class Repository extends ModelRepository
             ->leftJoin('o.partner', 'partner')
             ->leftJoin('o.orderStatus', 'orderState')
             ->leftJoin('o.customer', 'customer')
-            ->leftJoin('customer.billing', 'billing')
+            ->leftJoin('customer.defaultBillingAddress', 'billing')
             ->where($expr->eq('partner.id', '?1'))
             ->andWhere('o.status != 4')
             ->andWhere('o.status != -1')
@@ -291,7 +291,7 @@ class Repository extends ModelRepository
             'customer.email as email',
         ]);
         $builder->from('Shopware\Models\Customer\Customer', 'customer')
-                ->leftJoin('customer.billing', 'billing')
+                ->leftJoin('customer.defaultBillingAddress', 'billing')
                 ->where('customer.accountMode = 0')
                 ->andWhere('customer.email = ?0')
                 ->orWhere('customer.number = ?1')

@@ -212,7 +212,7 @@ class CleanupController
 
     private function cleanupTemplateRelations()
     {
-        $affectedShopsSql = <<<SQL
+        $affectedShopsSql = <<<'SQL'
 SELECT shops.id, template.id as tplId, doctemplate.id as docTplId, template.version as tplVersion, doctemplate.version as docTplVersion
 FROM `s_core_shops` as shops
 LEFT JOIN `s_core_templates` as template ON shops.template_id = template.id

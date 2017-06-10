@@ -630,7 +630,7 @@ class sBasket
                 $voucherDetails = $this->db->fetchRow(
                     'SELECT description, numberofunits, customergroup, value, restrictarticles,
                     minimumcharge, shippingfree, bindtosupplier, taxconfig, valid_from,
-                    valid_to, ordercode, modus, percental, strict, subshopID
+                    valid_to, ordercode, modus, percental, strict, subshopID, customer_stream_ids
                     FROM s_emarketing_vouchers WHERE modus = 1 AND id = ? AND (
                       (valid_to >= CURDATE()
                           AND valid_from <= CURDATE()
@@ -642,6 +642,21 @@ class sBasket
                 unset($voucherCodeDetails['voucherID']);
                 $voucherDetails = array_merge($voucherCodeDetails, $voucherDetails);
                 $individualCode = ($voucherDetails && $voucherDetails['description']);
+            }
+        }
+        $streams = array_filter(explode('|', $voucherDetails['customer_stream_ids']));
+
+        if (!empty($streams)) {
+            $context = $this->contextService->getShopContext();
+            $allowed = array_intersect($context->getActiveCustomerStreamIds(), $streams);
+
+            if (empty($allowed)) {
+                $message = $this->snippetManager->getNamespace('frontend/basket/internalMessages')->get(
+                    'VoucherFailureCustomerStreams',
+                    'This voucher is not available for you'
+                );
+
+                return ['sErrorFlag' => true, 'sErrorMessages' => [$message]];
             }
         }
 
@@ -660,8 +675,6 @@ class sBasket
 
             return ['sErrorFlag' => true, 'sErrorMessages' => $sErrorMessages];
         }
-
-        $restrictDiscount = !empty($voucherDetails['strict']);
 
         // If voucher is limited to a specific subshop, filter that and return on failure
         $sErrorMessages = $this->filterSubShopVoucher($voucherDetails);
@@ -704,8 +717,9 @@ class sBasket
         }
 
         // Calculate the amount in the basket
+        $restrictDiscount = !empty($voucherDetails['strict']);
         $allowedSupplierId = $voucherDetails['bindtosupplier'];
-        if (!empty($restrictDiscount) && (!empty($restrictedArticles) || !empty($allowedSupplierId))) {
+        if ($restrictDiscount && (!empty($restrictedArticles) || !empty($allowedSupplierId))) {
             $amount = $this->sGetAmountRestrictedArticles($restrictedArticles, $allowedSupplierId);
         } else {
             $amount = $this->sGetAmountArticles();
@@ -1138,15 +1152,6 @@ class sBasket
             'AmountWithTax' => $totalAmountWithTax,
             'AmountWithTaxNumeric' => $totalAmountWithTaxNumeric,
         ];
-
-        $lastArticle = $this->session->get('sLastArticle');
-        if (!empty($lastArticle)) {
-            $result['sLastActiveArticle'] = [
-                'id' => $lastArticle,
-                'link' => $this->config->get('sBASEFILE')
-                    . '?sViewport=detail&sDetails=' . $lastArticle,
-            ];
-        }
 
         if (!empty($result['content'])) {
             foreach ($result['content'] as $key => $value) {
@@ -1673,7 +1678,8 @@ class sBasket
                 details.articleID as voucherId,
                 details.articleordernumber AS voucherOrderNumber,
                 vouchers.numorder AS maxPerUser,
-                vouchers.numberofunits AS maxGlobal
+                vouchers.numberofunits AS maxGlobal,
+                vouchers.customer_stream_ids
             FROM s_emarketing_vouchers AS vouchers
             LEFT JOIN s_order_details details ON vouchers.ordercode = details.articleordernumber
             LEFT JOIN s_order AS orders ON details.orderID = orders.id
@@ -1963,7 +1969,7 @@ class sBasket
         $sErrorMessages = [];
 
         if (!empty($voucherDetails['restrictarticles']) && strlen($voucherDetails['restrictarticles']) > 5) {
-            $restrictedArticles = explode(';', $voucherDetails['restrictarticles']);
+            $restrictedArticles = array_filter(explode(';', $voucherDetails['restrictarticles']));
             if (count($restrictedArticles) == 0) {
                 $restrictedArticles[] = $voucherDetails['restrictarticles'];
             }

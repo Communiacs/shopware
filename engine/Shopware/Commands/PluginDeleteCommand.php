@@ -65,7 +65,7 @@ class PluginDeleteCommand extends ShopwareCommand
                 InputArgument::REQUIRED,
                 'Name of the plugin to be deleted.'
             )
-            ->setHelp(<<<EOF
+            ->setHelp(<<<'EOF'
 The <info>%command.name%</info> deletes a plugin.
 EOF
             );
