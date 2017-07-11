@@ -24,6 +24,7 @@
 /**
  * @see Zend_Auth_Storage_Interface
  */
+require_once 'Zend/Auth/Storage/Interface.php';
 
 
 /**

@@ -29,10 +29,10 @@ use ONGR\ElasticsearchDSL\Search;
 use Shopware\Bundle\SearchBundle\Condition\CreateDateCondition;
 use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundle\CriteriaPartInterface;
-use Shopware\Bundle\SearchBundleES\PartialConditionHandlerInterface;
+use Shopware\Bundle\SearchBundleES\HandlerInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
-class CreateDateConditionHandler implements PartialConditionHandlerInterface
+class CreateDateConditionHandler implements HandlerInterface
 {
     /**
      * {@inheritdoc}
@@ -45,46 +45,26 @@ class CreateDateConditionHandler implements PartialConditionHandlerInterface
     /**
      * {@inheritdoc}
      */
-    public function handleFilter(
+    public function handle(
         CriteriaPartInterface $criteriaPart,
         Criteria $criteria,
         Search $search,
         ShopContextInterface $context
     ) {
-        $search->addFilter(
-            $this->createQuery($criteriaPart)
-        );
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function handlePostFilter(
-        CriteriaPartInterface $criteriaPart,
-        Criteria $criteria,
-        Search $search,
-        ShopContextInterface $context
-    ) {
-        $search->addPostFilter(
-            $this->createQuery($criteriaPart)
-        );
-    }
-
-    /**
-     * @param CriteriaPartInterface $criteriaPart
-     *
-     * @return RangeQuery
-     */
-    private function createQuery(CriteriaPartInterface $criteriaPart)
-    {
         /** @var CreateDateCondition $criteriaPart */
         $date = new \DateTime();
         $intervalSpec = 'P' . $criteriaPart->getDays() . 'D';
         $interval = new \DateInterval($intervalSpec);
         $date->sub($interval);
 
-        return new RangeQuery('formattedCreatedAt', [
+        $filter = new RangeQuery('formattedCreatedAt', [
             'gte' => $date->format('Y-m-d'),
         ]);
+
+        if ($criteria->hasBaseCondition($criteriaPart->getName())) {
+            $search->addFilter($filter);
+        } else {
+            $search->addPostFilter($filter);
+        }
     }
 }

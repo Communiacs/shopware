@@ -46,7 +46,7 @@ class SearchBundleDBALSubscriber implements SubscriberInterface
     private $conditionHandlers = [];
 
     /**
-     * @var FacetHandlerInterface[]|PartialFacetHandlerInterface[]
+     * @var FacetHandlerInterface[]
      */
     private $facetHandlers = [];
 
@@ -62,15 +62,25 @@ class SearchBundleDBALSubscriber implements SubscriberInterface
     {
         $this->validateHandlers($handlers);
 
-        $this->sortingHandlers = $this->getHandlersByClass($handlers, SortingHandlerInterface::class);
-        $this->conditionHandlers = $this->getHandlersByClass($handlers, ConditionHandlerInterface::class);
-        $this->criteriaRequestHandlers = $this->getHandlersByClass($handlers, CriteriaRequestHandlerInterface::class);
+        $this->sortingHandlers = $this->getHandlersByClass(
+            $handlers,
+            '\Shopware\Bundle\SearchBundleDBAL\SortingHandlerInterface'
+        );
 
-        $this->facetHandlers = $this->getHandlersByClass($handlers, FacetHandlerInterface::class);
-        $partial = $this->getHandlersByClass($handlers, PartialFacetHandlerInterface::class);
-        foreach ($partial as $handler) {
-            $this->facetHandlers->add($handler);
-        }
+        $this->conditionHandlers = $this->getHandlersByClass(
+            $handlers,
+            '\Shopware\Bundle\SearchBundleDBAL\ConditionHandlerInterface'
+        );
+
+        $this->facetHandlers = $this->getHandlersByClass(
+            $handlers,
+            '\Shopware\Bundle\SearchBundleDBAL\FacetHandlerInterface'
+        );
+
+        $this->criteriaRequestHandlers = $this->getHandlersByClass(
+            $handlers,
+            '\Shopware\Bundle\SearchBundle\CriteriaRequestHandlerInterface'
+        );
     }
 
     /**
@@ -131,7 +141,6 @@ class SearchBundleDBALSubscriber implements SubscriberInterface
             if ($handler instanceof SortingHandlerInterface
                 || $handler instanceof ConditionHandlerInterface
                 || $handler instanceof FacetHandlerInterface
-                || $handler instanceof PartialFacetHandlerInterface
                 || $handler instanceof CriteriaRequestHandlerInterface
             ) {
                 continue;

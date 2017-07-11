@@ -45,6 +45,8 @@ class DeviceConfiguration
     /**
      * @param int $categoryId
      *
+     * @throws \Exception
+     *
      * @return array
      */
     public function get($categoryId)
@@ -56,16 +58,13 @@ class DeviceConfiguration
             'emotion.device as devices',
             'emotion.show_listing as showListing',
             'emotion.fullscreen',
-            'emotion.customer_stream_ids',
-            'emotion.replacement',
         ]);
 
         $query->from('s_emotion', 'emotion')
-            ->andWhere('emotion.active = 1')
+            ->where('emotion.active = 1')
             ->andWhere('emotion.is_landingpage = 0')
             ->andWhere('(emotion.valid_to   >= NOW() OR emotion.valid_to IS NULL)')
             ->andWhere('(emotion.valid_from <= NOW() OR emotion.valid_from IS NULL)')
-            ->andWhere('emotion.preview_id IS NULL')
             ->addOrderBy('emotion.position', 'ASC')
             ->addOrderBy('emotion.id', 'ASC')
             ->setParameter(':categoryId', $categoryId);
@@ -219,8 +218,6 @@ class DeviceConfiguration
             'emotion.seo_description',
             'emotion.valid_from',
             'emotion.valid_to',
-            'emotion.customer_stream_ids',
-            'emotion.replacement',
             'now()',
         ]);
 

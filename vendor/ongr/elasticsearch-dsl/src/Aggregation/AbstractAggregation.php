@@ -76,8 +76,6 @@ abstract class AbstractAggregation implements BuilderInterface
      * Adds a sub-aggregation.
      *
      * @param AbstractAggregation $abstractAggregation
-     *
-     * @return $this
      */
     public function addAggregation(AbstractAggregation $abstractAggregation)
     {
@@ -86,8 +84,6 @@ abstract class AbstractAggregation implements BuilderInterface
         }
 
         $this->aggregations->add($abstractAggregation);
-        
-        return $this;
     }
 
     /**

@@ -46,8 +46,7 @@ Ext.define('Shopware.apps.ProductStream.view.condition_list.condition.Property',
     create: function(callback, container, conditions) {
         var me = this;
 
-        Ext.create('Shopware.apps.ProductStream.view.condition_list.field.PropertyWindow', {
-            subApp: me.subApp,
+        me.subApp.getView('condition_list.field.PropertyWindow').create({
             applyCallback: function(group) {
                 var field = me.createField(group.get('id'), group.get('name'));
                 callback(field);

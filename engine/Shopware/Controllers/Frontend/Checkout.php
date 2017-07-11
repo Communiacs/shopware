@@ -23,9 +23,6 @@
  */
 
 use Enlight_Controller_Request_Request as Request;
-use Shopware\Components\BasketSignature\Basket;
-use Shopware\Components\BasketSignature\BasketPersister;
-use Shopware\Components\BasketSignature\BasketSignatureGeneratorInterface;
 use Shopware\Models\Customer\Address;
 
 /**
@@ -52,7 +49,7 @@ class Shopware_Controllers_Frontend_Checkout extends Enlight_Controller_Action
     /**
      * Reference to Shopware session object (Shopware()->Session)
      *
-     * @var Enlight_Components_Session_Namespace
+     * @var Zend_Session_Namespace
      */
     protected $session;
 
@@ -443,15 +440,15 @@ class Shopware_Controllers_Frontend_Checkout extends Enlight_Controller_Action
             $embedded = preg_replace('#^[./]+#', '', $embedded);
             $embedded .= '?sCoreId=' . Shopware()->Session()->get('sessionId');
             $embedded .= '&sAGB=1';
-            $embedded .= '&__basket_signature=' . $this->persistBasket();
+
             $this->View()->sEmbedded = $embedded;
         } else {
             $action = explode('/', $this->View()->sPayment['action']);
             $this->redirect([
-                'controller' => $action[0],
-                'action' => empty($action[1]) ? 'index' : $action[1],
-                'forceSecure' => true,
-            ]);
+                    'controller' => $action[0],
+                    'action' => empty($action[1]) ? 'index' : $action[1],
+                    'forceSecure' => true,
+                ]);
         }
     }
 
@@ -1873,22 +1870,5 @@ class Shopware_Controllers_Frontend_Checkout extends Enlight_Controller_Action
         foreach ($articles as $id => $quantity) {
             $this->basket->sUpdateArticle($id, $quantity);
         }
-    }
-
-    /**
-     * @return string
-     */
-    private function persistBasket()
-    {
-        /** @var BasketSignatureGeneratorInterface $generator */
-        $generator = $this->get('basket_signature_generator');
-        $basket = $this->session->offsetGet('sOrderVariables')->getArrayCopy();
-        $signature = $generator->generateSignature($basket, $this->session->get('sUserId'));
-
-        /** @var BasketPersister $persister */
-        $persister = $this->get('basket_persister');
-        $persister->persist($signature, $basket);
-
-        return $signature;
     }
 }

@@ -54,13 +54,13 @@ abstract class Enlight_Components_Test_Controller_TestCase extends Enlight_Compo
 
     /**
      * Instance of the enlight request. Filled in the dispatch function.
-     * @var Enlight_Controller_Request_Request
+     * @var Zend_Controller_Request_Http
      */
     protected $_request;
 
     /**
      * Instance of the enlight response. Filled in the dispatch function.
-     * @var Enlight_Controller_Response_Response
+     * @var Zend_Controller_Response_Http
      */
     protected $_response;
 
@@ -81,7 +81,7 @@ abstract class Enlight_Components_Test_Controller_TestCase extends Enlight_Compo
      * Dispatch the request
      *
      * @param   string|null $url
-     * @return  Enlight_Controller_Response_Response
+     * @return  Zend_Controller_Response_Abstract
      */
     public function dispatch($url = null)
     {
@@ -96,7 +96,6 @@ abstract class Enlight_Components_Test_Controller_TestCase extends Enlight_Compo
         $front = $this->Front()
                 ->setRequest($request)
                 ->setResponse($response);
-
         $front->dispatch();
 
         /** @var $viewRenderer Enlight_Controller_Plugins_ViewRenderer_Bootstrap */
@@ -160,7 +159,7 @@ abstract class Enlight_Components_Test_Controller_TestCase extends Enlight_Compo
      */
     public function resetRequest()
     {
-        if ($this->_request instanceof Enlight_Controller_Request_Request) {
+        if ($this->_request instanceof Zend_Controller_Request_Http) {
             $this->_request->clearQuery()
                     ->clearPost()
                     ->clearCookies();

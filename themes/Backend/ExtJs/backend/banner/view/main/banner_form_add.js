@@ -169,10 +169,10 @@ Ext.define('Shopware.apps.Banner.view.main.BannerFormAdd', {
 
     /**
      * Method to set the allowed file extension for the media manager
-     * @return []
+     * @return array of strings
      */
     getAllowedExtensions : function() {
-        return [ 'gif', 'png', 'jpeg', 'jpg' ]
+        return [ 'gif', 'png', 'jpeg', 'jpg', 'swf' ]
     },
 
     /**

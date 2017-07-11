@@ -5,13 +5,6 @@
 {block name="frontend_listing_box_article"}
     <div class="product--box box--{$productBoxLayout}" data-ordernumber="{$sArticle.ordernumber}">
 
-        {block name="frontend_listing_box_article_product_name"}
-            {$productName = $sArticle.articleName}
-            {if $sArticle.additionaltext}
-                {$productName = $productName|cat:' '|cat:$sArticle.additionaltext}
-            {/if}
-        {/block}
-
         {block name="frontend_listing_box_article_content"}
             <div class="box--content">
 
@@ -28,7 +21,7 @@
                         {* Product image *}
                         {block name='frontend_listing_box_article_picture'}
                             <a href="{$sArticle.linkDetails}"
-                               title="{$productName|escape}"
+                               title="{$sArticle.articleName|escape}"
                                class="product--image{if $imageOnly} is--large{/if}">
 
                                 {block name='frontend_listing_box_article_image_element'}
@@ -39,7 +32,7 @@
 
                                                 {block name='frontend_listing_box_article_image_picture'}
 
-                                                    {$desc = $productName|escape}
+                                                    {$desc = $sArticle.articleName|escape}
 
                                                     {if $sArticle.image.description}
                                                         {$desc = $sArticle.image.description|escape}
@@ -107,8 +100,8 @@
                                 {block name='frontend_listing_box_article_name'}
                                     <a href="{$sArticle.linkDetails}"
                                        class="product--title"
-                                       title="{$productName|escapeHtml}">
-                                        {$productName|truncate:50|escapeHtml}
+                                       title="{$sArticle.articleName|escapeHtml}">
+                                        {$sArticle.articleName|truncate:50|escapeHtml}
                                     </a>
                                 {/block}
 

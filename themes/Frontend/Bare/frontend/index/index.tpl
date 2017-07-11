@@ -74,7 +74,7 @@
             {/block}
 
             {block name='frontend_index_emotion_loading_overlay'}
-                {if $hasEmotion}
+                {if $hasEmotion && !$hasEscapedFragment}
                     <div class="emotion--overlay">
                         <i class="emotion--loading-indicator"></i>
                     </div>
@@ -147,24 +147,11 @@
         </div>
     {/block}
 
-    {* If required add the cookiePermission hint *}
-    {block name='frontend_index_cookie_permission'}
-        {if {config name="show_cookie_note"}}
-            {include file="frontend/_includes/cookie_permission_note.tpl"}
-        {/if}
-    {/block}
-
 {block name="frontend_index_header_javascript"}
     <script type="text/javascript" id="footer--js-inline">
         //<![CDATA[
         {block name="frontend_index_header_javascript_inline"}
             var timeNow = {time() nocache};
-
-            var asyncCallbacks = [];
-
-            document.asyncReady = function (callback) {
-                asyncCallbacks.push(callback);
-            };
 
             var controller = controller || {ldelim}
                 'vat_check_enabled': '{config name='vatcheckendabled'}',
@@ -223,11 +210,17 @@
         //]]>
     </script>
 
-    {include file="frontend/index/datepicker-config.tpl"}
-
     {if $theme.additionalJsLibraries}
         {$theme.additionalJsLibraries}
     {/if}
+{/block}
+
+{* Include jQuery and all other javascript files at the bottom of the page *}
+{block name="frontend_index_header_javascript_jquery_lib"}
+    {compileJavascript timestamp={themeTimestamp} output="javascriptFiles"}
+    {foreach $javascriptFiles as $file}
+        <script src="{$file}"></script>
+    {/foreach}
 {/block}
 
 {block name="frontend_index_header_javascript_jquery"}
@@ -236,18 +229,5 @@
         {include file='widgets/index/statistic_include.tpl'}
     {/if}
 {/block}
-
-{*Include jQuery and all other javascript files at the bottom of the page*}
-{block name="frontend_index_header_javascript_jquery_lib"}
-    {compileJavascript timestamp={themeTimestamp} output="javascriptFiles"}
-    {foreach $javascriptFiles as $file}
-        <script{if $theme.asyncJavascriptLoading} async{/if} src="{$file}" id="main-script"></script>
-    {/foreach}
-{/block}
-
-{block name="frontend_index_javascript_async_ready"}
-    {include file="frontend/index/script-async-ready.tpl"}
-{/block}
-
 </body>
 </html>

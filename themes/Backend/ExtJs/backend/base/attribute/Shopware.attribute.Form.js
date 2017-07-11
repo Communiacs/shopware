@@ -383,7 +383,6 @@ Ext.define('Shopware.attribute.Form', {
             Ext.create('Shopware.attribute.PaymentFieldHandler'),
             Ext.create('Shopware.attribute.DispatchFieldHandler'),
             Ext.create('Shopware.attribute.CustomerFieldHandler'),
-            Ext.create('Shopware.attribute.CustomerStreamFieldHandler'),
             Ext.create('Shopware.attribute.FormFieldHandler'),
             Ext.create('Shopware.attribute.PartnerFieldHandler'),
             Ext.create('Shopware.attribute.NewsletterFieldHandler'),

@@ -88,13 +88,6 @@ class Media extends Extendable implements \JsonSerializable
     protected $height;
 
     /**
-     * Contains the virtual path
-     *
-     * @var string
-     */
-    protected $path;
-
-    /**
      * @param int $id
      */
     public function setId($id)
@@ -274,21 +267,5 @@ class Media extends Extendable implements \JsonSerializable
     public function setHeight($height)
     {
         $this->height = $height;
-    }
-
-    /**
-     * @return string
-     */
-    public function getPath()
-    {
-        return $this->path;
-    }
-
-    /**
-     * @param string $path
-     */
-    public function setPath($path)
-    {
-        $this->path = $path;
     }
 }

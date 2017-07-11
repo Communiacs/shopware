@@ -29,10 +29,10 @@ use ONGR\ElasticsearchDSL\Search;
 use Shopware\Bundle\SearchBundle\Condition\SalesCondition;
 use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundle\CriteriaPartInterface;
-use Shopware\Bundle\SearchBundleES\PartialConditionHandlerInterface;
+use Shopware\Bundle\SearchBundleES\HandlerInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
-class SalesConditionHandler implements PartialConditionHandlerInterface
+class SalesConditionHandler implements HandlerInterface
 {
     /**
      * {@inheritdoc}
@@ -45,30 +45,19 @@ class SalesConditionHandler implements PartialConditionHandlerInterface
     /**
      * {@inheritdoc}
      */
-    public function handleFilter(
+    public function handle(
         CriteriaPartInterface $criteriaPart,
         Criteria $criteria,
         Search $search,
         ShopContextInterface $context
     ) {
-        /* @var SalesCondition $criteriaPart */
-        $search->addFilter(
-            new RangeQuery('sales', ['gt' => $criteriaPart->getMinSales()])
-        );
-    }
+        /** @var SalesCondition $criteriaPart */
+        $filter = new RangeQuery('sales', ['gt' => $criteriaPart->getMinSales()]);
 
-    /**
-     * {@inheritdoc}
-     */
-    public function handlePostFilter(
-        CriteriaPartInterface $criteriaPart,
-        Criteria $criteria,
-        Search $search,
-        ShopContextInterface $context
-    ) {
-        /* @var SalesCondition $criteriaPart */
-        $search->addPostFilter(
-            new RangeQuery('sales', ['gt' => $criteriaPart->getMinSales()])
-        );
+        if ($criteria->hasBaseCondition($criteriaPart->getName())) {
+            $search->addFilter($filter);
+        } else {
+            $search->addPostFilter($filter);
+        }
     }
 }

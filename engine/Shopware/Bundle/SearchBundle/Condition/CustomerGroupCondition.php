@@ -46,7 +46,6 @@ class CustomerGroupCondition implements ConditionInterface
     {
         Assertion::allIntegerish($customerGroupIds);
         $this->customerGroupIds = array_map('intval', $customerGroupIds);
-        sort($this->customerGroupIds, SORT_NUMERIC);
     }
 
     /**

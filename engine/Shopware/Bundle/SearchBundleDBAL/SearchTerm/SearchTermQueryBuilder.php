@@ -52,6 +52,11 @@ class SearchTermQueryBuilder implements SearchTermQueryBuilderInterface
     private $keywordFinder;
 
     /**
+     * @var SearchIndexerInterface
+     */
+    private $searchIndexer;
+
+    /**
      * @var TermHelperInterface
      */
     private $termHelper;
@@ -73,9 +78,10 @@ class SearchTermQueryBuilder implements SearchTermQueryBuilderInterface
         $this->config = $config;
         $this->connection = $connection;
         $this->keywordFinder = $keywordFinder;
+        $this->searchIndexer = $searchIndexer;
         $this->termHelper = $termHelper;
 
-        $searchIndexer->validate();
+        $this->searchIndexer->validate();
     }
 
     /**

@@ -44,7 +44,7 @@ Ext.define('Shopware.apps.Voucher.view.voucher.Window', {
     layout: 'border',
     height: '90%',
     autoScroll:true,
-    width: '80%',
+    width: 905,
     /**
      * Display no footer button for the detail window
      * @boolean
@@ -66,9 +66,7 @@ Ext.define('Shopware.apps.Voucher.view.voucher.Window', {
             }
         ];
         me.callParent(arguments);
-        me.on('show', me.fixLayout);
     },
-
     /**
      * Creates the tabs for the tab panel of the window.
      * Contains the detail form which is used to display the customer data for an existing customer
@@ -89,11 +87,6 @@ Ext.define('Shopware.apps.Voucher.view.voucher.Window', {
                 disabled:true
             }
         ];
-    },
-
-    fixLayout: function () {
-        var me = this;
-        me.setHeight(me.getHeight() + 1);
     }
 });
 //{/block}

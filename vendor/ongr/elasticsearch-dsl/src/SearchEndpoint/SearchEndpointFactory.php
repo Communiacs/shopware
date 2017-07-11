@@ -27,7 +27,6 @@ class SearchEndpointFactory
         'highlight' => 'ONGR\ElasticsearchDSL\SearchEndpoint\HighlightEndpoint',
         'aggregations' => 'ONGR\ElasticsearchDSL\SearchEndpoint\AggregationsEndpoint',
         'suggest' => 'ONGR\ElasticsearchDSL\SearchEndpoint\SuggestEndpoint',
-        'inner_hits' => 'ONGR\ElasticsearchDSL\SearchEndpoint\InnerHitsEndpoint',
     ];
 
     /**

@@ -1,10 +1,9 @@
 {
     "name": "shopware/shopware",
-  	"version": "5.3.0",
     "description": "Shopware is the next generation of open source e-commerce software made in Germany",
     "keywords": ["shopware", "shop"],
     "homepage": "http://www.shopware.com",
-    "type": "shopware-core",
+    "type": "project",
     "license": [
         "AGPL-3.0",
         "proprietary"
@@ -56,16 +55,11 @@
         "guzzlehttp/guzzle": "5.3.1",
         "egulias/email-validator": "1.2.12",
         "elasticsearch/elasticsearch": "2.2.0",
-        "ongr/elasticsearch-dsl": "2.2.2",
+        "ongr/elasticsearch-dsl": "2.0.2",
         "league/flysystem": "1.0.22",
-        "paragonie/random_compat": "2.0.10",
+        "paragonie/random_compat": "1.4.1",
         "cocur/slugify": "2.2",
-        "bcremer/line-reader": "^0.2.0",
-        "ramsey/uuid": "3.5.2",
-        "setasign/fpdf": "1.8.1",
-        "setasign/fpdi": "1.6.1",
-        "roave/security-advisories": "dev-master",
-        "wlwwt/sw-composer-installers": "0.4.x-dev"
+        "bcremer/line-reader": "^0.2.0"
     },
     "suggest": {
         "ext-apcu": "*",
@@ -119,11 +113,6 @@
         "optimize-autoloader": true,
         "platform": {
             "php": "5.6.4"
-        }
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-master": "5.3.x-dev"
         }
     },
     "scripts": {

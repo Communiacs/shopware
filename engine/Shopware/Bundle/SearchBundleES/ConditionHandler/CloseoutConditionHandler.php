@@ -29,10 +29,10 @@ use ONGR\ElasticsearchDSL\Search;
 use Shopware\Bundle\SearchBundle\Condition\CloseoutCondition;
 use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundle\CriteriaPartInterface;
-use Shopware\Bundle\SearchBundleES\PartialConditionHandlerInterface;
+use Shopware\Bundle\SearchBundleES\HandlerInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
-class CloseoutConditionHandler implements PartialConditionHandlerInterface
+class CloseoutConditionHandler implements HandlerInterface
 {
     /**
      * {@inheritdoc}
@@ -45,24 +45,19 @@ class CloseoutConditionHandler implements PartialConditionHandlerInterface
     /**
      * {@inheritdoc}
      */
-    public function handleFilter(
+    public function handle(
         CriteriaPartInterface $criteriaPart,
         Criteria $criteria,
         Search $search,
         ShopContextInterface $context
     ) {
-        $search->addFilter(new TermQuery('closeouts', 1));
-    }
+        $filter = new TermQuery('closeouts', 1);
 
-    /**
-     * {@inheritdoc}
-     */
-    public function handlePostFilter(
-        CriteriaPartInterface $criteriaPart,
-        Criteria $criteria,
-        Search $search,
-        ShopContextInterface $context
-    ) {
-        $search->addPostFilter(new TermQuery('closeouts', 1));
+        /** @var CloseoutCondition $criteriaPart */
+        if ($criteria->hasBaseCondition($criteriaPart->getName())) {
+            $search->addFilter($filter);
+        } else {
+            $search->addPostFilter($filter);
+        }
     }
 }

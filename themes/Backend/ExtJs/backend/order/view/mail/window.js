@@ -40,7 +40,7 @@ Ext.define('Shopware.apps.Order.view.mail.Window', {
      *
      * @type { String }
      */
-    extend: 'Enlight.app.Window',
+    extend:'Enlight.app.Window',
 
     /**
      * Set base css class prefix and module individual css class for css styling
@@ -54,7 +54,7 @@ Ext.define('Shopware.apps.Order.view.mail.Window', {
      *
      * @type { String }
      */
-    alias: 'widget.order-mail-window',
+    alias:'widget.order-mail-window',
 
     /**
      * Define window width
@@ -68,7 +68,7 @@ Ext.define('Shopware.apps.Order.view.mail.Window', {
      *
      * @type { String }
      */
-    height: '90%',
+    height:'90%',
 
     /**
      * Show scroll bar when the content is overflowing the window viewport
@@ -99,15 +99,11 @@ Ext.define('Shopware.apps.Order.view.mail.Window', {
      * This makes it easy to implement and, if needed, override the constructor logic of the Component at any step in the hierarchy.
      * The initComponent method must contain a call to callParent in order to ensure that the parent class' initComponent method is also called.
      */
-    initComponent: function() {
+    initComponent: function () {
         var me = this;
 
         me.form = Ext.create('Shopware.apps.Order.view.mail.Form', {
-            attached: me.attached,
-            mail: me.mail,
-            record: me.record,
-            listStore: me.listStore,
-            documentTypeStore: me.documentTypeStore
+            mail: me.mail
         });
 
         me.items = me.form;
@@ -116,17 +112,6 @@ Ext.define('Shopware.apps.Order.view.mail.Window', {
             me.form.loadRecord(me.mail);
         }
 
-        me.callParent(arguments);
-    },
-
-    /**
-     * Overwrite the doClose function to reset all documents to active = false
-     * @override
-     */
-    doClose: function() {
-        var me = this;
-
-        me.form.attachmentGrid.store.resetDocuments();
         me.callParent(arguments);
     }
 

@@ -28,7 +28,6 @@ use Shopware\Bundle\SearchBundle\Condition\ImmediateDeliveryCondition;
 use Shopware\Bundle\SearchBundle\ConditionInterface;
 use Shopware\Bundle\SearchBundleDBAL\ConditionHandlerInterface;
 use Shopware\Bundle\SearchBundleDBAL\QueryBuilder;
-use Shopware\Bundle\SearchBundleDBAL\VariantHelper;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
 /**
@@ -38,17 +37,7 @@ use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
  */
 class ImmediateDeliveryConditionHandler implements ConditionHandlerInterface
 {
-    const STATE_INCLUDES_IMMEDIATE_DELIVERY_VARIANTS = 'ImmediateDeliveryVariants';
-
-    /**
-     * @var VariantHelper
-     */
-    private $variantHelper;
-
-    public function __construct(VariantHelper $variantHelper)
-    {
-        $this->variantHelper = $variantHelper;
-    }
+    const STATE_INCLUDES_ALL_VARIANTS = 'all_variants';
 
     /**
      * {@inheritdoc}
@@ -66,11 +55,15 @@ class ImmediateDeliveryConditionHandler implements ConditionHandlerInterface
         QueryBuilder $query,
         ShopContextInterface $context
     ) {
-        $this->variantHelper->joinVariants($query);
+        $query->innerJoin(
+            'product',
+            's_articles_details',
+            'allVariants',
+            'allVariants.articleID = product.id
+             AND allVariants.active = 1
+             AND allVariants.instock >= allVariants.minpurchase'
+        );
 
-        if (!$query->hasState(self::STATE_INCLUDES_IMMEDIATE_DELIVERY_VARIANTS)) {
-            $query->andWhere('allVariants.instock >= allVariants.minpurchase');
-            $query->addState(self::STATE_INCLUDES_IMMEDIATE_DELIVERY_VARIANTS);
-        }
+        $query->addState(self::STATE_INCLUDES_ALL_VARIANTS);
     }
 }

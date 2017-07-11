@@ -51,8 +51,7 @@ Ext.define('Shopware.apps.PluginManager.controller.Navigation', {
         licencePage: 5,
         premiumPluginsPage: 6,
         expiredPluginsPage: 7,
-        connectIntroductionPage: 8,
-        importExportTeaserPage: 9
+        connectIntroductionPage: 8
     },
 
     animationSpeed: 150,
@@ -94,8 +93,6 @@ Ext.define('Shopware.apps.PluginManager.controller.Navigation', {
             'display-premium-plugins': me.displayPremiumPluginsPage,
             'display-expired-plugins': me.displayExpiredPluginsPage,
             'display-connect-introduction': me.displayConnectIntroductionPage,
-            'display-importexport-teaser': me.displayImportExportTeaserPage,
-            'load-store-listing': me.loadListingWithParams,
             scope: me
         });
 
@@ -268,14 +265,6 @@ Ext.define('Shopware.apps.PluginManager.controller.Navigation', {
         me.switchView(me.cards.connectIntroductionPage);
     },
 
-    displayImportExportTeaserPage: function() {
-        var me = this;
-
-        Shopware.app.Application.fireEvent('enable-importexport-teaser-mode');
-
-        me.switchView(me.cards.importExportTeaserPage);
-    },
-
     displayPluginUpdatesPage: function () {
         var me = this,
             updatePage = me.getUpdatePage(),
@@ -398,25 +387,6 @@ Ext.define('Shopware.apps.PluginManager.controller.Navigation', {
         me.displayListingPage();
         me.removeNavigationSelection();
         me.loadStoreListing(category);
-    },
-
-    loadListingWithParams: function(filters) {
-        var me = this,
-            navigation = me.getCategoryTree(),
-            storeListing = me.getStoreListing();
-
-        me.displayListingPage();
-        me.removeNavigationSelection();
-        
-        storeListing.store.clearFilter();
-
-        navigation.disable();
-        storeListing.resetListing();
-        storeListing.store.filter(filters);
-
-        me.filterStoreListing(function() {
-            navigation.enable();
-        });
     },
 
     loadStoreListing: function(category) {

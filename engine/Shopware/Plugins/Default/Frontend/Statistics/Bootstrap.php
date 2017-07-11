@@ -162,15 +162,15 @@ ShopWiki;Bot;WebAlta;;abachobot;architext;ask jeeves;frooglebot;googlebot;lycos;
      *
      * @return bool
      */
-    public function shouldRefreshLog(Enlight_Controller_Request_Request $request)
+    public function shouldRefreshLog($request)
     {
-        if ($request->getClientIp() === null
+        if ($request->getClientIp(false) === null
             || !empty(Shopware()->Session()->Bot)
         ) {
             return false;
         }
         if (!empty(Shopware()->Config()->blockIp)
-            && strpos(Shopware()->Config()->blockIp, $request->getClientIp()) !== false
+            && strpos(Shopware()->Config()->blockIp, $request->getClientIp(false)) !== false
         ) {
             return false;
         }
@@ -196,13 +196,13 @@ ShopWiki;Bot;WebAlta;;abachobot;architext;ask jeeves;frooglebot;googlebot;lycos;
      *
      * @param \Enlight_Controller_Request_Request $request
      */
-    public function refreshCurrentUsers(Enlight_Controller_Request_Request $request)
+    public function refreshCurrentUsers($request)
     {
         $sql = '
         INSERT INTO s_statistics_currentusers (remoteaddr, page, `time`, userID, deviceType)
         VALUES (?, ?, NOW(), ?, ?)';
         Shopware()->Db()->query($sql, [
-            $request->getClientIp(),
+            $request->getClientIp(false),
             $request->getParam('requestPage', $request->getRequestUri()),
             empty(Shopware()->Session()->sUserId) ? 0 : (int) Shopware()->Session()->sUserId,
             $request->getDeviceType(),
@@ -214,9 +214,9 @@ ShopWiki;Bot;WebAlta;;abachobot;architext;ask jeeves;frooglebot;googlebot;lycos;
      *
      * @param Enlight_Controller_Request_Request $request
      */
-    public function refreshLog(Enlight_Controller_Request_Request $request)
+    public function refreshLog($request)
     {
-        $ip = $request->getClientIp();
+        $ip = $request->getClientIp(false);
         $deviceType = $request->getDeviceType();
         $shopId = Shopware()->Shop()->getId();
         $isNewRecord = false;

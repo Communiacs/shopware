@@ -10,9 +10,7 @@ module.exports = {
         'StateManager': true,
         'picturefill': true,
         'StorageManager': true,
-        'Modernizr': true,
-        'Overlay': true
-
+        'Modernizr': true
     },
     'rules': {
         'arrow-parens': 0,
@@ -38,8 +36,6 @@ module.exports = {
         'indent': [
             'error',
             4
-        ],
-
-        'standard/no-callback-literal': 0
+        ]
     }
 };

@@ -24,15 +24,12 @@
 
 use \Shopware\Models\Emotion\Element;
 use Doctrine\Common\Collections\ArrayCollection;
-use Shopware\Components\CSRFWhitelistAware;
-use Shopware\Components\Emotion\EmotionExporter;
 use Shopware\Components\Model\ModelManager;
 use Shopware\Models\Emotion\Emotion;
 use Shopware\Models\Emotion\Library\Field;
 use Shopware\Models\Shop\Shop;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 
-class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_ExtJs implements CSRFWhitelistAware
+class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_ExtJs
 {
     /**
      * Emotion repository. Declared for an fast access to the emotion repository.
@@ -47,16 +44,6 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
      * @var null
      */
     protected $manager = null;
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getWhitelistedCSRFActions()
-    {
-        return [
-            'export',
-        ];
-    }
 
     /**
      * Event listener function of the listing store of the emotion backend module.
@@ -85,7 +72,8 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
             ->resetQueryPart('groupBy')
             ->resetQueryPart('orderBy')
             ->setFirstResult(0)
-            ->setMaxResults(1);
+            ->setMaxResults(1)
+        ;
 
         $statement = $query->execute();
         $count = $statement->fetch(PDO::FETCH_COLUMN);
@@ -132,6 +120,8 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
      * Event listener function of the emotion detail store of the backend module.
      * Fired when the user clicks the edit button in the listing. The function returns
      * all data for a single emotion.
+     *
+     * @return array
      */
     public function detailAction()
     {
@@ -188,8 +178,7 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
 
                 if ($entry['name'] === 'file' ||
                     $entry['name'] === 'image' ||
-                    $entry['name'] === 'fallback_picture'
-                ) {
+                    $entry['name'] === 'fallback_picture') {
                     $value = $mediaService->getUrl($value);
                 }
 
@@ -232,134 +221,6 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
             'success' => true,
             'data' => $emotion,
             'total' => 1,
-        ]);
-    }
-
-    /**
-     * Exports emotion data and assets to zip archive
-     */
-    public function exportAction()
-    {
-        $this->Front()->Plugins()->ViewRenderer()->setNoRender();
-        $this->Front()->Plugins()->Json()->setRenderer(false);
-
-        $emotionId = $this->Request()->get('emotionId');
-
-        if (!$emotionId) {
-            echo 'Parameter emotionId not found!';
-
-            return;
-        }
-
-        /** @var EmotionExporter $exporter */
-        $exporter = $this->container->get('shopware.emotion.emotion_exporter');
-
-        try {
-            /** @var string $exportFilePath */
-            $exportFilePath = $exporter->export($emotionId);
-        } catch (\Exception $e) {
-            echo $e->getMessage();
-
-            return;
-        }
-
-        @set_time_limit(0);
-        $this->Response()
-            ->setHeader('Content-type', 'application/zip')
-            ->setHeader('Content-Transfer-Encoding', 'binary')
-            ->setHeader('Content-disposition', 'attachment; filename="' . basename($exportFilePath) . '"')
-            ->sendHeaders();
-
-        readfile($exportFilePath);
-        $this->container->get('file_system')->remove($exportFilePath);
-
-        exit;
-    }
-
-    /**
-     * Uploads emotion zip archive to shopware file system
-     *
-     * @throws Exception
-     */
-    public function uploadAction()
-    {
-        /** @var $file UploadedFile */
-        $file = Symfony\Component\HttpFoundation\Request::createFromGlobals()->files->get('emotionfile');
-        $fileSystem = $this->container->get('file_system');
-
-        if ($file->getClientMimeType() !== 'application/zip' && strtolower($file->getClientOriginalExtension()) !== 'zip') {
-            $name = $file->getClientOriginalName();
-
-            $fileSystem->remove($file->getPathname());
-
-            $this->View()->assign([
-                'success' => false,
-                'message' => sprintf(
-                    'Uploaded file %s is no zip file',
-                    $name
-                ),
-            ]);
-
-            return;
-        }
-        $downloadPath = $this->container->getParameter('kernel.root_dir') . '/files/downloads/';
-
-        if (!is_writable($downloadPath)) {
-            $this->View()->assign([
-                'success' => false,
-                'error' => sprintf("Target Directory %s isn't writable", $downloadPath),
-            ]);
-
-            return;
-        }
-
-        $fileSystem->copy($file, $downloadPath . $file->getClientOriginalName());
-        $fileSystem->remove($file->getPathname());
-
-        $this->View()->assign([
-            'success' => true,
-            'filePath' => $downloadPath . $file->getClientOriginalName(),
-        ]);
-    }
-
-    /**
-     * Execute emotion import on uploaded zip archive.
-     */
-    public function importAction()
-    {
-        $filePath = $this->Request()->get('filePath');
-
-        $emotionImporter = $this->container->get('shopware.emotion.emotion_importer');
-        $preset = $emotionImporter->import($filePath);
-
-        $this->View()->assign([
-            'success' => true,
-            'presetId' => $preset->getId(),
-            'presetData' => $preset->getPresetData(),
-        ]);
-    }
-
-    /**
-     * Execute cleanup on imported emotion files.
-     */
-    public function afterImportAction()
-    {
-        $filePath = $this->Request()->get('filePath');
-        $presetId = $this->Request()->get('presetId');
-
-        if (!$filePath) {
-            $this->View()->assign([
-                'success' => false,
-            ]);
-
-            return;
-        }
-
-        $emotionImporter = $this->container->get('shopware.emotion.emotion_importer');
-        $emotionImporter->cleanupImport($filePath, $presetId);
-
-        $this->View()->assign([
-            'success' => true,
         ]);
     }
 
@@ -409,7 +270,6 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
             $data['id'] = $emotion->getId();
 
             $this->generateEmotionSeoUrls($emotion);
-            $this->removePreview($emotion->getId());
 
             $this->View()->assign([
                 'data' => $data,
@@ -417,66 +277,6 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
                 'alreadyExists' => $alreadyExists,
             ]);
         } catch (\Doctrine\ORM\ORMException $e) {
-            $this->View()->assign([
-                'data' => $this->Request()->getParams(),
-                'success' => false,
-                'message' => $e->getMessage(),
-            ]);
-        }
-    }
-
-    /**
-     * Model event listener function which fired when the user configure an emotion over the backend
-     * module and clicks the save button.
-     */
-    public function savePreviewAction()
-    {
-        try {
-            $data = $this->Request()->getParams();
-
-            if (empty($data['id'])) {
-                throw new \Shopware\Components\Api\Exception\NotFoundException('The emotion must exists before previewing it.');
-            }
-
-            $data['previewId'] = $data['id'];
-            $data['previewSecret'] = \Shopware\Components\Random::getAlphanumericString(32);
-            $data['active'] = false;
-
-            /** @var Emotion $previewEmotion */
-            $previewEmotion = $this->findPreviewEmotion($data['id']);
-            if ($previewEmotion) {
-                $previewEmotion->getElements()->clear();
-                $this->getManager()->flush($previewEmotion);
-
-                $data['id'] = $previewEmotion->getId();
-            } else {
-                unset($data['id']);
-            }
-
-            $emotion = $this->saveEmotion($data);
-
-            if ($emotion === null) {
-                $this->View()->assign([
-                    'data' => $this->Request()->getParams(),
-                    'success' => false,
-                ]);
-
-                return;
-            }
-
-            $data['id'] = $emotion->getId();
-
-            $this->View()->assign([
-                'data' => $data,
-                'success' => true,
-            ]);
-        } catch (\Doctrine\ORM\ORMException $e) {
-            $this->View()->assign([
-                'data' => $this->Request()->getParams(),
-                'success' => false,
-                'message' => $e->getMessage(),
-            ]);
-        } catch (\Shopware\Components\Api\Exception\NotFoundException $e) {
             $this->View()->assign([
                 'data' => $this->Request()->getParams(),
                 'success' => false,
@@ -519,10 +319,11 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
                 return;
             }
 
-            $emotion->setActive($data['active']);
+            $emotion->setActive($data['active'] === 'true');
             $emotion->setPosition($data['position']);
             $emotion->setModified(new \DateTime());
 
+            $manager->persist($emotion);
             $manager->flush();
 
             $this->View()->assign([
@@ -563,9 +364,6 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
                 foreach ($entity->getElements() as $element) {
                     $translator->delete(null, 'emotionElement', $element->getId());
                 }
-
-                // delete created previews
-                $this->removePreview($entity->getId());
 
                 Shopware()->Models()->remove($entity);
             }
@@ -724,20 +522,16 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
 
     protected function initAcl()
     {
-        $this->addAclPermission('list', 'read', 'Insufficient permissions');
-        $this->addAclPermission('detail', 'read', 'Insufficient permissions');
-        $this->addAclPermission('library', 'read', 'Insufficient permissions');
-        $this->addAclPermission('fill', 'read', 'Insufficient permissions');
+        $this->addAclPermission('list', 'read', 'Insufficient Permissions');
+        $this->addAclPermission('detail', 'read', 'Insufficient Permissions');
+        $this->addAclPermission('library', 'read', 'Insufficient Permissions');
+        $this->addAclPermission('fill', 'read', 'Insufficient Permissions');
 
-        $this->addAclPermission('delete', 'delete', 'Insufficient permissions');
+        $this->addAclPermission('delete', 'delete', 'Insufficient Permissions');
 
-        $this->addAclPermission('save', 'save', 'Insufficient permissions');
-        $this->addAclPermission('updateStatusAndPosition', 'save', 'Insufficient permissions');
-        $this->addAclPermission('upload', 'save', 'Insufficient permissions');
-        $this->addAclPermission('import', 'save', 'Insufficient permissions');
-        $this->addAclPermission('afterImport', 'save', 'Insufficient permissions');
+        $this->addAclPermission('save', 'save', 'Insufficient Permissions');
 
-        $this->addAclPermission('duplicate', 'create', 'Insufficient permissions');
+        $this->addAclPermission('duplicate', 'create', 'Insufficient Permissions');
     }
 
     /**
@@ -1021,24 +815,6 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
     }
 
     /**
-     * @param int $emotionId
-     *
-     * @return Emotion
-     */
-    private function findPreviewEmotion($emotionId)
-    {
-        $builder = $this->container->get('models')->createQueryBuilder();
-        $emotion = $builder->select('emotion')
-                ->from(Emotion::class, 'emotion')
-                ->where('emotion.previewId = :previewId')
-                ->setParameter('previewId', $emotionId)
-                ->getQuery()
-                ->getOneOrNullResult(\Doctrine\ORM\AbstractQuery::HYDRATE_OBJECT);
-
-        return $emotion;
-    }
-
-    /**
      * Method for saving a single emotion model.
      * Processes the provided data and creates necessary associations.
      *
@@ -1151,10 +927,6 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
         $emotion->setSeoTitle($data['seoTitle']);
         $emotion->setSeoKeywords($data['seoKeywords']);
         $emotion->setSeoDescription($data['seoDescription']);
-        $emotion->setPreviewId(array_key_exists('previewId', $data) ? $data['previewId'] : null);
-        $emotion->setPreviewSecret(array_key_exists('previewSecret', $data) ? $data['previewSecret'] : null);
-        $emotion->setCustomerStreamIds($data['customerStreamIds'] ?: null);
-        $emotion->setReplacement($data['replacement'] ?: null);
 
         Shopware()->Models()->persist($emotion);
         Shopware()->Models()->flush();
@@ -1223,12 +995,7 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
      */
     private function createElementData(Emotion $emotion, array $element, array $elementData)
     {
-        foreach ($elementData as $key => &$item) {
-            if (empty($item['fieldId'])) {
-                unset($elementData[$key]);
-                continue;
-            }
-
+        foreach ($elementData as &$item) {
             /** @var $field Field */
             $field = Shopware()->Models()->find('Shopware\Models\Emotion\Library\Field', $item['fieldId']);
             $item['field'] = $field;
@@ -1415,7 +1182,7 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
     private function copyElementTranslations(Emotion $emotion, Emotion $clonedEmotion)
     {
         $oldObjectKeys = [];
-        $sql = <<<'EOD'
+        $sql = <<<EOD
 INSERT INTO `s_core_translations` (`objecttype`, `objectdata`, `objectkey`, `objectlanguage`, `dirty`)
 SELECT `objecttype`,
 `objectdata`,
@@ -1512,20 +1279,5 @@ EOD;
             'emotionId' => $emotionId,
             'fullPath' => true,
         ]);
-    }
-
-    /**
-     * @param int $emotionId
-     */
-    private function removePreview($emotionId)
-    {
-        /** @var Emotion $previewEmotion */
-        $previewEmotion = $this->findPreviewEmotion($emotionId);
-        if (!$previewEmotion) {
-            return;
-        }
-
-        $this->getManager()->remove($previewEmotion);
-        $this->getManager()->flush($previewEmotion);
     }
 }

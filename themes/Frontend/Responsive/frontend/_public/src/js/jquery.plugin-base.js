@@ -91,7 +91,7 @@
         };
 
         // Call the init method of the plugin
-        me.init(element, options);
+        me.init();
 
         $.publish('plugin/' + name + '/onInit', [ me ]);
     }

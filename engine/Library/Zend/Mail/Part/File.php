@@ -23,10 +23,12 @@
 /**
  * @see Zend_Mime_Decode
  */
+require_once 'Zend/Mime/Decode.php';
 
 /**
  * @see Zend_Mail_Part
  */
+require_once 'Zend/Mail/Part.php';
 
 
 /**
@@ -58,6 +60,7 @@ class Zend_Mail_Part_File extends Zend_Mail_Part
             /**
              * @see Zend_Mail_Exception
              */
+            require_once 'Zend/Mail/Exception.php';
             throw new Zend_Mail_Exception('no file given in params');
         }
 
@@ -70,6 +73,7 @@ class Zend_Mail_Part_File extends Zend_Mail_Part
             /**
              * @see Zend_Mail_Exception
              */
+            require_once 'Zend/Mail/Exception.php';
             throw new Zend_Mail_Exception('could not open file');
         }
         if (isset($params['startPos'])) {
@@ -99,6 +103,7 @@ class Zend_Mail_Part_File extends Zend_Mail_Part
             /**
              * @see Zend_Mail_Exception
              */
+            require_once 'Zend/Mail/Exception.php';
             throw new Zend_Mail_Exception('no boundary found in content type to split message');
         }
 
@@ -114,6 +119,7 @@ class Zend_Mail_Part_File extends Zend_Mail_Part
                 /**
                  * @see Zend_Mail_Exception
                  */
+                require_once 'Zend/Mail/Exception.php';
                 throw new Zend_Mail_Exception('error reading file');
             }
 
@@ -182,6 +188,7 @@ class Zend_Mail_Part_File extends Zend_Mail_Part
             /**
              * @see Zend_Mail_Exception
              */
+            require_once 'Zend/Mail/Exception.php';
             throw new Zend_Mail_Exception('part not found');
         }
 

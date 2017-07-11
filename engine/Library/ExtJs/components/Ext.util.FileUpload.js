@@ -595,7 +595,10 @@ Ext.define('Ext.util.FileUpload', {
             text.addClass('small-padding');
 
             // Create the progress bar
-            var progressBar = me.createProgressBar();
+            var progressBar = Ext.create('Ext.Component', {
+                cls: me.progressBarCls,
+                tpl: me.progressBarTpl
+            });
             progressBar.update({ percent: 0 });
             progressBar.value = 0;
 
@@ -620,20 +623,6 @@ Ext.define('Ext.util.FileUpload', {
             }, 10);
         });
 
-    },
-
-    /**
-     * Creates the progressbar
-     *
-     * @return { Ext.Component }
-     */
-    createProgressBar: function() {
-        var me = this;
-
-        return Ext.create('Ext.Component', {
-            cls: me.progressBarCls,
-            tpl: me.progressBarTpl
-        });
     },
 
     /**
@@ -677,7 +666,10 @@ Ext.define('Ext.util.FileUpload', {
                 }
 
                 // Create the progress bar
-                progressBar = me.createProgressBar();
+                progressBar = Ext.create('Ext.Component', {
+                    cls: me.progressBarCls,
+                    tpl: me.progressBarTpl
+                });
                 progressBar.update({ percent: 0 });
                 progressBar.addClass(me.previewEnabledCls);
 

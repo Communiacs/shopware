@@ -40,32 +40,32 @@ Ext.define('Shopware.apps.Order', {
      * The name of the module. Used for internal purpose
      * @string
      */
-    name: 'Shopware.apps.Order',
+    name:'Shopware.apps.Order',
 
     /**
      * Extends from our special controller, which handles the sub-application behavior and the event bus
      * @string
      */
-    extend: 'Enlight.app.SubApplication',
+    extend:'Enlight.app.SubApplication',
 
     /**
      * Enable bulk loading
      * @boolean
      */
-    bulkLoad: true,
+    bulkLoad:true,
 
     /**
      * Sets the loading path for the sub-application.
      *
      * @string
      */
-    loadPath: '{url action=load}',
+    loadPath:'{url action=load}',
 
     /**
      * Array of views to require from AppName.view namespace.
      * @array
      */
-    views: [
+    views:[
         'main.Window',
         'detail.Window',
         'detail.Overview',
@@ -86,7 +86,6 @@ Ext.define('Shopware.apps.Order', {
         'list.Document',
         'mail.Window',
         'mail.Form',
-        'mail.Attachment',
         'batch.Window',
         'batch.Form',
         'batch.List',
@@ -97,7 +96,7 @@ Ext.define('Shopware.apps.Order', {
      * Array of stores to require from AppName.store namespace.
      * @array
      */
-    stores: [
+    stores:[
         'OrderHistory',
         'Order',
         'Voucher',
@@ -106,15 +105,14 @@ Ext.define('Shopware.apps.Order', {
         'Batch',
         'Tax',
         'DetailBatch',
-        'ListBatch',
-        'DocumentRegistry'
+        'ListBatch'
     ],
 
     /**
      * Array of models to require from AppName.model namespace.
      * @array
      */
-    models: [
+    models:[
         'OrderHistory',
         'Order',
         'Billing',
@@ -130,22 +128,20 @@ Ext.define('Shopware.apps.Order', {
         'Mail',
         'DetailBatch',
         'ListBatch',
-        'Dispatch'
+        'Dispatch',
     ],
 
     /**
      * Requires controllers for sub-application
      * @array
      */
-    controllers: [
+    controllers:[
         'Main',
         'List',
         'Filter',
         'Detail',
         'Batch',
-        'Mail',
-        'Document',
-        'Attachment'
+        'Mail'
     ],
 
     /**

@@ -147,7 +147,8 @@
 
             // reset modal
             $.modal.close();
-            $.loadingIndicator.open();
+            $.overlay.open({ closeOnClick: false });
+            $.loadingIndicator.open({ openOverlay: false });
 
             $.publish('plugin/swAddressEditor/onBeforeOpen', [ me, requestData ]);
 
@@ -199,6 +200,7 @@
         _registerPlugins: function() {
             window.StateManager
                 .addPlugin('div[data-register="true"]', 'swRegister')
+                .addPlugin('select:not([data-no-fancy-select="true"])', 'swSelectboxReplacement')
                 .addPlugin('*[data-preloader-button="true"]', 'swPreloaderButton');
 
             $.publish('plugin/swAddressEditor/onRegisterPlugins', [ this ]);

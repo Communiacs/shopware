@@ -11,13 +11,61 @@
 
 namespace ONGR\ElasticsearchDSL\Query;
 
+use ONGR\ElasticsearchDSL\BuilderInterface;
+use ONGR\ElasticsearchDSL\ParametersTrait;
+
 /**
  * Represents Elasticsearch "regexp" query.
  *
  * @link https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-regexp-query.html
- *
- * @deprecated Use the extended class instead. This class is left only for BC compatibility.
  */
-class RegexpQuery extends \ONGR\ElasticsearchDSL\Query\TermLevel\RegexpQuery
+class RegexpQuery implements BuilderInterface
 {
+    use ParametersTrait;
+
+    /**
+     * @var string Field to be queried.
+     */
+    private $field;
+
+    /**
+     * @var string The actual regexp value to be used.
+     */
+    private $regexpValue;
+
+    /**
+     * @param string $field
+     * @param string $regexpValue
+     * @param array  $parameters
+     */
+    public function __construct($field, $regexpValue, array $parameters = [])
+    {
+        $this->field = $field;
+        $this->regexpValue = $regexpValue;
+        $this->setParameters($parameters);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getType()
+    {
+        return 'regexp';
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function toArray()
+    {
+        $query = [
+            'value' => $this->regexpValue,
+        ];
+
+        $output = [
+            $this->field => $this->processArray($query),
+        ];
+
+        return [$this->getType() => $output];
+    }
 }

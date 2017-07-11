@@ -47,7 +47,15 @@
 
                             <div class="main--actions">
                                 {* Continue shopping *}
-                                {block name="frontend_checkout_actions_link_last"}{/block}
+                                {if $sBasket.sLastActiveArticle.link}
+                                    {block name="frontend_checkout_actions_link_last"}
+                                        <a href="{$sBasket.sLastActiveArticle.link}"
+                                           title="{"{s name='CheckoutActionsLinkLast' namespace="frontend/checkout/actions"}{/s}"|escape}"
+                                           class="btn btn--checkout-continue is--secondary left continue-shopping--action is--icon-left is--large">
+                                            <i class="icon--arrow-left"> </i>{s name="CheckoutActionsLinkLast" namespace="frontend/checkout/actions"}{/s}
+                                        </a>
+                                    {/block}
+                                {/if}
 
                                 {block name="frontend_checkout_actions_confirm"}
 
@@ -117,8 +125,16 @@
                             {block name="frontend_checkout_actions_confirm_bottom"}
                                 <div class="main--actions">
 
-                                    {* Continue shopping *}
-                                    {block name="frontend_checkout_actions_link_last_bottom"}{/block}
+                                    {* Contiune shopping *}
+                                    {if $sBasket.sLastActiveArticle.link}
+                                        {block name="frontend_checkout_actions_link_last_bottom"}
+                                            <a href="{$sBasket.sLastActiveArticle.link}"
+                                               title="{"{s name='CheckoutActionsLinkLast' namespace="frontend/checkout/actions"}{/s}"|escape}"
+                                               class="btn btn--checkout-continue is--secondary is--left continue-shopping--action is--icon-left is--large">
+                                                <i class="icon--arrow-left"></i> {s name="CheckoutActionsLinkLast" namespace="frontend/checkout/actions"}{/s}
+                                            </a>
+                                        {/block}
+                                    {/if}
 
                                     {* Forward to the checkout *}
                                     {if !$sMinimumSurcharge && !($sDispatchNoOrder && !$sDispatches)}

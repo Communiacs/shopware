@@ -65,13 +65,13 @@ class SnippetsToIniCommand extends ShopwareCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $dir = $this->container->get('application')->DocPath($input->getOption('target'));
-        if (!file_exists($dir) || !is_writable($dir)) {
+        if (!file_exists($dir) || !is_writeable($dir)) {
             $old = umask(0);
             mkdir($dir, 0777, true);
             chmod($dir, 0777);
             umask($old);
         }
-        if (!is_writable($dir)) {
+        if (!is_writeable($dir)) {
             $output->writeln('<error>Output dir ' . $input->getOption('file') . ' is not writable, aborting</error>');
 
             return 1;

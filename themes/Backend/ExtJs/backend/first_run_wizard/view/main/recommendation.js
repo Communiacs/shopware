@@ -71,6 +71,7 @@ Ext.define('Shopware.apps.FirstRunWizard.view.main.Recommendation', {
                 );
             }
         );
+
         me.items = [
             {
                 xtype: 'container',
@@ -91,7 +92,7 @@ Ext.define('Shopware.apps.FirstRunWizard.view.main.Recommendation', {
                 xtype: 'container',
                 border: false,
                 bodyPadding: 20,
-                style: 'font-weight: 700; line-height: 20px; margin-top: 30px;',
+                style: 'font-weight: 700; line-height: 20px; margin-top: 10px;',
                 html: '<h1>' + me.snippets.labels.integratedPluginsMessageLabel + '</h1>'
             },
             {
@@ -103,7 +104,6 @@ Ext.define('Shopware.apps.FirstRunWizard.view.main.Recommendation', {
             },
             me.createIntegratedPluginsListing()
         ];
-
 
         me.callParent(arguments);
     },
@@ -118,9 +118,7 @@ Ext.define('Shopware.apps.FirstRunWizard.view.main.Recommendation', {
             displayField: 'text',
             emptyText: me.snippets.languagePicker,
             fieldLabel: me.snippets.labels.integratedPluginsLanguageLabel,
-            labelWidth: 'auto',
             editable: false,
-            style: 'margin: 10px 0;',
             listeners: {
                 change: {
                     fn: function (view, newValue) {
@@ -137,7 +135,17 @@ Ext.define('Shopware.apps.FirstRunWizard.view.main.Recommendation', {
             }
         });
 
-        return me.languageFilter;
+        return Ext.create('Ext.form.FieldSet', {
+            cls: Ext.baseCSSPrefix + 'base-field-set',
+            width: 632,
+            style: 'margin-top: 10px;',
+            defaults: {
+                anchor:'100%'
+            },
+            items: [
+                me.languageFilter
+            ]
+        });
     },
 
     createRecommendedPluginsListing: function() {

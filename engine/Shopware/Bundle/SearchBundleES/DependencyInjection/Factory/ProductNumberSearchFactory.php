@@ -51,23 +51,13 @@ class ProductNumberSearchFactory
      */
     public function factory(Container $container)
     {
+        $handlers = $this->registerHandlers($container);
+
         return new ProductNumberSearch(
             $container->get('shopware_elastic_search.client'),
             $container->get('shopware_elastic_search.index_factory'),
-            $container->get('shopware_search_es.handler_collection')->toArray()
+            $handlers
         );
-    }
-
-    /**
-     * @param Container $container
-     *
-     * @return ArrayCollection
-     */
-    public function registerHandlerCollection(Container $container)
-    {
-        $handlers = $this->registerHandlers($container);
-
-        return new ArrayCollection($handlers);
     }
 
     /**

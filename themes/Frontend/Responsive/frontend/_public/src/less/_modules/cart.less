@@ -77,6 +77,10 @@ Shopware offers two different shopping cart element options that can be selected
         display: none;
     }
 
+    .js--fancy-select-text {
+        font-weight: bold;
+    }
+
     // Actions above the actual table body
     .table--actions {
         .clearfix();
@@ -249,7 +253,7 @@ Shopware offers two different shopping cart element options that can be selected
         }
     }
 
-    .column--quantity .select-field {
+    .column--quantity .js--fancy-select {
         .unitize(min-width, 100);
         .unitize(max-width, 160);
         width: auto;
@@ -302,7 +306,7 @@ Shopware offers two different shopping cart element options that can be selected
         .border-radius(128px);
         .unitize-height(48);
         .unitize-width(48);
-        margin: 0 auto;
+		margin: 0 auto;
         text-align: center;
         font-weight: bold;
         background: @text-color;
@@ -372,11 +376,10 @@ Shopware offers two different shopping cart element options that can be selected
         border-width: 1px 0 0 0;
     }
 
-    .table--shipping-costs .select-field {
+    .table--shipping-costs .js--fancy-select {
         .unitize(height, 38);
         .unitize(line-height, 36);
-        max-width: 100%;
-        font-weight: bold;
+        width: 100%;
     }
 
     .table--shipping-costs-trigger {
@@ -480,26 +483,26 @@ Shopware offers two different shopping cart element options that can be selected
             position: relative;
             text-align: center;
 
-            .image--element {
-                height: 100%;
-                width: 100%;
-                display: block;
-                margin: 0 auto;
-                position: relative;
+			.image--element {
+				height: 100%;
+				width: 100%;
+				display: block;
+				margin: 0 auto;
+				position: relative;
 
-                img {
-                    .user-select(none);
-                    .touch-callout(none);
-                    .tap-highlight-color(rgba(0, 0, 0, 0));
-                    position: absolute;
-                    top: 0; bottom: 0;
-                    left: 0; right: 0;
-                    margin: auto;
-                    display: inline-block;
-                    vertical-align: middle;
-                    z-index: @zindex-cart-product-image-element;
-                }
-            }
+				img {
+					.user-select(none);
+					.touch-callout(none);
+					.tap-highlight-color(rgba(0, 0, 0, 0));
+					position: absolute;
+					top: 0; bottom: 0;
+					left: 0; right: 0;
+					margin: auto;
+					display: inline-block;
+					vertical-align: middle;
+					z-index: @zindex-cart-product-image-element;
+				}
+			}
         }
 
         .premium-product--badge {
@@ -526,6 +529,14 @@ Shopware offers two different shopping cart element options that can be selected
             width: 100%;
         }
 
+        .js--fancy-select {
+            width: 100%;
+        }
+
+        .js--fancy-select-text {
+            font-weight: bold;
+        }
+
         // Premium articles with variants
         .premium--variant {
             .clearfix();
@@ -537,20 +548,15 @@ Shopware offers two different shopping cart element options that can be selected
                 width: 20%;
             }
 
-            .select-field {
+            .js--fancy-select {
+                .border-radius-multi(3px, 0, 0, 3px);
+                .unitize(line-height, 36);
                 .unitize(margin-right, 2);
-                max-width: 80%;
+                width: 80%;
                 float: left;
 
                 .premium--selection {
-                    .border-radius-multi(3px, 0, 0, 3px);
-                    .unitize(line-height, 38);
-                    .unitize-height(38);
-                    font-weight: bold;
-                }
-
-                &:after {
-                    .unitize-height(36);
+                    .unitize-height(36, 16);
                 }
             }
         }
@@ -560,17 +566,17 @@ Shopware offers two different shopping cart element options that can be selected
 .js--modal .modal--checkout-add-article {
 
     .link--article-image .image--media {
-        display: block;
-        width: 100%;
-        height: 100%;
-        position: relative;
+		display: block;
+		width: 100%;
+		height:	100%;
+		position: relative;
 
-        img {
-            position: absolute;
-            top: 0; bottom: 0;
-            left: 0; right: 0;
-            margin: auto;
-        }
+		img {
+			position: absolute;
+			top: 0; bottom: 0;
+			left: 0; right: 0;
+			margin: auto;
+		}
     }
 
     .modal--title {
@@ -840,8 +846,11 @@ Shopware offers two different shopping cart element options that can be selected
                 text-align: left;
             }
 
-            .select-field {
+            .js--fancy-select {
                 float: left;
+            }
+
+            .js--fancy-select-text {
                 font-weight: bold;
             }
         }
@@ -1061,9 +1070,11 @@ Shopware offers two different shopping cart element options that can be selected
             width: 11%;
             margin: 0;
 
-            .select-field {
+            .js--fancy-select {
                 float: right;
                 min-width: 0;
+            }
+            .js--fancy-select-text {
                 font-weight: bold;
             }
         }

@@ -30,8 +30,7 @@ use Shopware\Bundle\SearchBundle\Facet;
 use Shopware\Bundle\SearchBundle\FacetInterface;
 use Shopware\Bundle\SearchBundle\FacetResult\ValueListFacetResult;
 use Shopware\Bundle\SearchBundle\FacetResult\ValueListItem;
-use Shopware\Bundle\SearchBundle\FacetResultInterface;
-use Shopware\Bundle\SearchBundleDBAL\PartialFacetHandlerInterface;
+use Shopware\Bundle\SearchBundleDBAL\FacetHandlerInterface;
 use Shopware\Bundle\SearchBundleDBAL\QueryBuilderFactoryInterface;
 use Shopware\Bundle\StoreFrontBundle\Service\ManufacturerServiceInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\Product\Manufacturer;
@@ -43,7 +42,7 @@ use Shopware\Components\QueryAliasMapper;
  *
  * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
-class ManufacturerFacetHandler implements PartialFacetHandlerInterface
+class ManufacturerFacetHandler implements FacetHandlerInterface
 {
     /**
      * @var ManufacturerServiceInterface
@@ -87,20 +86,23 @@ class ManufacturerFacetHandler implements PartialFacetHandlerInterface
     }
 
     /**
-     * @param FacetInterface       $facet
-     * @param Criteria             $reverted
-     * @param Criteria             $criteria
-     * @param ShopContextInterface $context
+     * @param FacetInterface|Facet\PriceFacet $facet
+     * @param Criteria                        $criteria
+     * @param ShopContextInterface            $context
      *
-     * @return FacetResultInterface|null
+     * @return ValueListFacetResult
      */
-    public function generatePartialFacet(
+    public function generateFacet(
         FacetInterface $facet,
-        Criteria $reverted,
         Criteria $criteria,
         ShopContextInterface $context
     ) {
-        $query = $this->queryBuilderFactory->createQuery($reverted, $context);
+        $queryCriteria = clone $criteria;
+        $queryCriteria->resetConditions();
+        $queryCriteria->resetSorting();
+
+        $query = $this->queryBuilderFactory->createQuery($queryCriteria, $context);
+
         $query->resetQueryPart('groupBy');
         $query->resetQueryPart('orderBy');
 
@@ -121,7 +123,7 @@ class ManufacturerFacetHandler implements PartialFacetHandlerInterface
 
         $activeManufacturers = $this->getActiveIds($criteria);
 
-        return $this->createFacetResult($facet, $manufacturers, $activeManufacturers);
+        return $this->createFacetResult($manufacturers, $activeManufacturers);
     }
 
     /**
@@ -133,13 +135,12 @@ class ManufacturerFacetHandler implements PartialFacetHandlerInterface
     }
 
     /**
-     * @param Facet\ManufacturerFacet $facet
-     * @param Manufacturer[]          $manufacturers
-     * @param int[]                   $activeIds
+     * @param Manufacturer[] $manufacturers
+     * @param int[]          $activeIds
      *
      * @return ValueListFacetResult
      */
-    private function createFacetResult(Facet\ManufacturerFacet $facet, $manufacturers, $activeIds)
+    private function createFacetResult($manufacturers, $activeIds)
     {
         $listItems = [];
 
@@ -158,16 +159,10 @@ class ManufacturerFacetHandler implements PartialFacetHandlerInterface
             return strcasecmp($a->getLabel(), $b->getLabel());
         });
 
-        if (!empty($facet->getLabel())) {
-            $label = $facet->getLabel();
-        } else {
-            $label = $this->snippetNamespace->get('manufacturer', 'Manufacturer');
-        }
-
         return new ValueListFacetResult(
             'manufacturer',
             !empty($activeIds),
-            $label,
+            $this->snippetNamespace->get('manufacturer', 'Manufacturer'),
             $listItems,
             $this->fieldName
         );

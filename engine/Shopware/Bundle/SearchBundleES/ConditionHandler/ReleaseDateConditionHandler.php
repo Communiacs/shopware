@@ -29,10 +29,10 @@ use ONGR\ElasticsearchDSL\Search;
 use Shopware\Bundle\SearchBundle\Condition\ReleaseDateCondition;
 use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundle\CriteriaPartInterface;
-use Shopware\Bundle\SearchBundleES\PartialConditionHandlerInterface;
+use Shopware\Bundle\SearchBundleES\HandlerInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
-class ReleaseDateConditionHandler implements PartialConditionHandlerInterface
+class ReleaseDateConditionHandler implements HandlerInterface
 {
     /**
      * {@inheritdoc}
@@ -45,65 +45,46 @@ class ReleaseDateConditionHandler implements PartialConditionHandlerInterface
     /**
      * {@inheritdoc}
      */
-    public function handleFilter(
+    public function handle(
         CriteriaPartInterface $criteriaPart,
         Criteria $criteria,
         Search $search,
         ShopContextInterface $context
     ) {
-        /* @var ReleaseDateCondition $criteriaPart */
-        $search->addFilter(
-            $this->createQuery($criteriaPart)
-        );
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function handlePostFilter(
-        CriteriaPartInterface $criteriaPart,
-        Criteria $criteria,
-        Search $search,
-        ShopContextInterface $context
-    ) {
-        /* @var ReleaseDateCondition $criteriaPart */
-        $search->addPostFilter(
-            $this->createQuery($criteriaPart)
-        );
-    }
-
-    /**
-     * @param ReleaseDateCondition $criteriaPart
-     *
-     * @return RangeQuery
-     */
-    private function createQuery(ReleaseDateCondition $criteriaPart)
-    {
+        /** @var ReleaseDateCondition $criteriaPart */
         $date = new \DateTime();
         $intervalSpec = 'P' . $criteriaPart->getDays() . 'D';
         $interval = new \DateInterval($intervalSpec);
+
         $dateNow = new\DateTime();
 
         switch ($criteriaPart->getDirection()) {
             case ReleaseDateCondition::DIRECTION_FUTURE:
                 $date->add($interval);
-
-                return new RangeQuery('formattedReleaseDate', [
+                $range = [
                     'lte' => $date->format('Y-m-d'),
                     'gt' => $dateNow->format('Y-m-d'),
-                ]);
+                ];
                 break;
 
             case ReleaseDateCondition::DIRECTION_PAST:
                 $date->sub($interval);
-
-                return new RangeQuery('formattedReleaseDate', [
+                $range = [
                     'gte' => $date->format('Y-m-d'),
                     'lte' => $dateNow->format('Y-m-d'),
-                ]);
+                ];
+                break;
 
             default:
-                throw new \RuntimeException(sprintf('Provided release date direction %s not supported', $criteriaPart->getDirection()));
+                return;
+        }
+
+        $filter = new RangeQuery('formattedReleaseDate', $range);
+
+        if ($criteria->hasBaseCondition($criteriaPart->getName())) {
+            $search->addFilter($filter);
+        } else {
+            $search->addPostFilter($filter);
         }
     }
 }

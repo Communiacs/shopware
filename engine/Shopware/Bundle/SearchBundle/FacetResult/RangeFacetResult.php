@@ -25,7 +25,6 @@
 namespace Shopware\Bundle\SearchBundle\FacetResult;
 
 use Shopware\Bundle\SearchBundle\FacetResultInterface;
-use Shopware\Bundle\SearchBundle\TemplateSwitchable;
 use Shopware\Bundle\StoreFrontBundle\Struct\Attribute;
 use Shopware\Bundle\StoreFrontBundle\Struct\Extendable;
 
@@ -34,67 +33,57 @@ use Shopware\Bundle\StoreFrontBundle\Struct\Extendable;
  *
  * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
-class RangeFacetResult extends Extendable implements FacetResultInterface, TemplateSwitchable
+class RangeFacetResult extends Extendable implements FacetResultInterface
 {
     /**
      * @var string
      */
-    protected $facetName;
+    private $facetName;
 
     /**
      * @var bool
      */
-    protected $active;
+    private $active;
 
     /**
      * @var string
      */
-    protected $label;
+    private $label;
 
     /**
      * @var float
      */
-    protected $min;
+    private $min;
 
     /**
      * @var float
      */
-    protected $max;
+    private $max;
 
     /**
      * @var string
      */
-    protected $minFieldName;
+    private $minFieldName;
 
     /**
      * @var string
      */
-    protected $maxFieldName;
+    private $maxFieldName;
 
     /**
      * @var float
      */
-    protected $activeMax;
+    private $activeMax;
 
     /**
      * @var float
      */
-    protected $activeMin;
-
-    /**
-     * @var string|null
-     */
-    protected $suffix;
+    private $activeMin;
 
     /**
      * @var null|string
      */
-    protected $template;
-
-    /**
-     * @var int
-     */
-    protected $digits;
+    private $template = null;
 
     /**
      * @param string      $facetName
@@ -106,10 +95,8 @@ class RangeFacetResult extends Extendable implements FacetResultInterface, Templ
      * @param float       $activeMax
      * @param string      $minFieldName
      * @param string      $maxFieldName
-     * @param Attribute[] $attributes
-     * @param null|string $suffix
-     * @param int         $digits
      * @param string|null $template
+     * @param Attribute[] $attributes
      */
     public function __construct(
         $facetName,
@@ -122,8 +109,6 @@ class RangeFacetResult extends Extendable implements FacetResultInterface, Templ
         $minFieldName,
         $maxFieldName,
         $attributes = [],
-        $suffix = null,
-        $digits = 2,
         $template = 'frontend/listing/filter/facet-range.tpl'
     ) {
         $this->facetName = $facetName;
@@ -137,8 +122,6 @@ class RangeFacetResult extends Extendable implements FacetResultInterface, Templ
         $this->maxFieldName = $maxFieldName;
         $this->attributes = $attributes;
         $this->template = $template;
-        $this->suffix = $suffix;
-        $this->digits = $digits;
     }
 
     /**
@@ -267,21 +250,5 @@ class RangeFacetResult extends Extendable implements FacetResultInterface, Templ
     public function setActive($active)
     {
         $this->active = $active;
-    }
-
-    /**
-     * @return null|string
-     */
-    public function getSuffix()
-    {
-        return $this->suffix;
-    }
-
-    /**
-     * @return int
-     */
-    public function getDigits()
-    {
-        return $this->digits;
     }
 }

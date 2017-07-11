@@ -59,12 +59,6 @@ Ext.define('Shopware.apps.FirstRunWizard.view.main.Config', {
         },
         shopSettings: {
             title: '{s name=config/shopSettings/title}Shop settings{/s}',
-            shopName: {
-                label: '{s name=config/shopSettings/shopName/label}Shop name{/s}'
-            },
-            mail: {
-                label: '{s name=config/shopSettings/mail/label}Your email address{/s}'
-            },
             address: {
                 label: '{s name=config/shopSettings/address/label}Address{/s}'
             },
@@ -73,18 +67,15 @@ Ext.define('Shopware.apps.FirstRunWizard.view.main.Config', {
             },
             company: {
                 label: '{s name=config/shopSettings/company/label}Company{/s}'
+            },
+            metaIsFamilyFriendly: {
+                label: '{s name=config/shopSettings/metaIsFamilyFriendly/label}Shop is family friendly{/s}'
             }
         },
         themeSettings: {
             title: '{s name=config/themeSettings/title}Theme settings{/s}',
-            brandPrimary: {
-                label: '{s name=config/themeSettings/brandPrimaryColor/label}Primary color{/s}'
-            },
-            brandSecondary: {
-                label: '{s name=config/themeSettings/brandSecondaryColor/label}Secondary color{/s}'
-            },
-            logo: {
-                label: '{s name=config/themeSettings/logo/label}Shop\'s logo{/s}'
+            desktopLogo: {
+                label: '{s name=config/themeSettings/desktopLogo/label}Shop\'s logo (desktop){/s}'
             }
         }
     },
@@ -107,8 +98,8 @@ Ext.define('Shopware.apps.FirstRunWizard.view.main.Config', {
                 style: 'margin-bottom: 10px;',
                 html: '<p>' + me.snippets.content.message + '</p>'
             },
-            me.createShopConfigForm(),
-            me.createThemeConfigForm()
+            me.createThemeConfigForm(),
+            me.createShopConfigForm()
         ];
 
         me.callParent(arguments);
@@ -117,22 +108,11 @@ Ext.define('Shopware.apps.FirstRunWizard.view.main.Config', {
     createThemeConfigForm: function() {
         var me = this;
 
-        me.themeBrandPrimaryColor = Ext.create('Shopware.form.field.ColorField', {
-            name: 'brand-primary',
-            fieldLabel: me.snippets.themeSettings.brandPrimary.label,
-            supportText: me.snippets.themeSettings.brandPrimary.support,
-        });
-
-        me.themeBrandSecondaryColor = Ext.create('Shopware.form.field.ColorField', {
-            name: 'brand-secondary',
-            fieldLabel: me.snippets.themeSettings.brandSecondary.label,
-            supportText: me.snippets.themeSettings.brandSecondary.support,
-        });
-
-        me.themeDesktopLogo = Ext.create('Shopware.form.field.Media', {
+        me.themeMainLogo = Ext.create('Shopware.form.field.Media', {
             name: 'desktopLogo',
-            fieldLabel: me.snippets.themeSettings.logo.label,
-            valueField: 'virtualPath',
+            fieldLabel: me.snippets.themeSettings.desktopLogo.label,
+            supportText: me.snippets.themeSettings.desktopLogo.support,
+            valueField: 'path',
             minimizable: false
         });
 
@@ -146,9 +126,7 @@ Ext.define('Shopware.apps.FirstRunWizard.view.main.Config', {
                 xtype:'textfield'
             },
             items: [
-                me.themeBrandPrimaryColor,
-                me.themeBrandSecondaryColor,
-                me.themeDesktopLogo
+                me.themeMainLogo,
             ]
         });
 
@@ -157,18 +135,6 @@ Ext.define('Shopware.apps.FirstRunWizard.view.main.Config', {
 
     createShopConfigForm: function() {
         var me = this;
-
-        me.shopNameField = Ext.create('Ext.form.field.Text', {
-            name: 'shopName',
-            fieldLabel: me.snippets.shopSettings.shopName.label,
-            supportText: me.snippets.shopSettings.shopName.support
-        });
-
-        me.mailField = Ext.create('Ext.form.field.Text', {
-            name: 'mail',
-            fieldLabel: me.snippets.shopSettings.mail.label,
-            supportText: me.snippets.shopSettings.mail.support
-        });
 
         me.addressField = Ext.create('Ext.form.field.TextArea', {
             name: 'address',
@@ -187,6 +153,11 @@ Ext.define('Shopware.apps.FirstRunWizard.view.main.Config', {
             fieldLabel: me.snippets.shopSettings.company.label,
             supportText: me.snippets.shopSettings.company.support
         });
+        me.metaIsFamilyFriendlyField = Ext.create('Ext.form.field.Checkbox', {
+            name: 'metaIsFamilyFriendly',
+            fieldLabel: me.snippets.shopSettings.metaIsFamilyFriendly.label,
+            supportText: me.snippets.shopSettings.metaIsFamilyFriendly.support
+        });
 
         me.shopConfigFieldSet = Ext.create('Ext.form.FieldSet', {
             cls: Ext.baseCSSPrefix + 'base-field-set',
@@ -198,11 +169,10 @@ Ext.define('Shopware.apps.FirstRunWizard.view.main.Config', {
                 xtype:'textfield'
             },
             items: [
-                me.shopNameField,
-                me.mailField,
                 me.addressField,
                 me.bankAccountField,
-                me.companyField
+                me.companyField,
+                me.metaIsFamilyFriendlyField
             ]
         });
 

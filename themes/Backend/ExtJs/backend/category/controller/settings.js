@@ -86,8 +86,7 @@ Ext.define('Shopware.apps.Category.controller.Settings', {
             records = store.getRange(),
             customTpl = record.get('template'),
             i = 0,
-            count = records.length,
-            activeTab;
+            count = records.length;
 
         // handle special cases for custom templates
         for (i; i < count; i++) {
@@ -119,10 +118,8 @@ Ext.define('Shopware.apps.Category.controller.Settings', {
 
             form.streamSelection.enable();
 
-            activeTab = me.getMainWindow().tabPanel.getActiveTab();
-
             //to select the settings if the tree element is not a leaf
-            if(!treeRecord.get('leaf') && activeTab.name !== 'custom-listing'){
+            if(!treeRecord.get('leaf')){
                 me.getMainWindow().tabPanel.setActiveTab(0);
             }
 

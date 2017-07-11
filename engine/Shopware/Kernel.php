@@ -28,8 +28,6 @@ use Enlight_Controller_Request_RequestHttp as EnlightRequest;
 use Enlight_Controller_Response_ResponseHttp as EnlightResponse;
 use Shopware\Bundle\AttributeBundle\DependencyInjection\Compiler\SearchRepositoryCompilerPass;
 use Shopware\Bundle\ControllerBundle\DependencyInjection\Compiler\RegisterControllerCompilerPass;
-use Shopware\Bundle\CustomerSearchBundleDBAL\DependencyInjection\Compiler\HandlerRegistryCompilerPass;
-use Shopware\Bundle\EmotionBundle\DependencyInjection\Compiler\EmotionComponentHandlerCompilerPass;
 use Shopware\Bundle\ESIndexingBundle\DependencyInjection\CompilerPass\DataIndexerCompilerPass;
 use Shopware\Bundle\ESIndexingBundle\DependencyInjection\CompilerPass\MappingCompilerPass;
 use Shopware\Bundle\ESIndexingBundle\DependencyInjection\CompilerPass\SettingsCompilerPass;
@@ -43,10 +41,8 @@ use Shopware\Bundle\SearchBundle\DependencyInjection\Compiler\CriteriaRequestHan
 use Shopware\Bundle\SearchBundleDBAL\DependencyInjection\Compiler\DBALCompilerPass;
 use Shopware\Bundle\SearchBundleES\DependencyInjection\CompilerPass\SearchHandlerCompilerPass;
 use Shopware\Components\ConfigLoader;
-use Shopware\Components\DependencyInjection\Compiler\AddCaptchaCompilerPass;
 use Shopware\Components\DependencyInjection\Compiler\AddConsoleCommandPass;
 use Shopware\Components\DependencyInjection\Compiler\DoctrineEventSubscriberCompilerPass;
-use Shopware\Components\DependencyInjection\Compiler\EmotionPresetCompilerPass;
 use Shopware\Components\DependencyInjection\Compiler\EventListenerCompilerPass;
 use Shopware\Components\DependencyInjection\Compiler\EventSubscriberCompilerPass;
 use Shopware\Components\DependencyInjection\Container;
@@ -142,6 +138,8 @@ class Kernel implements HttpKernelInterface
      */
     public function __construct($environment, $debug)
     {
+        $debug = false;
+
         $this->environment = $environment;
         $this->debug = (bool) $debug;
         $this->name = 'Shopware';
@@ -177,10 +175,10 @@ class Kernel implements HttpKernelInterface
         /** @var $front \Enlight_Controller_Front * */
         $front = $this->container->get('front');
 
-        $enlightRequest = $this->transformSymfonyRequestToEnlightRequest($request);
+        $request = $this->transformSymfonyRequestToEnlightRequest($request);
 
         if ($front->Request() === null) {
-            $front->setRequest($enlightRequest);
+            $front->setRequest($request);
             $response = $front->dispatch();
         } else {
             $dispatcher = clone $front->Dispatcher();
@@ -191,12 +189,11 @@ class Kernel implements HttpKernelInterface
                 ->clearBody();
 
             $response->setHttpResponseCode(200);
-            $enlightRequest->setDispatched(true);
-            $dispatcher->dispatch($enlightRequest, $response);
+            $request->setDispatched(true);
+            $dispatcher->dispatch($request, $response);
         }
 
         $response = $this->transformEnlightResponseToSymfonyResponse($response);
-        $response->prepare($request);
 
         return $response;
     }
@@ -245,9 +242,9 @@ class Kernel implements HttpKernelInterface
             $headers
         );
 
-        foreach ($response->getCookies() as $cookieContent) {
+        foreach ($response->getCookies() as $cookieName => $cookieContent) {
             $sfCookie = new Cookie(
-                $cookieContent['name'],
+                $cookieName,
                 $cookieContent['value'],
                 $cookieContent['expire'],
                 $cookieContent['path'],
@@ -406,6 +403,18 @@ class Kernel implements HttpKernelInterface
             $resource = new FileResource($filePath);
             $container->addResource($resource);
         }
+    }
+
+    /**
+     * @deprecated since 5.2, to be removed in 5.3
+     *
+     * @return \Shopware
+     */
+    public function getShopware()
+    {
+        trigger_error('Shopware\Kernel::getShopware() is deprecated since version 5.2 and will be removed in 5.3.', E_USER_DEPRECATED);
+
+        return $this->shopware;
     }
 
     /**
@@ -607,9 +616,7 @@ class Kernel implements HttpKernelInterface
         $loader->load('FormBundle/services.xml');
         $loader->load('AccountBundle/services.xml');
         $loader->load('AttributeBundle/services.xml');
-        $loader->load('EmotionBundle/services.xml');
         $loader->load('SearchBundleES/services.xml');
-        $loader->load('CustomerSearchBundleDBAL/services.xml');
 
         if (is_file($file = __DIR__ . '/Components/DependencyInjection/services_local.xml')) {
             $loader->load($file);
@@ -631,13 +638,9 @@ class Kernel implements HttpKernelInterface
         $container->addCompilerPass(new AddConstraintValidatorsPass());
         $container->addCompilerPass(new SearchRepositoryCompilerPass());
         $container->addCompilerPass(new AddConsoleCommandPass());
-        $container->addCompilerPass(new AddCaptchaCompilerPass());
-        $container->addCompilerPass(new EmotionComponentHandlerCompilerPass());
         $container->addCompilerPass(new MediaAdapterCompilerPass());
         $container->addCompilerPass(new MediaOptimizerCompilerPass());
-        $container->addCompilerPass(new HandlerRegistryCompilerPass());
         $container->addCompilerPass(new SearchHandlerCompilerPass());
-        $container->addCompilerPass(new EmotionPresetCompilerPass());
 
         $this->loadPlugins($container);
     }

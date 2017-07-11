@@ -74,12 +74,12 @@ Ext.define('Shopware.apps.Snippet.view.main.TranslateWindow', {
 
         me.title = me.snippets.titleTranslateWindow;
 
-        me.translationForm = Ext.create('Shopware.apps.Snippet.view.main.TranslateForm', {
+        me.items = [{
+            xtype: 'snippet-main-translateForm',
             rootSnippet: me.rootSnippet,
             snippetStore: me.snippetStore,
             shopLocaleStore: me.shopLocaleStore
-        });
-        me.items = [me.translationForm];
+        }];
 
         me.callParent(arguments);
     }

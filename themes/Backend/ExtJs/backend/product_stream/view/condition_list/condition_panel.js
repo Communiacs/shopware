@@ -44,18 +44,10 @@ Ext.define('Shopware.apps.ProductStream.view.condition_list.ConditionPanel', {
 
         me.conditions = [];
         me.items = [];
-        me.conditionHandlers = me.sort(
-            me.createConditionHandlers()
-        );
+        me.conditionHandlers = me.createConditionHandlers();
         me.dockedItems = [me.createToolbar()];
 
         me.callParent(arguments);
-    },
-
-    sort: function(handlers) {
-        return handlers.sort(function(a, b) {
-            return a.getLabel().localeCompare(b.getLabel());
-        });
     },
 
     loadPreview: function(conditions) {
@@ -90,8 +82,9 @@ Ext.define('Shopware.apps.ProductStream.view.condition_list.ConditionPanel', {
         me.add(container);
     },
 
-    loadConditions: function(conditions) {
+    loadConditions: function(record) {
         var me = this;
+        var conditions = record.get('conditions');
 
         for (var key in conditions) {
             var condition = conditions[key];
@@ -105,6 +98,12 @@ Ext.define('Shopware.apps.ProductStream.view.condition_list.ConditionPanel', {
                 }
             });
         }
+
+        if (!record.get('id')) {
+            return;
+        }
+
+        me.loadPreview(conditions);
     },
 
     createConditionHandlers: function() {
@@ -122,11 +121,7 @@ Ext.define('Shopware.apps.ProductStream.view.condition_list.ConditionPanel', {
             Ext.create('Shopware.apps.ProductStream.view.condition_list.condition.ReleaseDate'),
             Ext.create('Shopware.apps.ProductStream.view.condition_list.condition.VoteAverage'),
             Ext.create('Shopware.apps.ProductStream.view.condition_list.condition.Sales'),
-            Ext.create('Shopware.apps.ProductStream.view.condition_list.condition.SearchTerm'),
-            Ext.create('Shopware.apps.ProductStream.view.condition_list.condition.Height'),
-            Ext.create('Shopware.apps.ProductStream.view.condition_list.condition.Width'),
-            Ext.create('Shopware.apps.ProductStream.view.condition_list.condition.Length'),
-            Ext.create('Shopware.apps.ProductStream.view.condition_list.condition.Weight')
+            Ext.create('Shopware.apps.ProductStream.view.condition_list.condition.SearchTerm')
         ];
     },
 
@@ -195,25 +190,11 @@ Ext.define('Shopware.apps.ProductStream.view.condition_list.ConditionPanel', {
         var me = this,
             items = [];
 
-        items.push(me.createAddButton());
-        items.push('->');
-        items.push(me.createPreviewButton());
-        return items;
-    },
-
-    createAddButton: function() {
-        var me = this;
-
-        me.addButton =Ext.create('Ext.button.Split', {
+        me.addButton = Ext.create('Ext.button.Split', {
             text: '{s name=add_condition}Add condition{/s}',
             iconCls: 'sprite-plus-circle-frame',
             menu: me.createMenu()
         });
-        return me.addButton;
-    },
-
-    createPreviewButton: function() {
-        var me = this;
 
         me.previewButton = Ext.create('Ext.button.Button', {
             text: '{s name=refresh_preview}Refresh preview{/s}',
@@ -222,7 +203,11 @@ Ext.define('Shopware.apps.ProductStream.view.condition_list.ConditionPanel', {
                 me.loadPreview();
             }
         });
-        return me.previewButton;
+
+        items.push(me.addButton);
+        items.push('->');
+        items.push(me.previewButton);
+        return items;
     },
 
     createMenu: function() {

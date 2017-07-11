@@ -24,11 +24,9 @@
 
 namespace Shopware\Commands;
 
-use League\Flysystem\FilesystemInterface;
-use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
  * Shopware ThumbnailCleanupCommand Class
@@ -43,23 +41,22 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class ThumbnailCleanupCommand extends ShopwareCommand
 {
     /**
-     * @var array
-     */
-    private $baseFiles = [];
-
-    /**
-     * @var array
-     */
-    private $thumbnailFiles = [];
-
-    /**
      * {@inheritdoc}
      */
     protected function configure()
     {
         $this->setName('sw:thumbnail:cleanup')
             ->setDescription('Deletes thumbnails for images whose original file has been deleted.')
-            ->setHelp('The <info>%command.name%</info> deletes unused thumbnails.');
+            ->addOption(
+                'albumid',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'ID of the album which contains the images'
+            )->setHelp(
+                <<<EOF
+                    The <info>%command.name%</info> deletes unused thumbnails.
+EOF
+            );
     }
 
     /**
@@ -67,153 +64,105 @@ class ThumbnailCleanupCommand extends ShopwareCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $io = new SymfonyStyle($input, $output);
+        $albumId = (int) $input->getOption('albumid');
 
-        $this->removeThumbnails($io);
-    }
+        $em = $this->getContainer()->get('models');
 
-    /**
-     * @param SymfonyStyle $io
-     */
-    private function removeThumbnails(SymfonyStyle $io)
-    {
-        $mediaService = $this->getContainer()->get('shopware_media.media_service');
-        $filesystem = $mediaService->getFilesystem();
+        $builder = $em->createQueryBuilder();
+        $builder->select(['album', 'settings', 'media'])
+            ->from('Shopware\Models\Media\Album', 'album')
+            ->leftJoin('album.settings', 'settings')
+            ->leftJoin('album.media', 'media');
 
-        $thumbnailFiles = $this->searchThumbnails($io, $filesystem);
-
-        if (count($thumbnailFiles) === 0) {
-            $io->success('No orphaned thumbnails found.');
-
-            return;
+        if (!empty($albumId)) {
+            $builder->where('album.id = :albumId')->setParameter('albumId', $albumId);
         }
 
-        // verbose information
-        if ($io->getVerbosity() === SymfonyStyle::VERBOSITY_VERBOSE) {
-            $io->caution('The following files will be deleted:');
-            $io->listing($thumbnailFiles);
-        }
+        $albumArray = $builder->getQuery()->getResult(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
+        $mediaService = Shopware()->Container()->get('shopware_media.media_service');
 
-        if (!$io->confirm(sprintf('Found %d orphaned thumbnails. Are you sure you want to delete the files? This step is irreversible.', count($thumbnailFiles)))) {
-            return;
-        }
+        foreach ($albumArray as $album) {
+            $output->writeln("Deleting unused Thumbnails for album {$album['name']} (ID: {$album['id']})");
 
-        $deletedThumbnails = $this->deleteThumbnails($io, $filesystem, $thumbnailFiles);
+            $sizes = $album['settings']['thumbnailSize'];
 
-        $io->success(sprintf('Removed %d/%d orphaned thumbnails.', $deletedThumbnails, count($thumbnailFiles)));
-    }
-
-    /**
-     * @param string              $directory
-     * @param FilesystemInterface $filesystem
-     * @param ProgressBar         $progressBar
-     */
-    private function processFilesIn($directory, FilesystemInterface $filesystem, ProgressBar $progressBar)
-    {
-        /** @var array $contents */
-        $contents = $filesystem->listContents($directory);
-
-        foreach ($contents as $item) {
-            if ($item['type'] === 'dir') {
-                $this->processFilesIn($item['path'], $filesystem, $progressBar);
+            if (empty($sizes)) {
+                continue;
             }
 
-            if ($item['type'] === 'file') {
-                if (strpos($item['basename'], '.') === 0) {
+            foreach ($album['media'] as $media) {
+                $path = Shopware()->DocPath() . $media['path'];
+                if ($mediaService->has($path)) {
                     continue;
                 }
 
-                $this->indexFile($item['path']);
-                $progressBar->advance();
+                $paths = $this->getMediaThumbnailPaths($media, explode(';', $sizes));
+
+                foreach ($paths as $path) {
+                    if ($mediaService->has($path)) {
+                        $mediaService->delete($path);
+                        if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
+                            $output->writeln("Deleting {$path}");
+                        }
+                    }
+                }
             }
         }
+
+        $output->writeln('Cleanup was finished successfully');
     }
 
     /**
-     * @param string $file
-     */
-    private function indexFile($file)
-    {
-        $baseName = pathinfo($file, PATHINFO_FILENAME);
-        $fileName = pathinfo($file, PATHINFO_BASENAME);
-
-        // check if the filename matches thumbnail syntax like "*_200x200" or "*_200x200@2x"
-        if (preg_match('/(_[0-9]+x[0-9]+(@2x)?)$/', $baseName)) {
-            // strip thumbnail info to get the base filename
-            $strippedName = preg_replace('/(_[0-9]+x[0-9]+(@2x)?)$/', '', $baseName);
-
-            if (array_key_exists($strippedName, $this->baseFiles)) {
-                return;
-            }
-
-            $this->thumbnailFiles[$strippedName][] = $file;
-
-            return;
-        }
-
-        $this->baseFiles[$baseName] = 1;
-
-        if (array_key_exists($baseName, $this->thumbnailFiles)) {
-            unset($this->thumbnailFiles[$baseName]);
-        }
-    }
-
-    /**
-     * @param SymfonyStyle        $io
-     * @param FilesystemInterface $filesystem
+     * Returns all thumbnails paths according to the given media object
+     *
+     * @param $media
+     * @param $sizes
      *
      * @return array
      */
-    private function searchThumbnails(SymfonyStyle $io, FilesystemInterface $filesystem)
+    private function getMediaThumbnailPaths($media, $sizes)
     {
-        // reset internal index
-        $this->baseFiles = [];
-        $this->thumbnailFiles = [];
-        $thumbnailFiles = [];
+        $sizes = array_merge($sizes, ['140x140']);
+        $sizes = array_unique($sizes);
 
-        $io->comment('Searching for all media files in your filesystem. This might take some time, depending on the number of media files you have.');
-        $io->newLine(2);
+        $thumbnails = [];
 
-        $progressBar = $io->createProgressBar();
-        $progressBar->setFormat(" Scanned: %current% files\n Elapsed: %elapsed:6s%");
-        $this->processFilesIn('media', $filesystem, $progressBar);
-        $progressBar->finish();
+        //iterate thumbnail sizes
+        foreach ($sizes as $size) {
+            if (strpos($size, 'x') === false) {
+                $size = $size . 'x' . $size;
+            }
 
-        if (!empty($this->thumbnailFiles)) {
-            $thumbnailFiles = array_merge(...array_values($this->thumbnailFiles));
+            $thumbnailDir = Shopware()->DocPath('media_' . strtolower($media['type'])) . 'thumbnail' . DIRECTORY_SEPARATOR;
+            $path = $thumbnailDir . $this->removeSpecialCharacters($media['name']) . '_' . $size;
+            if (DIRECTORY_SEPARATOR !== '/') {
+                $path = str_replace(DIRECTORY_SEPARATOR, '/', $path);
+            }
+
+            $thumbnails[] = $path . '.jpg';
+
+            if ($media['extension'] !== 'jpg') {
+                $thumbnails[] = $path . '.' . $media['extension'];
+            }
         }
 
-        $io->newLine(2);
-
-        return $thumbnailFiles;
+        return $thumbnails;
     }
 
     /**
-     * @param SymfonyStyle        $io
-     * @param FilesystemInterface $filesystem
-     * @param array               $thumbnailFiles
+     * Removes special characters from a filename
      *
-     * @return int
+     * @param $name
+     *
+     * @return string
      */
-    private function deleteThumbnails(SymfonyStyle $io, FilesystemInterface $filesystem, array $thumbnailFiles)
+    private function removeSpecialCharacters($name)
     {
-        $deleted = 0;
-        $progressBar = $io->createProgressBar(count($thumbnailFiles));
-        $progressBar->setFormat('verbose');
+        $name = iconv('utf-8', 'ascii//translit', $name);
+        $name = preg_replace('#[^A-z0-9\-_]#', '-', $name);
+        $name = preg_replace('#-{2,}#', '-', $name);
+        $name = trim($name, '-');
 
-        foreach ($thumbnailFiles as $mediaPath) {
-            if ($filesystem->has($mediaPath)) {
-                $filesystem->delete($mediaPath);
-                ++$deleted;
-            }
-
-            $progressBar->advance();
-        }
-
-        $progressBar->finish();
-
-        $io->newLine(2);
-
-        return $deleted;
+        return mb_substr($name, 0, 180);
     }
 }

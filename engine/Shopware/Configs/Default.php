@@ -40,7 +40,6 @@ return array_replace_recursive([
     'cdn' => [
         'backend' => 'local',
         'strategy' => 'md5',
-        'liveMigration' => false,
         'adapters' => [
             'local' => [
                 'type' => 'local',
@@ -172,7 +171,7 @@ return array_replace_recursive([
             'lifetime' => 3600,
             'cache_id_prefix' => md5($this->getCacheDir()),
         ],
-        'backend' => 'auto', // e.G auto, apcu, xcache, redis
+        'backend' => 'auto', // e.G auto, apcu, xcache
         'backendOptions' => [
             'hashed_directory_perm' => 0777 & ~umask(),
             'cache_file_perm' => 0666 & ~umask(),
@@ -190,7 +189,7 @@ return array_replace_recursive([
         'attributeDir' => $this->getCacheDir() . '/doctrine/attributes',
         'proxyDir' => $this->getCacheDir() . '/doctrine/proxies',
         'proxyNamespace' => $this->App() . '\Proxies',
-        'cacheProvider' => 'auto', // supports null, auto, Apcu, Array, Wincache, Xcache and redis
+        'cacheProvider' => 'auto', // supports null, auto, Apcu, Array, Wincache and Xcache
         'cacheNamespace' => null, // custom namespace for doctrine cache provider (optional; null = auto-generated namespace)
     ],
     'backendsession' => [
@@ -199,5 +198,9 @@ return array_replace_recursive([
         'cookie_httponly' => 1,
         'use_trans_sid' => 0,
         'locking' => false,
+    ],
+    'template_security' => [
+        'php_modifiers' => include __DIR__ . '/smarty_functions.php',
+        'php_functions' => include __DIR__ . '/smarty_functions.php',
     ],
 ], $customConfig);

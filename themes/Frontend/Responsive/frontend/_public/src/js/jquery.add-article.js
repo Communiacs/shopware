@@ -120,8 +120,12 @@
             ajaxData += '&isXHR=1';
 
             if (opts.showModal) {
+                $.overlay.open({
+                    'closeOnClick': false
+                });
+
                 $.loadingIndicator.open({
-                    'openOverlay': true
+                    'openOverlay': false
                 });
             }
 

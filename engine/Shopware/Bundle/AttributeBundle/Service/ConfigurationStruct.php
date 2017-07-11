@@ -52,9 +52,9 @@ class ConfigurationStruct implements \JsonSerializable
     private $supportText;
 
     /**
-     * @var int|null
+     * @var int
      */
-    private $position = null;
+    private $position = 0;
 
     /**
      * @var bool

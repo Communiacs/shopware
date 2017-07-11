@@ -68,8 +68,7 @@ Ext.define('Shopware.apps.PluginManager.view.list.Window', {
             me.createLicencePage(),
             me.createPremiumPluginsPage(),
             me.createExpiredPluginsPage(),
-            me.createConnectIntroductionPage(),
-            me.createImportExportTeaserPage()
+            me.createConnectIntroductionPage()
         ];
 
         me.centerPanel = Ext.create('Ext.container.Container', {
@@ -187,14 +186,6 @@ Ext.define('Shopware.apps.PluginManager.view.list.Window', {
         });
 
         return this.connectIntroductionPage;
-    },
-
-    createImportExportTeaserPage: function() {
-        this.importExportTeaserPage = Ext.create('Shopware.apps.PluginManager.view.list.ImportExportTeaserPage', {
-            cardIndex: 9
-        });
-
-        return this.importExportTeaserPage;
     }
 });
 //{/block}

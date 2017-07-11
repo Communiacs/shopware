@@ -299,9 +299,9 @@ class Shopware_Controllers_Backend_Newsletter extends Enlight_Controller_Action 
         $cronBootstrap = $this->getPluginBootstrap('Cron');
         if ($cronBootstrap && !$cronBootstrap->authorizeCronAction($this->Request())) {
             $this->Response()
-                ->clearHeaders()
-                ->setHttpResponseCode(403)
-                ->appendBody('Forbidden');
+                 ->clearHeaders()
+                 ->setHttpResponseCode(403)
+                 ->appendBody('Forbidden');
 
             return;
         }
@@ -554,15 +554,6 @@ class Shopware_Controllers_Backend_Newsletter extends Enlight_Controller_Action 
         $limit = !empty(Shopware()->Config()->MailCampaignsPerCall) ? (int) Shopware()->Config()->MailCampaignsPerCall : 1000;
         $limit = max(1, $limit);
 
-        $customerStreams = '1=2';
-        $ids = array_keys($mailing['groups'][2]);
-        if (!empty($ids)) {
-            $ids = array_map(function ($id) {
-                return (int) $id;
-            }, $ids);
-            $customerStreams = 'mapping.stream_id IN (' . implode(',', $ids) . ')';
-        }
-
         /**
          * Get mails belonging to selected customergroups of the selected subshop
          * -OR- belonging to the selected newsletter groups
@@ -574,15 +565,16 @@ class Shopware_Controllers_Backend_Newsletter extends Enlight_Controller_Action 
 
             LEFT JOIN s_user su
             ON sc.email=su.email
-            
-            LEFT JOIN s_customer_streams_mapping mapping
-              ON mapping.customer_id = su.id
 
             WHERE sc.lastmailing != ?
-            AND (
-              (su.language = ? AND ($customerGroups))
-              OR ($recipientGroups)
-              OR ($customerStreams)
+            AND
+            (
+                (
+                su.language = ?
+                AND ($customerGroups)
+                )
+            OR
+                ($recipientGroups)
             )
             GROUP BY sc.email
         ";
@@ -652,9 +644,8 @@ class Shopware_Controllers_Backend_Newsletter extends Enlight_Controller_Action 
             LEFT JOIN s_user u
             ON u.email=cm.email
             AND u.accountmode=0
-            LEFT JOIN s_user_addresses ub
-            ON u.default_billing_address_id=ub.id
-            AND u.id = ub.user_id
+            LEFT JOIN s_user_billingaddress ub
+            ON ub.userID=u.id
             WHERE cm.email=?
         ';
         $user = Shopware()->Db()->fetchRow($sql, [$email]);
@@ -670,9 +661,8 @@ class Shopware_Controllers_Backend_Newsletter extends Enlight_Controller_Action 
                 LEFT JOIN s_user u
                 ON u.email=cm.email
                 AND u.accountmode=0
-                LEFT JOIN s_user_addresses ub
-                ON u.default_billing_address_id=ub.id
-                AND u.id = ub.user_id
+                LEFT JOIN s_user_billingaddress ub
+                ON ub.userID=u.id
                 LIMIT 1
             ';
             $user = Shopware()->Db()->fetchRow($sql);

@@ -29,10 +29,8 @@ use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundle\Facet;
 use Shopware\Bundle\SearchBundle\FacetInterface;
 use Shopware\Bundle\SearchBundle\FacetResult\RangeFacetResult;
-use Shopware\Bundle\SearchBundle\FacetResultInterface;
-use Shopware\Bundle\SearchBundleDBAL\ConditionHandler\PriceConditionHandler;
-use Shopware\Bundle\SearchBundleDBAL\ListingPriceTable;
-use Shopware\Bundle\SearchBundleDBAL\PartialFacetHandlerInterface;
+use Shopware\Bundle\SearchBundleDBAL\FacetHandlerInterface;
+use Shopware\Bundle\SearchBundleDBAL\PriceHelperInterface;
 use Shopware\Bundle\SearchBundleDBAL\QueryBuilderFactoryInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 use Shopware\Components\QueryAliasMapper;
@@ -42,8 +40,13 @@ use Shopware\Components\QueryAliasMapper;
  *
  * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
-class PriceFacetHandler implements PartialFacetHandlerInterface
+class PriceFacetHandler implements FacetHandlerInterface
 {
+    /**
+     * @var PriceHelperInterface
+     */
+    private $priceHelper;
+
     /**
      * @var QueryBuilderFactoryInterface
      */
@@ -65,27 +68,20 @@ class PriceFacetHandler implements PartialFacetHandlerInterface
     private $maxFieldName;
 
     /**
-     * @var ListingPriceTable
-     */
-    private $listingPriceTable;
-
-    /**
-     * @param ListingPriceTable                    $listingPriceTable
+     * @param PriceHelperInterface                 $priceHelper
      * @param QueryBuilderFactoryInterface         $queryBuilderFactory
      * @param \Shopware_Components_Snippet_Manager $snippetManager
      * @param QueryAliasMapper                     $queryAliasMapper
-     *
-     * @internal param PriceHelperInterface $priceHelper
      */
     public function __construct(
-        ListingPriceTable $listingPriceTable,
+        PriceHelperInterface $priceHelper,
         QueryBuilderFactoryInterface $queryBuilderFactory,
         \Shopware_Components_Snippet_Manager $snippetManager,
         QueryAliasMapper $queryAliasMapper
     ) {
+        $this->priceHelper = $priceHelper;
         $this->queryBuilderFactory = $queryBuilderFactory;
         $this->snippetNamespace = $snippetManager->getNamespace('frontend/listing/facet_labels');
-        $this->listingPriceTable = $listingPriceTable;
 
         if (!$this->minFieldName = $queryAliasMapper->getShortAlias('priceMin')) {
             $this->minFieldName = 'priceMin';
@@ -105,33 +101,33 @@ class PriceFacetHandler implements PartialFacetHandlerInterface
     }
 
     /**
-     * @param FacetInterface       $facet
-     * @param Criteria             $reverted
-     * @param Criteria             $criteria
-     * @param ShopContextInterface $context
+     * @param FacetInterface|Facet\PriceFacet $facet
+     * @param Criteria                        $criteria
+     * @param ShopContextInterface            $context
      *
-     * @return FacetResultInterface
+     * @return RangeFacetResult
      */
-    public function generatePartialFacet(
+    public function generateFacet(
         FacetInterface $facet,
-        Criteria $reverted,
         Criteria $criteria,
         ShopContextInterface $context
     ) {
-        $query = $this->queryBuilderFactory->createQuery($reverted, $context);
+        $queryCriteria = clone $criteria;
+        $queryCriteria->resetConditions();
+        $queryCriteria->resetSorting();
+
+        $query = $this->queryBuilderFactory->createQuery(
+            $queryCriteria,
+            $context
+        );
+
         $query->resetQueryPart('orderBy');
         $query->resetQueryPart('groupBy');
 
-        if (!$query->hasState(PriceConditionHandler::LISTING_PRICE_JOINED)) {
-            $table = $this->listingPriceTable->get($context);
-            $query->innerJoin('product', '(' . $table->getSQL() . ')', 'listing_price', 'listing_price.articleID = product.id');
-            foreach ($table->getParameters() as $key => $value) {
-                $query->setParameter($key, $value);
-            }
-            $query->addState(PriceConditionHandler::LISTING_PRICE_JOINED);
-        }
+        $selection = $this->priceHelper->getSelection($context);
+        $this->priceHelper->joinPrices($query, $context);
 
-        $query->select('MIN(listing_price.cheapest_price)');
+        $query->select('MIN(' . $selection . ') as cheapest_price');
 
         /** @var $statement \Doctrine\DBAL\Driver\ResultStatement */
         $statement = $query->execute();
@@ -139,7 +135,7 @@ class PriceFacetHandler implements PartialFacetHandlerInterface
         $min = $statement->fetch(\PDO::FETCH_COLUMN);
 
         $query->groupBy('product.id')
-            ->orderBy('listing_price.cheapest_price', 'DESC')
+            ->orderBy('cheapest_price', 'DESC')
             ->setFirstResult(0)
             ->setMaxResults(1);
 
@@ -157,21 +153,10 @@ class PriceFacetHandler implements PartialFacetHandlerInterface
             $activeMax = $condition->getMaxPrice();
         }
 
-        if ($min == $max) {
-            return null;
-        }
-
-        /** @var Facet\PriceFacet $facet */
-        if (!empty($facet->getLabel())) {
-            $label = $facet->getLabel();
-        } else {
-            $label = $this->snippetNamespace->get($facet->getName(), 'Price');
-        }
-
         return new RangeFacetResult(
             $facet->getName(),
             $criteria->hasCondition($facet->getName()),
-            $label,
+            $this->snippetNamespace->get($facet->getName(), 'Price'),
             (float) $min,
             (float) $max,
             (float) $activeMin,
@@ -179,8 +164,6 @@ class PriceFacetHandler implements PartialFacetHandlerInterface
             $this->minFieldName,
             $this->maxFieldName,
             [],
-            null,
-            2,
             'frontend/listing/filter/facet-currency-range.tpl'
         );
     }

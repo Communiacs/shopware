@@ -43,8 +43,8 @@ Ext.define('Shopware.form.field.CustomerGrid', {
             me.createSortingColumn(),
             activeColumn,
             { dataIndex: 'number' },
-            { dataIndex: 'firstname', flex: 1 },
-            { dataIndex: 'lastname', flex: 1 },
+            { dataIndex: 'firstName', flex: 1 },
+            { dataIndex: 'lastName', flex: 1 },
             { dataIndex: 'customerGroup', flex: 1 },
             { dataIndex: 'company', flex: 1 },
             me.createActionColumn()

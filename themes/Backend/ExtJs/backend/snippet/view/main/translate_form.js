@@ -129,16 +129,11 @@ Ext.define('Shopware.apps.Snippet.view.main.TranslateForm', {
      * @return array
      */
     getButtons: function() {
-        var me = this;
-
         return [{
             cls: 'primary',
             text: '{s name=button_save_form}Save{/s}',
             action: 'save',
-            formBind: true,
-            handler: function() {
-                me.fireEvent('save')
-            }
+            formBind: true
         }];
     }
 });

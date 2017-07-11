@@ -33,10 +33,10 @@ use ONGR\ElasticsearchDSL\Search;
 use Shopware\Bundle\SearchBundle\Condition\SimilarProductCondition;
 use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundle\CriteriaPartInterface;
-use Shopware\Bundle\SearchBundleES\PartialConditionHandlerInterface;
+use Shopware\Bundle\SearchBundleES\HandlerInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
-class SimilarProductConditionHandler implements PartialConditionHandlerInterface
+class SimilarProductConditionHandler implements HandlerInterface
 {
     /**
      * @var Connection
@@ -64,7 +64,7 @@ class SimilarProductConditionHandler implements PartialConditionHandlerInterface
     /**
      * {@inheritdoc}
      */
-    public function handleFilter(
+    public function handle(
         CriteriaPartInterface $criteriaPart,
         Criteria $criteria,
         Search $search,
@@ -88,18 +88,6 @@ class SimilarProductConditionHandler implements PartialConditionHandlerInterface
 
         $search->addFilter($not);
         $search->addQuery($query);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function handlePostFilter(
-        CriteriaPartInterface $criteriaPart,
-        Criteria $criteria,
-        Search $search,
-        ShopContextInterface $context
-    ) {
-        $this->handleFilter($criteriaPart, $criteria, $search, $context);
     }
 
     /**

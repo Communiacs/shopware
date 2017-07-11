@@ -26,8 +26,6 @@
  * Shopware API
  * Zugriff auf XML-Dateien
  *
- * @deprecated since 5.3, to be removed in 5.4
- *
  * @author      Heiner Lohaus <hl@shopware2.de>
  */
 class Shopware_Components_Convert_Xml

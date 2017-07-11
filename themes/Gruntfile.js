@@ -5,21 +5,17 @@ module.exports = function (grunt) {
         lessTargetFile = {},
         jsFiles = [],
         jsTargetFile = {},
-        content = '';
+        content = '',
+        variables = {};
 
     lessTargetFile['../' + config.lessTarget] = '../web/cache/all.less';
 
-    config.js.forEach(function (item) {
+    config['js'].forEach(function (item) {
         jsFiles.push('../' + item);
     });
     jsTargetFile['../' + config.jsTarget] = jsFiles;
 
-    for (var key in config.config) {
-        content += '@' + key + ': ' + config.config[key] + ';';
-        content += '\n';
-    }
-
-    config.less.forEach(function (item) {
+    config['less'].forEach(function (item) {
         if (/(\.css)$/.test(item)) {
             // Entry is a css file and needs to be imported inline
             content += `@import (inline) "../${item}";`;
@@ -27,8 +23,11 @@ module.exports = function (grunt) {
             content += `@import "../${item}";`;
         }
     });
-
     grunt.file.write('../web/cache/all.less', content);
+
+    for (var key in config.config) {
+        variables[key] = config.config[key];
+    }
 
     grunt.initConfig({
         uglify: {
@@ -53,12 +52,14 @@ module.exports = function (grunt) {
             production: {
                 options: {
                     compress: true,
+                    modifyVars: variables,
                     relativeUrls: true
                 },
                 files: lessTargetFile
             },
             development: {
                 options: {
+                    modifyVars: variables,
                     dumpLineNumbers: 'all',
                     relativeUrls: true,
                     sourceMap: true,
@@ -78,7 +79,7 @@ module.exports = function (grunt) {
                     '../custom/plugins/**/*.less',
                     '../custom/plugins/**/*.css'
                 ],
-                tasks: ['less:development'],
+                tasks: ['less:development', 'eslint'],
                 options: {
                     spawn: false
                 }
@@ -98,16 +99,8 @@ module.exports = function (grunt) {
         eslint: {
             src: [
                 'Gruntfile.js',
-                '../themes/Frontend/**/_public/src/js/*.js',
-                '../engine/Shopware/Plugins/**/frontend/**/src/js/**/*.js',
-                '../custom/plugins/**/frontend/**/src/js/**/*.js'
-            ],
-            options: {
-                configFile: '.eslintrc.js'
-            }
-        },
-        fileExists: {
-            js: jsFiles
+                'Frontend/Responsive/frontend/_public/src/js/*.js'
+            ]
         }
     });
 
@@ -115,9 +108,8 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-chokidar');
     grunt.loadNpmTasks('gruntify-eslint');
-    grunt.loadNpmTasks('grunt-file-exists');
 
     grunt.renameTask('chokidar', 'watch');
     grunt.registerTask('production', [ 'eslint', 'less:production', 'uglify:production' ]);
-    grunt.registerTask('default', [ 'fileExists:js', 'less:development', 'uglify:development', 'watch' ]);
+    grunt.registerTask('default', [ 'less:development', 'uglify:development', 'watch' ]);
 };

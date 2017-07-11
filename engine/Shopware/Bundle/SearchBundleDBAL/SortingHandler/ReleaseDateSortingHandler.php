@@ -55,6 +55,7 @@ class ReleaseDateSortingHandler implements SortingHandlerInterface
     ) {
         /* @var ReleaseDateSorting $sorting */
         $query->addOrderBy('product.datum', $sorting->getDirection())
-            ->addOrderBy('product.changetime', $sorting->getDirection());
+            ->addOrderBy('product.changetime', $sorting->getDirection())
+            ->addOrderBy('product.id', $sorting->getDirection());
     }
 }

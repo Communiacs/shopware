@@ -310,12 +310,6 @@ class Service
                 $data['value'] = $this->mediaService->normalize($data['value']);
             }
 
-            // Don't save default values
-            if ($element->getDefaultValue() === $data['value']) {
-                $element->getValues()->removeElement($value);
-                continue;
-            }
-
             $value->setShop($shop);
             $value->setElement($element);
             $value->setValue($data['value']);

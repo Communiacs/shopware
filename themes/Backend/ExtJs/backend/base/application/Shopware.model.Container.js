@@ -810,13 +810,7 @@ Ext.define('Shopware.model.Container', {
             return fieldSet;
         }
 
-
-        var splitFields = me.getConfig('splitFields');
-        if (customConfig.hasOwnProperty('splitFields')) {
-            splitFields = customConfig.splitFields;
-        }
-
-        if (splitFields) {
+        if (me.getConfig('splitFields')) {
             //create a column container to display the columns in a two column layout
             container = Ext.create('Ext.container.Container', {
                 columnWidth: 0.5,

@@ -5,12 +5,6 @@
 {/block}
 
 {block name='frontend_index_content_left'}
-
-    {block name='frontend_index_controller_url'}
-        {* Controller url for the found products counter *}
-        {$countCtrlUrl = "{url module="widgets" controller="listing" action="listingCount" params=$ajaxCountUrlParams fullPath}"}
-    {/block}
-
     {include file='frontend/listing/sidebar.tpl'}
 {/block}
 
@@ -42,19 +36,17 @@
         {* Define all necessary template variables for the listing *}
         {block name="frontend_listing_index_layout_variables"}
 
-            {$emotionViewports = [0 => 'xl', 1 => 'l', 2 => 'm', 3 => 's', 4 => 'xs']}
-
             {* Count of available product pages *}
-            {$pages = 1}
+            {$pages = ceil($sNumberArticles / $criteria->getLimit())}
 
-            {if $criteria}
-                {$pages = ceil($sNumberArticles / $criteria->getLimit())}
-            {/if}
+            {* Controller url for the found products counter *}
+            {$countCtrlUrl = "{url module="widgets" controller="listing" action="listingCount" params=$ajaxCountUrlParams fullPath}"}
 
             {* Layout for the product boxes *}
             {$productBoxLayout = 'basic'}
 
-            {if $sCategoryContent.productBoxLayout !== null && $sCategoryContent.productBoxLayout !== 'extend'}
+            {if $sCategoryContent.productBoxLayout !== null &&
+                $sCategoryContent.productBoxLayout !== 'extend'}
                 {$productBoxLayout = $sCategoryContent.productBoxLayout}
             {/if}
         {/block}

@@ -115,7 +115,6 @@ class Detail extends ModelEntity
      * @ORM\OrderBy({"position" = "ASC"})
      */
     protected $images;
-
     /**
      * @var int
      *
@@ -179,7 +178,7 @@ class Detail extends ModelEntity
     /**
      * @var int
      *
-     * @ORM\Column(name="instock", type="integer", nullable=false)
+     * @ORM\Column(name="instock", type="integer", nullable=true)
      */
     private $inStock = 0;
 
@@ -445,7 +444,7 @@ class Detail extends ModelEntity
      */
     public function setInStock($inStock)
     {
-        $this->inStock = (int) $inStock;
+        $this->inStock = $inStock;
 
         return $this;
     }

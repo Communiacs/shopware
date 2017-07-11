@@ -30,10 +30,10 @@ use ONGR\ElasticsearchDSL\Search;
 use Shopware\Bundle\SearchBundle\Condition\CustomerGroupCondition;
 use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundle\CriteriaPartInterface;
-use Shopware\Bundle\SearchBundleES\PartialConditionHandlerInterface;
+use Shopware\Bundle\SearchBundleES\HandlerInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
-class CustomerGroupConditionHandler implements PartialConditionHandlerInterface
+class CustomerGroupConditionHandler implements HandlerInterface
 {
     /**
      * {@inheritdoc}
@@ -46,7 +46,7 @@ class CustomerGroupConditionHandler implements PartialConditionHandlerInterface
     /**
      * {@inheritdoc}
      */
-    public function handleFilter(
+    public function handle(
         CriteriaPartInterface $criteriaPart,
         Criteria $criteria,
         Search $search,
@@ -58,24 +58,11 @@ class CustomerGroupConditionHandler implements PartialConditionHandlerInterface
             new TermsQuery('blockedCustomerGroupIds', $criteriaPart->getCustomerGroupIds()),
             BoolQuery::MUST_NOT
         );
-        $search->addFilter($filter);
-    }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function handlePostFilter(
-        CriteriaPartInterface $criteriaPart,
-        Criteria $criteria,
-        Search $search,
-        ShopContextInterface $context
-    ) {
-        /** @var CustomerGroupCondition $criteriaPart */
-        $filter = new BoolQuery();
-        $filter->add(
-            new TermsQuery('blockedCustomerGroupIds', $criteriaPart->getCustomerGroupIds()),
-            BoolQuery::MUST_NOT
-        );
-        $search->addPostFilter($filter);
+        if ($criteria->hasBaseCondition($criteriaPart->getName())) {
+            $search->addFilter($filter);
+        } else {
+            $search->addPostFilter($filter);
+        }
     }
 }

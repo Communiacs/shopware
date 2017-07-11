@@ -41,63 +41,47 @@ class ProductAttributeFacet implements FacetInterface
     /**
      * @var string
      */
-    protected $field;
+    private $field;
 
     /**
      * @var string
      */
-    protected $mode;
+    private $mode;
 
     /**
      * @var string
      */
-    protected $formFieldName;
+    private $formFieldName;
 
     /**
      * @var string
      */
-    protected $label;
+    private $label;
 
     /**
      * @var string|null
      */
-    protected $template;
+    private $template = null;
 
     /**
-     * @var string
-     */
-    protected $suffix;
-
-    /**
-     * @var int
-     */
-    protected $digits;
-
-    /**
-     * @param string $field
-     * @param string $mode
-     * @param $formFieldName
-     * @param string      $label
-     * @param string|null $template
-     * @param string      $suffix
-     * @param int         $digits
+     * @param string        $field
+     * @param string        $mode
+     * @param string string $formFieldName
+     * @param string        $label
+     * @param string|null   $template
      */
     public function __construct(
         $field,
-        $mode,
+        $mode = self::MODE_VALUE_LIST_RESULT,
         $formFieldName,
         $label,
-        $template = null,
-        $suffix = '',
-        $digits = 2
+        $template = null
     ) {
         $this->field = $field;
         $this->mode = $mode;
         $this->formFieldName = $formFieldName;
         $this->label = $label;
         $this->template = $template;
-        $this->suffix = $suffix;
-        $this->digits = $digits;
     }
 
     /**
@@ -146,21 +130,5 @@ class ProductAttributeFacet implements FacetInterface
     public function getTemplate()
     {
         return $this->template;
-    }
-
-    /**
-     * @return int
-     */
-    public function getDigits()
-    {
-        return $this->digits;
-    }
-
-    /**
-     * @return string
-     */
-    public function getSuffix()
-    {
-        return $this->suffix;
     }
 }

@@ -24,6 +24,8 @@
 
 namespace ShopwarePlugin\PaymentMethods\Components;
 
+use Doctrine\ORM\AbstractQuery;
+
 /**
  * Class GenericPaymentMethod
  * Used for all payment methods that require no specific logic
@@ -68,19 +70,19 @@ class GenericPaymentMethod extends BasePaymentMethod
             ->getQuery()
             ->getSingleScalarResult();
 
-        $addressData = Shopware()->Models()->getRepository('Shopware\Models\Customer\Customer')
-            ->find($userId)->getDefaultBillingAddress();
+        $addressData = Shopware()->Models()->getRepository('Shopware\Models\Customer\Billing')
+            ->getUserBillingQuery($userId)->getOneOrNullResult(AbstractQuery::HYDRATE_ARRAY);
 
         $date = new \DateTime();
         $data = [
             'payment_mean_id' => $paymentId,
             'order_id' => $orderId,
             'user_id' => $userId,
-            'firstname' => $addressData->getFirstname(),
-            'lastname' => $addressData->getLastname(),
-            'address' => $addressData->getStreet(),
-            'zipcode' => $addressData->getZipcode(),
-            'city' => $addressData->getCity(),
+            'firstname' => $addressData['firstName'],
+            'lastname' => $addressData['lastName'],
+            'address' => $addressData['street'],
+            'zipcode' => $addressData['zipCode'],
+            'city' => $addressData['city'],
             'amount' => $orderAmount,
             'created_at' => $date->format('Y-m-d'),
         ];

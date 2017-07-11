@@ -250,10 +250,7 @@
                     {if $offerPosition.trackingcode}
                         <p>
                             {if $offerPosition.dispatch.status_link}
-                                <a href="{$offerPosition.dispatch.status_link}"
-                                   title="{$offerPosition.dispatch.name}"
-                                   onclick="return !window.open(this.href, 'popup', 'width=500,height=600,left=20,top=20');"
-                                   target="_blank">{$offerPosition.trackingcode}</a>
+                                {eval var=$offerPosition.dispatch.status_link}
                             {else}
                                 {$offerPosition.trackingcode}
                             {/if}

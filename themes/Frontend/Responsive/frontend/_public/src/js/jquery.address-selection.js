@@ -122,7 +122,8 @@
 
             // reset modal
             $.modal.close();
-            $.loadingIndicator.open();
+            $.overlay.open({ closeOnClick: false });
+            $.loadingIndicator.open({ openOverlay: false });
 
             $.publish('plugin/swAddressSelection/onBeforeAddressFetch', [ me ]);
 

@@ -164,10 +164,11 @@ class sRewriteTable
      * Replace special chars with a URL compliant representation
      *
      * @param string $path
+     * @param bool   $remove_ds @deprecated since 5.2.4, to be removed in 5.3.
      *
      * @return string
      */
-    public function sCleanupPath($path)
+    public function sCleanupPath($path, $remove_ds = true)
     {
         $parts = explode('/', $path);
         $parts = array_map(function ($path) {

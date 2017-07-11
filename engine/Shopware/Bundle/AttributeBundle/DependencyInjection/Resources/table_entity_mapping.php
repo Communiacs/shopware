@@ -372,12 +372,4 @@ return [
             's_user_billingaddress_attributes', 's_user_shippingaddress_attributes', 's_order_billingaddress_attributes', 's_order_shippingaddress_attributes',
         ],
     ],
-    's_customer_streams_attributes' => [
-        'readOnly' => false,
-        'model' => 'Shopware\Models\CustomerStream\CustomerStream',
-        'identifiers' => ['id', 'streamid'],
-        'foreignKey' => 'streamid',
-        'coreAttributes' => [],
-        'dependingTables' => [],
-    ],
 ];

@@ -11,14 +11,16 @@
 
 namespace ONGR\ElasticsearchDSL\Aggregation;
 
-use ONGR\ElasticsearchDSL\Aggregation\Metric\ValueCountAggregation as Base;
-
 /**
  * Class representing Value Count Aggregation.
- *
- * @deprecated Aggregations was moved to it's type namespace. Add `Metric` or `Bucketing` after `Aggregation`.
- *     This class will be removed in 3.0.
  */
-class ValueCountAggregation extends Base
+class ValueCountAggregation extends StatsAggregation
 {
+    /**
+     * {@inheritdoc}
+     */
+    public function getType()
+    {
+        return 'value_count';
+    }
 }

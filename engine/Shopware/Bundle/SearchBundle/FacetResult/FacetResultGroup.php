@@ -25,7 +25,6 @@
 namespace Shopware\Bundle\SearchBundle\FacetResult;
 
 use Shopware\Bundle\SearchBundle\FacetResultInterface;
-use Shopware\Bundle\SearchBundle\TemplateSwitchable;
 use Shopware\Bundle\StoreFrontBundle\Struct\Attribute;
 use Shopware\Bundle\StoreFrontBundle\Struct\Extendable;
 
@@ -34,27 +33,27 @@ use Shopware\Bundle\StoreFrontBundle\Struct\Extendable;
  *
  * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
-class FacetResultGroup extends Extendable implements FacetResultInterface, TemplateSwitchable
+class FacetResultGroup extends Extendable implements FacetResultInterface
 {
     /**
      * @var FacetResultInterface[]
      */
-    protected $facetResults;
+    private $facetResults;
 
     /**
      * @var string
      */
-    protected $facetName;
+    private $facetName;
 
     /**
      * @var string
      */
-    protected $label;
+    private $label;
 
     /**
      * @var string|null
      */
-    protected $template;
+    private $template = null;
 
     /**
      * @param FacetResultInterface[] $facetResults
@@ -123,13 +122,5 @@ class FacetResultGroup extends Extendable implements FacetResultInterface, Templ
     public function setFacetResults(array $facetResults)
     {
         $this->facetResults = $facetResults;
-    }
-
-    /**
-     * @param null|string $template
-     */
-    public function setTemplate($template)
-    {
-        $this->template = $template;
     }
 }

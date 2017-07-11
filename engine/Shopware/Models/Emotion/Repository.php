@@ -182,9 +182,6 @@ class Repository extends ModelRepository
             );
         }
 
-        // skip preview entries
-        $builder->andWhere('emotions.preview_id IS NULL');
-
         return $builder;
     }
 
@@ -373,8 +370,6 @@ class Repository extends ModelRepository
     }
 
     /**
-     * @deprecated since 5.3, to be removed with 5.4, use \Shopware\Bundle\EmotionBundle\Service\EmotionService instead
-     *
      * @param int $categoryId
      *
      * @return \Doctrine\ORM\Query
@@ -387,8 +382,6 @@ class Repository extends ModelRepository
     }
 
     /**
-     * @deprecated since 5.3, to be removed with 5.4, use \Shopware\Bundle\EmotionBundle\Service\EmotionService instead
-     *
      * @param int $categoryId
      *
      * @return \Doctrine\ORM\QueryBuilder

@@ -1,11 +1,7 @@
 {* Per page filter which will be included in the "listing/listing_actions.tpl" *}
 {namespace name="frontend/listing/listing_actions"}
 
-{if $limit === null && $criteria}
-    {$limit = $criteria->getLimit()}
-{/if}
-
-{if $limit && $pageSizes}
+{if $criteria && $criteria->getLimit() && $pageSizes}
     <form class="action--per-page action--content block" method="get" data-action-form="true">
 
         {* Necessary to reset the page to the first one *}
@@ -18,21 +14,12 @@
 
         {* Per page field *}
         {block name='frontend_listing_actions_items_per_page_field'}
-            {$listingMode = {config name=listingMode}}
-
-            <div class="per-page--select select-field">
-                <select id="{$shortParameters.sPerPage}"
-                        name="{$shortParameters.sPerPage}"
-                        class="per-page--field action--field"
-                        data-auto-submit="true"
-                        {if $listingMode != 'full_page_reload'}data-loadingindicator="false"{/if}>
-
-                    {foreach $pageSizes as $perPage}
-                        <option value="{$perPage}" {if $perPage == $limit}selected="selected"{/if}>{$perPage}</option>
-                    {/foreach}
-                    {block name='frontend_listing_actions_per_page_values'}{/block}
-                </select>
-            </div>
+            <select id="{$shortParameters.sPerPage}" name="{$shortParameters.sPerPage}" class="per-page--field action--field" data-auto-submit="true" data-class="per-page--select">
+                {foreach $pageSizes as $perPage}
+                    <option value="{$perPage}" {if $perPage == $criteria->getLimit()}selected="selected"{/if}>{$perPage}</option>
+                {/foreach}
+                {block name='frontend_listing_actions_per_page_values'}{/block}
+            </select>
         {/block}
     </form>
 {/if}

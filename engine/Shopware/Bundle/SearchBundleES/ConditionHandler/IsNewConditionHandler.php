@@ -29,10 +29,10 @@ use ONGR\ElasticsearchDSL\Search;
 use Shopware\Bundle\SearchBundle\Condition\IsNewCondition;
 use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundle\CriteriaPartInterface;
-use Shopware\Bundle\SearchBundleES\PartialConditionHandlerInterface;
+use Shopware\Bundle\SearchBundleES\HandlerInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
-class IsNewConditionHandler implements PartialConditionHandlerInterface
+class IsNewConditionHandler implements HandlerInterface
 {
     /**
      * @var \Shopware_Components_Config
@@ -58,42 +58,26 @@ class IsNewConditionHandler implements PartialConditionHandlerInterface
     /**
      * {@inheritdoc}
      */
-    public function handleFilter(
+    public function handle(
         CriteriaPartInterface $criteriaPart,
         Criteria $criteria,
         Search $search,
         ShopContextInterface $context
     ) {
-        $search->addFilter(
-            $this->createQuery()
-        );
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function handlePostFilter(
-        CriteriaPartInterface $criteriaPart,
-        Criteria $criteria,
-        Search $search,
-        ShopContextInterface $context
-    ) {
-        $search->addPostFilter(
-            $this->createQuery()
-        );
-    }
-
-    /**
-     * @return RangeQuery
-     */
-    private function createQuery()
-    {
         $dayLimit = (int) $this->config->get('markAsNew');
         $timestamp = strtotime('-' . $dayLimit . ' days');
 
-        return new RangeQuery('formattedCreatedAt', [
+        $range = [
             'gte' => date('Y-m-d', $timestamp),
             'lte' => date('Y-m-d'),
-        ]);
+        ];
+
+        $filter = new RangeQuery('formattedCreatedAt', $range);
+
+        if ($criteria->hasBaseCondition($criteriaPart->getName())) {
+            $search->addFilter($filter);
+        } else {
+            $search->addPostFilter($filter);
+        }
     }
 }

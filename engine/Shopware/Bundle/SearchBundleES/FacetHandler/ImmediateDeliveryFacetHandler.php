@@ -123,15 +123,9 @@ class ImmediateDeliveryFacetHandler implements HandlerInterface, ResultHydratorI
      */
     private function createFacet(Criteria $criteria)
     {
-        /** @var ImmediateDeliveryFacet $facet */
-        $facet = $criteria->getFacet('immediate_delivery');
-        if ($facet && !empty($facet->getLabel())) {
-            $label = $facet->getLabel();
-        } else {
-            $label = $this->snippetManager
-                ->getNamespace('frontend/listing/facet_labels')
-                ->get('immediate_delivery', 'Immediate delivery');
-        }
+        $label = $this->snippetManager
+            ->getNamespace('frontend/listing/facet_labels')
+            ->get('immediate_delivery', 'Immediate delivery');
 
         if (!$fieldName = $this->queryAliasMapper->getShortAlias('immediateDelivery')) {
             $fieldName = 'immediateDelivery';

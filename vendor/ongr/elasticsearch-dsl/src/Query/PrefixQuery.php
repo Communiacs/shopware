@@ -11,13 +11,61 @@
 
 namespace ONGR\ElasticsearchDSL\Query;
 
+use ONGR\ElasticsearchDSL\BuilderInterface;
+use ONGR\ElasticsearchDSL\ParametersTrait;
+
 /**
  * Represents Elasticsearch "prefix" query.
  *
  * @link https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-prefix-query.html
- *
- * @deprecated Use the extended class instead. This class is left only for BC compatibility.
  */
-class PrefixQuery extends \ONGR\ElasticsearchDSL\Query\TermLevel\PrefixQuery
+class PrefixQuery implements BuilderInterface
 {
+    use ParametersTrait;
+
+    /**
+     * @var string
+     */
+    protected $field;
+
+    /**
+     * @var string
+     */
+    protected $value;
+
+    /**
+     * @param string $field      Field name.
+     * @param string $value      Value.
+     * @param array  $parameters Optional parameters.
+     */
+    public function __construct($field, $value, array $parameters = [])
+    {
+        $this->field = $field;
+        $this->value = $value;
+        $this->setParameters($parameters);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getType()
+    {
+        return 'prefix';
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function toArray()
+    {
+        $query = [
+            'value' => $this->value,
+        ];
+
+        $output = [
+            $this->field => $this->processArray($query),
+        ];
+
+        return [$this->getType() => $output];
+    }
 }

@@ -57,7 +57,7 @@ class GenericReader implements ReaderInterface
     }
 
     /**
-     * @param int[]|string[] $identifiers
+     * @param \int[]|\string[] $identifiers
      *
      * @return array[]
      */
@@ -68,24 +68,11 @@ class GenericReader implements ReaderInterface
         $query->setParameter('ids', $identifiers, Connection::PARAM_STR_ARRAY);
         $data = $query->getQuery()->getArrayResult();
         $result = [];
-
-        $identifiers = array_map('strtolower', $identifiers);
-        $data = array_change_key_case($data, CASE_LOWER);
-        $identifierField = array_pop(explode('.', $this->getIdentifierField()));
-
         foreach ($identifiers as $id) {
             if (!isset($data[$id])) {
                 continue;
             }
-
-            $originalId = $id;
-            $row = $data[$id];
-
-            if (array_key_exists($identifierField, $row)) {
-                $originalId = $row[$identifierField];
-            }
-
-            $result[$originalId] = $row;
+            $result[$id] = $data[$id];
         }
 
         return $result;

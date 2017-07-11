@@ -332,7 +332,7 @@ Ext.define('Shopware.apps.Emotion.view.detail.Designer', {
             '{literal}',
 
                 '<div class="x-designer-actions-toolbar">',
-                    '<button data-qtip="{[this.getPreviewBtnTooltip()]}" class="{[this.getPreviewBtnCls()]}">',
+                    '<button class="{[this.getPreviewBtnCls()]}">',
                         '<span class="preview-btn-toggle"></span>' + me.snippets.preview + '',
                     '</button>',
 
@@ -368,23 +368,11 @@ Ext.define('Shopware.apps.Emotion.view.detail.Designer', {
                 '</div>',
             '{/literal}',
             {
-                getPreviewBtnTooltip: function() {
-                    if (me.emotion.get('id')) {
-                        return '';
-                    }
-
-                    return '{s name="preview/must_exists"}{/s}';
-                },
-
                 getPreviewBtnCls: function() {
                     var cls = 'x-designer-preview-btn';
 
                     if (me.activePreview) {
                         cls += ' is--active'
-                    }
-
-                    if (!me.emotion.get('id')) {
-                        cls += ' is--disabled';
                     }
 
                     return cls;

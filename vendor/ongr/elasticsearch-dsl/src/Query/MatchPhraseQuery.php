@@ -16,10 +16,14 @@ namespace ONGR\ElasticsearchDSL\Query;
  *
  * @author Ron Rademaker
  * @link https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-match-query.html
- *
- * @deprecated Use the extended class instead. This class is left only for BC compatibility.
- *
  */
-class MatchPhraseQuery extends \ONGR\ElasticsearchDSL\Query\FullText\MatchPhraseQuery
+class MatchPhraseQuery extends MatchQuery
 {
+    /**
+     * {@inheritdoc}
+     */
+    public function getType()
+    {
+        return 'match_phrase';
+    }
 }

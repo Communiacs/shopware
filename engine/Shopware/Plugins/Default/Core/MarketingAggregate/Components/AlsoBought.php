@@ -124,7 +124,7 @@ class Shopware_Components_AlsoBought extends Enlight_Class
             $sqlCombinations[] = '(' . (int) $combination['article_id'] . ', ' . (int) $combination['related_article_id'] . ', 1)';
         }
 
-        $sql .= implode(',', $sqlCombinations);
+        $sql .= join(',', $sqlCombinations);
 
         $sql .= ' ON DUPLICATE KEY UPDATE sales = sales + 1;';
 

@@ -61,10 +61,7 @@ class Shopware_Controllers_Frontend_Address extends Enlight_Controller_Action
         $this->View()->assign('sUserLoggedIn', $this->admin->sCheckUser());
 
         if (!$this->View()->getAssign('sUserLoggedIn')) {
-            $this->forward('index', 'register', 'frontend', [
-                'sTarget' => $this->Request()->getControllerName(),
-                'sTargetAction' => $this->Request()->getActionName(),
-            ]);
+            $this->forward('index', 'register');
 
             return;
         }

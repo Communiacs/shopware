@@ -24,7 +24,7 @@
 
 namespace Shopware\Components\Routing;
 
-use Enlight_Controller_Request_Request as EnlightRequest;
+use Enlight_Controller_Request_RequestHttp as EnlightRequest;
 use Shopware\Models\Shop\Shop as ShopwareShop;
 use Shopware_Components_Config as ShopwareConfig;
 
@@ -33,7 +33,7 @@ use Shopware_Components_Config as ShopwareConfig;
  *
  * @see http://php.net/manual/en/reflectionclass.iscloneable.php
  * @see http://api.symfony.com/2.0/Symfony/Component/Routing/RequestContext.html
- * @see \Enlight_Controller_Request_Request
+ * @see \Zend_Controller_Request_Abstract
  *
  * @category  Shopware
  *
@@ -53,7 +53,7 @@ class Context implements \JsonSerializable
     protected $baseFile = 'shopware.php';
 
     /**
-     * @see \Enlight_Controller_Request_Request::getHttpHost
+     * @see \Zend_Controller_Request_Http::getHttpHost
      *
      * @var string
      */
@@ -107,7 +107,7 @@ class Context implements \JsonSerializable
     /**
      * Module keys for retrieving module from params
      *
-     * @see \Enlight_Controller_Request_Request::$_moduleKey
+     * @see \Zend_Controller_Request_Abstract::$_moduleKey
      *
      * @var string
      */

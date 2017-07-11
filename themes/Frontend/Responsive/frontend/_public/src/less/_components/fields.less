@@ -101,130 +101,107 @@ label.has--error {
     background: @input-error-bg;
 }
 /*
-Selectfield
+Selectbox
 ==========================================
-Creates a styled combobox selection for the basic select element.
+######Select-element
 
+Creates a styled dropdown menu as a replacement for the basic select element.
+
+The plugin `jquery.selectbox-replacement.js` automaticly changes every `select` element to the slim dropdown selectbox of Shopware.
 ```
-<div class="select-field">
-    <select>
-        <option selected="selected" disabled="disabled" value="">Disabled Option</option>
-        <option>Option 1</option>
-        <option>Option 2</option>
-    </select>
-</div>
+<select>
+    <option selected="selected" disabled="disabled" value="">Disabled Option</option>
+    <option>Option 1</option>
+    <option>Option 2</option>
+</select>
 ```
 */
-.select-field,
 .js--fancy-select {
-    .unitize(max-width, 290);
-    .unitize-height(42);
-    width: 100%;
+    .border-radius();
+    .box-sizing();
+    .unitize-width(290);
+    .unitize(line-height, 40);
+    .white-gradient();
+    .clearfix();
     display: inline-block;
     position: relative;
+    border: 1px solid @btn-default-border-color;
     overflow: hidden;
+    cursor: pointer;
+    text-align: left;
 
     &:hover {
         color: @brand-primary;
+        border-color: @brand-primary;
+        background: #fff;
+    }
+
+    &.js--is--focused {
+        color: @brand-primary;
+        border-color: @brand-primary;
     }
 
     select {
         .appearance(none);
-        .unitize-padding(0, 40, 0, 10);
-        .unitize(line-height, 40);
-        .border-radius();
-        .white-gradient();
+        .opacity(0);
         height: 100%;
+        position: absolute;
         width: 100%;
         display: block;
         cursor: pointer;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        text-align: left;
-        border: 1px solid @btn-default-border-color;
+        z-index: @zindex-fancy-select;
 
         option {
-            .unitize-padding(4, 8);
             color: @text-color-dark;
-            background: #fff;
         }
 
-        &::-ms-expand {
-            display: none;
-        }
-
-        &:hover {
-            color: @brand-primary;
-            border-color: @brand-primary;
-            background: #fff;
-        }
-
+        // Removes the blue glow around the select field
+        // see: http://www.faridesign.net/2012/02/remove-border-around-input-chrome-safari/
         &:focus {
             outline: none;
-            color: @brand-primary;
-            border-color: @brand-primary;
-        }
-
-        &:focus::-ms-value {
-            color: @brand-primary;
-            background: none;
-        }
-
-        &:disabled {
-            .opacity(.5);
-            cursor: not-allowed;
-        }
-
-        &.has--error {
-            color: @input-error-color;
-            border-color: @input-error-border;
-            background: @input-error-bg;
         }
     }
 
-    &:after {
+    .js--fancy-select-text {
+        .unitize-padding(0, 40, 0, 10);
+
+        // CSS truncating
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .js--fancy-select-trigger {
         .unitize-width(30);
-        .unitize-height(40);
-        .unitize(top, 1);
-        .user-select(none);
-        line-height: 40px;
-        max-height: 100%;
-        display: block;
-        content: @sw-icon-arrow-down;
         position: absolute;
         right: 0;
-        font-size: 5px;
+        top: 0;
         border-left: 1px solid @border-color;
         text-align: center;
-        font-family: 'shopware';
-        pointer-events: none;
-
-        &:hover {
-            color: @brand-primary;
-        }
+        font-weight: bold;
     }
 
     // State disabled
     &.is--disabled {
-        select,
-        &:after {
-            .opacity(.5);
+        .opacity(.5);
+
+        select {
             cursor: not-allowed;
         }
     }
 
     // Error state
     &.has--error {
-        select {
-            color: @input-error-color;
-            border-color: @input-error-border;
-            background: @input-error-bg;
+        color: @input-error-color;
+        border-color: @input-error-border;
+        background: @input-error-bg;
+
+        .js--fancy-select-trigger {
+            border-color: @input-error-color;
         }
 
-        &:after {
-            color: @input-error-color;
-            border-color: @input-error-border;
+        .js--fancy-select-text {
+            border-color: lighten(@input-error-color, 40%);
         }
     }
 }

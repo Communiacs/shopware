@@ -79,10 +79,7 @@ Ext.define('Shopware.apps.Order.controller.Filter', {
         if (store.filters.containsKey('free')) {
             store.filters.removeAtKey('free');
         }
-
-        if (value.length > 0) {
-            store.filters.add('free', Ext.create('Ext.util.Filter', { property: 'free', value: Ext.String.trim(value) }));
-        }
+        store.filters.add('free', Ext.create('Ext.util.Filter', { property: 'free', value: Ext.String.trim(value) }));
 
         //scroll the store to first page
         store.currentPage = 1;

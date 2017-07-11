@@ -50,10 +50,10 @@ class TypeMapping
      */
     private $types = [
         self::TYPE_STRING => [
-            'sql' => 'TEXT',
+            'sql' => 'VARCHAR(500)',
             'dbal' => 'string',
-            'allowDefaultValue' => false,
-            'quoteDefaultValue' => false,
+            'allowDefaultValue' => true,
+            'quoteDefaultValue' => true,
             'elastic' => ['type' => 'string'],
         ],
         self::TYPE_TEXT => [
@@ -113,10 +113,10 @@ class TypeMapping
             'elastic' => ['type' => 'string'],
         ],
         self::TYPE_SINGLE_SELECTION => [
-            'sql' => 'TEXT',
+            'sql' => 'VARCHAR(500)',
             'dbal' => 'text',
-            'allowDefaultValue' => false,
-            'quoteDefaultValue' => false,
+            'allowDefaultValue' => true,
+            'quoteDefaultValue' => true,
             'elastic' => ['type' => 'string'],
         ],
         self::TYPE_MULTI_SELECTION => [
@@ -201,7 +201,6 @@ class TypeMapping
             'Shopware\Models\Blog\Blog',
             'Shopware\Models\Form\Form',
             'Shopware\Models\Customer\Customer',
-            'Shopware\Models\CustomerStream\CustomerStream',
             'Shopware\Models\Dispatch\Dispatch',
             'Shopware\Models\Payment\Payment',
             'Shopware\Models\Mail\Mail',

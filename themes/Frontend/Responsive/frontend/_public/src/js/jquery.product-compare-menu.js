@@ -77,8 +77,12 @@
                 modalUrl = startCompareBtn.attr('href'),
                 modalTitle = startCompareBtn.attr('data-modal-title');
 
-            $.loadingIndicator.open({
+            $.overlay.open({
                 closeOnClick: false
+            });
+
+            $.loadingIndicator.open({
+                openOverlay: false
             });
 
             $.publish('plugin/swProductCompareMenu/onStartCompareBefore', [ me ]);

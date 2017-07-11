@@ -43,7 +43,7 @@ Ext.define('Shopware.apps.Config.view.main.Window', {
 
     cls: Ext.baseCSSPrefix + 'template-main-window',
     hideNavigation: false,
-    width: '80%',
+    width: 1100,
     height:'90%',
 
     loadTitle: function(record) {

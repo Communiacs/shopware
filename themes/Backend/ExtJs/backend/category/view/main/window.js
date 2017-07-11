@@ -125,20 +125,9 @@ Ext.define('Shopware.apps.Category.view.main.Window', {
         me.addEvents('saveDetail');
 
         me.tabPanel = Ext.create('Ext.tab.Panel', {
-            items: me.getTabs(),
+            region:'center',
+            items:me.getTabs(),
             split: true,
-            flex: 1
-        });
-
-        me.formPanel = Ext.create('Ext.form.Panel', {
-            items: [me.tabPanel],
-            region: 'center',
-            border: false,
-            name: 'mainForm',
-            layout: {
-                type: 'hbox',
-                align: 'stretch'
-            },
             dockedItems: me.getDockedItems()
         });
 
@@ -148,7 +137,7 @@ Ext.define('Shopware.apps.Category.view.main.Window', {
                 split: true,
                 store:me.treeStore
             },
-            me.formPanel
+            me.tabPanel
         ];
 
         me.callParent(arguments);
@@ -179,18 +168,13 @@ Ext.define('Shopware.apps.Category.view.main.Window', {
             layout: 'fit'
         });
 
-        me.customListing = Ext.create('Shopware.apps.Category.view.category.tabs.CustomListing', {
-            disabled: true
-        });
-
         return [
             {
                 xtype:'category-category-tabs-settings',
                 templateStore : me.templateStore
             },
             me.articleMappingContainer,
-            me.categoryRestrictionContainer,
-            me.customListing
+            me.categoryRestrictionContainer
         ];
     },
 

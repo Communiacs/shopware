@@ -24,6 +24,7 @@
 /**
  * @see Zend_Auth_Exception
  */
+require_once 'Zend/Auth/Exception.php';
 
 
 /**

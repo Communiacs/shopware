@@ -24,9 +24,6 @@
 
 namespace Shopware\Bundle\SearchBundleDBAL\FacetHandler;
 
-use Shopware\Bundle\AttributeBundle\Service\ConfigurationStruct;
-use Shopware\Bundle\AttributeBundle\Service\CrudService;
-use Shopware\Bundle\AttributeBundle\Service\TypeMapping;
 use Shopware\Bundle\SearchBundle\Condition\ProductAttributeCondition;
 use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundle\Facet\ProductAttributeFacet;
@@ -36,39 +33,38 @@ use Shopware\Bundle\SearchBundle\FacetResult\RadioFacetResult;
 use Shopware\Bundle\SearchBundle\FacetResult\RangeFacetResult;
 use Shopware\Bundle\SearchBundle\FacetResult\ValueListFacetResult;
 use Shopware\Bundle\SearchBundle\FacetResult\ValueListItem;
-use Shopware\Bundle\SearchBundle\FacetResultInterface;
-use Shopware\Bundle\SearchBundleDBAL\PartialFacetHandlerInterface;
+use Shopware\Bundle\SearchBundleDBAL\FacetHandlerInterface;
 use Shopware\Bundle\SearchBundleDBAL\QueryBuilder;
 use Shopware\Bundle\SearchBundleDBAL\QueryBuilderFactoryInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct;
-use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
 /**
  * @category  Shopware
  *
  * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
-class ProductAttributeFacetHandler implements PartialFacetHandlerInterface
+class ProductAttributeFacetHandler implements FacetHandlerInterface
 {
     /**
      * @var QueryBuilderFactoryInterface
      */
     private $queryBuilderFactory;
-    /**
-     * @var CrudService
-     */
-    private $crudService;
 
     /**
-     * @param QueryBuilderFactoryInterface $queryBuilderFactory
-     * @param CrudService                  $crudService
+     * @var \Enlight_Components_Snippet_Namespace
+     */
+    private $snippetNamespace;
+
+    /**
+     * @param QueryBuilderFactoryInterface         $queryBuilderFactory
+     * @param \Shopware_Components_Snippet_Manager $snippetManager
      */
     public function __construct(
         QueryBuilderFactoryInterface $queryBuilderFactory,
-        CrudService $crudService
+        \Shopware_Components_Snippet_Manager $snippetManager
     ) {
         $this->queryBuilderFactory = $queryBuilderFactory;
-        $this->crudService = $crudService;
+        $this->snippetNamespace = $snippetManager->getNamespace('frontend/listing/facet_labels');
     }
 
     /**
@@ -80,31 +76,31 @@ class ProductAttributeFacetHandler implements PartialFacetHandlerInterface
     }
 
     /**
-     * @param FacetInterface|ProductAttributeFacet $facet
-     * @param Criteria                             $reverted
-     * @param Criteria                             $criteria
-     * @param ShopContextInterface                 $context
+     * Generates the facet data for the passed query, criteria and context object.
      *
-     * @return FacetResultInterface|null
+     * @param FacetInterface|ProductAttributeFacet $facet
+     * @param Criteria                             $criteria
+     * @param Struct\ShopContextInterface          $context
+     *
+     * @return BooleanFacetResult|ValueListFacetResult
      */
-    public function generatePartialFacet(
+    public function generateFacet(
         FacetInterface $facet,
-        Criteria $reverted,
         Criteria $criteria,
-        ShopContextInterface $context
+        Struct\ShopContextInterface $context
     ) {
-        $query = $this->queryBuilderFactory->createQuery($reverted, $context);
+        $queryCriteria = clone $criteria;
+        $queryCriteria->resetConditions();
+        $queryCriteria->resetSorting();
+
+        $query = $this->queryBuilderFactory->createQuery($queryCriteria, $context);
+
         $query->resetQueryPart('orderBy');
         $query->resetQueryPart('groupBy');
 
         $sqlField = 'productAttribute.' . $facet->getField();
         $query->andWhere($sqlField . ' IS NOT NULL')
             ->andWhere($sqlField . " != ''");
-
-        /** @var ConfigurationStruct $attribute */
-        $attribute = $this->crudService->get('s_articles_attributes', $facet->getField());
-
-        $type = $attribute ? $attribute->getColumnType() : null;
 
         switch ($facet->getMode()) {
             case ProductAttributeFacet::MODE_VALUE_LIST_RESULT:
@@ -125,19 +121,9 @@ class ProductAttributeFacetHandler implements PartialFacetHandlerInterface
                 break;
         }
 
-        if ($result === null) {
-            return $result;
-        }
-
-        if ($facet->getTemplate()) {
+        if ($result !== null && $facet->getTemplate()) {
             $result->setTemplate($facet->getTemplate());
-
-            return $result;
         }
-
-        $result->setTemplate(
-            $this->getTypeTemplate($type, $facet->getMode(), $result->getTemplate())
-        );
 
         return $result;
     }
@@ -177,10 +163,6 @@ class ProductAttributeFacetHandler implements PartialFacetHandlerInterface
             $actives = $condition->getValue();
         }
 
-        if (!is_array($actives)) {
-            $actives = [$actives];
-        }
-
         $items = array_map(function ($row) use ($actives, $facet) {
             $viewName = $row[$facet->getField()];
             $translation = $this->extractTranslations($row, $facet->getField());
@@ -202,12 +184,12 @@ class ProductAttributeFacetHandler implements PartialFacetHandlerInterface
         }
 
         return new ValueListFacetResult(
-            $facet->getName(),
-            $criteria->hasCondition($facet->getName()),
-            $facet->getLabel(),
-            $items,
-            $facet->getFormFieldName()
-        );
+                $facet->getName(),
+                $criteria->hasCondition($facet->getName()),
+                $facet->getLabel(),
+                $items,
+                $facet->getFormFieldName()
+            );
     }
 
     /**
@@ -237,10 +219,6 @@ class ProductAttributeFacetHandler implements PartialFacetHandlerInterface
             return null;
         }
 
-        if ($result['minValues'] === null && $result['maxValues'] === null) {
-            return null;
-        }
-
         $activeMin = $result['minValues'];
         $activeMax = $result['maxValues'];
 
@@ -260,10 +238,7 @@ class ProductAttributeFacetHandler implements PartialFacetHandlerInterface
             $activeMin,
             $activeMax,
             'min' . $facet->getFormFieldName(),
-            'max' . $facet->getFormFieldName(),
-            [],
-            $facet->getSuffix(),
-            $facet->getDigits()
+            'max' . $facet->getFormFieldName()
         );
     }
 
@@ -380,38 +355,5 @@ class ProductAttributeFacetHandler implements PartialFacetHandlerInterface
         }
 
         return $result[$fieldName];
-    }
-
-    /**
-     * @param string $type
-     * @param string $mode
-     * @param string $defaultTemplate
-     *
-     * @return string
-     */
-    private function getTypeTemplate($type, $mode, $defaultTemplate)
-    {
-        switch (true) {
-            case $type === TypeMapping::TYPE_DATE && $mode === ProductAttributeFacet::MODE_RANGE_RESULT:
-
-                return 'frontend/listing/filter/facet-date-range.tpl';
-            case $type === TypeMapping::TYPE_DATE && $mode === ProductAttributeFacet::MODE_VALUE_LIST_RESULT:
-
-                return 'frontend/listing/filter/facet-date-multi.tpl';
-            case $type === TypeMapping::TYPE_DATE && $mode !== ProductAttributeFacet::MODE_BOOLEAN_RESULT:
-
-                return 'frontend/listing/filter/facet-date.tpl';
-            case $type === TypeMapping::TYPE_DATETIME && $mode === ProductAttributeFacet::MODE_RANGE_RESULT:
-
-                return 'frontend/listing/filter/facet-datetime-range.tpl';
-            case $type === TypeMapping::TYPE_DATETIME && $mode === ProductAttributeFacet::MODE_VALUE_LIST_RESULT:
-
-                return 'frontend/listing/filter/facet-datetime-multi.tpl';
-            case $type === TypeMapping::TYPE_DATETIME && $mode !== ProductAttributeFacet::MODE_BOOLEAN_RESULT:
-
-                return 'frontend/listing/filter/facet-datetime.tpl';
-            default:
-                return $defaultTemplate;
-        }
     }
 }

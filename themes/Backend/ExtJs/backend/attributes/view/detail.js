@@ -358,9 +358,9 @@ Ext.define('Shopware.apps.Attributes.view.Detail', {
                 }, {
                     title: '{s name="view_configuration"}{/s}',
                     fields: {
-                        label: { fieldLabel: '{s name="label"}{/s}', translatable: true },
-                        supportText: { fieldLabel: '{s name="support_text"}{/s}', translatable: true },
-                        helpText: { fieldLabel: '{s name="help_text"}{/s}', translatable: true },
+                        label: '{s name="label"}{/s}',
+                        supportText: '{s name="support_text"}{/s}',
+                        helpText: '{s name="help_text"}{/s}',
                         position: '{s name="position"}{/s}',
                         displayInBackend: '{s name="display_in_backend"}{/s}',
                         translatable: '{s name="translatable"}{/s}',

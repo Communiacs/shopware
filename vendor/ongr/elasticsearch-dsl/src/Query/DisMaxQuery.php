@@ -11,13 +11,66 @@
 
 namespace ONGR\ElasticsearchDSL\Query;
 
+use ONGR\ElasticsearchDSL\BuilderInterface;
+use ONGR\ElasticsearchDSL\ParametersTrait;
+
 /**
  * Represents Elasticsearch "dis_max" query.
  *
  * @link https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-dis-max-query.html
- *
- * @deprecated Use the extended class instead. This class is left only for BC compatibility.
  */
-class DisMaxQuery extends \ONGR\ElasticsearchDSL\Query\Compound\DisMaxQuery
+class DisMaxQuery implements BuilderInterface
 {
+    use ParametersTrait;
+
+    /**
+     * @var BuilderInterface[]
+     */
+    private $queries = [];
+
+    /**
+     * Initializes Dis Max query.
+     *
+     * @param array $parameters
+     */
+    public function __construct(array $parameters = [])
+    {
+        $this->setParameters($parameters);
+    }
+
+    /**
+     * Add query.
+     *
+     * @param BuilderInterface $query
+     *
+     * @return DisMaxQuery
+     */
+    public function addQuery(BuilderInterface $query)
+    {
+        $this->queries[] = $query;
+
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getType()
+    {
+        return 'dis_max';
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function toArray()
+    {
+        $query = [];
+        foreach ($this->queries as $type) {
+            $query[] = $type->toArray();
+        }
+        $output = $this->processArray(['queries' => $query]);
+
+        return [$this->getType() => $output];
+    }
 }

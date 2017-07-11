@@ -24,17 +24,17 @@
 
 namespace Shopware\Bundle\SearchBundleDBAL\FacetHandler;
 
+use Doctrine\DBAL\Connection;
 use Shopware\Bundle\SearchBundle\Condition\VoteAverageCondition;
 use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundle\Facet\VoteAverageFacet;
 use Shopware\Bundle\SearchBundle\FacetInterface;
 use Shopware\Bundle\SearchBundle\FacetResult\RadioFacetResult;
 use Shopware\Bundle\SearchBundle\FacetResult\ValueListItem;
-use Shopware\Bundle\SearchBundle\FacetResultInterface;
-use Shopware\Bundle\SearchBundleDBAL\PartialFacetHandlerInterface;
-use Shopware\Bundle\SearchBundleDBAL\QueryBuilder;
+use Shopware\Bundle\SearchBundleDBAL\FacetHandlerInterface;
+use Shopware\Bundle\SearchBundleDBAL\QueryBuilderFactory;
 use Shopware\Bundle\SearchBundleDBAL\QueryBuilderFactoryInterface;
-use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
+use Shopware\Bundle\StoreFrontBundle\Struct;
 use Shopware\Components\QueryAliasMapper;
 
 /**
@@ -42,12 +42,17 @@ use Shopware\Components\QueryAliasMapper;
  *
  * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
-class VoteAverageFacetHandler implements PartialFacetHandlerInterface
+class VoteAverageFacetHandler implements FacetHandlerInterface
 {
     /**
      * @var QueryBuilderFactoryInterface
      */
     private $queryBuilderFactory;
+
+    /**
+     * @var Connection
+     */
+    private $connection;
 
     /**
      * @var \Enlight_Components_Snippet_Namespace
@@ -60,25 +65,20 @@ class VoteAverageFacetHandler implements PartialFacetHandlerInterface
     private $fieldName;
 
     /**
-     * @var \Shopware_Components_Config
-     */
-    private $config;
-
-    /**
      * @param QueryBuilderFactoryInterface         $queryBuilderFactory
+     * @param \Doctrine\DBAL\Connection            $connection
      * @param \Shopware_Components_Snippet_Manager $snippetManager
      * @param QueryAliasMapper                     $queryAliasMapper
-     * @param \Shopware_Components_Config          $config
      */
     public function __construct(
         QueryBuilderFactoryInterface $queryBuilderFactory,
+        Connection $connection,
         \Shopware_Components_Snippet_Manager $snippetManager,
-        QueryAliasMapper $queryAliasMapper,
-        \Shopware_Components_Config $config
+        QueryAliasMapper $queryAliasMapper
     ) {
         $this->queryBuilderFactory = $queryBuilderFactory;
+        $this->connection = $connection;
         $this->snippetNamespace = $snippetManager->getNamespace('frontend/listing/facet_labels');
-        $this->config = $config;
 
         if (!$this->fieldName = $queryAliasMapper->getShortAlias('rating')) {
             $this->fieldName = 'rating';
@@ -86,36 +86,42 @@ class VoteAverageFacetHandler implements PartialFacetHandlerInterface
     }
 
     /**
-     * @param FacetInterface       $facet
-     * @param Criteria             $reverted
-     * @param Criteria             $criteria
-     * @param ShopContextInterface $context
+     * Generates the facet data for the passed query, criteria and context object.
      *
-     * @return FacetResultInterface|null
+     * @param FacetInterface|VoteAverageFacet $facet
+     * @param Criteria                        $criteria
+     * @param Struct\ShopContextInterface     $context
+     *
+     * @return \Shopware\Bundle\SearchBundle\FacetResult\RadioFacetResult|null
      */
-    public function generatePartialFacet(
+    public function generateFacet(
         FacetInterface $facet,
-        Criteria $reverted,
         Criteria $criteria,
-        ShopContextInterface $context
+        Struct\ShopContextInterface $context
     ) {
-        $query = $this->queryBuilderFactory->createQuery($reverted, $context);
+        $queryCriteria = clone $criteria;
+        $queryCriteria->resetConditions();
+        $queryCriteria->resetSorting();
+
+        $query = $this->queryBuilderFactory->createQuery($queryCriteria, $context);
+
         $query->resetQueryPart('orderBy');
         $query->resetQueryPart('groupBy');
 
         if (!$query->hasState(VoteAverageCondition::STATE_INCLUDES_VOTE_TABLE)) {
-            $this->joinVoteAverage($context, $query);
+            $query->innerJoin(
+                'product',
+                's_articles_vote',
+                'vote',
+                'vote.articleID = product.id'
+            );
         }
 
-        $query->groupBy('voteAverage.average');
-        $query->select([
-            'voteAverage.average',
-            'COUNT(voteAverage.average) as count',
-        ]);
+        $query->select('COUNT(vote.id) as hasVotes');
 
         /** @var $statement \Doctrine\DBAL\Driver\ResultStatement */
         $statement = $query->execute();
-        $data = $statement->fetchAll(\PDO::FETCH_ASSOC);
+        $data = $statement->fetch(\PDO::FETCH_COLUMN);
 
         if (!$data) {
             return null;
@@ -128,19 +134,18 @@ class VoteAverageFacetHandler implements PartialFacetHandlerInterface
             $activeAverage = $condition->getAverage();
         }
 
-        $values = $this->buildItems($data, $activeAverage);
-
-        /** @var VoteAverageFacet $facet */
-        if (!empty($facet->getLabel())) {
-            $label = $facet->getLabel();
-        } else {
-            $label = $this->snippetNamespace->get($facet->getName(), 'Shipping free');
-        }
+        $values = [
+            new ValueListItem(1, '', ($activeAverage == 1)),
+            new ValueListItem(2, '', ($activeAverage == 2)),
+            new ValueListItem(3, '', ($activeAverage == 3)),
+            new ValueListItem(4, '', ($activeAverage == 4)),
+            new ValueListItem(5, '', ($activeAverage == 5)),
+        ];
 
         return new RadioFacetResult(
             $facet->getName(),
             $criteria->hasCondition($facet->getName()),
-            $label,
+            $this->snippetNamespace->get($facet->getName(), 'Ranking'),
             $values,
             $this->fieldName,
             [],
@@ -158,64 +163,5 @@ class VoteAverageFacetHandler implements PartialFacetHandlerInterface
     public function supportsFacet(FacetInterface $facet)
     {
         return $facet instanceof VoteAverageFacet;
-    }
-
-    /**
-     * @param ShopContextInterface $context
-     * @param QueryBuilder         $query
-     */
-    private function joinVoteAverage(ShopContextInterface $context, QueryBuilder $query)
-    {
-        $shopCondition = '';
-        if ($this->config->get('displayOnlySubShopVotes')) {
-            $shopCondition = ' AND (vote.shop_id = :voteAverageShopId OR vote.shop_id IS NULL)';
-            $query->setParameter(':voteAverageShopId', $context->getShop()->getId());
-        }
-
-        $table = '
-    SELECT SUM(vote.points) / COUNT(vote.id) AS average, vote.articleID AS product_id
-    FROM s_articles_vote vote
-    WHERE vote.active = 1 ' . $shopCondition . '
-    GROUP BY vote.articleID';
-
-        $query->innerJoin(
-            'product',
-            '(' . $table . ')',
-            'voteAverage',
-            'voteAverage.product_id = product.id'
-        );
-    }
-
-    /**
-     * @param array $data
-     * @param int   $activeAverage
-     *
-     * @return array
-     */
-    private function buildItems($data, $activeAverage)
-    {
-        usort($data, function ($a, $b) {
-            return $a['average'] > $b['average'];
-        });
-
-        $values = [];
-        for ($i = 1; $i <= 4; ++$i) {
-            $affected = array_filter($data, function ($value) use ($i) {
-                return $value['average'] >= $i;
-            });
-
-            $count = array_sum(array_column($affected, 'count'));
-            if ($count === 0) {
-                continue;
-            }
-
-            $values[] = new ValueListItem($i, $count, $activeAverage == $i);
-        }
-
-        usort($values, function (ValueListItem $a, ValueListItem $b) {
-            return $a->getId() < $b->getId();
-        });
-
-        return $values;
     }
 }

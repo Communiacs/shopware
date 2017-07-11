@@ -56,7 +56,6 @@ Ext.define('Shopware.apps.ProductStream.view.condition_list.field.AttributeWindo
 
         me.attributeCombo = Ext.create('Ext.form.field.ComboBox', {
             name: 'attribute',
-            labelWidth: 180,
             fieldLabel: '{s name=select_product_attribute}Select product attribute{/s}',
             pageSize: 20,
             store: store,

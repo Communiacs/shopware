@@ -43,6 +43,7 @@ Ext.define('Shopware.form.field.DispatchGrid', {
             me.createSortingColumn(),
             activeColumn,
             { dataIndex: 'name', flex: 1 },
+            { dataIndex: 'comment', flex: 1 },
             me.createActionColumn()
         ];
     }

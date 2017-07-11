@@ -167,7 +167,5 @@ class CategoryHydrator extends Hydrator
                 explode(',', $data['__category_customer_groups'])
             );
         }
-
-        $category->setHideSortings((bool) $data['__category_hide_sortings']);
     }
 }

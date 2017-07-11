@@ -134,28 +134,18 @@
     border-right: 1px solid #d3e0e6;
   }
 
-  .tile-description {
-    display: block;
-    margin-left: 43px;
-
-    p {
-      color: #3F5D71;
-    }
-
-    h1 {
-      padding-top: 3px;
-    }
-  }
-
   .tile-link {
     display: inline-block;
-    width: 100%;
+    width: 170px;
+    height: 90px;
     background: #fff;
     border: 1px solid #e7ecf2;
     padding: 15px;
     text-decoration: none;
     color: #3F5D71;
-    margin: 0 0 10px 0;
+    font-weight: 700;
+    text-align: center;
+    margin: 0 10px 10px 0;
     overflow: hidden;
     border-radius: 3px;
 
@@ -168,8 +158,7 @@
       width: 28px;
       height: 28px;
       display: block;
-      margin: 0 10px 0 0;
-      float: left;
+      margin: 0 auto 10px;
 
       $dir-frw-icons: '../themes/images/shopware-ui/first_run_wizard/';
 

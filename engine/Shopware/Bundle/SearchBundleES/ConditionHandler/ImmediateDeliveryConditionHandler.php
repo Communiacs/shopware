@@ -29,10 +29,10 @@ use ONGR\ElasticsearchDSL\Search;
 use Shopware\Bundle\SearchBundle\Condition\ImmediateDeliveryCondition;
 use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundle\CriteriaPartInterface;
-use Shopware\Bundle\SearchBundleES\PartialConditionHandlerInterface;
+use Shopware\Bundle\SearchBundleES\HandlerInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
-class ImmediateDeliveryConditionHandler implements PartialConditionHandlerInterface
+class ImmediateDeliveryConditionHandler implements HandlerInterface
 {
     /**
      * {@inheritdoc}
@@ -45,28 +45,19 @@ class ImmediateDeliveryConditionHandler implements PartialConditionHandlerInterf
     /**
      * {@inheritdoc}
      */
-    public function handleFilter(
+    public function handle(
         CriteriaPartInterface $criteriaPart,
         Criteria $criteria,
         Search $search,
         ShopContextInterface $context
     ) {
-        $search->addFilter(
-            new TermQuery('hasAvailableVariant', 1)
-        );
-    }
+        $filter = new TermQuery('hasAvailableVariant', 1);
 
-    /**
-     * {@inheritdoc}
-     */
-    public function handlePostFilter(
-        CriteriaPartInterface $criteriaPart,
-        Criteria $criteria,
-        Search $search,
-        ShopContextInterface $context
-    ) {
-        $search->addPostFilter(
-            new TermQuery('hasAvailableVariant', 1)
-        );
+        /** @var ImmediateDeliveryCondition $criteriaPart */
+        if ($criteria->hasBaseCondition($criteriaPart->getName())) {
+            $search->addFilter($filter);
+        } else {
+            $search->addPostFilter($filter);
+        }
     }
 }

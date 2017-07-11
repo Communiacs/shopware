@@ -34,6 +34,18 @@ use Shopware\Bundle\SearchBundle\ConditionInterface;
  */
 class ProductAttributeCondition implements ConditionInterface
 {
+    const OPERATOR_EQ = '=';
+    const OPERATOR_NEQ = '!=';
+    const OPERATOR_LT = '<';
+    const OPERATOR_LTE = '<=';
+    const OPERATOR_BETWEEN = 'BETWEEN';
+    const OPERATOR_GT = '>';
+    const OPERATOR_GTE = '>=';
+    const OPERATOR_IN = 'IN';
+    const OPERATOR_STARTS_WITH = 'STARTS_WITH';
+    const OPERATOR_ENDS_WITH = 'ENDS_WITH';
+    const OPERATOR_CONTAINS = 'CONTAINS';
+
     /**
      * @var string
      */
@@ -87,7 +99,7 @@ class ProductAttributeCondition implements ConditionInterface
     }
 
     /**
-     * @return string|array $value
+     * @return string
      */
     public function getValue()
     {

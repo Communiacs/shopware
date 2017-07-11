@@ -56,14 +56,12 @@ Ext.define('Shopware.apps.Emotion.view.detail.elements.ArticleSlider', {
         if (Ext.isDefined(type)) {
             content += Ext.String.format('<div class="x-emotion-preview-title">[0]:</div>', me.getLabel());
 
-            if (type === 'selected_article' || type === 'selected_variant') {
-                var products = me.getConfigValue(type + 's').split('|');
+            if (type === 'selected_article') {
+                var products = me.getConfigValue('selected_articles');
 
                 if (products.length > 0) {
                     Ext.each(products, function(product) {
-                        if (product) {
-                            content += Ext.String.format('<div class="article-ordernumber">[0]</div>', product);
-                        }
+                        content += Ext.String.format('<div class="article-ordernumber">[0] - [1]</div>', product.ordernumber, product.name);
                     });
                 }
 

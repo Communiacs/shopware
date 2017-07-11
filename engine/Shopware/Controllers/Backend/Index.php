@@ -149,15 +149,12 @@ class Shopware_Controllers_Backend_Index extends Enlight_Controller_Action imple
     {
     }
 
-    /**
-     * Allows changing the locale by sending a Shopware localeId or an ISO-3166 locale (e.g. de_DE)
-     */
     public function changeLocaleAction()
     {
         $this->Front()->Plugins()->Json()->setRenderer();
 
         $localeId = $this->Request()->getParam('localeId');
-        if (!$localeId) {
+        if ($localeId == null) {
             $this->View()->assign([
                 'success' => false,
                 'message' => false,
@@ -166,20 +163,11 @@ class Shopware_Controllers_Backend_Index extends Enlight_Controller_Action imple
             return;
         }
 
-        $localeRepository = $this->container->get('models')
-            ->getRepository(Shopware\Models\Shop\Locale::class);
+        $locale = $this->container->get('models')
+            ->getRepository('Shopware\Models\Shop\Locale')
+            ->find($localeId);
 
-        $locale = $localeRepository->find($localeId);
-
-        if (!$locale) {
-            $locale = $localeRepository->findBy(['locale' => $localeId]);
-
-            if ($locale && count($locale) === 1) {
-                $locale = $locale[0];
-            }
-        }
-
-        if (!$locale) {
+        if ($locale == null) {
             $this->View()->assign([
                 'success' => false,
                 'message' => false,

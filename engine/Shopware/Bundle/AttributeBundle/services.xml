@@ -138,24 +138,6 @@
             <argument type="service" id="models" />
         </service>
 
-        <service id="shopware_attribute.emotion_repository" class="Shopware\Bundle\AttributeBundle\Repository\GenericRepository">
-            <argument>Shopware\Models\Emotion\Emotion</argument>
-            <argument type="service" id="models" />
-            <argument type="service" id="shopware_attribute.emotion_reader" />
-            <argument type="service" id="shopware_attribute.emotion_searcher" />
-            <tag name="attribute_search_repository" />
-        </service>
-
-        <service id="shopware_attribute.emotion_searcher" class="Shopware\Bundle\AttributeBundle\Repository\Searcher\EmotionSearcher">
-            <argument>Shopware\Models\Emotion\Emotion</argument>
-            <argument type="service" id="models" />
-        </service>
-
-        <service id="shopware_attribute.emotion_reader" class="Shopware\Bundle\AttributeBundle\Repository\Reader\GenericReader">
-            <argument>Shopware\Models\Emotion\Emotion</argument>
-            <argument type="service" id="models" />
-        </service>
-
         <service id="shopware_attribute.customer_repository" class="Shopware\Bundle\AttributeBundle\Repository\GenericRepository">
             <argument>Shopware\Models\Customer\Customer</argument>
             <argument type="service" id="models" />
@@ -208,25 +190,6 @@
         <service id="shopware_attribute.shop_reader" class="Shopware\Bundle\AttributeBundle\Repository\Reader\ShopReader">
             <argument>Shopware\Models\Shop\Shop</argument>
             <argument type="service" id="models" />
-        </service>
-
-        <service id="shopware_attribute.customer_stream_repository" class="Shopware\Bundle\AttributeBundle\Repository\GenericRepository">
-            <argument>Shopware\Models\CustomerStream\CustomerStream</argument>
-            <argument type="service" id="models" />
-            <argument type="service" id="shopware_attribute.customer_stream_reader" />
-            <argument type="service" id="shopware_attribute.customer_stream_searcher" />
-            <tag name="attribute_search_repository" />
-        </service>
-
-        <service id="shopware_attribute.customer_stream_searcher" class="Shopware\Bundle\AttributeBundle\Repository\Searcher\GenericSearcher">
-            <argument>Shopware\Models\CustomerStream\CustomerStream</argument>
-            <argument type="service" id="models" />
-        </service>
-
-        <service id="shopware_attribute.customer_stream_reader" class="Shopware\Bundle\AttributeBundle\Repository\Reader\CustomerStreamReader">
-            <argument>Shopware\Models\CustomerStream\CustomerStream</argument>
-            <argument type="service" id="models" />
-            <argument type="service" id="shopware.customer_stream.repository" />
         </service>
 
     </services>

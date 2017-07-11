@@ -128,8 +128,6 @@
              */
             labelFormat: '',
 
-            suffix: '',
-
             /**
              * Turn pretty rounding for cleaner steps on and off.
              */
@@ -159,11 +157,6 @@
              * The number of steps the slider is divided in.
              */
             stepCount: 100,
-
-            /**
-             * Number of digits for the display value and slide size
-             */
-            digits: 2,
 
             /**
              * Function for calculation
@@ -428,39 +421,25 @@
         updateMinInput: function(value) {
             var me = this;
 
-            if (!me.$minInputEl.length) {
-                return;
-            }
-
-            if (value <= me.opts.rangeMin) {
-                me.$minInputEl.prop('disabled', 'disabled')
-                    .trigger('change');
-            } else {
-                me.$minInputEl.val(value.toFixed(me.opts.digits))
+            if (me.$minInputEl.length) {
+                me.$minInputEl.val(value.toFixed(2))
                     .removeAttr('disabled')
                     .trigger('change');
-            }
 
-            $.publish('plugin/swRangeSlider/onUpdateMinInput', [ me, me.$minInputEl, value ]);
+                $.publish('plugin/swRangeSlider/onUpdateMinInput', [ me, me.$minInputEl, value ]);
+            }
         },
 
         updateMaxInput: function(value) {
             var me = this;
 
-            if (!me.$maxInputEl.length) {
-                return;
-            }
-
-            if (value >= me.opts.rangeMax) {
-                me.$maxInputEl.prop('disabled', 'disabled')
-                    .trigger('change');
-            } else {
-                me.$maxInputEl.val(value.toFixed(me.opts.digits))
+            if (me.$maxInputEl.length) {
+                me.$maxInputEl.val(value.toFixed(2))
                     .removeAttr('disabled')
                     .trigger('change');
-            }
 
-            $.publish('plugin/swRangeSlider/onUpdateMaxInput', [ me, me.$maxInputEl, value ]);
+                $.publish('plugin/swRangeSlider/onUpdateMaxInput', [ me, me.$maxInputEl, value ]);
+            }
         },
 
         updateMinLabel: function(value) {
@@ -497,11 +476,7 @@
         roundValue: function(value) {
             var me = this;
 
-            if (value < 0.1) {
-                value = me.roundTo(value, 0.001);
-            } else if (value < 1) {
-                value = me.roundTo(value, 0.01);
-            } else if (value < 10) {
+            if (value < 10) {
                 value = me.roundTo(value, 0.10);
             } else if (value < 100) {
                 value = me.roundTo(value, 1);
@@ -522,18 +497,17 @@
             }
 
             if (!me.opts.labelFormat.length) {
-                return value.toFixed(me.opts.digits) + ' ' + me.opts.suffix;
+                return value.toFixed(2);
             }
 
-            var division = Math.pow(10, me.opts.digits);
-            value = Math.round(value * division) / division;
-            value = value.toFixed(me.opts.digits);
+            value = Math.round(value * 100) / 100;
+            value = value.toFixed(2);
 
             if (me.opts.labelFormat.indexOf('0.00') >= 0) {
-                value = me.opts.labelFormat.replace('0.00', value) + ' ' + me.opts.suffix;
+                value = me.opts.labelFormat.replace('0.00', value);
             } else {
                 value = value.replace('.', ',');
-                value = me.opts.labelFormat.replace('0,00', value) + ' ' + me.opts.suffix;
+                value = me.opts.labelFormat.replace('0,00', value);
             }
 
             $.publish('plugin/swRangeSlider/onFormatValue', [ me, value ]);
@@ -572,7 +546,7 @@
 
             pos = Math.round(pos * me.stepWidth);
 
-            return (pos > 0 && pos) || 0;
+            return pos > 0 && pos || 0;
         },
 
         _getPositionLinear: function(value) {

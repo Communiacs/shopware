@@ -27,8 +27,6 @@
  * @author shopware AG
  */
 
-// {namespace name=backend/customer/view/main}
-
 /**
  * Shopware Model - Customer list backend module.
  *
@@ -36,22 +34,22 @@
  * or the Shopware\Models\Customer\Shipping doctrine model which contains the data about
  * the customer shipping address.
  */
-// {block name="backend/customer/model/shipping"}
+//{block name="backend/customer/model/shipping"}
 Ext.define('Shopware.apps.Customer.model.Shipping', {
 
     /**
      * Extends the standard Ext Model
      * @string
      */
-    extend: 'Shopware.apps.Base.model.Address',
+    extend:'Shopware.apps.Base.model.Address',
 
     /**
      * The fields used for this model
      * @array
      */
-    fields: [
-        // {block name="backend/customer/model/shipping/fields"}{/block}
-        { name: 'stateId', type: 'int', useNull: true }
+    fields:[
+        //{block name="backend/customer/model/shipping/fields"}{/block}
+        { name:'stateId', type:'int', useNull:true }
     ],
 
     /**
@@ -78,4 +76,4 @@ Ext.define('Shopware.apps.Customer.model.Shipping', {
     }
 
 });
-// {/block}
+//{/block}

@@ -38,7 +38,7 @@ class Repository extends ModelRepository
      *
      * @return \Doctrine\ORM\Query
      */
-    public function getListQuery($filter, $orderBy, $offset, $limit)
+    public function getListQuery($filter = null, $orderBy = null, $offset, $limit)
     {
         $builder = $this->getListQueryBuilder($filter, $orderBy);
         $builder->setFirstResult($offset)
@@ -106,13 +106,8 @@ class Repository extends ModelRepository
             ->orderBy('fields.position');
 
         if ($shopId) {
-            $builder->andWhere(
-                $builder->expr()->orX(
-                    $builder->expr()->like('forms.shopIds', ':shopId'),
-                    $builder->expr()->isNull('forms.shopIds')
-                )
-            )
-            ->setParameter('shopId', '%|' . $shopId . '|%');
+            $builder->andWhere('(forms.shopIds LIKE :shopId OR forms.shopIds IS NULL)')
+                ->setParameter('shopId', '%|' . $shopId . '|%');
         }
 
         return $builder;

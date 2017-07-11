@@ -22,10 +22,12 @@
 /**
  * @see Zend_Validate_Abstract
  */
+require_once 'Zend/Validate/Abstract.php';
 
 /**
  * @see Zend_Locale_Format
  */
+require_once 'Zend/Locale/Format.php';
 
 /**
  * @category   Zend
@@ -75,7 +77,12 @@ class Zend_Validate_PostCode extends Zend_Validate_Abstract
             $options = $options->toArray();
         }
 
-        if (is_array($options)) {
+        if (empty($options)) {
+            require_once 'Zend/Registry.php';
+            if (Zend_Registry::isRegistered('Zend_Locale')) {
+                $this->setLocale(Zend_Registry::get('Zend_Locale'));
+            }
+        } elseif (is_array($options)) {
             // Received
             if (array_key_exists('locale', $options)) {
                 $this->setLocale($options['locale']);
@@ -91,6 +98,7 @@ class Zend_Validate_PostCode extends Zend_Validate_Abstract
 
         $format = $this->getFormat();
         if (empty($format)) {
+            require_once 'Zend/Validate/Exception.php';
             throw new Zend_Validate_Exception("A postcode-format string has to be given for validation");
         }
     }
@@ -115,10 +123,12 @@ class Zend_Validate_PostCode extends Zend_Validate_Abstract
      */
     public function setLocale($locale = null)
     {
+        require_once 'Zend/Locale.php';
         $this->_locale = Zend_Locale::findLocale($locale);
         $locale        = new Zend_Locale($this->_locale);
         $region        = $locale->getRegion();
         if (empty($region)) {
+            require_once 'Zend/Validate/Exception.php';
             throw new Zend_Validate_Exception("Unable to detect a region for the locale '$locale'");
         }
 
@@ -129,6 +139,7 @@ class Zend_Validate_PostCode extends Zend_Validate_Abstract
         );
 
         if (empty($format)) {
+            require_once 'Zend/Validate/Exception.php';
             throw new Zend_Validate_Exception("Unable to detect a postcode format for the region '{$locale->getRegion()}'");
         }
 
@@ -156,6 +167,7 @@ class Zend_Validate_PostCode extends Zend_Validate_Abstract
     public function setFormat($format)
     {
         if (empty($format) || !is_string($format)) {
+            require_once 'Zend/Validate/Exception.php';
             throw new Zend_Validate_Exception("A postcode-format string has to be given for validation");
         }
 

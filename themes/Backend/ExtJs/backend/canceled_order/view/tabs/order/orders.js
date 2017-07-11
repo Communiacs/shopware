@@ -135,7 +135,7 @@ Ext.define('Shopware.apps.CanceledOrder.view.tabs.order.Orders', {
             },
             {
                 header: me.snippets.columns.customer,
-                dataIndex: 'customer.lastname',
+                dataIndex: 'billing.lastName',
                 flex: 1,
                 renderer: me.customerRenderer
             },
@@ -211,10 +211,13 @@ Ext.define('Shopware.apps.CanceledOrder.view.tabs.order.Orders', {
         if(!record.getCustomer() || !record.getCustomer().first()) {
             return '';
         }
-
         var customer = record.getCustomer().first();
-
-        return customer.get('lastname') + ", " + customer.get('firstname');
+        if(!customer.getBilling() || !customer.getBilling().first()) {
+            return '';
+        }
+        var billing = customer.getBilling().first();
+//        return billing.get('firstName') + " " + billing.get('lastName');
+        return billing.get('lastName') + ", " + billing.get('firstName');
     },
 
     /**

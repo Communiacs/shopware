@@ -41,7 +41,6 @@ Ext.define('Shopware.apps.Emotion.view.main.Window', {
     width: '80%',
     stateful: true,
     stateId: 'emotion-main-window',
-    cls: Ext.baseCSSPrefix + 'media-manager-window',
 
     /**
      * Object which are used in this component

@@ -38,6 +38,14 @@ use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
  */
 class StoreFrontCriteriaFactory implements StoreFrontCriteriaFactoryInterface
 {
+    const SORTING_RELEASE_DATE = 1;
+    const SORTING_POPULARITY = 2;
+    const SORTING_CHEAPEST_PRICE = 3;
+    const SORTING_HIGHEST_PRICE = 4;
+    const SORTING_PRODUCT_NAME_ASC = 5;
+    const SORTING_PRODUCT_NAME_DESC = 6;
+    const SORTING_SEARCH_RANKING = 7;
+
     /**
      * @var \Shopware_Components_Config
      */
@@ -248,23 +256,21 @@ class StoreFrontCriteriaFactory implements StoreFrontCriteriaFactoryInterface
      */
     private function getSearchCriteria(Request $request, ShopContextInterface $context)
     {
-        $criteria = $this->createCriteriaFromRequest($request, $context);
-
-        $systemId = $context->getShop()->getCategory()->getId();
-
-        if (!$criteria->hasBaseCondition('category')) {
-            $criteria->addBaseCondition(new CategoryCondition([$systemId]));
-
-            return $criteria;
+        if (!$request->has('sSort')) {
+            $request->setParam('sSort', self::SORTING_SEARCH_RANKING);
         }
 
-        /** @var CategoryCondition $condition */
-        $condition = $criteria->getBaseCondition('category');
+        $criteria = $this->createCriteriaFromRequest(
+            $request,
+            $context
+        );
 
-        if (!in_array($systemId, $condition->getCategoryIds())) {
-            $criteria->removeBaseCondition('category');
-            $criteria->addCondition($condition);
-            $criteria->addBaseCondition(new CategoryCondition([$systemId]));
+        if (!$criteria->hasCondition('category')) {
+            $categoryId = $context->getShop()->getCategory()->getId();
+
+            $criteria->addBaseCondition(
+                new CategoryCondition([$categoryId])
+            );
         }
 
         return $criteria;

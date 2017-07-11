@@ -22,7 +22,7 @@ class Promise implements ExtendedPromiseInterface, CancellablePromiseInterface
     public function then(callable $onFulfilled = null, callable $onRejected = null, callable $onProgress = null)
     {
         if (null !== $this->result) {
-            return $this->result->then($onFulfilled, $onRejected, $onProgress);
+            return $this->result()->then($onFulfilled, $onRejected, $onProgress);
         }
 
         if (null === $this->canceller) {
@@ -43,7 +43,7 @@ class Promise implements ExtendedPromiseInterface, CancellablePromiseInterface
     public function done(callable $onFulfilled = null, callable $onRejected = null, callable $onProgress = null)
     {
         if (null !== $this->result) {
-            return $this->result->done($onFulfilled, $onRejected, $onProgress);
+            return $this->result()->done($onFulfilled, $onRejected, $onProgress);
         }
 
         $this->handlers[] = function (ExtendedPromiseInterface $promise) use ($onFulfilled, $onRejected) {
@@ -155,7 +155,15 @@ class Promise implements ExtendedPromiseInterface, CancellablePromiseInterface
 
     private function settle(ExtendedPromiseInterface $promise)
     {
-        $promise = $this->unwrap($promise);
+        if ($promise instanceof LazyPromise) {
+            $promise = $promise->promise();
+        }
+
+        if ($promise === $this) {
+            $promise = new RejectedPromise(
+                new \LogicException('Cannot resolve a promise with itself.')
+            );
+        }
 
         $handlers = $this->handlers;
 
@@ -167,30 +175,13 @@ class Promise implements ExtendedPromiseInterface, CancellablePromiseInterface
         }
     }
 
-    private function unwrap($promise)
+    private function result()
     {
-        $promise = $this->extract($promise);
-
-        while ($promise instanceof self && null !== $promise->result) {
-            $promise = $this->extract($promise->result);
+        while ($this->result instanceof self && null !== $this->result->result) {
+            $this->result = $this->result->result;
         }
 
-        return $promise;
-    }
-
-    private function extract($promise)
-    {
-        if ($promise instanceof LazyPromise) {
-            $promise = $promise->promise();
-        }
-
-        if ($promise === $this) {
-            return new RejectedPromise(
-                new \LogicException('Cannot resolve a promise with itself.')
-            );
-        }
-
-        return $promise;
+        return $this->result;
     }
 
     private function call(callable $callback)

@@ -32,13 +32,11 @@ use Shopware\Bundle\SearchBundle\FacetResult\FacetResultGroup;
 use Shopware\Bundle\SearchBundle\FacetResult\MediaListFacetResult;
 use Shopware\Bundle\SearchBundle\FacetResult\MediaListItem;
 use Shopware\Bundle\SearchBundle\FacetResult\ValueListFacetResult;
-use Shopware\Bundle\SearchBundle\FacetResultInterface;
-use Shopware\Bundle\SearchBundleDBAL\PartialFacetHandlerInterface;
+use Shopware\Bundle\SearchBundleDBAL\FacetHandlerInterface;
 use Shopware\Bundle\SearchBundleDBAL\QueryBuilder;
 use Shopware\Bundle\SearchBundleDBAL\QueryBuilderFactoryInterface;
 use Shopware\Bundle\StoreFrontBundle\Gateway\PropertyGatewayInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct;
-use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 use Shopware\Components\QueryAliasMapper;
 
 /**
@@ -46,7 +44,7 @@ use Shopware\Components\QueryAliasMapper;
  *
  * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
-class PropertyFacetHandler implements PartialFacetHandlerInterface
+class PropertyFacetHandler implements FacetHandlerInterface
 {
     /**
      * @var PropertyGatewayInterface
@@ -91,26 +89,35 @@ class PropertyFacetHandler implements PartialFacetHandlerInterface
 
     /**
      * @param FacetInterface|Facet\PropertyFacet $facet
-     * @param Criteria                           $reverted
      * @param Criteria                           $criteria
-     * @param ShopContextInterface               $context
+     * @param Struct\ShopContextInterface        $context
      *
-     * @return FacetResultInterface|null
+     * @return FacetResultGroup[]
      */
-    public function generatePartialFacet(
+    public function generateFacet(
         FacetInterface $facet,
-        Criteria $reverted,
         Criteria $criteria,
-        ShopContextInterface $context
+        Struct\ShopContextInterface $context
     ) {
-        $properties = $this->getProperties($context, $reverted);
+        $queryCriteria = clone $criteria;
+        $queryCriteria->resetConditions();
+        $queryCriteria->resetSorting();
+        $queryCriteria->resetFacets();
+        $queryCriteria->offset(0)->limit(1);
 
-        if (null === $properties) {
+        $properties = $this->getProperties($context, $queryCriteria);
+
+        if ($properties == null) {
             return null;
         }
+
         $actives = $this->getFilteredValues($criteria);
 
-        return $this->createCollectionResult($facet, $properties, $actives);
+        return $this->createCollectionResult(
+            $facet,
+            $properties,
+            $actives
+        );
     }
 
     /**

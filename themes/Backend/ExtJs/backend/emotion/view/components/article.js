@@ -19,6 +19,12 @@
  * The licensing of the program under the AGPLv3 does not imply a
  * trademark license. Therefore any rights, title and interest in
  * our trademarks remain entirely with us.
+ *
+ * @category   Shopware
+ * @package    UserManager
+ * @subpackage View
+ * @version    $Id$
+ * @author shopware AG
  */
 //{block name="backend/emotion/view/components/article"}
 //{namespace name=backend/emotion/view/components/article}
@@ -27,11 +33,10 @@ Ext.define('Shopware.apps.Emotion.view.components.Article', {
     alias: 'widget.emotion-components-article',
 
     snippets: {
-        article: '{s name=article}{/s}',
-        variant: '{s name=variant}{/s}',
+        article: '{s name=article}Search article{/s}',
         productImageOnly: {
-            fieldLabel: '{s name=productImageOnly/label}{/s}',
-            supportText: '{s name=productImageOnly/support}{/s}'
+            fieldLabel: '{s name=productImageOnly/label}Do not add styling{/s}',
+            supportText: '{s name=productImageOnly/support}If selected, no other layout styling is applied.{/s}'
         },
         no_border: {
             fieldLabel: '{s name="noBorder/label"}{/s}',
@@ -56,7 +61,7 @@ Ext.define('Shopware.apps.Emotion.view.components.Article', {
         me.callParent(arguments);
 
         me.articleSearch = me.down('emotion-components-fields-article');
-        me.variantSearch = me.down('emotion-components-fields-variant');
+        me.articleSearch.searchField.setValue(me.articleSearch.hiddenField.getValue());
 
         me.articleCategory = me.down('emotion-components-fields-category-selection');
 
@@ -90,13 +95,11 @@ Ext.define('Shopware.apps.Emotion.view.components.Article', {
             type = articleType || me.articleType;
 
         me.articleSearch.setVisible(type === 'selected_article');
-        me.articleSearch.combo.allowBlank = (type !== 'selected_article');
+        me.articleSearch.searchField.allowBlank = (type !== 'selected_article');
+        me.articleSearch.hiddenField.allowBlank = (type !== 'selected_article');
 
-        me.variantSearch.setVisible(type === 'selected_variant');
-        me.variantSearch.combo.allowBlank = (type !== 'selected_variant');
-
-        me.articleCategory.setVisible(type !== 'selected_article' && type !== 'selected_variant');
-        me.articleCategory.allowBlank = (type === 'selected_article' || type === 'selected_variant');
+        me.articleCategory.setVisible(type !== 'selected_article');
+        me.articleCategory.allowBlank = (type === 'selected_article');
     },
 
     /**

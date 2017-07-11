@@ -97,8 +97,6 @@ class AppCache extends HttpCache
      */
     public function handle(Request $request, $type = HttpKernelInterface::MASTER_REQUEST, $catch = true)
     {
-        $this->checkSltCookie($request);
-
         $request->headers->set('Surrogate-Capability', 'shopware="ESI/1.0"');
 
         if (strpos($request->getPathInfo(), '/backend/') === 0) {
@@ -116,7 +114,7 @@ class AppCache extends HttpCache
         $response = parent::handle($request, $type, $catch);
 
         $response->headers->remove('cache-control');
-        $response->headers->addCacheControlDirective('no-cache');
+        $response->headers->addCacheControlDirective('nocache');
 
         return $response;
     }
@@ -326,24 +324,5 @@ class AppCache extends HttpCache
         $allowedIps = $this->options['purge_allowed_ips'];
 
         return $allowedIps;
-    }
-
-    /**
-     * @param Request $request
-     */
-    private function checkSltCookie(Request $request)
-    {
-        if (!$request->cookies->has('slt')) {
-            return;
-        }
-
-        $noCache = $request->cookies->get('nocache');
-        $noCache = array_filter(explode(', ', $noCache));
-        if (in_array('slt', $noCache)) {
-            return;
-        }
-
-        $noCache[] = 'slt';
-        $request->cookies->set('nocache', implode(', ', $noCache));
     }
 }

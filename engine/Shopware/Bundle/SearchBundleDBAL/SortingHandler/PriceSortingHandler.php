@@ -26,8 +26,7 @@ namespace Shopware\Bundle\SearchBundleDBAL\SortingHandler;
 
 use Shopware\Bundle\SearchBundle\Sorting\PriceSorting;
 use Shopware\Bundle\SearchBundle\SortingInterface;
-use Shopware\Bundle\SearchBundleDBAL\ConditionHandler\PriceConditionHandler;
-use Shopware\Bundle\SearchBundleDBAL\ListingPriceTable;
+use Shopware\Bundle\SearchBundleDBAL\PriceHelperInterface;
 use Shopware\Bundle\SearchBundleDBAL\QueryBuilder;
 use Shopware\Bundle\SearchBundleDBAL\SortingHandlerInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
@@ -40,16 +39,16 @@ use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 class PriceSortingHandler implements SortingHandlerInterface
 {
     /**
-     * @var ListingPriceTable
+     * @var PriceHelperInterface
      */
-    private $listingPriceTable;
+    private $priceHelper;
 
     /**
-     * @param ListingPriceTable $listingPriceTable
+     * @param PriceHelperInterface $priceHelper
      */
-    public function __construct(ListingPriceTable $listingPriceTable)
+    public function __construct(PriceHelperInterface $priceHelper)
     {
-        $this->listingPriceTable = $listingPriceTable;
+        $this->priceHelper = $priceHelper;
     }
 
     /**
@@ -68,16 +67,13 @@ class PriceSortingHandler implements SortingHandlerInterface
         QueryBuilder $query,
         ShopContextInterface $context
     ) {
-        if (!$query->hasState(PriceConditionHandler::LISTING_PRICE_JOINED)) {
-            $table = $this->listingPriceTable->get($context);
-            $query->innerJoin('product', '(' . $table->getSQL() . ')', 'listing_price', 'listing_price.articleID = product.id');
-            foreach ($table->getParameters() as $key => $value) {
-                $query->setParameter($key, $value);
-            }
-            $query->addState(PriceConditionHandler::LISTING_PRICE_JOINED);
-        }
+        $selection = $this->priceHelper->getSelection($context);
+
+        $this->priceHelper->joinPrices($query, $context);
+        $query->addSelect('MIN(' . $selection . ') as cheapest_price');
 
         /* @var PriceSorting $sorting */
-        $query->addOrderBy('listing_price.cheapest_price', $sorting->getDirection());
+        $query->addOrderBy('cheapest_price', $sorting->getDirection())
+            ->addOrderBy('product.id', $sorting->getDirection());
     }
 }

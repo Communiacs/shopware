@@ -14,9 +14,6 @@ namespace ONGR\ElasticsearchDSL\Suggest;
 use ONGR\ElasticsearchDSL\BuilderInterface;
 use ONGR\ElasticsearchDSL\ParametersTrait;
 
-/**
- * @deprecated TermSuggestClass is deprecated, use Suggest instead
- */
 class TermSuggest implements BuilderInterface
 {
     use ParametersTrait;

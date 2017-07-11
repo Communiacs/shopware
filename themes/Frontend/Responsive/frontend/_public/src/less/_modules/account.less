@@ -41,8 +41,9 @@ It allows the user to directly see and change the important information of their
 
 .account--menu {
     .link--logout {
-        font-weight: bold;
-        color: @brand-primary;
+        [class^="icon--"] {
+            display: none;
+        }
     }
 }
 
@@ -442,9 +443,9 @@ It allows the user to directly see and change the important information of their
         .unitize(font-size, 14);
     }
 
-    .select-field {
+    .js--fancy-select {
         .unitize(margin-bottom, 10);
-        max-width: 100%;
+        width: 100%;
     }
 
     .profile--field {
@@ -474,14 +475,14 @@ It allows the user to directly see and change the important information of their
     .profile--birthdate {
         .clearfix();
 
-        .select-field {
+        .js--fancy-select {
             .unitize(margin-bottom, 15);
-            max-width: 100%;
+            width: 100%;
             float: left;
         }
 
         .profile--birthyear,
-        .profile--birthyear.select-field {
+        .profile--birthyear .js--fancy-select {
             .unitize(margin-right, 0);
         }
 
@@ -848,20 +849,24 @@ It allows the user to directly see and change the important information of their
         .unitize(margin, 0);
         .unitize(padding-top, 30);
 
-        .select-field {
+        .js--fancy-select {
             .unitize(margin-bottom, 15);
+
+            .profile--birthday {
+                margin-right: 2%;
+            }
         }
 
         .profile--field {
             .unitize(margin-bottom, 15);
         }
 
-        .select-field {
-            .unitize(max-width, 290);
+        .js--fancy-select {
+            .unitize-width(290);
         }
 
         .profile--birthdate {
-            .select-field {
+            .js--fancy-select {
                 width: 32%;
                 margin-right: 2%;
             }

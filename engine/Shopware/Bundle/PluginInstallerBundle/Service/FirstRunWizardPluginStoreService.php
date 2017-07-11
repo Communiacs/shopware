@@ -47,11 +47,6 @@ class FirstRunWizardPluginStoreService
      */
     private $localPluginService;
 
-    /**
-     * @param StructHydrator     $hydrator
-     * @param PluginLocalService $localPluginService
-     * @param StoreClient        $storeClient
-     */
     public function __construct(
         StructHydrator $hydrator,
         PluginLocalService $localPluginService,
@@ -65,12 +60,12 @@ class FirstRunWizardPluginStoreService
     /**
      * Loads recommended plugins from SBP
      *
-     * @param LocaleStruct|null $locale          Locale in which to translate the information
-     * @param string            $shopwareVersion Current Shopware version
+     * @param LocaleStruct $locale          Locale in which to translate the information
+     * @param string       $shopwareVersion Current Shopware version
      *
      * @return array List of plugins
      */
-    public function getRecommendedPlugins(LocaleStruct $locale = null, $shopwareVersion)
+    public function getRecommendedPlugins($locale, $shopwareVersion)
     {
         $localeName = $locale ? $locale->getName() : null;
 
@@ -111,12 +106,12 @@ class FirstRunWizardPluginStoreService
     /**
      * Loads demo data plugins from SBP
      *
-     * @param LocaleStruct|null $locale          Locale in which to translate the information
-     * @param string            $shopwareVersion Current Shopware version
+     * @param LocaleStruct $locale          Locale in which to translate the information
+     * @param string       $shopwareVersion Current Shopware version
      *
      * @return array List of plugins
      */
-    public function getDemoDataPlugins(LocaleStruct $locale = null, $shopwareVersion)
+    public function getDemoDataPlugins($locale, $shopwareVersion)
     {
         $localeName = $locale ? $locale->getName() : null;
 
@@ -133,12 +128,12 @@ class FirstRunWizardPluginStoreService
     /**
      * Loads localization options from SBP
      *
-     * @param LocaleStruct|null $locale          Locale in which to translate the information
-     * @param string            $shopwareVersion Current Shopware version
+     * @param LocaleStruct $locale          Locale in which to translate the information
+     * @param string       $shopwareVersion Current Shopware version
      *
      * @return array List of plugins
      */
-    public function getLocalizations(LocaleStruct $locale = null, $shopwareVersion)
+    public function getLocalizations($locale, $shopwareVersion)
     {
         $localeName = $locale ? $locale->getName() : null;
 
@@ -153,11 +148,11 @@ class FirstRunWizardPluginStoreService
     /**
      * Loads countries for integrated plugins from SBP
      *
-     * @param LocaleStruct|null $locale Locale in which to translate the information
+     * @param LocaleStruct $locale Locale in which to translate the information
      *
-     * @return string[] List of countries
+     * @return array List of countries
      */
-    public function getIntegratedPluginsCountries(LocaleStruct $locale = null)
+    public function getIntegratedPluginsCountries($locale)
     {
         $localeName = $locale ? $locale->getName() : null;
 
@@ -172,13 +167,13 @@ class FirstRunWizardPluginStoreService
     /**
      * Loads localization plugins from SBP for the given localization
      *
-     * @param string            $localization    Localization for which to retrieve the plugins
-     * @param LocaleStruct|null $locale          Locale in which to translate the information
-     * @param string            $shopwareVersion Current Shopware version
+     * @param string       $localization    Localization for which to retrieve the plugins
+     * @param LocaleStruct $locale          Locale in which to translate the information
+     * @param string       $shopwareVersion Current Shopware version
      *
-     * @return PluginStruct[] List of plugins
+     * @return array List of plugins
      */
-    public function getLocalizationPlugins($localization, LocaleStruct $locale = null, $shopwareVersion)
+    public function getLocalizationPlugins($localization, $locale, $shopwareVersion)
     {
         $localeName = $locale ? $locale->getName() : null;
 
@@ -193,33 +188,11 @@ class FirstRunWizardPluginStoreService
     }
 
     /**
-     * Loads all available localization plugins from SBP
-     *
-     * @param LocaleStruct|null $locale          Locale in which to translate the information
-     * @param string            $shopwareVersion Current Shopware version
-     *
-     * @return PluginStruct[] List of plugins
-     */
-    public function getAvailableLocalizations(LocaleStruct $locale = null, $shopwareVersion)
-    {
-        $localeName = $locale ? $locale->getName() : null;
-
-        $data = $this->storeClient->doGetRequest(
-            '/firstrunwizard/localizations',
-            ['locale' => $localeName, 'shopwareVersion' => $shopwareVersion]
-        );
-
-        $plugins = $this->hydrator->hydrateStorePlugins($data);
-
-        return $this->getAdditionallyLocalData($plugins);
-    }
-
-    /**
      * @param PluginStruct[] $plugins
      *
      * @return PluginStruct[]
      */
-    private function getAdditionallyLocalData(array $plugins)
+    private function getAdditionallyLocalData($plugins)
     {
         $context = new PluginsByTechnicalNameRequest(
             null,

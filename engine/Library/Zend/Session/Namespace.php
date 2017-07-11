@@ -24,11 +24,13 @@
 /**
  * @see Zend_Session
  */
+require_once 'Zend/Session.php';
 
 
 /**
  * @see Zend_Session_Abstract
  */
+require_once 'Zend/Session/Abstract.php';
 
 
 /**
@@ -103,6 +105,7 @@ class Zend_Session_Namespace extends Zend_Session_Abstract implements IteratorAg
             /**
              * @see Zend_Session_Exception
              */
+            require_once 'Zend/Session/Exception.php';
             throw new Zend_Session_Exception('Session namespace must be a non-empty string.');
         }
 
@@ -110,6 +113,7 @@ class Zend_Session_Namespace extends Zend_Session_Abstract implements IteratorAg
             /**
              * @see Zend_Session_Exception
              */
+            require_once 'Zend/Session/Exception.php';
             throw new Zend_Session_Exception('Session namespace must not start with an underscore.');
         }
 
@@ -117,6 +121,7 @@ class Zend_Session_Namespace extends Zend_Session_Abstract implements IteratorAg
             /**
              * @see Zend_Session_Exception
              */
+            require_once 'Zend/Session/Exception.php';
             throw new Zend_Session_Exception('Session namespace must not start with a number.');
         }
 
@@ -124,6 +129,7 @@ class Zend_Session_Namespace extends Zend_Session_Abstract implements IteratorAg
             /**
              * @see Zend_Session_Exception
              */
+            require_once 'Zend/Session/Exception.php';
             throw new Zend_Session_Exception("A session namespace object already exists for this namespace ('$namespace'), and no additional accessors (session namespace objects) for this namespace are permitted.");
         }
 
@@ -140,6 +146,7 @@ class Zend_Session_Namespace extends Zend_Session_Abstract implements IteratorAg
             /**
              * @see Zend_Session_Exception
              */
+            require_once 'Zend/Session/Exception.php';
             throw new Zend_Session_Exception(self::_THROW_NOT_READABLE_MSG);
         }
 
@@ -273,6 +280,7 @@ class Zend_Session_Namespace extends Zend_Session_Abstract implements IteratorAg
             /**
              * @see Zend_Session_Exception
              */
+            require_once 'Zend/Session/Exception.php';
             throw new Zend_Session_Exception("The '$name' key must be a non-empty string");
         }
 
@@ -294,6 +302,7 @@ class Zend_Session_Namespace extends Zend_Session_Abstract implements IteratorAg
             /**
              * @see Zend_Session_Exception
              */
+            require_once 'Zend/Session/Exception.php';
             throw new Zend_Session_Exception('This session/namespace has been marked as read-only.');
         }
 
@@ -301,6 +310,7 @@ class Zend_Session_Namespace extends Zend_Session_Abstract implements IteratorAg
             /**
              * @see Zend_Session_Exception
              */
+            require_once 'Zend/Session/Exception.php';
             throw new Zend_Session_Exception("The '$name' key must be a non-empty string");
         }
 
@@ -308,6 +318,7 @@ class Zend_Session_Namespace extends Zend_Session_Abstract implements IteratorAg
             /**
              * @see Zend_Session_Exception
              */
+            require_once 'Zend/Session/Exception.php';
             throw new Zend_Session_Exception(parent::_THROW_NOT_WRITABLE_MSG);
         }
 
@@ -356,6 +367,7 @@ class Zend_Session_Namespace extends Zend_Session_Abstract implements IteratorAg
             /**
              * @see Zend_Session_Exception
              */
+            require_once 'Zend/Session/Exception.php';
             throw new Zend_Session_Exception('Result must be an array. Got: ' . gettype($result));
         }
         $_SESSION[$this->_namespace] = $result;
@@ -375,6 +387,7 @@ class Zend_Session_Namespace extends Zend_Session_Abstract implements IteratorAg
             /**
              * @see Zend_Session_Exception
              */
+            require_once 'Zend/Session/Exception.php';
             throw new Zend_Session_Exception("The '$name' key must be a non-empty string");
         }
 
@@ -394,6 +407,7 @@ class Zend_Session_Namespace extends Zend_Session_Abstract implements IteratorAg
             /**
              * @see Zend_Session_Exception
              */
+            require_once 'Zend/Session/Exception.php';
             throw new Zend_Session_Exception("The '$name' key must be a non-empty string");
         }
 
@@ -416,6 +430,7 @@ class Zend_Session_Namespace extends Zend_Session_Abstract implements IteratorAg
             /**
              * @see Zend_Session_Exception
              */
+            require_once 'Zend/Session/Exception.php';
             throw new Zend_Session_Exception(parent::_THROW_NOT_WRITABLE_MSG);
         }
 
@@ -423,6 +438,7 @@ class Zend_Session_Namespace extends Zend_Session_Abstract implements IteratorAg
             /**
              * @see Zend_Session_Exception
              */
+            require_once 'Zend/Session/Exception.php';
             throw new Zend_Session_Exception('Seconds must be positive.');
         }
 
@@ -462,6 +478,7 @@ class Zend_Session_Namespace extends Zend_Session_Abstract implements IteratorAg
             /**
              * @see Zend_Session_Exception
              */
+            require_once 'Zend/Session/Exception.php';
             throw new Zend_Session_Exception(parent::_THROW_NOT_WRITABLE_MSG);
         }
 
@@ -469,6 +486,7 @@ class Zend_Session_Namespace extends Zend_Session_Abstract implements IteratorAg
             /**
              * @see Zend_Session_Exception
              */
+            require_once 'Zend/Session/Exception.php';
             throw new Zend_Session_Exception('Hops must be positive number.');
         }
 

@@ -46,9 +46,6 @@ Ext.define('Shopware.form.field.Grid', {
     hideHeaders: true,
     baseBodyCls: Ext.baseCSSPrefix + 'form-item-body shopware-multi-selection-form-item-body',
     separator: '|',
-    allowBlank: true,
-    
-    fieldLabelConfig: 'default',
 
     /**
      * @required
@@ -70,23 +67,11 @@ Ext.define('Shopware.form.field.Grid', {
      */
     animateAddItem: true,
 
-    useSeparator: true,
-
-    /**
-     * @boolean
-     */
-    ignoreDisabled: true,
-
     initComponent: function() {
         var me = this;
 
         me.store = me.initializeStore();
         me.items = me.createItems();
-
-        if (me.fieldLabelConfig !== 'default') {
-            me.fieldLabel = '';
-        }
-
         me.callParent(arguments);
     },
 
@@ -215,7 +200,6 @@ Ext.define('Shopware.form.field.Grid', {
     removeItem: function(record) {
         var me = this;
         me.store.remove(record);
-        me.fixLayout();
     },
 
     /**
@@ -238,7 +222,6 @@ Ext.define('Shopware.form.field.Grid', {
         if (!exist) {
             this.store.add(record);
         }
-        me.fixLayout();
         return !exist;
     },
 
@@ -253,13 +236,7 @@ Ext.define('Shopware.form.field.Grid', {
             margin = '0 25 0 0';
         }
 
-        var emptyText = '';
-        if (me.fieldLabelConfig === 'as_empty_text') {
-            emptyText = me.fieldLabel;
-        }
-
         return {
-            emptyText: emptyText,
             helpText: me.helpText,
             helpTitle: me.helpTitle,
             store: me.searchStore,
@@ -269,32 +246,15 @@ Ext.define('Shopware.form.field.Grid', {
             pageSize: me.searchStore.pageSize,
             listeners: {
                 beforeselect: function (combo, records) {
-                    return me.onBeforeSelect(combo, records);
-                },
-                select: function(combo, records) {
-                    return me.onSelect(combo, records);
+                    var added = false;
+                    Ext.each(records, function(record) {
+                        added = me.addItem(record);
+                        me.animateAdded(combo, added, record);
+                    });
+                    return false;
                 }
             }
         };
-    },
-
-    /**
-     * allows to override the select event
-     * @param combo
-     * @param records
-     */
-    onSelect: function(combo, records) {
-
-    },
-
-    onBeforeSelect: function(combo, records) {
-        var me = this, added = false;
-
-        Ext.each(records, function(record) {
-            added = me.addItem(record);
-            me.animateAdded(combo, added, record);
-        });
-        return false;
     },
 
     animateAdded: function(combo, added, record) {
@@ -318,11 +278,9 @@ Ext.define('Shopware.form.field.Grid', {
     },
 
     getValue: function() {
-        var me = this, recordData = [], store = me.store;
-
-        if (me.isDisabled() && !me.ignoreDisabled) {
-            return null;
-        }
+        var me = this;
+        var recordData = [];
+        var store = me.store;
 
         store.each(function(item) {
             recordData.push(me.getItemData(item));
@@ -332,9 +290,6 @@ Ext.define('Shopware.form.field.Grid', {
             return null;
         }
 
-        if (!me.useSeparator) {
-            return recordData;
-        }
         return me.separator + recordData.join(me.separator) + me.separator;
     },
 
@@ -343,76 +298,31 @@ Ext.define('Shopware.form.field.Grid', {
 
         me.store.removeAll();
         if (!value) {
-            me.isValid();
-            me.fixLayout();
             return;
         }
 
         try {
-            var ids = value;
-            if (me.useSeparator) {
-                ids = value.split(me.separator);
-            }
-            ids = ids.filter(function(id) {
-                return id.length > 0 || id > 0;
+            var ids = value.split(me.separator);
+            ids = ids.filter(function(value) {
+                return value.length > 0;
             });
         } catch (e) {
             return;
         }
 
         if (!ids || ids.length <= 0) {
-            me.isValid();
             return;
         }
 
         me.store.load({
-            params: { ids: Ext.JSON.encode(ids) },
-            callback: function() {
-                me.isValid();
-                me.fixLayout();
-            }
+            params: { ids: Ext.JSON.encode(ids) }
         });
-    },
-
-    fixLayout: function() {
-        if (!this.rendered) {
-            return;
-        }
-        if (this.getHeight() <= 0) {
-            return;
-        }
-
-        this.setHeight(this.getHeight());
     },
 
     getSubmitData: function() {
         var value = { };
         value[this.name] = this.getValue();
         return value;
-    },
-
-    isValid: function() {
-        var me = this;
-
-        if (me.searchField && me.searchField.combo) {
-            me.searchField.combo.clearInvalid();
-        }
-
-        if (me.allowBlank) {
-            return true;
-        }
-
-        if (me.store.getCount() > 0) {
-            return true;
-        }
-
-        if (me.searchField) {
-            me.searchField.combo.markInvalid([
-                '{s name="not_empty"}{/s}'
-            ]);
-        }
-
-        return false;
     },
 
     labelRenderer: function(value, meta, record) {
@@ -432,30 +342,5 @@ Ext.define('Shopware.form.field.Grid', {
             html: '<div>'+supportText+'</div>',
             cls: Ext.baseCSSPrefix +'form-support-text'
         });
-    },
-
-    enable: function() {
-        var me = this;
-
-        me.callParent(arguments);
-        if (me.grid) {
-            me.grid.enable();
-        }
-        if (me.searchField) {
-            me.searchField.enable();
-        }
-    },
-
-    disable: function() {
-        var me = this;
-
-        me.callParent(arguments);
-
-        if (me.grid) {
-            me.grid.disable();
-        }
-        if (me.searchField) {
-            me.searchField.disable();
-        }
     }
 });

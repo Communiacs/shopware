@@ -76,6 +76,11 @@ class Country extends Extendable implements \JsonSerializable
     /**
      * @var bool
      */
+    protected $shippingFree;
+
+    /**
+     * @var bool
+     */
     protected $taxFree;
 
     /**
@@ -200,6 +205,14 @@ class Country extends Extendable implements \JsonSerializable
     }
 
     /**
+     * @param bool $shippingFree
+     */
+    public function setShippingFree($shippingFree)
+    {
+        $this->shippingFree = $shippingFree;
+    }
+
+    /**
      * @param bool $taxFree
      */
     public function setTaxFree($taxFree)
@@ -237,6 +250,14 @@ class Country extends Extendable implements \JsonSerializable
     public function setRequiresStateSelection($requiresStateSelection)
     {
         $this->requiresStateSelection = $requiresStateSelection;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isShippingFree()
+    {
+        return $this->shippingFree;
     }
 
     /**

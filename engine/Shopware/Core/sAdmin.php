@@ -494,19 +494,19 @@ class sAdmin
         if (!count($paymentData)) {
             throw new Enlight_Exception('sValidateStep3 #01: Could not load paymentmean');
         }
-        // Include management class and check input data
-        if (!empty($paymentData['class'])) {
-            $sPaymentObject = $this->sInitiatePaymentClass($paymentData);
-            $requestData = $this->front->Request()->getParams();
-            $checkPayment = $sPaymentObject->validate($requestData);
-        }
+            // Include management class and check input data
+            if (!empty($paymentData['class'])) {
+                $sPaymentObject = $this->sInitiatePaymentClass($paymentData);
+                $requestData = $this->front->Request()->getParams();
+                $checkPayment = $sPaymentObject->validate($requestData);
+            }
 
         return [
-            'checkPayment' => $checkPayment,
-            'paymentData' => $paymentData,
-            'sProcessed' => true,
-            'sPaymentObject' => &$sPaymentObject,
-        ];
+                'checkPayment' => $checkPayment,
+                'paymentData' => $paymentData,
+                'sProcessed' => true,
+                'sPaymentObject' => &$sPaymentObject,
+            ];
     }
 
     /**
@@ -633,8 +633,6 @@ class sAdmin
 
         Shopware()->Session()->unsetAll();
         $this->regenerateSessionId();
-
-        $this->eventManager->notify('Shopware_Modules_Admin_Logout_Successful');
     }
 
     /**
@@ -853,9 +851,9 @@ class sAdmin
         $this->session->offsetUnset('sUserPassword');
         $this->session->offsetUnset('sUserId');
         $this->eventManager->notify(
-            'Shopware_Modules_Admin_CheckUser_Failure',
-            ['subject' => $this, 'session' => $this->session, 'user' => $getUser]
-        );
+                'Shopware_Modules_Admin_CheckUser_Failure',
+                ['subject' => $this, 'session' => $this->session, 'user' => $getUser]
+            );
 
         return false;
     }
@@ -1054,8 +1052,8 @@ class sAdmin
 
             $countryList[$key]['flag'] =
                 ($countryList[$key]['id'] == $this->front->Request()->getPost('country')
-                    || $countryList[$key]['id'] == $this->front->Request()->getPost('countryID')
-                );
+                || $countryList[$key]['id'] == $this->front->Request()->getPost('countryID')
+            );
         }
 
         $countryList = $this->eventManager->filter(
@@ -1339,23 +1337,23 @@ class sAdmin
                 $pagesStructure['numbers'][$i]['markup'] = ($i == $destinationPage);
                 $pagesStructure['numbers'][$i]['value'] = $i;
                 $pagesStructure['numbers'][$i]['link'] = $baseFile . $this->moduleManager->Core()->sBuildLink(
-                        $additionalParams + ['sPage' => $i]
-                    );
+                    $additionalParams + ['sPage' => $i]
+                );
             }
             // Previous page
             if ($destinationPage != 1) {
                 $pagesStructure['previous'] = $baseFile . $this->moduleManager->Core()->sBuildLink(
-                        $additionalParams + ['sPage' => $destinationPage - 1]
-                    );
+                    $additionalParams + ['sPage' => $destinationPage - 1]
+                );
             } else {
                 $pagesStructure['previous'] = null;
             }
             // Next page
             if ($destinationPage != $numberOfPages) {
                 $pagesStructure['next'] = $baseFile . $this->moduleManager->Core()->sBuildLink(
-                        $additionalParams + ['sPage' => $destinationPage + 1],
-                        false
-                    );
+                    $additionalParams + ['sPage' => $destinationPage + 1],
+                    false
+                );
             } else {
                 $pagesStructure['next'] = null;
             }
@@ -1430,7 +1428,7 @@ class sAdmin
         $userData = [];
 
         $countryQuery =
-            'SELECT c.*, a.name AS countryarea
+          'SELECT c.*, a.name AS countryarea
           FROM s_core_countries c
           LEFT JOIN s_core_countries_areas a
            ON a.id = c.areaID AND a.active = 1
@@ -1813,7 +1811,7 @@ class sAdmin
         return
             $user['additional']['user']['firstlogin'] == date('Y-m-d')
             || !$user['additional']['user']['firstlogin']
-            ;
+        ;
     }
 
     /**
@@ -1829,7 +1827,7 @@ class sAdmin
     {
         return
             is_array($order['content']) ? count($order['content']) : $order['content'] >= $value
-            ;
+        ;
     }
 
     /**
@@ -2118,7 +2116,7 @@ class sAdmin
                 trim($user['shippingaddress']['zipcode'])
                 != trim($user['billingaddress']['zipcode'])
             )
-            ;
+        ;
     }
 
     /**
@@ -2151,7 +2149,7 @@ class sAdmin
         return
             preg_match("/$value/", strtolower($user['shippingaddress']['lastname']))
             || preg_match("/$value/", strtolower($user['billingaddress']['lastname']))
-            ;
+        ;
     }
 
     /**
@@ -2225,26 +2223,6 @@ class sAdmin
         if (empty($unsubscribe)) {
             $errorFlag = [];
 
-            $captchaName = $this->front->Request()->getPost('captchaName');
-            if (($captchaName !== 'noCaptcha')) {
-                /** @var \Shopware\Components\Captcha\CaptchaValidator $captchaValidator */
-                $captchaValidator = Shopware()->Container()->get('shopware.captcha.validator');
-
-                try {
-                    $isValid = $captchaValidator->validateByName($captchaName, $this->front->Request());
-                } catch (\Exception $exception) {
-                    // log captchaNotFound Exception
-                    Shopware()->Container()->get('corelogger')->error($exception->getMessage());
-                    $isValid = $captchaValidator->validateByName('nocaptcha', $this->front->Request());
-                }
-
-                if (!$isValid) {
-                    return [
-                        'code' => 7,
-                    ];
-                }
-            }
-
             $fields = ['newsletter'];
             foreach ($fields as $field) {
                 $fieldData = $this->front->Request()->getPost($field);
@@ -2252,12 +2230,11 @@ class sAdmin
                     $errorFlag[$field] = true;
                 }
             }
-
             if (!empty($errorFlag)) {
                 return [
                     'code' => 5,
                     'message' => $this->snippetManager->getNamespace('frontend/account/internalMessages')
-                        ->get('ErrorFillIn', 'Please fill in all red fields'),
+                            ->get('ErrorFillIn', 'Please fill in all red fields'),
                     'sErrorFlag' => $errorFlag,
                 ];
             }
@@ -2277,14 +2254,14 @@ class sAdmin
             return [
                 'code' => 6,
                 'message' => $this->snippetManager->getNamespace('frontend/account/internalMessages')
-                    ->get('NewsletterFailureMail', 'Enter eMail address'),
+                        ->get('NewsletterFailureMail', 'Enter eMail address'),
             ];
         }
         if (!$this->emailValidator->isValid($email)) {
             return [
                 'code' => 1,
                 'message' => $this->snippetManager->getNamespace('frontend/account/internalMessages')
-                    ->get('NewsletterFailureInvalid', 'Enter valid eMail address'),
+                        ->get('NewsletterFailureInvalid', 'Enter valid eMail address'),
             ];
         }
         if (!$unsubscribe) {
@@ -2297,13 +2274,13 @@ class sAdmin
                 $result = [
                     'code' => 4,
                     'message' => $this->snippetManager->getNamespace('frontend/account/internalMessages')
-                        ->get('NewsletterFailureNotFound', 'This mail address could not be found'),
+                            ->get('NewsletterFailureNotFound', 'This mail address could not be found'),
                 ];
             } else {
                 $result = [
                     'code' => 5,
                     'message' => $this->snippetManager->getNamespace('frontend/account/internalMessages')
-                        ->get('NewsletterMailDeleted', 'Your mail address was deleted'),
+                            ->get('NewsletterMailDeleted', 'Your mail address was deleted'),
                 ];
             }
         }
@@ -2377,10 +2354,12 @@ class sAdmin
         $sql = "
             SELECT c.id, c.id as countryID, countryname, countryiso,
                 (SELECT name FROM s_core_countries_areas WHERE id = areaID ) AS countryarea,
-                countryen, c.position, notice
+                countryen, c.position, notice, c.shippingfree as shippingfree
             FROM s_core_countries c
             WHERE $sql
         ";
+        $currencyFactor = empty($this->sSYSTEM->sCurrency['factor']) ? 1 : $this->sSYSTEM->sCurrency['factor'];
+        $cache[$country]['shippingfree'] = round($cache[$country]['shippingfree'] * $currencyFactor, 2);
 
         return $cache[$country] = $this->db->fetchRow($sql) ?: [];
     }
@@ -2505,14 +2484,22 @@ class sAdmin
             ON u.id = :userId
             AND u.active = 1
 
-            LEFT JOIN s_user_addresses as ub
-                ON ub.user_id = u.id
-                AND ub.id = :billingAddressId
+            LEFT JOIN (
+              SELECT *, user_id as userID, country_id as countryID, state_id as stateID
+              FROM s_user_addresses a
+              WHERE a.user_id = :userId
+              AND a.id = :billingAddressId
+            ) as ub
+              ON ub.userID = u.id
               
-            LEFT JOIN s_user_addresses as us
-                ON us.user_id = u.id
-                AND us.id = :shippingAddressId
-                
+           LEFT JOIN (
+              SELECT *, user_id as userID, country_id as countryID, state_id as stateID
+              FROM s_user_addresses a
+              WHERE a.user_id = :userId
+              AND a.id = :shippingAddressId
+            ) as us
+              ON us.userID = u.id   
+
             WHERE b.sessionID = :sessionId
 
             GROUP BY b.sessionID
@@ -2690,13 +2677,21 @@ class sAdmin
             ON u.id=b.userID
             AND u.active=1
 
-            LEFT JOIN s_user_addresses as ub
-                ON ub.user_id = u.id
-                AND ub.id = :billingAddressId
+            LEFT JOIN (
+              SELECT *, user_id as userID, country_id as countryID, state_id as stateID
+              FROM s_user_addresses a
+              WHERE a.user_id = :userId
+              AND a.id = :billingAddressId
+            ) as ub
+              ON ub.userID = u.id
               
-            LEFT JOIN s_user_addresses as us
-                ON us.user_id = u.id
-                AND us.id = :shippingAddressId
+           LEFT JOIN (
+              SELECT *, user_id as userID, country_id as countryID, state_id as stateID
+              FROM s_user_addresses a
+              WHERE a.user_id = :userId
+              AND a.id = :shippingAddressId
+            ) as us
+              ON us.userID = u.id
 
             WHERE d.active=1
             AND (
@@ -2730,9 +2725,11 @@ class sAdmin
             ORDER BY d.position, d.name
         ";
 
+        $userId = $this->session->offsetGet('sUserId');
         $dispatches = $this->db->fetchAssoc(
             $sql,
             [
+                'userId' => empty($userId) ? 0 : $userId,
                 'billingAddressId' => $this->getBillingAddressId(),
                 'shippingAddressId' => $this->getShippingAddressId(),
             ]
@@ -2852,13 +2849,21 @@ class sAdmin
             ON u.id=b.userID
             AND u.active=1
 
-            LEFT JOIN s_user_addresses as ub
-                ON ub.user_id = u.id
-                AND ub.id = :billingAddressId
+            LEFT JOIN (
+              SELECT *, user_id as userID, country_id as countryID, state_id as stateID
+              FROM s_user_addresses a
+              WHERE a.user_id = :userId
+              AND a.id = :billingAddressId
+            ) as ub
+              ON ub.userID = u.id
               
-            LEFT JOIN s_user_addresses as us
-                ON us.user_id = u.id
-                AND us.id = :shippingAddressId
+           LEFT JOIN (
+              SELECT *, user_id as userID, country_id as countryID, state_id as stateID
+              FROM s_user_addresses a
+              WHERE a.user_id = :userId
+              AND a.id = :shippingAddressId
+            ) as us
+              ON us.userID = u.id
 
             WHERE d.active=1
             AND (
@@ -2892,11 +2897,14 @@ class sAdmin
             GROUP BY d.id
         ";
 
+        $userId = $this->session->offsetGet('sUserId');
+
         return $this->calculateDispatchSurcharge(
             $basket,
             $this->db->fetchAll(
                 $sql,
                 [
+                    'userId' => empty($userId) ? 0 : $userId,
                     'billingAddressId' => $this->getBillingAddressId(),
                     'shippingAddressId' => $this->getShippingAddressId(),
                 ]
@@ -3197,6 +3205,7 @@ class sAdmin
         $sessions = [
             's_order_basket' => 'sessionID',
             's_user' => 'sessionID',
+            's_emarketing_lastarticles' => 'sessionID',
             's_order_comparisons' => 'sessionID',
         ];
 
@@ -3321,7 +3330,7 @@ class sAdmin
      */
     private function completeUserCountryData(array $userData, $isShippingAddress = false)
     {
-        $sql = <<<'SQL'
+        $sql = <<<SQL
 SELECT c.*, a.name AS countryarea
 FROM s_core_countries c
 LEFT JOIN s_core_countries_areas a ON a.id = c.areaID AND a.active = 1
@@ -3538,7 +3547,7 @@ SQL;
     {
         // Query country information
         $userData['additional']['country'] = $this->db->fetchRow(
-            'SELECT c.*, a.name AS countryarea
+        'SELECT c.*, a.name AS countryarea
           FROM s_core_countries c
           LEFT JOIN s_core_countries_areas a
            ON a.id = c.areaID AND a.active = 1
@@ -3586,9 +3595,22 @@ SQL;
         $shipping['attributes'] = $this->attributeLoader->load('s_user_addresses_attributes', $shipping['id']) ?: [];
         $userData['shippingaddress'] = $shipping;
 
+        // If shipping address is not available, billing address is coeval the shipping address
+        $countryShipping = $this->config->get('sCOUNTRYSHIPPING');
         if (!isset($userData['shippingaddress']['firstname'])) {
             $userData['shippingaddress'] = $userData['billingaddress'];
             $userData['shippingaddress']['eqalBilling'] = true;
+        } else {
+            if (($userData['shippingaddress']['countryID'] != $userData['billingaddress']['countryID'])
+                && empty($countryShipping)
+            ) {
+                $this->db->update(
+                    's_user_shippingaddress',
+                    ['countryID' => $userData['billingaddress']['countryID']],
+                    ['id = ?' => $userData['shippingaddress']['id']]
+                );
+                $userData['shippingaddress']['countryID'] = $userData['billingaddress']['countryID'];
+            }
         }
 
         if (empty($userData['shippingaddress']['countryID'])) {
@@ -3662,7 +3684,7 @@ SQL;
             $result = [
                 'code' => 10,
                 'message' => $this->snippetManager->getNamespace('frontend/account/internalMessages')
-                    ->get('UnknownError', 'Unknown error'),
+                        ->get('UnknownError', 'Unknown error'),
             ];
 
             return $result;
@@ -3686,7 +3708,7 @@ SQL;
                 $result = [
                     'code' => 10,
                     'message' => $this->snippetManager->getNamespace('frontend/account/internalMessages')
-                        ->get('UnknownError', 'Unknown error'),
+                            ->get('UnknownError', 'Unknown error'),
                 ];
 
                 return $result;

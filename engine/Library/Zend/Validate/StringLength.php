@@ -22,6 +22,7 @@
 /**
  * @see Zend_Validate_Abstract
  */
+require_once 'Zend/Validate/Abstract.php';
 
 /**
  * @category   Zend
@@ -136,6 +137,7 @@ class Zend_Validate_StringLength extends Zend_Validate_Abstract
             /**
              * @see Zend_Validate_Exception
              */
+            require_once 'Zend/Validate/Exception.php';
             throw new Zend_Validate_Exception("The minimum must be less than or equal to the maximum length, but $min >"
                                             . " $this->_max");
         }
@@ -168,6 +170,7 @@ class Zend_Validate_StringLength extends Zend_Validate_Abstract
             /**
              * @see Zend_Validate_Exception
              */
+            require_once 'Zend/Validate/Exception.php';
             throw new Zend_Validate_Exception("The maximum must be greater than or equal to the minimum length, but "
                                             . "$max < $this->_min");
         } else {
@@ -196,13 +199,24 @@ class Zend_Validate_StringLength extends Zend_Validate_Abstract
     public function setEncoding($encoding = null)
     {
         if ($encoding !== null) {
-            $orig = ini_get('default_charset');
-            $result = ini_set('default_charset', $encoding);
+            $orig = PHP_VERSION_ID < 50600
+                ? iconv_get_encoding('internal_encoding')
+                : ini_get('default_charset');
+            if (PHP_VERSION_ID < 50600) {
+                $result = iconv_set_encoding('internal_encoding', $encoding);
+            } else {
+                $result = ini_set('default_charset', $encoding);
+            }
             if (!$result) {
+                require_once 'Zend/Validate/Exception.php';
                 throw new Zend_Validate_Exception('Given encoding not supported on this OS!');
             }
 
-            ini_set('default_charset', $orig);
+            if (PHP_VERSION_ID < 50600) {
+                iconv_set_encoding('internal_encoding', $orig);
+            } else {
+                ini_set('default_charset', $orig);
+            }
         }
 
         $this->_encoding = $encoding;

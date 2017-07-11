@@ -189,7 +189,6 @@ class LegacyPluginInstaller
         }
 
         $plugin->setActive(true);
-        $plugin->setInSafeMode(false);
         $this->em->flush($plugin);
 
         return $result;

@@ -762,13 +762,11 @@ class Shopware_Controllers_Backend_NewsletterManager extends Shopware_Controller
      */
     private function serializeGroup($groups)
     {
-        $newGroup = [[], [], []];
+        $newGroup = [[], []];
 
         foreach ($groups as $key => $values) {
             if ($values['isCustomerGroup'] === true) {
                 array_push($newGroup[0][$values['groupkey']], $values['number']);
-            } elseif ($values['streamId'] !== null) {
-                array_push($newGroup[2][$values['streamId']], $values['number']);
             } else {
                 array_push($newGroup[1][$values['internalId']], $values['number']);
             }
@@ -791,38 +789,16 @@ class Shopware_Controllers_Backend_NewsletterManager extends Shopware_Controller
         $flattenedGroup = [];
         foreach ($groups as $group => $item) {
             foreach ($item as $id => $number) {
-                switch ($group) {
-                    case 0:
-                        $flattenedGroup[] = [
-                            'internalId' => null,
-                            'number' => $number,
-                            'name' => '',
-                            'streamId' => null,
-                            'groupkey' => $id,
-                            'isCustomerGroup' => true,
-                        ];
-                        break;
-                    case 1:
-                        $flattenedGroup[] = [
-                            'internalId' => $id,
-                            'number' => $number,
-                            'name' => '',
-                            'streamId' => null,
-                            'groupkey' => false,
-                            'isCustomerGroup' => false,
-                        ];
-                        break;
-                    case 2:
-                        $flattenedGroup[] = [
-                            'internalId' => null,
-                            'number' => $number,
-                            'name' => '',
-                            'streamId' => $id,
-                            'groupkey' => false,
-                            'isCustomerGroup' => false,
-                        ];
-                        break;
-                }
+                $groupKey = ($group === 0) ? $id : false;
+                $isCustomerGroup = ($group === 0) ? true : false;
+
+                $flattenedGroup[] = [
+                    'internalId' => ($group === 0) ? null : $id,
+                    'number' => $number,
+                    'name' => '',
+                    'groupkey' => $groupKey,
+                    'isCustomerGroup' => $isCustomerGroup,
+                ];
             }
         }
 

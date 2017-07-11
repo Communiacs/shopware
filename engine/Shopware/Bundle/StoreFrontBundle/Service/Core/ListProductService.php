@@ -128,10 +128,6 @@ class ListProductService implements Service\ListProductServiceInterface
      */
     public function getList(array $numbers, Struct\ProductContextInterface $context)
     {
-        // faster replacement for array_unique()
-        // see http://stackoverflow.com/questions/8321620/array-unique-vs-array-flip
-        $numbers = array_keys(array_flip($numbers));
-
         $products = $this->productGateway->getList($numbers, $context);
 
         $covers = $this->mediaService->getCovers($products, $context);
@@ -171,21 +167,16 @@ class ListProductService implements Service\ListProductServiceInterface
                 $product->setCategories($categories[$number]);
             }
 
-            $product->addAttribute('marketing', $this->marketingService->getProductAttribute($product));
+            $product->addAttribute(
+                'marketing',
+                $this->marketingService->getProductAttribute($product)
+            );
 
             $this->priceCalculationService->calculateProduct($product, $context);
 
-            if (!$this->isProductValid($product, $context)) {
-                continue;
+            if ($this->isProductValid($product, $context)) {
+                $result[$number] = $product;
             }
-
-            $product->setListingPrice($product->getCheapestUnitPrice());
-            $product->setDisplayFromPrice((count($product->getPrices()) > 1 || $product->hasDifferentPrices()));
-            $product->setAllowBuyInListing($this->allowBuyInListing($product));
-            if ($this->config->get('calculateCheapestPriceWithMinPurchase')) {
-                $product->setListingPrice($product->getCheapestPrice());
-            }
-            $result[$number] = $product;
         }
 
         return $result;
@@ -220,18 +211,5 @@ class ListProductService implements Service\ListProductServiceInterface
         }, $product->getCategories());
 
         return in_array($context->getShop()->getCategory()->getId(), $ids);
-    }
-
-    /**
-     * @param Struct\ListProduct $product
-     *
-     * @return bool
-     */
-    private function allowBuyInListing(Struct\ListProduct $product)
-    {
-        return !$product->hasConfigurator()
-            && $product->isAvailable()
-            && $product->getUnit()->getMinPurchase() <= 1
-            && !$product->displayFromPrice();
     }
 }

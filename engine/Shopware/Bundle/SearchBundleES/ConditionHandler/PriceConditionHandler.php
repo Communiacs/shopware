@@ -30,10 +30,10 @@ use Shopware\Bundle\ESIndexingBundle\FieldMappingInterface;
 use Shopware\Bundle\SearchBundle\Condition\PriceCondition;
 use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundle\CriteriaPartInterface;
-use Shopware\Bundle\SearchBundleES\PartialConditionHandlerInterface;
+use Shopware\Bundle\SearchBundleES\HandlerInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
-class PriceConditionHandler implements PartialConditionHandlerInterface
+class PriceConditionHandler implements HandlerInterface
 {
     /**
      * @var FieldMappingInterface
@@ -59,39 +59,14 @@ class PriceConditionHandler implements PartialConditionHandlerInterface
     /**
      * {@inheritdoc}
      */
-    public function handleFilter(
+    public function handle(
         CriteriaPartInterface $criteriaPart,
         Criteria $criteria,
         Search $search,
         ShopContextInterface $context
     ) {
-        $search->addFilter(
-            $this->createQuery($criteriaPart, $context)
-        );
-    }
+        $field = $this->fieldMapping->getPriceField($context);
 
-    /**
-     * {@inheritdoc}
-     */
-    public function handlePostFilter(
-        CriteriaPartInterface $criteriaPart,
-        Criteria $criteria,
-        Search $search,
-        ShopContextInterface $context
-    ) {
-        $search->addPostFilter(
-            $this->createQuery($criteriaPart, $context)
-        );
-    }
-
-    /**
-     * @param CriteriaPartInterface $criteriaPart
-     * @param ShopContextInterface  $context
-     *
-     * @return RangeQuery
-     */
-    private function createQuery(CriteriaPartInterface $criteriaPart, ShopContextInterface $context)
-    {
         $range = [];
 
         /** @var PriceCondition $criteriaPart */
@@ -102,6 +77,12 @@ class PriceConditionHandler implements PartialConditionHandlerInterface
             $range['lte'] = $criteriaPart->getMaxPrice();
         }
 
-        return new RangeQuery($this->fieldMapping->getPriceField($context), $range);
+        $filter = new RangeQuery($field, $range);
+
+        if ($criteria->hasBaseCondition($criteriaPart->getName())) {
+            $search->addFilter($filter);
+        } else {
+            $search->addPostFilter($filter);
+        }
     }
 }

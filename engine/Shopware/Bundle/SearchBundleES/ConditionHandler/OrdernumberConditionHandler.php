@@ -29,7 +29,7 @@ use ONGR\ElasticsearchDSL\Search;
 use Shopware\Bundle\SearchBundle\Condition\OrdernumberCondition;
 use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundle\CriteriaPartInterface;
-use Shopware\Bundle\SearchBundleES\PartialConditionHandlerInterface;
+use Shopware\Bundle\SearchBundleES\HandlerInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
 /**
@@ -37,7 +37,7 @@ use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
  *
  * @copyright Copyright (c) shopware AG (http://www.shopware.com)
  */
-class OrdernumberConditionHandler implements PartialConditionHandlerInterface
+class OrdernumberConditionHandler implements HandlerInterface
 {
     /**
      * {@inheritdoc}
@@ -50,30 +50,19 @@ class OrdernumberConditionHandler implements PartialConditionHandlerInterface
     /**
      * {@inheritdoc}
      */
-    public function handleFilter(
+    public function handle(
         CriteriaPartInterface $criteriaPart,
         Criteria $criteria,
         Search $search,
         ShopContextInterface $context
     ) {
-        /* @var OrdernumberCondition $criteriaPart */
-        $search->addFilter(
-            new TermsQuery('number', $criteriaPart->getOrdernumbers())
-        );
-    }
+        /** @var OrdernumberCondition $criteriaPart */
+        $filter = new TermsQuery('number', $criteriaPart->getOrdernumbers());
 
-    /**
-     * {@inheritdoc}
-     */
-    public function handlePostFilter(
-        CriteriaPartInterface $criteriaPart,
-        Criteria $criteria,
-        Search $search,
-        ShopContextInterface $context
-    ) {
-        /* @var OrdernumberCondition $criteriaPart */
-        $search->addPostFilter(
-            new TermsQuery('number', $criteriaPart->getOrdernumbers())
-        );
+        if ($criteria->hasBaseCondition($criteriaPart->getName())) {
+            $search->addFilter($filter);
+        } else {
+            $search->addPostFilter($filter);
+        }
     }
 }

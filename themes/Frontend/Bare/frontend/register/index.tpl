@@ -85,31 +85,23 @@
                 {if $register.personal.sValidation}
                     {* Include information related to registration for other customergroups then guest, this block get overridden by b2b essentials plugin *}
                     <div class="panel register--supplier">
-                        {block name='frontend_register_index_cgroup_header_title'}
-                            <h2 class="panel--title is--underline">{$sShopname|escapeHtml} {s name='RegisterHeadlineSupplier' namespace='frontend/register/index'}{/s}</h2>
-                        {/block}
+                        <h2 class="panel--title is--underline">{$sShopname|escapeHtml} {s name='RegisterHeadlineSupplier' namespace='frontend/register/index'}{/s}</h2>
 
-                        {block name='frontend_register_index_cgroup_header_body'}
-                            <div class="panel--body is--wide">
-                                <p class="is--bold">{s name='RegisterInfoSupplier3' namespace='frontend/register/index'}{/s}</p>
+                        <div class="panel--body is--wide">
+                            <p class="is--bold">{s name='RegisterInfoSupplier3' namespace='frontend/register/index'}{/s}</p>
 
-                                <h3 class="is--bold">{s name='RegisterInfoSupplier4' namespace='frontend/register/index'}{/s}</h3>
-                                <p>{s name='RegisterInfoSupplier5' namespace='frontend/register/index'}{/s}</p>
+                            <h3 class="is--bold">{s name='RegisterInfoSupplier4' namespace='frontend/register/index'}{/s}</h3>
+                            <p>{s name='RegisterInfoSupplier5' namespace='frontend/register/index'}{/s}</p>
 
-                                <h3 class="is--bold">{s name='RegisterInfoSupplier6' namespace='frontend/register/index'}{/s}</h3>
-                                <p>{s name='RegisterInfoSupplier7' namespace='frontend/register/index'}{/s}</p>
-                            </div>
-                        {/block}
+                            <h3 class="is--bold">{s name='RegisterInfoSupplier6' namespace='frontend/register/index'}{/s}</h3>
+                            <p>{s name='RegisterInfoSupplier7' namespace='frontend/register/index'}{/s}</p>
+                        </div>
                     </div>
                 {/if}
             {/block}
 
             {block name='frontend_register_index_form'}
                 <form method="post" action="{url action=saveRegister sTarget=$sTarget sTargetAction=$sTargetAction}" class="panel register--form">
-
-                    {block name='frontend_register_index_form_captcha_fieldset'}
-                        {include file="frontend/register/error_message.tpl" error_messages=$errors.captcha}
-                    {/block}
 
                     {block name='frontend_register_index_form_personal_fieldset'}
                         {include file="frontend/register/error_message.tpl" error_messages=$errors.personal}
@@ -145,13 +137,6 @@
                         </div>
                     {/block}
 
-                    {* Captcha *}
-                    {block name='frontend_register_index_form_captcha'}
-                        {$captchaHasError = $errors.captcha}
-                        {$captchaName = {config name=registerCaptcha}}
-                        {include file="widgets/captcha/custom_captcha.tpl" captchaName=$captchaName captchaHasError=$captchaHasError}
-                    {/block}
-
                     {block name='frontend_register_index_form_submit'}
                         {* Submit button *}
                         <div class="register--action">
@@ -171,9 +156,7 @@
     {* Register advantages *}
     {block name='frontend_register_index_advantages'}
         <div class="register--advantages block">
-            {block name='frontend_register_index_advantages_title'}
-                <h2 class="panel--title">{s name='RegisterInfoAdvantagesTitle'}{/s}</h2>
-            {/block}
+            <h2 class="panel--title">{s name='RegisterInfoAdvantagesTitle'}{/s}</h2>
             {block name='frontend_index_content_advantages_list'}
                 <ul class="list--unordered is--checked register--advantages-list">
                     {block name='frontend_index_content_advantages_entry1'}

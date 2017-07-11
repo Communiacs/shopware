@@ -24,8 +24,10 @@
 
 namespace Shopware\Components\Routing;
 
-use Enlight_Controller_Request_Request as EnlightRequest;
+use Enlight_Controller_Request_RequestHttp as EnlightRequest;
+use Enlight_Controller_Request_RequestTestCase as RequestTestCase;
 use Enlight_Controller_Router as EnlightRouter;
+use Zend_Controller_Request_Abstract as ZendRequest;
 
 /**
  * @category  Shopware
@@ -267,25 +269,33 @@ class Router extends EnlightRouter implements RouterInterface
     }
 
     /**
-     * @param EnlightRequest $request
+     * @param ZendRequest|EnlightRequest $request
      *
      * @deprecated Use self::match()
      *
-     * @return EnlightRequest
+     * @return ZendRequest
      */
-    public function route(EnlightRequest $request)
+    public function route(ZendRequest $request)
     {
-        /* For enlight routing  */
-        $this->context->updateFromEnlightRequest($request);
+        if ($request instanceof EnlightRequest || $request instanceof RequestTestCase) {
+            /* For enlight routing  */
+            $this->context->updateFromEnlightRequest($request);
+        }
 
         $params = $this->match($request->getPathInfo(), $this->context);
         if ($params !== false) {
-            /* For shopware routing (query === userParams)  */
-            $request->setQuery($params);
+            if ($request instanceof EnlightRequest || $request instanceof RequestTestCase) {
+                /* For shopware routing (query === userParams)  */
+                $request->setQuery($params);
+            } else {
+                $request->setParams($params);
+            }
         }
 
-        /* For enlight routing  */
-        $this->context->updateFromEnlightRequest($request);
+        if ($request instanceof EnlightRequest || $request instanceof RequestTestCase) {
+            /* For enlight routing  */
+            $this->context->updateFromEnlightRequest($request);
+        }
         $this->context->setParams([]);
 
         return $request;

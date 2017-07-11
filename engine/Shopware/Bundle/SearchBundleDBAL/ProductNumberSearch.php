@@ -29,8 +29,6 @@ use Shopware\Bundle\SearchBundle;
 use Shopware\Bundle\StoreFrontBundle\Struct\Attribute;
 use Shopware\Bundle\StoreFrontBundle\Struct\BaseProduct;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
-use Shopware\Components\DependencyInjection\Container;
-use Shopware\Bundle\SearchBundleDBAL\QueryBuilderFactoryInterface;
 
 /**
  * @category  Shopware
@@ -40,7 +38,7 @@ use Shopware\Bundle\SearchBundleDBAL\QueryBuilderFactoryInterface;
 class ProductNumberSearch implements SearchBundle\ProductNumberSearchInterface
 {
     /**
-     * @var QueryBuilderFactoryInterface
+     * @var \Shopware\Bundle\SearchBundleDBAL\QueryBuilderFactoryInterface
      */
     private $queryBuilderFactory;
 
@@ -58,20 +56,16 @@ class ProductNumberSearch implements SearchBundle\ProductNumberSearchInterface
      * @param QueryBuilderFactoryInterface $queryBuilderFactory
      * @param \Enlight_Event_EventManager  $eventManager
      * @param FacetHandlerInterface[]      $facetHandlers
-     * @param Container                    $container
      */
     public function __construct(
         QueryBuilderFactoryInterface $queryBuilderFactory,
         \Enlight_Event_EventManager $eventManager,
-        $facetHandlers,
-        Container $container
+        $facetHandlers = []
     ) {
         $this->queryBuilderFactory = $queryBuilderFactory;
         $this->facetHandlers = $facetHandlers;
         $this->eventManager = $eventManager;
         $this->facetHandlers = $this->registerFacetHandlers();
-
-        $container->set('shopware_searchdbal.facet_handlers', $this->facetHandlers);
     }
 
     /**
@@ -153,32 +147,12 @@ class ProductNumberSearch implements SearchBundle\ProductNumberSearchInterface
      */
     private function createFacets(SearchBundle\Criteria $criteria, ShopContextInterface $context)
     {
-        if (count($criteria->getFacets()) === 0) {
-            return [];
-        }
-
         $facets = [];
-
-        $clone = clone $criteria;
-
-        if (!$criteria->generatePartialFacets()) {
-            $clone->resetConditions();
-            $clone->resetSorting();
-        }
 
         foreach ($criteria->getFacets() as $facet) {
             $handler = $this->getFacetHandler($facet);
 
-            if ($criteria->generatePartialFacets() && !$handler instanceof PartialFacetHandlerInterface) {
-                throw new \Exception(sprintf("New filter mode activated, handler class %s doesn't support this mode", get_class($handler)));
-            }
-
-            if ($handler instanceof PartialFacetHandlerInterface) {
-                $result = $handler->generatePartialFacet($facet, $clone, $criteria, $context);
-            } else {
-                trigger_error(sprintf("Facet handler %s doesn't support new filter mode. FacetHandlerInterface is deprecated since version 5.3 and will be removed in 6.0.", get_class($handler)), E_USER_DEPRECATED);
-                $result = $handler->generateFacet($facet, $criteria, $context);
-            }
+            $result = $handler->generateFacet($facet, $criteria, $context);
 
             if (!$result) {
                 continue;
@@ -205,13 +179,7 @@ class ProductNumberSearch implements SearchBundle\ProductNumberSearchInterface
             $facetHandlers
         );
 
-        $this->assertCollectionIsInstanceOf(
-            $facetHandlers,
-            [
-                __NAMESPACE__ . '\FacetHandlerInterface',
-                __NAMESPACE__ . '\PartialFacetHandlerInterface',
-            ]
-        );
+        $this->assertCollectionIsInstanceOf($facetHandlers, __NAMESPACE__ . '\FacetHandlerInterface');
 
         return array_merge($facetHandlers->toArray(), $this->facetHandlers);
     }
@@ -236,24 +204,17 @@ class ProductNumberSearch implements SearchBundle\ProductNumberSearchInterface
 
     /**
      * @param ArrayCollection $objects
-     * @param string[]        $classes
+     * @param string          $class
      */
-    private function assertCollectionIsInstanceOf(ArrayCollection $objects, $classes)
+    private function assertCollectionIsInstanceOf(ArrayCollection $objects, $class)
     {
         foreach ($objects as $object) {
-            $implements = false;
-            foreach ($classes as $class) {
-                if ($object instanceof $class) {
-                    $implements = true;
-                    break;
-                }
-            }
-            if (!$implements) {
+            if (!$object instanceof $class) {
                 throw new \RuntimeException(
                     sprintf(
-                        'Object of class "%s" has to implement one of the following interfaces: "%s".',
+                        'Object of class "%s" must be instance of "%s".',
                         get_class($object),
-                        implode(',', $classes)
+                        $class
                     )
                 );
             }

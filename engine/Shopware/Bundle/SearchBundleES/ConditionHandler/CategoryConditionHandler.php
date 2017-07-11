@@ -29,10 +29,10 @@ use ONGR\ElasticsearchDSL\Search;
 use Shopware\Bundle\SearchBundle\Condition\CategoryCondition;
 use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundle\CriteriaPartInterface;
-use Shopware\Bundle\SearchBundleES\PartialConditionHandlerInterface;
+use Shopware\Bundle\SearchBundleES\HandlerInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
-class CategoryConditionHandler implements PartialConditionHandlerInterface
+class CategoryConditionHandler implements HandlerInterface
 {
     /**
      * {@inheritdoc}
@@ -45,30 +45,19 @@ class CategoryConditionHandler implements PartialConditionHandlerInterface
     /**
      * {@inheritdoc}
      */
-    public function handleFilter(
+    public function handle(
         CriteriaPartInterface $criteriaPart,
         Criteria $criteria,
         Search $search,
         ShopContextInterface $context
     ) {
-        /* @var CategoryCondition $criteriaPart */
-        $search->addFilter(
-            new TermsQuery('categoryIds', $criteriaPart->getCategoryIds())
-        );
-    }
+        /** @var CategoryCondition $criteriaPart */
+        $filter = new TermsQuery('categoryIds', $criteriaPart->getCategoryIds());
 
-    /**
-     * {@inheritdoc}
-     */
-    public function handlePostFilter(
-        CriteriaPartInterface $criteriaPart,
-        Criteria $criteria,
-        Search $search,
-        ShopContextInterface $context
-    ) {
-        /* @var CategoryCondition $criteriaPart */
-        $search->addPostFilter(
-            new TermsQuery('categoryIds', $criteriaPart->getCategoryIds())
-        );
+        if ($criteria->hasBaseCondition($criteriaPart->getName())) {
+            $search->addFilter($filter);
+        } else {
+            $search->addPostFilter($filter);
+        }
     }
 }

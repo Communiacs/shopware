@@ -49,8 +49,6 @@ class Shopware_Controllers_Frontend_AjaxSearch extends Enlight_Controller_Action
             return;
         }
 
-        $this->setDefaultSorting();
-
         /** @var ShopContextInterface $context */
         $context = $this->get('shopware_storefront.context_service')->getShopContext();
 
@@ -93,15 +91,5 @@ class Shopware_Controllers_Frontend_AjaxSearch extends Enlight_Controller_Action
         }
 
         return $articles;
-    }
-
-    private function setDefaultSorting()
-    {
-        if ($this->Request()->has('sSort')) {
-            return;
-        }
-        $sortings = $this->container->get('config')->get('searchSortings');
-        $sortings = array_filter(explode('|', $sortings));
-        $this->Request()->setParam('sSort', array_shift($sortings));
     }
 }

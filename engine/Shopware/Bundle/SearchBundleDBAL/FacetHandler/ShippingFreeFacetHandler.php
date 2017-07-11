@@ -28,7 +28,7 @@ use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundle\Facet;
 use Shopware\Bundle\SearchBundle\FacetInterface;
 use Shopware\Bundle\SearchBundle\FacetResult\BooleanFacetResult;
-use Shopware\Bundle\SearchBundleDBAL\PartialFacetHandlerInterface;
+use Shopware\Bundle\SearchBundleDBAL\FacetHandlerInterface;
 use Shopware\Bundle\SearchBundleDBAL\QueryBuilderFactoryInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 use Shopware\Components\QueryAliasMapper;
@@ -38,7 +38,7 @@ use Shopware\Components\QueryAliasMapper;
  *
  * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
-class ShippingFreeFacetHandler implements PartialFacetHandlerInterface
+class ShippingFreeFacetHandler implements FacetHandlerInterface
 {
     /**
      * @var QueryBuilderFactoryInterface
@@ -73,13 +73,26 @@ class ShippingFreeFacetHandler implements PartialFacetHandlerInterface
         }
     }
 
-    public function generatePartialFacet(
+    /**
+     * Generates the facet data for the passed query, criteria and context object.
+     *
+     * @param FacetInterface|Facet\ShippingFreeFacet $facet
+     * @param Criteria                               $criteria
+     * @param ShopContextInterface                   $context
+     *
+     * @return BooleanFacetResult
+     */
+    public function generateFacet(
         FacetInterface $facet,
-        Criteria $reverted,
         Criteria $criteria,
         ShopContextInterface $context
     ) {
-        $query = $this->queryBuilderFactory->createQuery($reverted, $context);
+        $queryCriteria = clone $criteria;
+        $queryCriteria->resetConditions();
+        $queryCriteria->resetSorting();
+
+        $query = $this->queryBuilderFactory->createQuery($queryCriteria, $context);
+
         $query->resetQueryPart('orderBy');
         $query->resetQueryPart('groupBy');
 
@@ -96,18 +109,11 @@ class ShippingFreeFacetHandler implements PartialFacetHandlerInterface
             return null;
         }
 
-        /** @var Facet\ShippingFreeFacet $facet */
-        if (!empty($facet->getLabel())) {
-            $label = $facet->getLabel();
-        } else {
-            $label = $this->snippetNamespace->get($facet->getName(), 'Shipping free');
-        }
-
         return new BooleanFacetResult(
             $facet->getName(),
             $this->fieldName,
             $criteria->hasCondition($facet->getName()),
-            $label
+            $this->snippetNamespace->get($facet->getName(), 'Shipping free')
         );
     }
 

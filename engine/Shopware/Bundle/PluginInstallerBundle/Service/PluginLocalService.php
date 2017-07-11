@@ -232,7 +232,6 @@ class PluginLocalService
             'plugin.capability_secure_uninstall',
             'plugin.update_version',
             'plugin.translations',
-            'plugin.in_safe_mode',
 
             'plugin.installation_date',
             'forms.id as form_id',

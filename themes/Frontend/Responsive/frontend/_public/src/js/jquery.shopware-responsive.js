@@ -32,9 +32,6 @@
         // OffCanvas menu
         .addPlugin('*[data-offcanvas="true"]', 'swOffcanvasMenu', ['xs', 's'])
 
-        // Datepicker
-        .addPlugin('*[data-datepicker="true"]', 'swDatePicker')
-
         // Search field
         .addPlugin('*[data-search="true"]', 'swSearch')
 
@@ -117,8 +114,6 @@
         .addPlugin('*[data-panel-auto-resizer="true"]', 'swPanelAutoResizer')
         .addPlugin('*[data-address-selection="true"]', 'swAddressSelection')
         .addPlugin('*[data-address-editor="true"]', 'swAddressEditor')
-        .addPlugin('*[data-cookie-permission="true"]', 'swCookiePermission')
-        .addPlugin('.navigation--entry.entry--account.with-slt', 'swDropdownMenu', [ 'm', 'l', 'xl' ])
     ;
 
     $(function($) {
@@ -161,6 +156,9 @@
             }
         });
 
+        // Start up the placeholder polyfill, see ```jquery.ie-fixes.js```
+        $('input, textarea').placeholder();
+
         $('.add-voucher--checkbox').on('change', function (event) {
             var method = (!$(this).is(':checked')) ? 'addClass' : 'removeClass';
             event.preventDefault();
@@ -188,8 +186,6 @@
                 return;
             }
 
-            $.publish('plugin/swResponsive/onCartRefresh');
-
             $.ajax({
                 'url': ajaxCartRefresh,
                 'dataType': 'jsonp',
@@ -206,8 +202,6 @@
                     if (cart.quantity == 0) {
                         $cartQuantity.addClass('is--hidden');
                     }
-
-                    $.publish('plugin/swResponsive/onCartRefreshSuccess', [ cart ]);
                 }
             });
         }

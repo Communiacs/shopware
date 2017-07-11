@@ -212,7 +212,6 @@ class PluginInstaller
         $bootstrap->activate($context);
 
         $plugin->setActive(true);
-        $plugin->setInSafeMode(false);
         $this->em->flush($plugin);
 
         return $context;

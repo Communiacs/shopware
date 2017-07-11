@@ -47,23 +47,12 @@ Ext.define('Shopware.apps.Config.controller.Main', {
         'main.Panel',
         'main.Form', 'main.Fieldset',
 
-        'element.Boolean',
-        'element.Button',
-        'element.Date',
-        'element.Html',
-        'element.Select',
-        'element.Text',
-        'element.TextArea',
-        'element.Time',
-        'element.Number',
-        'element.DateTime',
-        'element.Interval',
-        'element.SelectTree',
+        'element.Boolean', 'element.Button', 'element.Date',
+        'element.Html', 'element.Select', 'element.Text',
+        'element.TextArea', 'element.Time', 'element.Number',
+        'element.DateTime', 'element.Interval', 'element.SelectTree',
         'element.ProductBoxLayoutSelect',
-        'element.Color',
-        'element.CustomSortingSelection',
-        'element.CustomSortingGrid',
-        'element.CustomFacetGrid'
+        'element.Color'
     ],
 
     stores:[

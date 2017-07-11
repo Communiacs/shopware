@@ -37,16 +37,22 @@ Ext.define('Shopware.apps.Performance.model.Filter', {
      * Extends the standard Ext Model
      * @string
      */
-    extend: 'Ext.data.Model',
+    extend:'Ext.data.Model',
 
     /**
      * Contains the model fields
      * @array
      */
-    fields: [
+    fields:[
         //{block name="backend/performance/model/filter/fields"}{/block}
-        { name: 'id', type: 'int' },
-        { name: 'listingMode', type: 'string' }
+        { name:'id', type:'int' },
+        { name: 'showSupplierInCategories', type: 'bool'},
+        { name: 'displayFiltersInListings', type:'bool' },
+        { name: 'showShippingFreeFacet', type:'bool' },
+        { name: 'showPriceFacet', type:'bool' },
+        { name: 'showVoteAverageFacet', type:'bool' },
+        { name: 'showImmediateDeliveryFacet', type:'bool' }
     ]
+
 });
 //{/block}

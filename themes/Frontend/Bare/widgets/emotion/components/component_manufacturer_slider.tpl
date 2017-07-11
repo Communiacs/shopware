@@ -25,10 +25,6 @@
 
                         <div class="product-slider--container">
                             {foreach $Data.values as $supplier}
-                                {if !$supplier.link}
-                                    {$supplier.link = {url module=frontend controller=listing action=manufacturer sSupplier=$supplier.id}}
-                                {/if}
-
                                 {block name="frontend_widgets_manufacturer_slider_item"}
                                     <div class="manufacturer--item product-slider--item">
 

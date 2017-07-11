@@ -26,10 +26,7 @@
     {block name='frontend_register_login_customer'}
         <div class="register--existing-customer panel has--border is--rounded">
 
-            {block name='frontend_register_login_customer_title'}
-                <h2 class="panel--title is--underline">{s name="LoginHeaderExistingCustomer"}{/s}</h2>
-            {/block}
-
+            <h2 class="panel--title is--underline">{s name="LoginHeaderExistingCustomer"}{/s}</h2>
             <div class="panel--body is--wide">
                 {block name='frontend_register_login_form'}
                     {if $register.personal.sValidation}

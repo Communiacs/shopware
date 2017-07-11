@@ -25,6 +25,7 @@
 namespace Shopware\Bundle\SearchBundle\FacetResult;
 
 use Shopware\Bundle\StoreFrontBundle\Struct\Attribute;
+use Shopware\Bundle\StoreFrontBundle\Struct\Extendable;
 use Shopware\Bundle\StoreFrontBundle\Struct\Media;
 
 /**
@@ -32,12 +33,27 @@ use Shopware\Bundle\StoreFrontBundle\Struct\Media;
  *
  * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
-class MediaListItem extends ValueListItem
+class MediaListItem extends Extendable
 {
+    /**
+     * @var int|string
+     */
+    private $id;
+
+    /**
+     * @var string
+     */
+    private $label;
+
+    /**
+     * @var bool
+     */
+    private $active;
+
     /**
      * @var Media
      */
-    protected $media;
+    private $media;
 
     /**
      * @param int|string  $id
@@ -48,8 +64,35 @@ class MediaListItem extends ValueListItem
      */
     public function __construct($id, $label, $active, Media $media = null, $attributes = [])
     {
-        parent::__construct($id, $label, $active, $attributes);
+        $this->id = $id;
+        $this->label = $label;
+        $this->active = $active;
         $this->media = $media;
+        $this->attributes = $attributes;
+    }
+
+    /**
+     * @return int|string
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isActive()
+    {
+        return $this->active;
+    }
+
+    /**
+     * @return string
+     */
+    public function getLabel()
+    {
+        return $this->label;
     }
 
     /**
