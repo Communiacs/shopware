@@ -3,7 +3,7 @@
     "description": "Shopware is the next generation of open source e-commerce software made in Germany",
     "keywords": ["shopware", "shop"],
     "homepage": "http://www.shopware.com",
-    "type": "project",
+    "type": "shopware-core",
     "license": [
         "AGPL-3.0",
         "proprietary"
@@ -59,7 +59,8 @@
         "league/flysystem": "1.0.22",
         "paragonie/random_compat": "1.4.1",
         "cocur/slugify": "2.2",
-        "bcremer/line-reader": "^0.2.0"
+        "bcremer/line-reader": "^0.2.0",
+        "wlwwt/sw-composer-installers": "0.4.x-dev"
     },
     "suggest": {
         "ext-apcu": "*",
@@ -113,6 +114,11 @@
         "optimize-autoloader": true,
         "platform": {
             "php": "5.6.4"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "5.2.x-dev"
         }
     },
     "scripts": {
