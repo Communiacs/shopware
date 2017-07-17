@@ -1,4 +1,4 @@
-280d358e02f7989ae5429c2ed215ac83  engine/Shopware/Application.php
+20ce80598accafbbfccbaec33053a9dd  engine/Shopware/Application.php
 53898e51654551fc3bc4a0d2f6f201b1  engine/Shopware/Bootstrap.php
 14591d8596d06184b11058be863789d5  engine/Shopware/Bundle/AccountBundle/Constraint/CurrentPassword.php
 842fbc0f2245e382a9783068a8e9fe98  engine/Shopware/Bundle/AccountBundle/Constraint/CurrentPasswordValidator.php
@@ -154,6 +154,7 @@ dcae792eeaaf7a26ed0db81de8276778  engine/Shopware/Bundle/MediaBundle/MediaMigrat
 154146eac00dcc7e93a1799078c56347  engine/Shopware/Bundle/MediaBundle/MediaServiceInterface.php
 9c0d3cfc7367e48a6a109c3a44c2f552  engine/Shopware/Bundle/MediaBundle/MediaService.php
 4e820b8cf53b23bacc6da095ea52c6c0  engine/Shopware/Bundle/MediaBundle/Optimizer/BinaryOptimizer.php
+c1df96e62d9602625e4e908dbe4663d8  engine/Shopware/Bundle/MediaBundle/Optimizer/GuetzliOptimizer.php
 513e26dd90cc3094945b265894a08470  engine/Shopware/Bundle/MediaBundle/Optimizer/JpegoptimOptimizer.php
 397fe853b299f60f96957aef17b168f9  engine/Shopware/Bundle/MediaBundle/Optimizer/JpegtranOptimizer.php
 091ea7161db58b3ded3e3c22cb5fcc3f  engine/Shopware/Bundle/MediaBundle/Optimizer/OptimizerInterface.php
@@ -419,7 +420,7 @@ f851d3b81fff67f5aecc02658d974d27  engine/Shopware/Bundle/StoreFrontBundle/Gatewa
 3ae33c62c21f0564b20956b9d151ef84  engine/Shopware/Bundle/StoreFrontBundle/Gateway/DBAL/Hydrator/LinkHydrator.php
 7badb64d746b2136220aa2837e412c02  engine/Shopware/Bundle/StoreFrontBundle/Gateway/DBAL/Hydrator/LocaleHydrator.php
 b88e15047eb609c1bee28fe47bec6843  engine/Shopware/Bundle/StoreFrontBundle/Gateway/DBAL/Hydrator/ManufacturerHydrator.php
-95673feb94c2b25cb93d5d626fe2790f  engine/Shopware/Bundle/StoreFrontBundle/Gateway/DBAL/Hydrator/MediaHydrator.php
+0af246f14ef4a0bed17281cc4e96d610  engine/Shopware/Bundle/StoreFrontBundle/Gateway/DBAL/Hydrator/MediaHydrator.php
 84ca3873c7b731d3a871837329321601  engine/Shopware/Bundle/StoreFrontBundle/Gateway/DBAL/Hydrator/PriceHydrator.php
 68dba251eea237952e7aebcc56baed12  engine/Shopware/Bundle/StoreFrontBundle/Gateway/DBAL/Hydrator/ProductHydrator.php
 deb6ef06f625bce1f8d70509d25ee03c  engine/Shopware/Bundle/StoreFrontBundle/Gateway/DBAL/Hydrator/ProductStreamHydrator.php
@@ -621,14 +622,14 @@ efc2e677a4e50bd0a3ab7b086d9755f0  engine/Shopware/Components/Api/Exception/Privi
 557da7b8453100f6c3ff91eeb27ace59  engine/Shopware/Components/Api/Exception/ValidationException.php
 4d5af126a31ee9052b34b66c144b4aba  engine/Shopware/Components/Api/Manager.php
 7bf465baa7d523e0ad5f772b2f3ca504  engine/Shopware/Components/Api/Resource/Address.php
-390942898b15c4221ea13ce0ce3fd55a  engine/Shopware/Components/Api/Resource/Article.php
+c16e84c2e9af563d9914f84158f3df5e  engine/Shopware/Components/Api/Resource/Article.php
 52aa735a7203068c2e1518a7ffbc08f5  engine/Shopware/Components/Api/Resource/Cache.php
 504fb9e914345e093c92c4575382ccc7  engine/Shopware/Components/Api/Resource/Category.php
 c6378bc98ce2b60ea5ab97233d75eb97  engine/Shopware/Components/Api/Resource/Country.php
 dca3c8c99c80eca649484be9bb4b2f67  engine/Shopware/Components/Api/Resource/CustomerGroup.php
 fe03a54a2e0a85294aaaa71aee802953  engine/Shopware/Components/Api/Resource/Customer.php
 22d1f47de7d28c5d92facfed432d6343  engine/Shopware/Components/Api/Resource/Manufacturer.php
-f769c83cbb99d08e99d76baf75814f53  engine/Shopware/Components/Api/Resource/Media.php
+4682c3b1e2ab741ff25a7d623139d83b  engine/Shopware/Components/Api/Resource/Media.php
 082bda61b7a44821f0778d0b454e9c58  engine/Shopware/Components/Api/Resource/Order.php
 3dc02ba966b822ab74786e97a80a83a8  engine/Shopware/Components/Api/Resource/PropertyGroup.php
 e9c5ea62f84123a065e224871b74c930  engine/Shopware/Components/Api/Resource/Resource.php
@@ -646,7 +647,7 @@ ecba104c5c54c404e297189ad19a501b  engine/Shopware/Components/Check/File.php
 394140a89527740043da573d55eb181f  engine/Shopware/Components/Check/Path.php
 56e2fc503ca61579ccfc086d641252c3  engine/Shopware/Components/Check/Requirements.php
 d7164f37d058678bca4be8197ecd93d5  engine/Shopware/Components/Compatibility/LegacyEventManager.php
-c0f14bc9fd402a330c9fca64f76ef9a4  engine/Shopware/Components/Compatibility/LegacyStructConverter.php
+9d2e257533044b01145d06eb2adabe9e  engine/Shopware/Components/Compatibility/LegacyStructConverter.php
 7f260b57eb5afb3ea182fcd89e96b3d3  engine/Shopware/Components/ConfigLoader.php
 2b4a8b4c7893daa426cb359195870ddd  engine/Shopware/Components/Config.php
 4115ec81c585e3b2da86c95b6fbf5ae5  engine/Shopware/Components/ConfigWriter.php
@@ -813,7 +814,7 @@ e84bdd17166a5db5518436e163ae40e7  engine/Shopware/Components/Plugin.php
 72593db43a92fb97cb552d01bf9a6a83  engine/Shopware/Components/Plugin/RequirementValidator.php
 cc7473189cf2d1d7d3f6a93375175111  engine/Shopware/Components/Plugin/ResourceSubscriber.php
 97aef967d576a04358f0064af7bc1820  engine/Shopware/Components/Plugin/XmlConfigDefinitionReader.php
-7be81b34e4bc998121ec95a4153ba480  engine/Shopware/Components/Plugin/XmlCronjobReader.php
+d3d2137ea30639f580d19ff87847e2eb  engine/Shopware/Components/Plugin/XmlCronjobReader.php
 fdaa9e393414906342d80ed3a185a95f  engine/Shopware/Components/Plugin/XmlMenuReader.php
 9b9651240c2fa632b42063f8fde3c6de  engine/Shopware/Components/Plugin/XmlPluginInfoReader.php
 9c3d54c922fcdf35d628d6545646aaa3  engine/Shopware/Components/ProductStream/CriteriaFactoryInterface.php
@@ -858,7 +859,7 @@ db5a3ff129792050da7a5df702ccc465  engine/Shopware/Components/StringCompiler.php
 5ef36d4161ba876e78b681500aeab9be  engine/Shopware/Components/TemplateMail.php
 b0a2536aef5ee788a49619007e36bc3d  engine/Shopware/Components/Template/Security.php
 c79ed187d2675a426c768f3c024dd09f  engine/Shopware/Components/Test/Plugin/TestCase.php
-50b2f9e28be019c5db7fcf4bd41d0fcf  engine/Shopware/Components/Theme/Compiler.php
+506b1c873f73a5f2a82782ff87718149  engine/Shopware/Components/Theme/Compiler.php
 05e0c78d448ef3ec894931f83c22b461  engine/Shopware/Components/Theme/Compressor/CompressorInterface.php
 19a7aea00dff2bc42c7a69b75a13636e  engine/Shopware/Components/Theme/Compressor/Js.php
 e2b73c032d596dc08e0b600d54e665d3  engine/Shopware/Components/Theme/ConfigSet.php
@@ -943,7 +944,7 @@ c9d679057e92dbd637245d2cde054941  engine/Shopware/Controllers/Backend/MediaManag
 041688966b89a875eaf2556fcb0f1b4c  engine/Shopware/Controllers/Backend/NewsletterManager.php
 4163fb738ed169c9b3909a8f6d3ff550  engine/Shopware/Controllers/Backend/Newsletter.php
 2200a5916d5beeb0111be96c7828767e  engine/Shopware/Controllers/Backend/Notification.php
-be0bf03ba93a5e551144621a0964f5ae  engine/Shopware/Controllers/Backend/Order.php
+d43eaf833eb22590f58f675ee58f9413  engine/Shopware/Controllers/Backend/Order.php
 98666f1510a43f3e3b88cf42b61b8169  engine/Shopware/Controllers/Backend/Overview.php
 981a807f5defefcd915fceed15ca52f7  engine/Shopware/Controllers/Backend/Partner.php
 a1a60f2ca6068c36640203775d98769f  engine/Shopware/Controllers/Backend/Payment.php
@@ -964,7 +965,7 @@ a96b773fd24d61a798982c23cda696ab  engine/Shopware/Controllers/Backend/Translatio
 26edf69a5a500b032071274377455c80  engine/Shopware/Controllers/Backend/UpdateWizard.php
 dfeec2a427b24d4bd2dc3247d4858d20  engine/Shopware/Controllers/Backend/UserManager.php
 85cfbff4bd9c1bb9ce9503ed020c53ba  engine/Shopware/Controllers/Backend/Vote.php
-12e9b88626a4a5f41841cf39d355a79e  engine/Shopware/Controllers/Backend/Voucher.php
+e83b8dbc594324f2151f17a05f0cfc95  engine/Shopware/Controllers/Backend/Voucher.php
 39599e67f48ebb6b790c98b21b559b91  engine/Shopware/Controllers/Backend/Widgets.php
 bee5361ef16b24344638a28a1cd7194f  engine/Shopware/Controllers/Frontend/Account.php
 15fee063b6744e98bdaefdec77648b4b  engine/Shopware/Controllers/Frontend/Address.php
@@ -975,7 +976,7 @@ dd8b9864ce0f9d88fabff031b464f102  engine/Shopware/Controllers/Frontend/Campaign.
 e1a45cdc90200fe2baa1e412dd69c807  engine/Shopware/Controllers/Frontend/Compare.php
 7301dcb96947076bf4636d18e160c36e  engine/Shopware/Controllers/Frontend/Csrftoken.php
 6d5ecc21ff48030aea2f688bd311c5c6  engine/Shopware/Controllers/Frontend/Custom.php
-d75730107200eb6d326bbab912ab6e44  engine/Shopware/Controllers/Frontend/Detail.php
+1252a16cec15420f11ca0607d3db5273  engine/Shopware/Controllers/Frontend/Detail.php
 be98df9f26fa0b94c3c6f5cd7d96cd6d  engine/Shopware/Controllers/Frontend/Error.php
 cb8e4d18ccb2e713f00c68697e3a0914  engine/Shopware/Controllers/Frontend/Forms.php
 fb4c5884bca97ba02971f2dadfe8ebda  engine/Shopware/Controllers/Frontend/Index.php
@@ -990,7 +991,7 @@ c3c586b8a8e99c5ad19cdfeb7332872f  engine/Shopware/Controllers/Frontend/RobotsTxt
 2f80999321861980477e1a79ab2fabbf  engine/Shopware/Controllers/Frontend/SitemapMobileXml.php
 745cf5ebd9224aed62783ceefcd4efe2  engine/Shopware/Controllers/Frontend/Sitemap.php
 2c3584b89168a9dbc92bc1cfa9a2b237  engine/Shopware/Controllers/Frontend/SitemapXml.php
-49d1adb760d7a9913caee2fc2a4b26d8  engine/Shopware/Controllers/Frontend/Tellafriend.php
+b0b2dae622b26c886cd66c90c83181b4  engine/Shopware/Controllers/Frontend/Tellafriend.php
 9566727879bfac42073f11b2c68d039a  engine/Shopware/Controllers/Frontend/Ticket.php
 6a8b5202520ec0552ec446bc8ce6fc22  engine/Shopware/Controllers/Frontend/Tracking.php
 430fb0b2c7c20abc47e3dd7ebfd69e96  engine/Shopware/Controllers/Widgets/Campaign.php
@@ -1012,7 +1013,7 @@ b6610cbd6e68cf9ca7a7165244bfa3c0  engine/Shopware/Core/sCms.php
 6b1e392dc3860e2f34b2a253d90885fc  engine/Shopware/Core/sExport.php
 293520bc626e1107695e95fbfd048e85  engine/Shopware/Core/sMarketing.php
 7e01a2ffbfe9ce66c72716983664c26c  engine/Shopware/Core/sOrder.php
-51b3ecbe3afe3e79760e9e9d1037d9f4  engine/Shopware/Core/sRewriteTable.php
+57484123f0cd459f9ec952b84f48852e  engine/Shopware/Core/sRewriteTable.php
 bc0ee6cf7c3e753d96244405d895cf23  engine/Shopware/Core/sSystem.php
 b5f613eb6c01f042609706c9ba3e20c7  engine/Shopware/Kernel.php
 f0a2cd59719d753f4dabbd8bfedceb45  engine/Shopware/Models/Analytics/Repository.php
@@ -1099,7 +1100,7 @@ cf58ef9e4d41b8e17dc862a4fd530a14  engine/Shopware/Models/Form/Form.php
 6451b72a6ffb2deefd6b4a750aa2c749  engine/Shopware/Models/Mail/Mail.php
 f867527039cd7652d165967b37d56e3b  engine/Shopware/Models/Mail/Repository.php
 52fbef24532a564079388d62ec233b0f  engine/Shopware/Models/Media/Album.php
-598804643482bcc1e667cddd5df0e9b6  engine/Shopware/Models/Media/Media.php
+b3cc2d6b21dbc4ec90a2f557a6ba1ad3  engine/Shopware/Models/Media/Media.php
 efa2c37ee8199863c2cd5bd8e4d7138d  engine/Shopware/Models/Media/MediaSubscriber.php
 b0297468054108eb5d0f437d3f8c06e6  engine/Shopware/Models/Media/Repository.php
 71231aa974161a36f63728fce1eaf515  engine/Shopware/Models/Media/Settings.php
@@ -1243,7 +1244,7 @@ c22f0689113874300e9bf62156d83e00  engine/Shopware/Plugins/Default/Core/Debug/Com
 d8dad29d47b8b5fb8d7423955ef4ddb4  engine/Shopware/Plugins/Default/Core/Debug/Components/TemplateVarCollector.php
 6198c1c809503759acd423a300548a68  engine/Shopware/Plugins/Default/Core/Debug/Components/Utils.php
 020f2a4a1e2cbf1addad2fd364706012  engine/Shopware/Plugins/Default/Core/ErrorHandler/Bootstrap.php
-c1e302c6cebe860b391ce5d51d6200ba  engine/Shopware/Plugins/Default/Core/HttpCache/Bootstrap.php
+bc18e54f071db6b790849d75fe442802  engine/Shopware/Plugins/Default/Core/HttpCache/Bootstrap.php
 7ae44d4dcd5f49fed17fa7b0c76cdaea  engine/Shopware/Plugins/Default/Core/MarketingAggregate/Bootstrap.php
 98e3391a20844b287e6c54bfbcea8129  engine/Shopware/Plugins/Default/Core/MarketingAggregate/Components/AlsoBought.php
 f966e2c872e8974046c32822ac71806b  engine/Shopware/Plugins/Default/Core/MarketingAggregate/Components/SimilarShown.php

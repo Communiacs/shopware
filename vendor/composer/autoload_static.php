@@ -1938,6 +1938,7 @@ class ComposerStaticInitShopware
         'Shopware\\Bundle\\MediaBundle\\OptimizerService' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/OptimizerService.php',
         'Shopware\\Bundle\\MediaBundle\\OptimizerServiceInterface' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/OptimizerServiceInterface.php',
         'Shopware\\Bundle\\MediaBundle\\Optimizer\\BinaryOptimizer' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/Optimizer/BinaryOptimizer.php',
+        'Shopware\\Bundle\\MediaBundle\\Optimizer\\GuetzliOptimizer' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/Optimizer/GuetzliOptimizer.php',
         'Shopware\\Bundle\\MediaBundle\\Optimizer\\JpegoptimOptimizer' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/Optimizer/JpegoptimOptimizer.php',
         'Shopware\\Bundle\\MediaBundle\\Optimizer\\JpegtranOptimizer' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/Optimizer/JpegtranOptimizer.php',
         'Shopware\\Bundle\\MediaBundle\\Optimizer\\OptimizerInterface' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/MediaBundle/Optimizer/OptimizerInterface.php',

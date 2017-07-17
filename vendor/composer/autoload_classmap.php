@@ -1630,6 +1630,7 @@ return array(
     'Shopware\\Bundle\\MediaBundle\\OptimizerService' => $baseDir . '/engine/Shopware/Bundle/MediaBundle/OptimizerService.php',
     'Shopware\\Bundle\\MediaBundle\\OptimizerServiceInterface' => $baseDir . '/engine/Shopware/Bundle/MediaBundle/OptimizerServiceInterface.php',
     'Shopware\\Bundle\\MediaBundle\\Optimizer\\BinaryOptimizer' => $baseDir . '/engine/Shopware/Bundle/MediaBundle/Optimizer/BinaryOptimizer.php',
+    'Shopware\\Bundle\\MediaBundle\\Optimizer\\GuetzliOptimizer' => $baseDir . '/engine/Shopware/Bundle/MediaBundle/Optimizer/GuetzliOptimizer.php',
     'Shopware\\Bundle\\MediaBundle\\Optimizer\\JpegoptimOptimizer' => $baseDir . '/engine/Shopware/Bundle/MediaBundle/Optimizer/JpegoptimOptimizer.php',
     'Shopware\\Bundle\\MediaBundle\\Optimizer\\JpegtranOptimizer' => $baseDir . '/engine/Shopware/Bundle/MediaBundle/Optimizer/JpegtranOptimizer.php',
     'Shopware\\Bundle\\MediaBundle\\Optimizer\\OptimizerInterface' => $baseDir . '/engine/Shopware/Bundle/MediaBundle/Optimizer/OptimizerInterface.php',
