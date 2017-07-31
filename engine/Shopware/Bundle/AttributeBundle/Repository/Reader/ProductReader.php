@@ -70,9 +70,9 @@ class ProductReader extends GenericReader
     }
 
     /**
-     * @param \int[]|\string[] $identifiers
+     * @param int[]|string[] $identifiers
      *
-     * @return \array[]
+     * @return array[]
      */
     public function getList($identifiers)
     {

@@ -73,8 +73,10 @@ class Shopware_Controllers_Frontend_Forms extends Enlight_Controller_Action
 
         $success = $this->Request()->getParam('success');
         if ($success) {
-            $this->View()->sSupport = array_merge($this->View()->sSupport, ['sElements' => '']);
+            $this->View()->sSupport = array_merge($this->View()->sSupport, ['sElements' => []]);
         }
+
+        $this->renderElementNote($this->View());
 
         $this->View()->assign('success', $success);
 
@@ -288,25 +290,19 @@ class Shopware_Controllers_Frontend_Forms extends Enlight_Controller_Action
                     $post = str_replace('"', '', $post);
                 }
 
-                $post = '{literal}' . $post . '{/literal}';
-
                 break;
-
             case 'text2':
                 $post[0] = $this->_filterInput($post[0]);
                 if (empty($post[0]) && !empty($element['value'][0])) {
                     $post[0] = $element['value'][0];
                 }
                 $post[0] = str_replace('"', '', $post[0]);
-                $post[0] = '{literal}' . $post[0] . '{/literal}';
 
                 $post[1] = $this->_filterInput($post[1]);
                 if (empty($post[0]) && !empty($element['value'][1])) {
                     $post[1] = $element['value'][1];
                 }
                 $post[1] = str_replace('"', '', $post[1]);
-                $post[1] = '{literal}' . $post[1] . '{/literal}';
-
                 break;
             default:
                 break;
@@ -512,6 +508,27 @@ class Shopware_Controllers_Frontend_Forms extends Enlight_Controller_Action
     }
 
     /**
+     * @param Enlight_View_Default $view
+     */
+    private function renderElementNote(Enlight_View_Default $view)
+    {
+        $rendererService = $this->container->get('shopware.form.string_renderer_service');
+
+        $elements = [];
+        foreach ($view->sSupport['sElements'] as $key => &$element) {
+            if (empty($element['note'])) {
+                $elements[$key] = $element;
+                continue;
+            }
+
+            $element['note'] = $rendererService->render($element['note'], $view->getAssign(), $element);
+            $elements[$key] = $element;
+        }
+
+        $view->sSupport = array_merge($view->sSupport, ['sElements' => $elements]);
+    }
+
+    /**
      * @param int $formId
      *
      * @throws Enlight_Exception
@@ -546,9 +563,10 @@ class Shopware_Controllers_Frontend_Forms extends Enlight_Controller_Action
         $this->_errors = $this->_validateInput($this->Request()->getPost(), $this->_elements);
 
         if (!empty(Shopware()->Config()->CaptchaColor)) {
-            $captcha = str_replace(' ', '', strtolower($this->Request()->sCaptcha));
-            $rand = $this->Request()->getPost('sRand');
-            if (empty($rand) || $captcha != substr(md5($rand), 0, 5)) {
+            /** @var \Shopware\Components\Captcha\CaptchaValidator $captchaValidator */
+            $captchaValidator = $this->container->get('shopware.captcha.validator');
+
+            if (!$captchaValidator->validate($this->Request())) {
                 $this->_elements['sCaptcha']['class'] = ' instyle_error has--error';
                 $this->_errors['e']['sCaptcha'] = true;
             }

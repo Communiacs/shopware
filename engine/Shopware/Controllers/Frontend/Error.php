@@ -72,16 +72,6 @@ class Shopware_Controllers_Frontend_Error extends Enlight_Controller_Action impl
         }
     }
 
-    public function cliAction()
-    {
-        $this->view->setTemplate();
-
-        $response = new Enlight_Controller_Response_ResponseCli();
-        $response->appendBody(strip_tags($this->View()->exception) . "\n");
-
-        $this->front->setResponse($response);
-    }
-
     /**
      * Controller action that handles all error rendering
      * either by itself or by delegating specific scenarios to other actions
@@ -202,7 +192,6 @@ class Shopware_Controllers_Frontend_Error extends Enlight_Controller_Action impl
     {
         return [
             'error',
-            'cli',
             'pageNotFoundError',
             'genericError',
             'service',

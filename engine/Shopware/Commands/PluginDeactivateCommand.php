@@ -50,7 +50,7 @@ class PluginDeactivateCommand extends ShopwareCommand
                 InputArgument::REQUIRED,
                 'Name of the plugin to be deactivated.'
             )
-            ->setHelp(<<<EOF
+            ->setHelp(<<<'EOF'
 The <info>%command.name%</info> deactivates a plugin.
 EOF
             );

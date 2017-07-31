@@ -55,7 +55,7 @@ class MediaServiceFactory
      * @param array     $adapterFactories
      * @param array     $cdnConfig
      */
-    public function __construct(Container $container, array $adapterFactories = [], array $cdnConfig)
+    public function __construct(Container $container, array $adapterFactories, array $cdnConfig)
     {
         $this->container = $container;
         $this->adapterFactories = $adapterFactories;

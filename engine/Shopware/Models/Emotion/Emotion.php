@@ -247,7 +247,7 @@ class Emotion extends ModelEntity
 
     /**
      * @var int
-     * @ORM\Column(name="rows", type="integer", nullable=false)
+     * @ORM\Column(name="`rows`", type="integer", nullable=false)
      */
     private $rows;
 
@@ -300,6 +300,32 @@ class Emotion extends ModelEntity
      * @ORM\Column(name="mode", type="string", length=255, nullable=false)
      */
     private $mode;
+
+    /**
+     * @var int
+     *
+     * @ORM\Column(name="preview_id", type="integer", nullable=true)
+     */
+    private $previewId;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="preview_secret", type="string", nullable=true)
+     */
+    private $previewSecret;
+
+    /**
+     * @var string
+     * @ORM\Column(name="customer_stream_ids", type="string", nullable=true)
+     */
+    private $customerStreamIds;
+
+    /**
+     * @var string|null
+     * @ORM\Column(name="replacement", type="string", nullable=true)
+     */
+    private $replacement;
 
     /**
      * Class constructor.
@@ -852,5 +878,63 @@ class Emotion extends ModelEntity
     public function setParentId($parentId)
     {
         $this->parentId = $parentId;
+    }
+
+    /**
+     * @return int
+     */
+    public function getPreviewId()
+    {
+        return $this->previewId;
+    }
+
+    /**
+     * @param int $previewId
+     */
+    public function setPreviewId($previewId)
+    {
+        $this->previewId = $previewId;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPreviewSecret()
+    {
+        return $this->previewSecret;
+    }
+
+    /**
+     * @param string $previewSecret
+     */
+    public function setPreviewSecret($previewSecret)
+    {
+        $this->previewSecret = $previewSecret;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getReplacement()
+    {
+        return $this->replacement;
+    }
+
+    /**
+     * @param string|null $replacement
+     */
+    public function setReplacement($replacement)
+    {
+        $this->replacement = $replacement;
+    }
+
+    public function getCustomerStreamIds()
+    {
+        return $this->customerStreamIds;
+    }
+
+    public function setCustomerStreamIds($customerStreamIds)
+    {
+        $this->customerStreamIds = $customerStreamIds;
     }
 }

@@ -58,7 +58,7 @@ class AdminService
         // Drop previous inserted admins
         $this->connection->query('DELETE FROM s_core_auth');
 
-        $sql = <<<EOT
+        $sql = <<<'EOT'
 INSERT INTO s_core_auth
 (roleID,username,password,localeID,`name`,email,active,lockeduntil)
 VALUES

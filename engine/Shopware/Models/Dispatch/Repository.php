@@ -27,6 +27,7 @@ namespace   Shopware\Models\Dispatch;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\Query\Expr\Join;
 use Shopware\Components\Model\ModelRepository;
+use Shopware\Components\Model\QueryBuilder;
 use Shopware\Models\Customer;
 
 /**
@@ -66,15 +67,10 @@ class Repository extends ModelRepository
      */
     public function getDispatchesQueryBuilder($filter = null, $order = null)
     {
+        /** @var QueryBuilder $builder */
         $builder = $this->getEntityManager()->createQueryBuilder();
-        $builder->select([
-            'id' => 'dispatches.id',
-            'name' => 'dispatches.name',
-            'type' => 'dispatches.type',
-            'comment' => 'dispatches.comment',
-            'active' => 'dispatches.active',
-            'position' => 'dispatches.position',
-        ]);
+        $builder->select('dispatches');
+        $builder->setAlias('dispatches');
         $builder->from('Shopware\Models\Dispatch\Dispatch', 'dispatches');
         $builder->setAlias('dispatches');
 
@@ -162,7 +158,7 @@ class Repository extends ModelRepository
 
         // Set the filtering logic
         if (null !== $filter) {
-            $builder->andWhere('(dispatch.name LIKE ?1 OR dispatch.description LIKE ?2)');
+            $builder->andWhere('(dispatch.name LIKE ?1 OR dispatch.description LIKE ?1)');
             $builder->setParameter(1, '%' . $filter . '%');
         }
 
@@ -294,7 +290,7 @@ class Repository extends ModelRepository
         $builder = $this->getEntityManager()->createQueryBuilder();
 
         $filters = [];
-        if (null !== $filter && !empty($filter)) {
+        if (null !== $filter && is_array($filter)) {
             foreach ($filter as $singleFilter) {
                 $filters[$singleFilter['property']] = $singleFilter['value'];
             }
@@ -348,7 +344,7 @@ class Repository extends ModelRepository
     public function getCountryQueryBuilder($filter = null, $order = null)
     {
         $filters = [];
-        if (null !== $filter && !empty($filter)) {
+        if (null !== $filter && is_array($filter)) {
             foreach ($filter as $singleFilter) {
                 $filters[$singleFilter['property']] = $singleFilter['value'];
             }

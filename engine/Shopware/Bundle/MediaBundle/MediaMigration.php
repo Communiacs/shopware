@@ -24,6 +24,8 @@
 
 namespace Shopware\Bundle\MediaBundle;
 
+use Symfony\Component\Console\Helper\ProgressBar;
+use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
@@ -46,26 +48,38 @@ class MediaMigration
      * @param MediaServiceInterface $fromFilesystem
      * @param MediaServiceInterface $toFileSystem
      * @param OutputInterface       $output
-     *
-     * @throws \Exception
+     * @param bool                  $skipScan
      */
-    public function migrate(MediaServiceInterface $fromFilesystem, MediaServiceInterface $toFileSystem, OutputInterface $output)
+    public function migrate(MediaServiceInterface $fromFilesystem, MediaServiceInterface $toFileSystem, OutputInterface $output, $skipScan = false)
     {
-        $output->writeln('Searching for all media files in your filesystem. This might take some time, depending on the number of media files you have.');
+        $output->writeln(' // Migrating all media files in your filesystem. This might take some time, depending on the number of media files you have.');
+        $output->writeln('');
 
-        foreach ($fromFilesystem->listFiles('media') as $path) {
-            $this->migrateFile($path, $fromFilesystem, $toFileSystem, $output);
+        $filesToMigrate = 0;
+
+        if (!$skipScan) {
+            $filesToMigrate = $this->countFilesToMigrate('media', $fromFilesystem);
         }
 
-        $status = join('. ', array_map(
-            function ($v, $k) {
-                return $v . ' ' . $k;
-            },
-            $this->counter,
-            array_keys($this->counter)
-        ));
+        $progressBar = new ProgressBar($output, $filesToMigrate);
+        $progressBar->setFormat(' %current%/%max% [%bar%] %percent%% Elapsed: %elapsed%' . "\n" . ' Current file: %filename%');
+        $progressBar->setMessage('', 'filename');
+        $this->migrateFilesIn('media', $fromFilesystem, $toFileSystem, $progressBar);
+        $progressBar->finish();
 
-        $output->writeln('Job done. ' . $status);
+        $rows = [];
+        foreach ($this->counter as $key => $value) {
+            $rows[] = [$key, $value];
+        }
+
+        $output->writeln('');
+        $output->writeln('');
+
+        $table = new Table($output);
+        $table->setStyle('borderless');
+        $table->setHeaders(['Action', 'Number of items']);
+        $table->setRows($rows);
+        $table->render();
     }
 
     /**
@@ -74,18 +88,16 @@ class MediaMigration
      * @param string                $path
      * @param MediaServiceInterface $fromFilesystem
      * @param MediaServiceInterface $toFileSystem
-     * @param OutputInterface       $output
      *
-     * @throws \Exception
+     * @throws \RuntimeException
      */
-    private function migrateFile($path, MediaServiceInterface $fromFilesystem, MediaServiceInterface $toFileSystem, OutputInterface $output)
+    private function migrateFile($path, MediaServiceInterface $fromFilesystem, MediaServiceInterface $toFileSystem)
     {
         // only do migration if it's on the local filesystem since could take a long time
         // to read and write all the files
         if ($fromFilesystem->getAdapterType() === 'local') {
             if (!$fromFilesystem->isEncoded($path)) {
                 ++$this->counter['migrated'];
-                $output->writeln('Migrate: ' . $path);
                 $fromFilesystem->migrateFile($path);
             }
         }
@@ -93,7 +105,6 @@ class MediaMigration
         // file already exists
         if ($toFileSystem->has($path)) {
             ++$this->counter['skipped'];
-            $output->writeln('SKIP: ' . $path);
 
             return;
         }
@@ -101,7 +112,6 @@ class MediaMigration
         // move file to new filesystem and remove the old one
         if ($fromFilesystem->has($path)) {
             ++$this->counter['moved'];
-            $output->writeln('Move: ' . $path);
             $success = $this->writeStream($toFileSystem, $path, $fromFilesystem->readStream($path));
             if ($success) {
                 $fromFilesystem->delete($path);
@@ -110,7 +120,7 @@ class MediaMigration
             return;
         }
 
-        throw new \Exception('File not found: ' . $path);
+        throw new \RuntimeException('File not found: ' . $path);
     }
 
     /**
@@ -134,5 +144,63 @@ class MediaMigration
         $toFileSystem->writeStream($path, $contents);
 
         return $toFileSystem->has($path);
+    }
+
+    /**
+     * @param string                $directory
+     * @param MediaServiceInterface $fromFilesystem
+     * @param MediaServiceInterface $toFilesystem
+     * @param ProgressBar           $progressBar
+     */
+    private function migrateFilesIn($directory, MediaServiceInterface $fromFilesystem, MediaServiceInterface $toFilesystem, ProgressBar $progressBar)
+    {
+        /** @var array $contents */
+        $contents = $fromFilesystem->getFilesystem()->listContents($directory);
+
+        foreach ($contents as $item) {
+            if ($item['type'] === 'dir') {
+                $this->migrateFilesIn($item['path'], $fromFilesystem, $toFilesystem, $progressBar);
+                continue;
+            }
+
+            if ($item['type'] === 'file') {
+                if (strpos($item['basename'], '.') === 0) {
+                    continue;
+                }
+
+                $progressBar->setMessage($item['path'], 'filename');
+                $this->migrateFile($item['path'], $fromFilesystem, $toFilesystem);
+                $progressBar->advance();
+            }
+        }
+    }
+
+    /**
+     * @param string                $directory
+     * @param MediaServiceInterface $filesystem
+     *
+     * @return int
+     */
+    private function countFilesToMigrate($directory, MediaServiceInterface $filesystem)
+    {
+        /** @var array $contents */
+        $contents = $filesystem->getFilesystem()->listContents($directory);
+        $cnt = 0;
+
+        foreach ($contents as $item) {
+            if ($item['type'] === 'dir') {
+                $cnt += $this->countFilesToMigrate($item['path'], $filesystem);
+            }
+
+            if ($item['type'] === 'file') {
+                if (strpos($item['basename'], '.') === 0) {
+                    continue;
+                }
+
+                ++$cnt;
+            }
+        }
+
+        return $cnt;
     }
 }

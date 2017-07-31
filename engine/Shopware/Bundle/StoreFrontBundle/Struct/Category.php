@@ -51,7 +51,7 @@ class Category extends Extendable implements \JsonSerializable
     /**
      * @var array
      */
-    protected $path;
+    protected $path = [];
 
     /**
      * @var string
@@ -109,6 +109,11 @@ class Category extends Extendable implements \JsonSerializable
     protected $externalLink;
 
     /**
+     * @var string
+     */
+    protected $externalTarget;
+
+    /**
      * @var Media
      */
     protected $media;
@@ -127,6 +132,11 @@ class Category extends Extendable implements \JsonSerializable
      * @var null|ProductStream
      */
     protected $productStream;
+
+    /**
+     * @var bool
+     */
+    protected $hideSortings;
 
     /**
      * @param CategoryEntity $category
@@ -316,6 +326,22 @@ class Category extends Extendable implements \JsonSerializable
     }
 
     /**
+     * @param string $externalTarget
+     */
+    public function setExternalTarget($externalTarget)
+    {
+        $this->externalTarget = $externalTarget;
+    }
+
+    /**
+     * @return string
+     */
+    public function getExternalTarget()
+    {
+        return $this->externalTarget;
+    }
+
+    /**
      * @param bool $displayFacets
      */
     public function setDisplayFacets($displayFacets)
@@ -465,5 +491,21 @@ class Category extends Extendable implements \JsonSerializable
     public function setProductStream(ProductStream $productStream = null)
     {
         $this->productStream = $productStream;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hideSortings()
+    {
+        return $this->hideSortings;
+    }
+
+    /**
+     * @param bool $hideSortings
+     */
+    public function setHideSortings($hideSortings)
+    {
+        $this->hideSortings = $hideSortings;
     }
 }

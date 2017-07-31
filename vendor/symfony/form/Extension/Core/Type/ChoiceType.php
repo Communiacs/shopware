@@ -160,6 +160,22 @@ class ChoiceType extends AbstractType
             // transformation is merged back into the original collection
             $builder->addEventSubscriber(new MergeCollectionListener(true, true));
         }
+
+        // To avoid issues when the submitted choices are arrays (i.e. array to string conversions),
+        // we have to ensure that all elements of the submitted choice data are NULL, strings or ints.
+        $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) {
+            $data = $event->getData();
+
+            if (!is_array($data)) {
+                return;
+            }
+
+            foreach ($data as $v) {
+                if (null !== $v && !is_string($v) && !is_int($v)) {
+                    throw new TransformationFailedException('All choices submitted must be NULL, strings or ints.');
+                }
+            }
+        }, 256);
     }
 
     /**
@@ -341,7 +357,7 @@ class ChoiceType extends AbstractType
         };
 
         $choicesAsValuesNormalizer = function (Options $options, $choicesAsValues) use ($that) {
-            if (true !== $choicesAsValues) {
+            if (true !== $choicesAsValues && null === $options['choice_loader']) {
                 @trigger_error(sprintf('The value "false" for the "choices_as_values" option of the "%s" form type (%s) is deprecated since version 2.8 and will not be supported anymore in 3.0. Set this option to "true" and flip the contents of the "choices" option instead.', $that->getName(), __CLASS__), E_USER_DEPRECATED);
             }
 
@@ -523,7 +539,7 @@ class ChoiceType extends AbstractType
      *
      * @param array|\Traversable $choices      The choice labels indexed by choices
      * @param object             $choiceLabels The object that receives the choice labels
-     *                                         indexed by generated keys.
+     *                                         indexed by generated keys
      * @param int                $nextKey      The next generated key
      *
      * @return array The choices in a normalized array with labels replaced by generated keys

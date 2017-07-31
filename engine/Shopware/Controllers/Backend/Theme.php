@@ -22,8 +22,8 @@
  * our trademarks remain entirely with us.
  */
 
+use Shopware\Bundle\PluginInstallerBundle\Service\ZipUtils;
 use Shopware\Components\CSRFWhitelistAware;
-use Shopware\Models\Shop\Locale;
 use Shopware\Models\Shop\Shop;
 use Shopware\Models\Shop\Template;
 use Symfony\Component\Filesystem\Filesystem;
@@ -432,14 +432,9 @@ class Shopware_Controllers_Backend_Theme extends Shopware_Controllers_Backend_Ap
      */
     private function unzip(UploadedFile $file, $targetDirectory)
     {
-        $filter = new \Zend_Filter_Decompress([
-            'adapter' => $file->getClientOriginalExtension(),
-            'options' => ['target' => $targetDirectory],
-        ]);
-
-        $filter->filter(
-            $file->getPath() . DIRECTORY_SEPARATOR . $file->getFilename()
-        );
+        $filePath = $file->getPath() . DIRECTORY_SEPARATOR . $file->getFilename();
+        $zipUtils = ZipUtils::openZip($filePath);
+        $zipUtils->extractTo($targetDirectory);
     }
 
     /**

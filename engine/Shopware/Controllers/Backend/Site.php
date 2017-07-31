@@ -177,16 +177,16 @@ class Shopware_Controllers_Backend_Site extends Shopware_Controllers_Backend_Ext
                 $groups = explode('|', $site['grouping']);
 
                 //if we only have one group, exploding isn't possible, thus we create the array
-                (sizeof($groups) == 1) ? $groups = [$site['grouping']] : null;
+                (count($groups) == 1) ? $groups = [$site['grouping']] : null;
 
                 //if the current site is associated with the requested group and has no other groups
-                if (in_array($key, $groups) && sizeof($groups) == 1) {
+                if (in_array($key, $groups) && count($groups) == 1) {
                     //set group to gDisabled to prevent orphanage
                     Shopware()->Db()->query('UPDATE s_cms_static SET grouping = ? WHERE id = ?',
                         ['gDisabled', $site['id']]);
                 } //if the current site is associated with the requested group and does have other associations
                 else {
-                    if (in_array($key, $groups) && sizeof($groups) > 1) {
+                    if (in_array($key, $groups) && count($groups) > 1) {
                         //remove the requested group from the groupings field
                         str_replace($key, '', $site['grouping']);
                         str_replace('|', '', $site['grouping']);

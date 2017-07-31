@@ -75,7 +75,7 @@ class Md5Strategy implements StrategyInterface
         }
 
         $realPath = array_slice(str_split($md5hash, 2), 0, 3);
-        $realPath = $pathElements[0] . '/' . $pathElements[1] . '/' . join('/', $realPath) . '/' . $pathInfo['basename'];
+        $realPath = $pathElements[0] . '/' . $pathElements[1] . '/' . implode('/', $realPath) . '/' . $pathInfo['basename'];
 
         if (!$this->hasBlacklistParts($realPath)) {
             return $realPath;

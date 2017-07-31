@@ -33,6 +33,8 @@ use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\ORMException;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\Tools\Pagination\Paginator;
+use Shopware\Bundle\AttributeBundle\Service\CrudService;
+use Shopware\Bundle\AttributeBundle\Service\TypeMapping;
 use Shopware\Components\Model\Query\SqlWalker;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -52,30 +54,6 @@ class ModelManager extends EntityManager
      * @var bool
      */
     protected $debugMode = false;
-
-    /**
-     * Magic method to build this liquid interface ...
-     *
-     * @deprecated since 5.2, to be removed in 5.3
-     *
-     * @param string     $name
-     * @param array|null $args
-     *
-     * @return ModelRepository
-     */
-    public function __call($name, $args)
-    {
-        $backTrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0];
-        $string = sprintf('Shopware()->Models()->__call() is deprecated since version 5.2 and will be removed in 5.3. File %s:%s', $backTrace['file'], $backTrace['line']);
-        trigger_error($string, E_USER_DEPRECATED);
-
-        if (strpos($name, '\\') === false) {
-            $name = $name . '\\' . $name;
-        }
-        $name = 'Shopware\\Models\\' . $name;
-
-        return $this->getRepository($name);
-    }
 
     /**
      * @return DBALQueryBuilder
@@ -244,104 +222,6 @@ class ModelManager extends EntityManager
     }
 
     /**
-     * Shopware helper function to extend an attribute table.
-     *
-     * @param string $table    Full table name. Example: "s_user_attributes"
-     * @param string $prefix   Column prefix. The prefix and column parameter will be the column name. Example: "swag".
-     * @param string $column   The column name
-     * @param string $type     Full type declaration. Example: "VARCHAR( 5 )" / "DECIMAL( 10, 2 )"
-     * @param bool   $nullable Allow null property
-     * @param null   $default  Default value of the column
-     *
-     * @throws \InvalidArgumentException
-     *
-     * @deprecated since version 5.2.2, to be removed in 5.3 - Use \Shopware\Bundle\AttributeBundle\Service\CrudService::update instead
-     */
-    public function addAttribute($table, $prefix, $column, $type, $nullable = true, $default = null)
-    {
-        if (empty($table)) {
-            throw new \InvalidArgumentException('No table name passed');
-        }
-        if (strpos($table, '_attributes') === false) {
-            throw new \InvalidArgumentException('The passed table name is no attribute table');
-        }
-        if (empty($prefix)) {
-            throw new \InvalidArgumentException('No column prefix passed');
-        }
-        if (empty($column)) {
-            throw new \InvalidArgumentException('No column name passed');
-        }
-        if (empty($type)) {
-            throw new \InvalidArgumentException('No column type passed');
-        }
-
-        $name = $prefix . '_' . $column;
-
-        if (!$this->tableExist($table)) {
-            throw new \InvalidArgumentException("Table doesn't exist");
-        }
-
-        if ($this->columnExist($table, $name)) {
-            return;
-        }
-
-        $null = ($nullable) ? ' NULL ' : ' NOT NULL ';
-
-        if (is_string($default)) {
-            $defaultValue = "'" . $default . "'";
-        } elseif (is_bool($default)) {
-            $defaultValue = ($default) ? 1 : 0;
-        } elseif (is_null($default)) {
-            $defaultValue = ' NULL ';
-        } else {
-            $defaultValue = $default;
-        }
-
-        $sql = 'ALTER TABLE ' . $table . ' ADD ' . $name . ' ' . $type . ' ' . $null . ' DEFAULT ' . $defaultValue;
-        Shopware()->Db()->query($sql, [$table, $prefix, $column, $type, $null, $defaultValue]);
-    }
-
-    /**
-     * Shopware Helper function to remove an attribute column.
-     *
-     * @param $table
-     * @param $prefix
-     * @param $column
-     *
-     * @throws \InvalidArgumentException
-     *
-     * @deprecated since version 5.2.2, to be removed in 5.3 - Use \Shopware\Bundle\AttributeBundle\Service\CrudService::delete instead
-     */
-    public function removeAttribute($table, $prefix, $column)
-    {
-        if (empty($table)) {
-            throw new \InvalidArgumentException('No table name passed');
-        }
-        if (strpos($table, '_attributes') === false) {
-            throw new \InvalidArgumentException('The passed table name is no attribute table');
-        }
-        if (empty($prefix)) {
-            throw new \InvalidArgumentException('No column prefix passed');
-        }
-        if (empty($column)) {
-            throw new \InvalidArgumentException('No column name passed');
-        }
-
-        $name = $prefix . '_' . $column;
-
-        if (!$this->tableExist($table)) {
-            throw new \InvalidArgumentException("Table doesn't exist");
-        }
-
-        if (!$this->columnExist($table, $name)) {
-            return;
-        }
-
-        $sql = 'ALTER TABLE ' . $table . ' DROP ' . $name;
-        Shopware()->Db()->query($sql);
-    }
-
-    /**
      * Helper function to add mysql specified command to increase the sql performance.
      *
      * @param Query $query
@@ -412,6 +292,79 @@ class ModelManager extends EntityManager
     }
 
     /**
+     * Shopware helper function to extend an attribute table.
+     *
+     * @param string $table    Full table name. Example: "s_user_attributes"
+     * @param string $prefix   Column prefix. The prefix and column parameter will be the column name. Example: "swag".
+     * @param string $column   The column name
+     * @param string $type     Full type declaration. Example: "VARCHAR( 5 )" / "DECIMAL( 10, 2 )"
+     * @param bool   $nullable Deprecated and unused
+     * @param null   $default  Default value of the column
+     *
+     * @throws \InvalidArgumentException
+     *
+     * @deprecated since version 5.2.2, to be removed in 5.4 - Use \Shopware\Bundle\AttributeBundle\Service\CrudService::update instead
+     */
+    public function addAttribute($table, $prefix, $column, $type, $nullable = true, $default = null)
+    {
+        if (empty($table)) {
+            throw new \InvalidArgumentException('No table name passed');
+        }
+        if (strpos($table, '_attributes') === false) {
+            throw new \InvalidArgumentException('The passed table name is no attribute table');
+        }
+        if (empty($prefix)) {
+            throw new \InvalidArgumentException('No column prefix passed');
+        }
+        if (empty($column)) {
+            throw new \InvalidArgumentException('No column name passed');
+        }
+        if (empty($type)) {
+            throw new \InvalidArgumentException('No column type passed');
+        }
+
+        $type = $this->convertColumnType($type);
+        $prefixedColumn = $prefix . '_' . $column;
+
+        /** @var CrudService $crudService */
+        $crudService = Shopware()->Container()->get('shopware_attribute.crud_service');
+        $crudService->update($table, $prefixedColumn, $type, [], null, false, $default);
+    }
+
+    /**
+     * Shopware Helper function to remove an attribute column.
+     *
+     * @param string $table
+     * @param string $prefix
+     * @param string $column
+     *
+     * @throws \InvalidArgumentException
+     *
+     * @deprecated since version 5.2.2, to be removed in 5.4 - Use \Shopware\Bundle\AttributeBundle\Service\CrudService::delete instead
+     */
+    public function removeAttribute($table, $prefix, $column)
+    {
+        if (empty($table)) {
+            throw new \InvalidArgumentException('No table name passed');
+        }
+        if (strpos($table, '_attributes') === false) {
+            throw new \InvalidArgumentException('The passed table name is no attribute table');
+        }
+        if (empty($prefix)) {
+            throw new \InvalidArgumentException('No column prefix passed');
+        }
+        if (empty($column)) {
+            throw new \InvalidArgumentException('No column name passed');
+        }
+
+        $prefixedColumn = $prefix . '_' . $column;
+
+        /** @var CrudService $crudService */
+        $crudService = Shopware()->Container()->get('shopware_attribute.crud_service');
+        $crudService->delete($table, $prefixedColumn, false);
+    }
+
+    /**
      * Serialize an entity to an array
      *
      * @author      Boris Guéry <guery.b@gmail.com>
@@ -470,33 +423,40 @@ class ModelManager extends EntityManager
     }
 
     /**
-     * Helper function to check if the table is realy exist.
+     * Convert SQL column types to attribute bundle type mapping
      *
-     * @param $tableName
+     * @param string $type
      *
-     * @return bool
+     * @return string
      */
-    private function tableExist($tableName)
+    private function convertColumnType($type)
     {
-        $sql = "SHOW TABLES LIKE '" . $tableName . "'";
-        $result = Shopware()->Db()->fetchRow($sql);
+        switch (true) {
+            case (bool) preg_match('#\b(char\b|varchar)\b#i', $type):
+                $type = TypeMapping::TYPE_STRING;
+                break;
+            case (bool) preg_match('#\b(text|blob|array|simple_array|json_array|object|binary|guid)\b#i', $type):
+                $type = TypeMapping::TYPE_TEXT;
+                break;
+            case (bool) preg_match('#\b(datetime|timestamp)\b#i', $type):
+                $type = TypeMapping::TYPE_DATETIME;
+                break;
+            case (bool) preg_match('#\b(date|datetimetz)\b#i', $type):
+                $type = TypeMapping::TYPE_DATE;
+                break;
+            case (bool) preg_match('#\b(int|integer|smallint|tinyint|mediumint|bigint)\b#i', $type):
+                $type = TypeMapping::TYPE_INTEGER;
+                break;
+            case (bool) preg_match('#\b(float|double|decimal|dec|fixed|numeric)\b#i', $type):
+                $type = TypeMapping::TYPE_FLOAT;
+                break;
+            case (bool) preg_match('#\b(bool|boolean)\b#i', $type):
+                $type = TypeMapping::TYPE_BOOLEAN;
+                break;
+            default:
+                throw new \InvalidArgumentException(sprintf('Column type "%s" cannot be converted.', $type));
+        }
 
-        return !empty($result);
-    }
-
-    /**
-     * Internal helper function to check if a database table column exist.
-     *
-     * @param $tableName
-     * @param $columnName
-     *
-     * @return bool
-     */
-    private function columnExist($tableName, $columnName)
-    {
-        $sql = 'SHOW COLUMNS FROM ' . $tableName . " LIKE '" . $columnName . "'";
-        $result = Shopware()->Db()->fetchRow($sql);
-
-        return !empty($result);
+        return $type;
     }
 }

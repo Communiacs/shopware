@@ -22,8 +22,6 @@
  * our trademarks remain entirely with us.
  */
 
-use Shopware\Components\Routing\Context;
-
 /**
  * Shopware Cron for article ratings
  */
@@ -84,13 +82,11 @@ class Shopware_Plugins_Core_CronRating_Bootstrap extends Shopware_Components_Plu
             $shop->setCurrency($repository->find($order['currencyID']));
             $shop->registerResources();
 
-            $config = Shopware()->Container()->get('config');
-            $mailContext = Context::createFromShop($shop, $config);
             foreach ($positions[$orderId] as &$position) {
                 $position['link'] = Shopware()->Container()->get('router')->assemble([
                     'module' => 'frontend', 'sViewport' => 'detail',
                     'sArticle' => $position['articleID'],
-                ], $mailContext);
+                ]);
             }
 
             $context = [
@@ -99,7 +95,7 @@ class Shopware_Plugins_Core_CronRating_Bootstrap extends Shopware_Components_Plu
                 'sArticles' => $positions[$orderId],
             ];
 
-            $mail = Shopware()->TemplateMail()->createMail('sARTICLECOMMENT', $context, $shop);
+            $mail = Shopware()->TemplateMail()->createMail('sARTICLECOMMENT', $context);
             $mail->addTo($customers[$orderId]['email']);
             $mail->send();
             ++$count;
@@ -240,10 +236,11 @@ class Shopware_Plugins_Core_CronRating_Bootstrap extends Shopware_Components_Plu
                 s_order_billingaddress as b
             LEFT JOIN s_order_shippingaddress as s
                 ON s.orderID = b.orderID
-            LEFT JOIN s_user_billingaddress as ub
-                ON ub.userID = b.userID
             LEFT JOIN s_user as u
                 ON b.userID = u.id
+            LEFT JOIN s_user_addresses as ub
+                ON u.default_billing_address_id = ub.id
+                AND u.id = ub.user_id
             LEFT JOIN s_core_countries as bc
                 ON bc.id = b.countryID
             LEFT JOIN s_core_countries as sc

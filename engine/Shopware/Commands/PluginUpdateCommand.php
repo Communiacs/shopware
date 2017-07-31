@@ -50,7 +50,7 @@ class PluginUpdateCommand extends ShopwareCommand
                 InputArgument::REQUIRED,
                 'Name of the plugin to be updated.'
             )
-            ->setHelp(<<<EOF
+            ->setHelp(<<<'EOF'
 The <info>%command.name%</info> updates a plugin.
 EOF
             );

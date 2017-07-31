@@ -23,6 +23,9 @@
  */
 
 use Enlight_Controller_Request_Request as Request;
+use Shopware\Components\BasketSignature\Basket;
+use Shopware\Components\BasketSignature\BasketPersister;
+use Shopware\Components\BasketSignature\BasketSignatureGeneratorInterface;
 use Shopware\Models\Customer\Address;
 
 /**
@@ -49,7 +52,7 @@ class Shopware_Controllers_Frontend_Checkout extends Enlight_Controller_Action
     /**
      * Reference to Shopware session object (Shopware()->Session)
      *
-     * @var Zend_Session_Namespace
+     * @var Enlight_Components_Session_Namespace
      */
     protected $session;
 
@@ -373,6 +376,8 @@ class Shopware_Controllers_Frontend_Checkout extends Enlight_Controller_Action
         $this->saveDefaultAddresses();
         $this->resetTemporaryAddresses();
 
+        $this->session->offsetUnset('sComment');
+
         $orderVariables = $this->session['sOrderVariables']->getArrayCopy();
 
         $orderVariables['sAddresses']['billing'] = $this->getOrderAddress($orderVariables['sOrderNumber'], 'billing');
@@ -440,15 +445,15 @@ class Shopware_Controllers_Frontend_Checkout extends Enlight_Controller_Action
             $embedded = preg_replace('#^[./]+#', '', $embedded);
             $embedded .= '?sCoreId=' . Shopware()->Session()->get('sessionId');
             $embedded .= '&sAGB=1';
-
+            $embedded .= '&__basket_signature=' . $this->persistBasket();
             $this->View()->sEmbedded = $embedded;
         } else {
             $action = explode('/', $this->View()->sPayment['action']);
             $this->redirect([
-                    'controller' => $action[0],
-                    'action' => empty($action[1]) ? 'index' : $action[1],
-                    'forceSecure' => true,
-                ]);
+                'controller' => $action[0],
+                'action' => empty($action[1]) ? 'index' : $action[1],
+                'forceSecure' => true,
+            ]);
         }
     }
 
@@ -989,16 +994,11 @@ class Shopware_Controllers_Frontend_Checkout extends Enlight_Controller_Action
         $result = [];
 
         if (!empty($basket['sShippingcostsTax'])) {
-            $basket['sShippingcostsTax'] = number_format(floatval($basket['sShippingcostsTax']), 2);
+            $basket['sShippingcostsTax'] = number_format((float) $basket['sShippingcostsTax'], 2);
 
             $result[$basket['sShippingcostsTax']] = $basket['sShippingcostsWithTax'] - $basket['sShippingcostsNet'];
             if (empty($result[$basket['sShippingcostsTax']])) {
                 unset($result[$basket['sShippingcostsTax']]);
-            }
-        } elseif ($basket['sShippingcostsWithTax']) {
-            $result[number_format(floatval(Shopware()->Config()->get('sTAXSHIPPING')), 2)] = $basket['sShippingcostsWithTax'] - $basket['sShippingcostsNet'];
-            if (empty($result[number_format(floatval(Shopware()->Config()->get('sTAXSHIPPING')), 2)])) {
-                unset($result[number_format(floatval(Shopware()->Config()->get('sTAXSHIPPING')), 2)]);
             }
         }
 
@@ -1509,7 +1509,7 @@ class Shopware_Controllers_Frontend_Checkout extends Enlight_Controller_Action
      */
     public function setAddressAction()
     {
-        $this->View()->loadTemplate('');
+        $this->Front()->Plugins()->ViewRenderer()->setNoRender(true);
         $target = $this->Request()->getParam('target', 'shipping');
         $sessionKey = $target == 'shipping' ? 'checkoutShippingAddressId' : 'checkoutBillingAddressId';
 
@@ -1870,5 +1870,22 @@ class Shopware_Controllers_Frontend_Checkout extends Enlight_Controller_Action
         foreach ($articles as $id => $quantity) {
             $this->basket->sUpdateArticle($id, $quantity);
         }
+    }
+
+    /**
+     * @return string
+     */
+    private function persistBasket()
+    {
+        /** @var BasketSignatureGeneratorInterface $generator */
+        $generator = $this->get('basket_signature_generator');
+        $basket = $this->session->offsetGet('sOrderVariables')->getArrayCopy();
+        $signature = $generator->generateSignature($basket['sBasket'], $this->session->get('sUserId'));
+
+        /** @var BasketPersister $persister */
+        $persister = $this->get('basket_persister');
+        $persister->persist($signature, $basket);
+
+        return $signature;
     }
 }

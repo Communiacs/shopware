@@ -29,10 +29,10 @@ use ONGR\ElasticsearchDSL\Search;
 use Shopware\Bundle\SearchBundle\Condition\ManufacturerCondition;
 use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundle\CriteriaPartInterface;
-use Shopware\Bundle\SearchBundleES\HandlerInterface;
+use Shopware\Bundle\SearchBundleES\PartialConditionHandlerInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
-class ManufacturerConditionHandler implements HandlerInterface
+class ManufacturerConditionHandler implements PartialConditionHandlerInterface
 {
     /**
      * {@inheritdoc}
@@ -45,19 +45,30 @@ class ManufacturerConditionHandler implements HandlerInterface
     /**
      * {@inheritdoc}
      */
-    public function handle(
+    public function handleFilter(
         CriteriaPartInterface $criteriaPart,
         Criteria $criteria,
         Search $search,
         ShopContextInterface $context
     ) {
-        /** @var ManufacturerCondition $criteriaPart */
-        $filter = new TermsQuery('manufacturer.id', $criteriaPart->getManufacturerIds());
+        /* @var ManufacturerCondition $criteriaPart */
+        $search->addFilter(
+            new TermsQuery('manufacturer.id', $criteriaPart->getManufacturerIds())
+        );
+    }
 
-        if ($criteria->hasBaseCondition($criteriaPart->getName())) {
-            $search->addFilter($filter);
-        } else {
-            $search->addPostFilter($filter);
-        }
+    /**
+     * {@inheritdoc}
+     */
+    public function handlePostFilter(
+        CriteriaPartInterface $criteriaPart,
+        Criteria $criteria,
+        Search $search,
+        ShopContextInterface $context
+    ) {
+        /* @var ManufacturerCondition $criteriaPart */
+        $search->addPostFilter(
+            new TermsQuery('manufacturer.id', $criteriaPart->getManufacturerIds())
+        );
     }
 }

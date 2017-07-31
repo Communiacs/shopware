@@ -171,9 +171,13 @@ class PluginLocalService
         $locale = substr($context->getLocale(), 0, 2);
 
         foreach ($plugins as &$row) {
-            $row['iconPath'] = $this->getIconOfPlugin(
-                $row['name']
-            );
+            try {
+                $row['iconPath'] = $this->getIconOfPlugin(
+                    $row['name']
+                );
+            } catch (\InvalidArgumentException $e) {
+                $row['iconPath'] = null;
+            }
 
             $translations = json_decode($row['translations'], true);
 
@@ -232,6 +236,7 @@ class PluginLocalService
             'plugin.capability_secure_uninstall',
             'plugin.update_version',
             'plugin.translations',
+            'plugin.in_safe_mode',
 
             'plugin.installation_date',
             'forms.id as form_id',

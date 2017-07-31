@@ -29,10 +29,10 @@ use ONGR\ElasticsearchDSL\Search;
 use Shopware\Bundle\SearchBundle\Condition\IsAvailableCondition;
 use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundle\CriteriaPartInterface;
-use Shopware\Bundle\SearchBundleES\HandlerInterface;
+use Shopware\Bundle\SearchBundleES\PartialConditionHandlerInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
-class IsAvailableConditionHandler implements HandlerInterface
+class IsAvailableConditionHandler implements PartialConditionHandlerInterface
 {
     /**
      * {@inheritdoc}
@@ -45,19 +45,28 @@ class IsAvailableConditionHandler implements HandlerInterface
     /**
      * {@inheritdoc}
      */
-    public function handle(
+    public function handleFilter(
         CriteriaPartInterface $criteriaPart,
         Criteria $criteria,
         Search $search,
         ShopContextInterface $context
     ) {
-        $query = new TermQuery('hasAvailableVariant', true);
+        $search->addFilter(
+            new TermQuery('hasAvailableVariant', true)
+        );
+    }
 
-        /** @var IsAvailableCondition $criteriaPart */
-        if ($criteria->hasBaseCondition($criteriaPart->getName())) {
-            $search->addFilter($query);
-        } else {
-            $search->addPostFilter($query);
-        }
+    /**
+     * {@inheritdoc}
+     */
+    public function handlePostFilter(
+        CriteriaPartInterface $criteriaPart,
+        Criteria $criteria,
+        Search $search,
+        ShopContextInterface $context
+    ) {
+        $search->addPostFilter(
+            new TermQuery('hasAvailableVariant', true)
+        );
     }
 }

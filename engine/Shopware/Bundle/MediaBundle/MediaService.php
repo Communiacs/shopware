@@ -87,7 +87,7 @@ class MediaService implements MediaServiceInterface
      */
     public function read($path)
     {
-        $this->migrateFile($path);
+        $this->migrateFileLive($path);
         $path = $this->strategy->encode($path);
 
         return $this->filesystem->read($path);
@@ -98,7 +98,7 @@ class MediaService implements MediaServiceInterface
      */
     public function readStream($path)
     {
-        $this->migrateFile($path);
+        $this->migrateFileLive($path);
         $path = $this->strategy->encode($path);
 
         return $this->filesystem->readStream($path);
@@ -117,7 +117,7 @@ class MediaService implements MediaServiceInterface
             return $this->mediaUrl . '/' . ltrim($path, '/');
         }
 
-        $this->migrateFile($path);
+        $this->migrateFileLive($path);
         $path = $this->strategy->encode($path);
 
         return $this->mediaUrl . '/' . ltrim($path, '/');
@@ -156,7 +156,7 @@ class MediaService implements MediaServiceInterface
      */
     public function has($path)
     {
-        $this->migrateFile($path);
+        $this->migrateFileLive($path);
         $path = $this->strategy->encode($path);
 
         return $this->filesystem->has($path);
@@ -177,7 +177,7 @@ class MediaService implements MediaServiceInterface
      */
     public function getSize($path)
     {
-        $this->migrateFile($path);
+        $this->migrateFileLive($path);
         $path = $this->strategy->encode($path);
 
         return $this->filesystem->getSize($path);
@@ -188,7 +188,7 @@ class MediaService implements MediaServiceInterface
      */
     public function rename($path, $newPath)
     {
-        $this->migrateFile($path);
+        $this->migrateFileLive($path);
         $path = $this->strategy->encode($path);
         $newPath = $this->strategy->encode($newPath);
 
@@ -241,7 +241,7 @@ class MediaService implements MediaServiceInterface
      *
      * @internal
      *
-     * @param $path
+     * @param string $path
      */
     public function migrateFile($path)
     {
@@ -270,6 +270,14 @@ class MediaService implements MediaServiceInterface
     public function isEncoded($path)
     {
         return $this->strategy->isEncoded($path);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getFilesystem()
+    {
+        return $this->filesystem;
     }
 
     /**
@@ -304,5 +312,19 @@ class MediaService implements MediaServiceInterface
         }
 
         return 'http://' . $shop->getHost() . $shop->getBasePath() . '/';
+    }
+
+    /**
+     * Used as internal check for the liveMigration config flag.
+     *
+     * @param string $path
+     */
+    private function migrateFileLive($path)
+    {
+        if (!$this->container->getParameter('shopware.cdn.liveMigration')) {
+            return;
+        }
+
+        $this->migrateFile($path);
     }
 }

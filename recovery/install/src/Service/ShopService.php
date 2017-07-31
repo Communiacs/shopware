@@ -63,7 +63,7 @@ class ShopService
             $fetchLanguageId = $this->getLocaleIdByLocale($shop->locale);
 
             // Update s_core_shops
-            $sql = <<<EOT
+            $sql = <<<'EOT'
 UPDATE
     s_core_shops
 SET
@@ -146,7 +146,7 @@ EOT;
      */
     private function updateConfigValue($elementName, $value)
     {
-        $sql = <<<EOT
+        $sql = <<<'EOT'
 DELETE
 FROM s_core_config_values
 WHERE element_id =
@@ -157,7 +157,7 @@ EOT;
             'elementName' => $elementName,
         ]);
 
-        $sql = <<<EOT
+        $sql = <<<'EOT'
 INSERT INTO `s_core_config_values`
 (`id`, `element_id`, `shop_id`, `value`) VALUES
 (NULL, (SELECT id FROM s_core_config_elements WHERE name=:elementName), 1, :value);

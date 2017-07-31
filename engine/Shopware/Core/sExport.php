@@ -167,7 +167,7 @@ class sExport
     }
 
     /**
-     * @param $customerGroup
+     * @param int $customerGroup
      *
      * @return bool
      */
@@ -339,8 +339,8 @@ class sExport
         $this->sCustomergroup = $this->sGetCustomergroup($this->sSettings['customergroupID']);
 
         $this->articleMediaAlbum = $this->getMediaRepository()
-                ->getAlbumWithSettingsQuery(-1)
-                ->getOneOrNullResult(\Doctrine\ORM\AbstractQuery::HYDRATE_OBJECT);
+            ->getAlbumWithSettingsQuery(-1)
+            ->getOneOrNullResult(\Doctrine\ORM\AbstractQuery::HYDRATE_OBJECT);
 
         $repository = Shopware()->Models()->getRepository('Shopware\Models\Shop\Currency');
         $shop->setCurrency($repository->find($this->sCurrency['id']));
@@ -443,15 +443,15 @@ class sExport
 
                 return $this->sSettings['fieldmark'] . $string . $this->sSettings['fieldmark'];
             case 'xml':
-                 if ($char_set != 'UTF-8') {
-                     $string = utf8_decode($string);
-                 }
+                if ($char_set != 'UTF-8') {
+                    $string = utf8_decode($string);
+                }
 
                 return $string;
-               case 'html':
+            case 'html':
                 $string = html_entity_decode($string, ENT_NOQUOTES, $char_set);
 
-                   return htmlspecialchars($string, ENT_QUOTES, $char_set, false);
+                return htmlspecialchars($string, ENT_QUOTES, $char_set, false);
             case 'htmlall':
                 return htmlentities($string, ENT_QUOTES, $char_set);
             case 'url':
@@ -497,19 +497,19 @@ class sExport
                 return str_replace(['@', '.'], [' [AT] ', ' [DOT] '], $string);
 
             case 'nonstd':
-               // escape non-standard chars, such as ms document quotes
-               $_res = '';
-               for ($_i = 0, $_len = strlen($string); $_i < $_len; ++$_i) {
-                   $_ord = ord(substr($string, $_i, 1));
-                   // non-standard char, escape it
-                   if ($_ord >= 126) {
-                       $_res .= '&#' . $_ord . ';';
-                   } else {
-                       $_res .= substr($string, $_i, 1);
-                   }
-               }
+                // escape non-standard chars, such as ms document quotes
+                $_res = '';
+                for ($_i = 0, $_len = strlen($string); $_i < $_len; ++$_i) {
+                    $_ord = ord(substr($string, $_i, 1));
+                    // non-standard char, escape it
+                    if ($_ord >= 126) {
+                        $_res .= '&#' . $_ord . ';';
+                    } else {
+                        $_res .= substr($string, $_i, 1);
+                    }
+                }
 
-               return $_res;
+                return $_res;
         }
     }
 
@@ -519,9 +519,8 @@ class sExport
     }
 
     /**
-     * @param string      $hash
+     * @param string $hash
      * @param null|string $imageSize
-     *
      * @return null|string
      */
     public function sGetImageLink($hash, $imageSize = null)
@@ -547,8 +546,8 @@ class sExport
 
         // get thumbnail sizes
         $sizes = $this->articleMediaAlbum
-                ->getSettings()
-                ->getThumbnailSize();
+            ->getSettings()
+            ->getThumbnailSize();
 
         foreach ($sizes as $key => &$size) {
             if (strpos($size, 'x') === 0) {
@@ -1200,8 +1199,7 @@ class sExport
         $sql = "
             SELECT
               c.id, c.id as countryID, countryname, countryiso,
-              countryen, c.position, notice,
-              c.shippingfree as shippingfree
+              countryen, c.position, notice
             FROM s_core_countries c
             WHERE $sql
         ";
@@ -1358,28 +1356,31 @@ class sExport
             LEFT JOIN s_core_tax t
             ON t.id=a.taxID
 
+            # Join on NULL in order to synchronize query result columns with query from sAdmin::sGetDispatchBasket
             LEFT JOIN s_user u
             ON u.id=NULL
 
-            LEFT JOIN s_user_billingaddress ub
-            ON ub.userID=u.id
-
-            LEFT JOIN s_user_shippingaddress us
-            ON us.userID=u.id
+            LEFT JOIN s_user_addresses as ub
+            ON ub.id=u.default_billing_address_id
+            AND ub.user_id=u.id
+              
+            LEFT JOIN s_user_addresses as us
+            ON us.id=u.default_shipping_address_id
+            AND us.user_id=u.id
 
             GROUP BY b.sessionID
         ";
 
         try {
             $basket = $this->db->fetchRow($sql, [
-            $article['articleID'],
-            $article['ordernumber'],
-            $article['shippingfree'],
-            $article['price'],
-            $article['netprice'],
-            $article['esd'],
-            $this->sCurrency['factor'],
-        ]);
+                $article['articleID'],
+                $article['ordernumber'],
+                $article['shippingfree'],
+                $article['price'],
+                $article['netprice'],
+                $article['esd'],
+                $this->sCurrency['factor'],
+            ]);
         } catch (Exception $e) {
             echo $e->getMessage();
             exit();
@@ -1488,11 +1489,13 @@ class sExport
             ON u.id=0
             AND u.active=1
 
-            LEFT JOIN s_user_billingaddress ub
-            ON ub.userID=u.id
+            LEFT JOIN s_user_addresses ub
+            ON u.default_billing_address_id=ub.id
+            AND u.id=ub.user_id
 
-            LEFT JOIN s_user_shippingaddress us
-            ON us.userID=u.id
+            LEFT JOIN s_user_addresses us
+            ON u.default_shipping_address_id=us.id
+            AND u.id=us.user_id
 
             WHERE d.active = 1
             AND (bind_weight_from IS NULL OR bind_weight_from <= b.weight)
@@ -1594,11 +1597,13 @@ class sExport
             ON u.id=b.userID
             AND u.active=1
 
-            LEFT JOIN s_user_billingaddress ub
-            ON ub.userID=u.id
+            LEFT JOIN s_user_addresses ub
+            ON u.default_billing_address_id=ub.id
+            AND u.id=ub.user_id
 
-            LEFT JOIN s_user_shippingaddress us
-            ON us.userID=u.id
+            LEFT JOIN s_user_addresses us
+            ON u.default_shipping_address_id=us.id
+            AND u.id=us.user_id
 
             WHERE d.active=1
             AND (bind_weight_from IS NULL OR bind_weight_from <= b.weight)
@@ -1720,7 +1725,7 @@ class sExport
     }
 
     /**
-     * @param int $id
+     * @param $id
      *
      * @return mixed
      */
@@ -1809,7 +1814,6 @@ class sExport
      *
      * @param string $url
      * @param string $adapterType
-     *
      * @return string
      */
     private function fixShopHost($url, $adapterType)

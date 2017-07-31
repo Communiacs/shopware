@@ -41,9 +41,8 @@ It allows the user to directly see and change the important information of their
 
 .account--menu {
     .link--logout {
-        [class^="icon--"] {
-            display: none;
-        }
+        font-weight: bold;
+        color: @brand-primary;
     }
 }
 
@@ -402,7 +401,7 @@ It allows the user to directly see and change the important information of their
 
 .account--profile {
     .unitize(margin, 0);
-    .unitize(padding-top, 20);
+    .unitize(padding-top, 30);
 
     .profile--email-password-container {
         .clearfix();
@@ -443,9 +442,9 @@ It allows the user to directly see and change the important information of their
         .unitize(font-size, 14);
     }
 
-    .js--fancy-select {
+    .select-field {
         .unitize(margin-bottom, 10);
-        width: 100%;
+        max-width: 100%;
     }
 
     .profile--field {
@@ -475,14 +474,14 @@ It allows the user to directly see and change the important information of their
     .profile--birthdate {
         .clearfix();
 
-        .js--fancy-select {
+        .select-field {
             .unitize(margin-bottom, 15);
-            width: 100%;
+            max-width: 100%;
             float: left;
         }
 
         .profile--birthyear,
-        .profile--birthyear .js--fancy-select {
+        .profile--birthyear.select-field {
             .unitize(margin-right, 0);
         }
 
@@ -847,26 +846,21 @@ It allows the user to directly see and change the important information of their
 
     .account--profile {
         .unitize(margin, 0);
-        .unitize(padding-top, 30);
 
-        .js--fancy-select {
+        .select-field {
             .unitize(margin-bottom, 15);
-
-            .profile--birthday {
-                margin-right: 2%;
-            }
         }
 
         .profile--field {
             .unitize(margin-bottom, 15);
         }
 
-        .js--fancy-select {
-            .unitize-width(290);
+        .select-field {
+            .unitize(max-width, 290);
         }
 
         .profile--birthdate {
-            .js--fancy-select {
+            .select-field {
                 width: 32%;
                 margin-right: 2%;
             }
@@ -932,6 +926,10 @@ It allows the user to directly see and change the important information of their
         .content-main--inner {
             .unitize-padding(0, 45, 45, 45);
         }
+    }
+
+    .account--profile {
+        .unitize(padding-top, 45);
     }
 
     .account--content {

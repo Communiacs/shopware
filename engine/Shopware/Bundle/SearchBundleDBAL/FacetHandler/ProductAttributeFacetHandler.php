@@ -24,6 +24,9 @@
 
 namespace Shopware\Bundle\SearchBundleDBAL\FacetHandler;
 
+use Shopware\Bundle\AttributeBundle\Service\ConfigurationStruct;
+use Shopware\Bundle\AttributeBundle\Service\CrudService;
+use Shopware\Bundle\AttributeBundle\Service\TypeMapping;
 use Shopware\Bundle\SearchBundle\Condition\ProductAttributeCondition;
 use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundle\Facet\ProductAttributeFacet;
@@ -33,38 +36,39 @@ use Shopware\Bundle\SearchBundle\FacetResult\RadioFacetResult;
 use Shopware\Bundle\SearchBundle\FacetResult\RangeFacetResult;
 use Shopware\Bundle\SearchBundle\FacetResult\ValueListFacetResult;
 use Shopware\Bundle\SearchBundle\FacetResult\ValueListItem;
-use Shopware\Bundle\SearchBundleDBAL\FacetHandlerInterface;
+use Shopware\Bundle\SearchBundle\FacetResultInterface;
+use Shopware\Bundle\SearchBundleDBAL\PartialFacetHandlerInterface;
 use Shopware\Bundle\SearchBundleDBAL\QueryBuilder;
 use Shopware\Bundle\SearchBundleDBAL\QueryBuilderFactoryInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct;
+use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
 /**
  * @category  Shopware
  *
  * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
-class ProductAttributeFacetHandler implements FacetHandlerInterface
+class ProductAttributeFacetHandler implements PartialFacetHandlerInterface
 {
     /**
      * @var QueryBuilderFactoryInterface
      */
     private $queryBuilderFactory;
-
     /**
-     * @var \Enlight_Components_Snippet_Namespace
+     * @var CrudService
      */
-    private $snippetNamespace;
+    private $crudService;
 
     /**
-     * @param QueryBuilderFactoryInterface         $queryBuilderFactory
-     * @param \Shopware_Components_Snippet_Manager $snippetManager
+     * @param QueryBuilderFactoryInterface $queryBuilderFactory
+     * @param CrudService                  $crudService
      */
     public function __construct(
         QueryBuilderFactoryInterface $queryBuilderFactory,
-        \Shopware_Components_Snippet_Manager $snippetManager
+        CrudService $crudService
     ) {
         $this->queryBuilderFactory = $queryBuilderFactory;
-        $this->snippetNamespace = $snippetManager->getNamespace('frontend/listing/facet_labels');
+        $this->crudService = $crudService;
     }
 
     /**
@@ -76,31 +80,31 @@ class ProductAttributeFacetHandler implements FacetHandlerInterface
     }
 
     /**
-     * Generates the facet data for the passed query, criteria and context object.
-     *
      * @param FacetInterface|ProductAttributeFacet $facet
+     * @param Criteria                             $reverted
      * @param Criteria                             $criteria
-     * @param Struct\ShopContextInterface          $context
+     * @param ShopContextInterface                 $context
      *
-     * @return BooleanFacetResult|ValueListFacetResult
+     * @return FacetResultInterface|null
      */
-    public function generateFacet(
+    public function generatePartialFacet(
         FacetInterface $facet,
+        Criteria $reverted,
         Criteria $criteria,
-        Struct\ShopContextInterface $context
+        ShopContextInterface $context
     ) {
-        $queryCriteria = clone $criteria;
-        $queryCriteria->resetConditions();
-        $queryCriteria->resetSorting();
-
-        $query = $this->queryBuilderFactory->createQuery($queryCriteria, $context);
-
+        $query = $this->queryBuilderFactory->createQuery($reverted, $context);
         $query->resetQueryPart('orderBy');
         $query->resetQueryPart('groupBy');
 
         $sqlField = 'productAttribute.' . $facet->getField();
         $query->andWhere($sqlField . ' IS NOT NULL')
-            ->andWhere($sqlField . " != ''");
+            ->andWhere($sqlField . " NOT IN ('', 0, '0000-00-00')");
+
+        /** @var ConfigurationStruct $attribute */
+        $attribute = $this->crudService->get('s_articles_attributes', $facet->getField());
+
+        $type = $attribute ? $attribute->getColumnType() : null;
 
         switch ($facet->getMode()) {
             case ProductAttributeFacet::MODE_VALUE_LIST_RESULT:
@@ -121,9 +125,19 @@ class ProductAttributeFacetHandler implements FacetHandlerInterface
                 break;
         }
 
-        if ($result !== null && $facet->getTemplate()) {
-            $result->setTemplate($facet->getTemplate());
+        if ($result === null) {
+            return $result;
         }
+
+        if ($facet->getTemplate()) {
+            $result->setTemplate($facet->getTemplate());
+
+            return $result;
+        }
+
+        $result->setTemplate(
+            $this->getTypeTemplate($type, $facet->getMode(), $result->getTemplate())
+        );
 
         return $result;
     }
@@ -163,6 +177,10 @@ class ProductAttributeFacetHandler implements FacetHandlerInterface
             $actives = $condition->getValue();
         }
 
+        if (!is_array($actives)) {
+            $actives = [$actives];
+        }
+
         $items = array_map(function ($row) use ($actives, $facet) {
             $viewName = $row[$facet->getField()];
             $translation = $this->extractTranslations($row, $facet->getField());
@@ -184,12 +202,12 @@ class ProductAttributeFacetHandler implements FacetHandlerInterface
         }
 
         return new ValueListFacetResult(
-                $facet->getName(),
-                $criteria->hasCondition($facet->getName()),
-                $facet->getLabel(),
-                $items,
-                $facet->getFormFieldName()
-            );
+            $facet->getName(),
+            $criteria->hasCondition($facet->getName()),
+            $facet->getLabel(),
+            $items,
+            $facet->getFormFieldName()
+        );
     }
 
     /**
@@ -219,6 +237,13 @@ class ProductAttributeFacetHandler implements FacetHandlerInterface
             return null;
         }
 
+        if ($result['minValues'] === null && $result['maxValues'] === null) {
+            return null;
+        }
+        if ($result['minValues'] === $result['maxValues']) {
+            return null;
+        }
+
         $activeMin = $result['minValues'];
         $activeMax = $result['maxValues'];
 
@@ -238,7 +263,10 @@ class ProductAttributeFacetHandler implements FacetHandlerInterface
             $activeMin,
             $activeMax,
             'min' . $facet->getFormFieldName(),
-            'max' . $facet->getFormFieldName()
+            'max' . $facet->getFormFieldName(),
+            [],
+            $facet->getSuffix(),
+            $facet->getDigits()
         );
     }
 
@@ -355,5 +383,38 @@ class ProductAttributeFacetHandler implements FacetHandlerInterface
         }
 
         return $result[$fieldName];
+    }
+
+    /**
+     * @param string $type
+     * @param string $mode
+     * @param string $defaultTemplate
+     *
+     * @return string
+     */
+    private function getTypeTemplate($type, $mode, $defaultTemplate)
+    {
+        switch (true) {
+            case $type === TypeMapping::TYPE_DATE && $mode === ProductAttributeFacet::MODE_RANGE_RESULT:
+
+                return 'frontend/listing/filter/facet-date-range.tpl';
+            case $type === TypeMapping::TYPE_DATE && $mode === ProductAttributeFacet::MODE_VALUE_LIST_RESULT:
+
+                return 'frontend/listing/filter/facet-date-multi.tpl';
+            case $type === TypeMapping::TYPE_DATE && $mode !== ProductAttributeFacet::MODE_BOOLEAN_RESULT:
+
+                return 'frontend/listing/filter/facet-date.tpl';
+            case $type === TypeMapping::TYPE_DATETIME && $mode === ProductAttributeFacet::MODE_RANGE_RESULT:
+
+                return 'frontend/listing/filter/facet-datetime-range.tpl';
+            case $type === TypeMapping::TYPE_DATETIME && $mode === ProductAttributeFacet::MODE_VALUE_LIST_RESULT:
+
+                return 'frontend/listing/filter/facet-datetime-multi.tpl';
+            case $type === TypeMapping::TYPE_DATETIME && $mode !== ProductAttributeFacet::MODE_BOOLEAN_RESULT:
+
+                return 'frontend/listing/filter/facet-datetime.tpl';
+            default:
+                return $defaultTemplate;
+        }
     }
 }

@@ -70,6 +70,7 @@ class ProductStream extends ModelEntity
     private $type;
 
     /**
+     * @deprecated since version 5.3, to be removed in 6.0 - Use \Shopware\Models\ProductStream\ProductStream::$sortingId instead
      * @ORM\Column(name="sorting", type="string", nullable=false)
      */
     private $sorting;
@@ -79,6 +80,12 @@ class ProductStream extends ModelEntity
      * @ORM\Column(name="conditions", type="string", nullable=true)
      */
     private $conditions = true;
+
+    /**
+     * @var int
+     * @ORM\Column(name="sorting_id", type="integer", nullable=true)
+     */
+    private $sortingId;
 
     /**
      * @return int
@@ -153,6 +160,8 @@ class ProductStream extends ModelEntity
     }
 
     /**
+     * @deprecated since version 5.3, to be removed in 6.0 - Use \Shopware\Models\ProductStream\ProductStream::$sortingId instead
+     *
      * @return mixed
      */
     public function getSorting()
@@ -161,6 +170,8 @@ class ProductStream extends ModelEntity
     }
 
     /**
+     * @deprecated since version 5.3, to be removed in 6.0 - Use \Shopware\Models\ProductStream\ProductStream::$sortingId instead
+     *
      * @param mixed $sorting
      */
     public function setSorting($sorting)
@@ -184,5 +195,21 @@ class ProductStream extends ModelEntity
     public function setAttribute($attribute)
     {
         return $this->setOneToOne($attribute, '\Shopware\Models\Attribute\ProductStream', 'attribute', 'productStream');
+    }
+
+    /**
+     * @return int
+     */
+    public function getSortingId()
+    {
+        return $this->sortingId;
+    }
+
+    /**
+     * @param int $sortingId
+     */
+    public function setSortingId($sortingId)
+    {
+        $this->sortingId = $sortingId;
     }
 }

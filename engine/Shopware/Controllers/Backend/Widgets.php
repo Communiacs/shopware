@@ -22,7 +22,6 @@
  * our trademarks remain entirely with us.
  */
 
-use Shopware\Components\Template\Security;
 use Shopware\Models\Shop\Locale;
 
 /**
@@ -276,9 +275,7 @@ class Shopware_Controllers_Backend_Widgets extends Shopware_Controllers_Backend_
         '
         );
 
-        if (empty($timeBack)) {
-            $timeBack = 7;
-        }
+        $timeBack = 7;
 
         $sql = "
         SELECT
@@ -339,9 +336,7 @@ class Shopware_Controllers_Backend_Widgets extends Shopware_Controllers_Backend_
      */
     public function getVisitorsAction()
     {
-        if (empty($timeBack)) {
-            $timeBack = 8;
-        }
+        $timeBack = 8;
 
         // Get visitors in defined time-range
         $sql = '
@@ -376,7 +371,7 @@ class Shopware_Controllers_Backend_Widgets extends Shopware_Controllers_Backend_
         $fetchLoggedInUsers = Shopware()->Container()->get('db')->fetchAll("
             SELECT s.userID,
             (SELECT SUM(quantity * price) AS amount FROM s_order_basket WHERE userID = s.userID GROUP BY sessionID ORDER BY id DESC LIMIT 1) AS amount,
-            (SELECT IF(ub.company,ub.company,CONCAT(ub.firstname,' ',ub.lastname)) FROM s_user_billingaddress AS ub WHERE ub.userID = s.userID) AS customer
+            (SELECT IF(ub.company,ub.company,CONCAT(ub.firstname,' ',ub.lastname)) FROM s_user_addresses AS ub INNER JOIN s_user AS u ON u.default_billing_address_id = ub.id WHERE u.id = s.userID) AS customer
             FROM s_statistics_currentusers s
             WHERE userID != 0
             GROUP BY remoteaddr
@@ -422,32 +417,18 @@ class Shopware_Controllers_Backend_Widgets extends Shopware_Controllers_Backend_
      */
     public function getLastOrdersAction()
     {
-        $addSqlPayment = '';
-        $addSqlSubshop = '';
-        if (!empty($subshopID)) {
-            $addSqlSubshop = '
-            AND s_order.subshopID = ' . Shopware()->Container()->get('db')->quote($subshopID);
-        }
-
-        if (!empty($restrictPayment)) {
-            $addSqlPayment = '
-            AND s_order.paymentID = ' . Shopware()->Container()->get('db')->quote($restrictPayment);
-        }
-
-        $sql = "
+        $sql = '
         SELECT s_order.id AS id, currency,currencyFactor,firstname,lastname, company, subshopID, paymentID,  ordernumber AS orderNumber, transactionID, s_order.userID AS customerId, invoice_amount,invoice_shipping, ordertime AS `date`, status, cleared
         FROM s_order
         LEFT JOIN s_order_billingaddress ON s_order_billingaddress.userID = s_order.userID
         WHERE
             s_order.status != -1
-        $addSqlSubshop
-        $addSqlPayment
         AND
             ordertime >= DATE_SUB(now(),INTERVAL 14 DAY)
         GROUP BY s_order.id
         ORDER BY ordertime DESC
         LIMIT 20
-        ";
+        ';
 
         $result = Shopware()->Container()->get('db')->fetchAll($sql);
         foreach ($result as &$order) {
@@ -550,11 +531,12 @@ class Shopware_Controllers_Backend_Widgets extends Shopware_Controllers_Backend_
             company AS company_name, s_user.customernumber, CONCAT(s_user.firstname,' ',s_user.lastname) AS customer
         FROM s_user
         LEFT JOIN s_core_customergroups
-            ON groupkey = validation,
-        s_user_billingaddress
+            ON groupkey = validation
+        LEFT JOIN s_user_addresses
+            ON s_user_addresses.id = s_user.default_billing_address_id
+            AND s_user.id = s_user_addresses.user_id
         WHERE
-            s_user.id = s_user_billingaddress.userID
-            AND validation != ''
+            validation != ''
             AND validation != '0'
         ORDER BY s_user.firstlogin DESC";
 
@@ -678,13 +660,6 @@ class Shopware_Controllers_Backend_Widgets extends Shopware_Controllers_Backend_
 
         $content = preg_replace('`<br(?: /)?>([\\n\\r])`', '$1', $params['content']);
 
-        $this->View()->Engine()->enableSecurity(
-            new Security(
-                $this->View()->Engine(),
-                $this->container->getParameter('shopware.template_security')
-            )
-        );
-
         $compiler = new Shopware_Components_StringCompiler($this->View()->Engine());
         $defaultContext = [
             'sConfig' => Shopware()->Config(),
@@ -707,18 +682,18 @@ class Shopware_Controllers_Backend_Widgets extends Shopware_Controllers_Backend_
         }
         if ($status == 'accepted') {
             Shopware()->Container()->get('db')->query(
-                    "
+                "
                                     UPDATE s_user SET customergroup = validation, validation = '' WHERE id = ?
                                     ",
-                    [$userId]
-                );
+                [$userId]
+            );
         } else {
             Shopware()->Container()->get('db')->query(
-                    "
+                "
                                     UPDATE s_user SET validation = '' WHERE id = ?
                                     ",
-                    [$userId]
-                );
+                [$userId]
+            );
         }
 
         $this->View()->assign(['success' => true, 'message' => 'The mail was send successfully.']);

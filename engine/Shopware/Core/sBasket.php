@@ -630,7 +630,7 @@ class sBasket
                 $voucherDetails = $this->db->fetchRow(
                     'SELECT description, numberofunits, customergroup, value, restrictarticles,
                     minimumcharge, shippingfree, bindtosupplier, taxconfig, valid_from,
-                    valid_to, ordercode, modus, percental, strict, subshopID
+                    valid_to, ordercode, modus, percental, strict, subshopID, customer_stream_ids
                     FROM s_emarketing_vouchers WHERE modus = 1 AND id = ? AND (
                       (valid_to >= CURDATE()
                           AND valid_from <= CURDATE()
@@ -642,6 +642,21 @@ class sBasket
                 unset($voucherCodeDetails['voucherID']);
                 $voucherDetails = array_merge($voucherCodeDetails, $voucherDetails);
                 $individualCode = ($voucherDetails && $voucherDetails['description']);
+            }
+        }
+        $streams = array_filter(explode('|', $voucherDetails['customer_stream_ids']));
+
+        if (!empty($streams)) {
+            $context = $this->contextService->getShopContext();
+            $allowed = array_intersect($context->getActiveCustomerStreamIds(), $streams);
+
+            if (empty($allowed)) {
+                $message = $this->snippetManager->getNamespace('frontend/basket/internalMessages')->get(
+                    'VoucherFailureCustomerStreams',
+                    'This voucher is not available for you'
+                );
+
+                return ['sErrorFlag' => true, 'sErrorMessages' => [$message]];
             }
         }
 
@@ -660,8 +675,6 @@ class sBasket
 
             return ['sErrorFlag' => true, 'sErrorMessages' => $sErrorMessages];
         }
-
-        $restrictDiscount = !empty($voucherDetails['strict']);
 
         // If voucher is limited to a specific subshop, filter that and return on failure
         $sErrorMessages = $this->filterSubShopVoucher($voucherDetails);
@@ -704,8 +717,9 @@ class sBasket
         }
 
         // Calculate the amount in the basket
+        $restrictDiscount = !empty($voucherDetails['strict']);
         $allowedSupplierId = $voucherDetails['bindtosupplier'];
-        if (!empty($restrictDiscount) && (!empty($restrictedArticles) || !empty($allowedSupplierId))) {
+        if ($restrictDiscount && (!empty($restrictedArticles) || !empty($allowedSupplierId))) {
             $amount = $this->sGetAmountRestrictedArticles($restrictedArticles, $allowedSupplierId);
         } else {
             $amount = $this->sGetAmountArticles();
@@ -1106,7 +1120,7 @@ class sBasket
             $totalAmountNet
         ) = $this->getBasketArticles($getArticles);
 
-        if ($totalAmount < 0 || empty($totalCount)) {
+        if (static::roundTotal($totalAmount) < 0 || empty($totalCount)) {
             if (!$this->eventManager->notifyUntil('Shopware_Modules_Basket_sGetBasket_AllowEmptyBasket', [
                 'articles' => $getArticles,
                 'totalAmount' => $totalAmount,
@@ -1138,15 +1152,6 @@ class sBasket
             'AmountWithTax' => $totalAmountWithTax,
             'AmountWithTaxNumeric' => $totalAmountWithTaxNumeric,
         ];
-
-        $lastArticle = $this->session->get('sLastArticle');
-        if (!empty($lastArticle)) {
-            $result['sLastActiveArticle'] = [
-                'id' => $lastArticle,
-                'link' => $this->config->get('sBASEFILE')
-                    . '?sViewport=detail&sDetails=' . $lastArticle,
-            ];
-        }
 
         if (!empty($result['content'])) {
             foreach ($result['content'] as $key => $value) {
@@ -1258,8 +1263,9 @@ class sBasket
         /** @var $product ListProduct */
         foreach ($products as $product) {
             $note = $notes[$product->getNumber()];
-
-            $promotions[] = $this->convertListProductToNote($product, $note);
+            $promotion = $this->convertListProductToNote($product, $note);
+            $promotion['linkDetails'] = $promotion['linkVariant'];
+            $promotions[] = $promotion;
         }
 
         return $this->eventManager->filter(
@@ -1675,7 +1681,8 @@ class sBasket
                 details.articleID as voucherId,
                 details.articleordernumber AS voucherOrderNumber,
                 vouchers.numorder AS maxPerUser,
-                vouchers.numberofunits AS maxGlobal
+                vouchers.numberofunits AS maxGlobal,
+                vouchers.customer_stream_ids
             FROM s_emarketing_vouchers AS vouchers
             LEFT JOIN s_order_details details ON vouchers.ordercode = details.articleordernumber
             LEFT JOIN s_order AS orders ON details.orderID = orders.id
@@ -1727,6 +1734,26 @@ class sBasket
         $passedVoucherGlobalLimit = $result['usedVoucherCount'] < $voucherData['maxGlobal'];
 
         return $passedVoucherPerUserLimit && $passedVoucherGlobalLimit;
+    }
+
+    /**
+     * Round a total to two decimal places. Also make sure to round to positive zero instead of negative zero.
+     *
+     * @param float $total a number to round
+     *
+     * @return float The number rounded to two decimal places, with -0.0 replaced with 0.0
+     */
+    private static function roundTotal($total)
+    {
+        $roundedTotal = round($total, 2);
+
+        // -0.0 == 0.0 in PHP
+        if (((float) $roundedTotal) == 0.0) {
+            // prevent -0.0 (FP negative zero) from being returned from this function
+            return 0.0;
+        }
+
+        return $roundedTotal;
     }
 
     /**
@@ -1965,7 +1992,7 @@ class sBasket
         $sErrorMessages = [];
 
         if (!empty($voucherDetails['restrictarticles']) && strlen($voucherDetails['restrictarticles']) > 5) {
-            $restrictedArticles = explode(';', $voucherDetails['restrictarticles']);
+            $restrictedArticles = array_filter(explode(';', $voucherDetails['restrictarticles']));
             if (count($restrictedArticles) == 0) {
                 $restrictedArticles[] = $voucherDetails['restrictarticles'];
             }
@@ -2632,7 +2659,7 @@ class sBasket
             ($this->config->get('sARTICLESOUTPUTNETTO') && !$this->sSYSTEM->sUSERGROUPDATA['tax'])
             || (!$this->sSYSTEM->sUSERGROUPDATA['tax'] && $this->sSYSTEM->sUSERGROUPDATA['id'])
         ) {
-            $netPrice = round($grossPrice, 2);
+            $netPrice = $grossPrice;
         } else {
             // Round to right value, if no purchase unit is set
             if ($queryAdditionalInfo['purchaseunit'] == 1) {

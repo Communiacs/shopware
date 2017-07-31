@@ -60,7 +60,7 @@ class LicenseInstaller
             $this->connection->query($sql);
 
             // Insert new license
-            $sql = <<<EOT
+            $sql = <<<'EOT'
 INSERT INTO s_core_licenses (module,host,label,license,version,type,source,added,creation,expiration,active)
 VALUES (:module,:host,:label,:license,:version,:type,:source,now(),:creation,:expiration,1)
 EOT;

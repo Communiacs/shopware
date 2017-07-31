@@ -36,7 +36,7 @@ class Utils
     public static function check($file)
     {
         if (file_exists($file)) {
-            if (!is_writeable($file)) {
+            if (!is_writable($file)) {
                 return $file;
             }
 
@@ -74,7 +74,7 @@ class Utils
         $results = [];
         foreach ($paths as $path) {
             $name = $basePath . '/' . $path;
-            $result = file_exists($name) && is_readable($name) && is_writeable($name);
+            $result = file_exists($name) && is_readable($name) && is_writable($name);
             $results[] = [
                 'name' => $path,
                 'result' => $result,

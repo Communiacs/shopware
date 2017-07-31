@@ -24,7 +24,7 @@
 
 namespace Shopware\Bundle\SearchBundleES\FacetHandler;
 
-use ONGR\ElasticsearchDSL\Aggregation\StatsAggregation;
+use ONGR\ElasticsearchDSL\Aggregation\TermsAggregation;
 use ONGR\ElasticsearchDSL\Search;
 use Shopware\Bundle\SearchBundle\Condition\VoteAverageCondition;
 use Shopware\Bundle\SearchBundle\Criteria;
@@ -79,9 +79,9 @@ class VoteAverageFacetHandler implements HandlerInterface, ResultHydratorInterfa
         Search $search,
         ShopContextInterface $context
     ) {
-        $aggregation = new StatsAggregation('vote_average');
-        $aggregation->setField('voteAverage.average');
-        $search->addAggregation($aggregation);
+        $search->addAggregation(
+            new TermsAggregation('vote_average', 'voteAverage.average')
+        );
     }
 
     /**
@@ -101,20 +101,21 @@ class VoteAverageFacetHandler implements HandlerInterface, ResultHydratorInterfa
         }
 
         $data = $elasticResult['aggregations']['vote_average'];
-        if ($data['count'] <= 0) {
+        if (empty($data['buckets'])) {
             return;
         }
 
-        $criteriaPart = $this->createFacet($criteria);
+        $criteriaPart = $this->createFacet($criteria, $data['buckets']);
         $result->addFacet($criteriaPart);
     }
 
     /**
      * @param Criteria $criteria
+     * @param array    $buckets
      *
      * @return RadioFacetResult
      */
-    private function createFacet(Criteria $criteria)
+    private function createFacet(Criteria $criteria, array $buckets)
     {
         $activeAverage = null;
         if ($criteria->hasCondition('vote_average')) {
@@ -123,18 +124,17 @@ class VoteAverageFacetHandler implements HandlerInterface, ResultHydratorInterfa
             $activeAverage = $condition->getAverage();
         }
 
-        $values = [
-            new ValueListItem(1, '', ($activeAverage == 1)),
-            new ValueListItem(2, '', ($activeAverage == 2)),
-            new ValueListItem(3, '', ($activeAverage == 3)),
-            new ValueListItem(4, '', ($activeAverage == 4)),
-            new ValueListItem(5, '', ($activeAverage == 5)),
-        ];
+        $values = $this->buildItems($buckets, $activeAverage);
 
-        $label = $this->snippetManager
-            ->getNamespace('frontend/listing/facet_labels')
-            ->get('vote_average', 'Ranking')
-        ;
+        /** @var VoteAverageFacet $facet */
+        $facet = $criteria->getFacet('vote_average');
+        if ($facet && !empty($facet->getLabel())) {
+            $label = $facet->getLabel();
+        } else {
+            $label = $this->snippetManager
+                ->getNamespace('frontend/listing/facet_labels')
+                ->get('vote_average', 'Ranking');
+        }
 
         if (!$fieldName = $this->queryAliasMapper->getShortAlias('rating')) {
             $fieldName = 'rating';
@@ -149,5 +149,38 @@ class VoteAverageFacetHandler implements HandlerInterface, ResultHydratorInterfa
             [],
             'frontend/listing/filter/facet-rating.tpl'
         );
+    }
+
+    /**
+     * @param array $data
+     * @param int   $activeAverage
+     *
+     * @return array
+     */
+    private function buildItems($data, $activeAverage)
+    {
+        usort($data, function ($a, $b) {
+            return $a['key'] > $b['key'];
+        });
+
+        $values = [];
+        for ($i = 1; $i <= 4; ++$i) {
+            $affected = array_filter($data, function ($value) use ($i) {
+                return ($value['key'] / 2) >= $i;
+            });
+
+            $count = array_sum(array_column($affected, 'doc_count'));
+            if ($count === 0) {
+                continue;
+            }
+
+            $values[] = new ValueListItem($i, $count, $activeAverage == $i);
+        }
+
+        usort($values, function (ValueListItem $a, ValueListItem $b) {
+            return $a->getId() < $b->getId();
+        });
+
+        return $values;
     }
 }

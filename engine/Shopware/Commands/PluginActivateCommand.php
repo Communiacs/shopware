@@ -50,7 +50,7 @@ class PluginActivateCommand extends ShopwareCommand
                 InputArgument::REQUIRED,
                 'Name of the plugin to be activated.'
             )
-            ->setHelp(<<<EOF
+            ->setHelp(<<<'EOF'
 The <info>%command.name%</info> activates a plugin.
 EOF
             );

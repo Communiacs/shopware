@@ -124,9 +124,9 @@ class Shopware_Controllers_Backend_Blog extends Shopware_Controllers_Backend_Ext
     public function getListAction()
     {
         try {
-            $limit = intval($this->Request()->limit);
-            $offset = intval($this->Request()->start);
-            $categoryId = (intval($this->Request()->categoryId) == 0) ? 1 : intval($this->Request()->categoryId);
+            $limit = (int) $this->Request()->limit;
+            $offset = (int) $this->Request()->start;
+            $categoryId = ((int) $this->Request()->categoryId == 0) ? 1 : (int) $this->Request()->categoryId;
 
             //order data
             $order = (array) $this->Request()->getParam('sort', []);
@@ -192,7 +192,7 @@ class Shopware_Controllers_Backend_Blog extends Shopware_Controllers_Backend_Ext
 
         if (!empty($id)) {
             //edit Data
-            $blogModel = $this->getManager()->Blog()->find($id);
+            $blogModel = $this->getManager()->getRepository(Blog::class)->find($id);
             //deletes all old blog tags
             $this->deleteOldTags($id);
         } else {
@@ -216,7 +216,7 @@ class Shopware_Controllers_Backend_Blog extends Shopware_Controllers_Backend_Ext
             $this->getManager()->flush();
 
             /** @var $repository \Shopware\Models\Blog\Repository */
-            $repository = $this->getManager()->Blog();
+            $repository = $this->getManager()->getRepository(Blog::class);
 
             $filter = [['property' => 'id', 'value' => $blogModel->getId()]];
             $dataQuery = $repository->getBackendDetailQuery($filter);
@@ -263,8 +263,8 @@ class Shopware_Controllers_Backend_Blog extends Shopware_Controllers_Backend_Ext
      */
     public function getBlogCommentsAction()
     {
-        $limit = intval($this->Request()->limit);
-        $offset = intval($this->Request()->start);
+        $limit = (int) $this->Request()->limit;
+        $offset = (int) $this->Request()->start;
         //order data
         $order = (array) $this->Request()->getParam('sort', []);
 
@@ -273,7 +273,7 @@ class Shopware_Controllers_Backend_Blog extends Shopware_Controllers_Backend_Ext
         }
         /** @var $filter array */
         $filter = $this->Request()->getParam('filter', []);
-        $blogId = intval($this->Request()->blogId);
+        $blogId = (int) $this->Request()->blogId;
 
         $dataQuery = $this->getRepository()->getBlogCommentsById($blogId, $filter, $order, $offset, $limit);
         $totalCount = $this->getManager()->getQueryCount($dataQuery);
@@ -473,6 +473,8 @@ class Shopware_Controllers_Backend_Blog extends Shopware_Controllers_Backend_Ext
 
     /**
      * Internal helper function to get access to the entity manager.
+     *
+     * @return \Shopware\Components\Model\ModelManager
      */
     private function getManager()
     {
@@ -505,7 +507,7 @@ class Shopware_Controllers_Backend_Blog extends Shopware_Controllers_Backend_Ext
      *
      * @param $tags
      *
-     * @return array
+     * @return string
      */
     private function flatBlogTags($tags)
     {

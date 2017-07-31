@@ -30,6 +30,7 @@ use Shopware\Bundle\SearchBundle\ConditionInterface;
 use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundle\SortingInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
+use Shopware\Components\DependencyInjection\Container;
 
 /**
  * @category  Shopware
@@ -63,12 +64,14 @@ class QueryBuilderFactory implements QueryBuilderFactoryInterface
      * @param \Enlight_Event_EventManager $eventManager
      * @param ConditionHandlerInterface[] $conditionHandlers
      * @param SortingHandlerInterface[]   $sortingHandlers
+     * @param Container                   $container
      */
     public function __construct(
         Connection $connection,
         \Enlight_Event_EventManager $eventManager,
-        $conditionHandlers = [],
-        $sortingHandlers = []
+        $conditionHandlers,
+        $sortingHandlers,
+        Container $container
     ) {
         $this->connection = $connection;
         $this->conditionHandlers = $conditionHandlers;
@@ -77,6 +80,9 @@ class QueryBuilderFactory implements QueryBuilderFactoryInterface
 
         $this->conditionHandlers = $this->registerConditionHandlers();
         $this->sortingHandlers = $this->registerSortingHandlers();
+
+        $container->set('shopware_searchdbal.condition_handlers', $this->conditionHandlers);
+        $container->set('shopware_searchdbal.sorting_handlers', $this->sortingHandlers);
     }
 
     /**
@@ -147,12 +153,6 @@ class QueryBuilderFactory implements QueryBuilderFactoryInterface
                  AND product.active = 1'
             )
             ->innerJoin(
-                'product',
-                's_core_tax',
-                'tax',
-                'tax.id = product.taxID'
-            )
-            ->innerJoin(
                 'variant',
                 's_articles_attributes',
                 'productAttribute',
@@ -198,6 +198,7 @@ class QueryBuilderFactory implements QueryBuilderFactoryInterface
             $handler = $this->getSortingHandler($sorting);
             $handler->generateSorting($sorting, $query, $context);
         }
+        $query->addOrderBy('product.id', 'ASC');
     }
 
     /**

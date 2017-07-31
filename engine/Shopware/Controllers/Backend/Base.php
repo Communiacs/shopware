@@ -126,7 +126,7 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
      *    [string]   description
      *    [int]      position
      *    [int]      active
-     * </code>
+     * </code>getlocalesaction
      */
     public function getPaymentsAction()
     {
@@ -292,7 +292,7 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
         //search for values
         if (!empty($searchQuery)) {
             $builder->andWhere('s.name LIKE :searchQuery')
-                    ->setParameter('searchQuery', '%' . $searchQuery . '%');
+                ->setParameter('searchQuery', '%' . $searchQuery . '%');
         }
 
         $builder->addOrderBy($this->Request()->getParam('sort', []));
@@ -526,16 +526,16 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
         $builder = Shopware()->Container()->get('dbal_connection')->createQueryBuilder();
 
         $fields = [
-                'details.id',
-                'articles.name',
-                'articles.description',
-                'articles.active',
-                'details.ordernumber',
-                'articles.id as articleId',
-                'details.inStock',
-                'supplier.name as supplierName',
-                'supplier.id as supplierId',
-                'details.additionalText',
+            'details.id',
+            'articles.name',
+            'articles.description',
+            'articles.active',
+            'details.ordernumber',
+            'articles.id as articleId',
+            'details.inStock',
+            'supplier.name as supplierName',
+            'supplier.id as supplierId',
+            'details.additionalText',
         ];
 
         $builder->select($fields);
@@ -565,7 +565,7 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
         }
 
         $builder->setFirstResult($this->Request()->getParam('start'))
-                ->setMaxResults($this->Request()->getParam('limit'));
+            ->setMaxResults($this->Request()->getParam('limit'));
 
         /** @var $statement \Doctrine\DBAL\Driver\ResultStatement */
         $statement = $builder->execute();
@@ -736,7 +736,7 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
         $builder->addOrderBy((array) $this->Request()->getParam('sort', []));
 
         $builder->setFirstResult($this->Request()->getParam('start'))
-                ->setMaxResults($this->Request()->getParam('limit'));
+            ->setMaxResults($this->Request()->getParam('limit'));
 
         $query = $builder->getQuery();
 
@@ -795,7 +795,7 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
         $builder->addOrderBy((array) $this->Request()->getParam('sort', []));
 
         $builder->setFirstResult($this->Request()->getParam('start'))
-                ->setMaxResults($this->Request()->getParam('limit'));
+            ->setMaxResults($this->Request()->getParam('limit'));
 
         $query = $builder->getQuery();
 
@@ -836,6 +836,7 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
 
     public function getAvailableHashesAction()
     {
+        /** @var \Shopware\Components\Password\Encoder\PasswordEncoderInterface[] $hashes */
         $hashes = Shopware()->PasswordEncoder()->getCompatibleEncoders();
 
         $result = [];
@@ -855,6 +856,32 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
         }
 
         $totalResult = count($hashes);
+
+        $this->View()->assign([
+            'success' => true,
+            'data' => $result,
+            'total' => $totalResult,
+        ]);
+    }
+
+    public function getAvailableCaptchasAction()
+    {
+        /** @var \Shopware\Components\Captcha\CaptchaRepository $captchaManager */
+        $captchaRepository = $this->get('shopware.captcha.repository');
+        /** @var Enlight_Components_Snippet_Namespace $namespace */
+        $namespace = $namespace = Shopware()->Snippets()->getNamespace('backend/captcha/display_names');
+        /** @var \Shopware\Components\Captcha\CaptchaInterface[] $availableCaptchas */
+        $availableCaptchas = $captchaRepository->getList();
+        $result = [];
+
+        foreach ($availableCaptchas as $captcha) {
+            $result[] = [
+                'id' => $captcha->getName(),
+                'displayname' => $namespace->get($captcha->getName(), ucfirst(strtolower($captcha->getName()))),
+            ];
+        }
+
+        $totalResult = count($availableCaptchas);
 
         $this->View()->assign([
             'success' => true,
@@ -931,10 +958,23 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
     {
         $value = $this->getAvailableSalutationKeys();
 
+        $whitelist = $this->Request()->getParam('ids', []);
+
+        if (!empty($whitelist)) {
+            $whitelist = json_decode($whitelist, true);
+            $value = array_filter($value, function ($key) use ($whitelist) {
+                return in_array($key, $whitelist, true);
+            });
+        }
+
         $namespace = Shopware()->Container()->get('snippets')->getNamespace('frontend/salutation');
         $salutations = [];
         foreach ($value as $key) {
-            $salutations[] = ['key' => $key, 'label' => $namespace->get($key, $key)];
+            $label = $namespace->get($key, $key);
+            if (empty(trim($label))) {
+                $label = $key;
+            }
+            $salutations[] = ['key' => $key, 'label' => $label];
         }
 
         $this->View()->assign('data', $salutations);

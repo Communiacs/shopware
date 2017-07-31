@@ -49,10 +49,8 @@ class Shopware_Controllers_Widgets_Index extends Enlight_Controller_Action
         $plugin = Shopware()->Plugins()->Frontend()->Statistics();
         $plugin->updateLog($request, $response);
 
-        if (($articleId = $request->getParam('articleId')) !== null) {
-            $plugin = Shopware()->Plugins()->Frontend()->LastArticles();
-            $plugin->setLastArticleById($articleId);
-        }
+        /** Setting mime type for jsonp request */
+        $this->Response()->setHeader('Content-type', 'application/javascript', true);
     }
 
     /**

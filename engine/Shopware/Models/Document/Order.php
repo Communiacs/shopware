@@ -277,10 +277,6 @@ class Shopware_Models_Document_Order extends Enlight_Class implements Enlight_Ho
             $this->_user['customergroupID']
         );
 
-        if (empty($taxShipping)) {
-            $taxShipping = Shopware()->Config()->sTAXSHIPPING;
-        }
-
         $taxShipping = (float) $taxShipping;
         $this->_shippingCosts = $this->_order['invoice_shipping'];
 
@@ -468,9 +464,9 @@ class Shopware_Models_Document_Order extends Enlight_Class implements Enlight_Ho
                     } elseif ($ticketResult['taxconfig'] == 'auto') {
                         // Check max. used tax-rate from basket
                         $position['tax'] = $this->getMaxTaxRate();
-                    } elseif (intval($ticketResult['taxconfig'])) {
+                    } elseif ((int) $ticketResult['taxconfig']) {
                         // Fix defined tax
-                        $temporaryTax = $ticketResult['taxconfig'];
+                        $temporaryTax = (int) $ticketResult['taxconfig'];
                         $getTaxRate = Shopware()->Db()->fetchOne("
                         SELECT tax FROM s_core_tax WHERE id = $temporaryTax
                         ");
@@ -500,7 +496,7 @@ class Shopware_Models_Document_Order extends Enlight_Class implements Enlight_Ho
             $this->_amount += $position['amount'];
 
             if (!empty($position['tax'])) {
-                $this->_tax[number_format(floatval($position['tax']), 2)] += round($position['amount'] / ($position['tax'] + 100) * $position['tax'], 2);
+                $this->_tax[number_format((float) $position['tax'], 2)] += round($position['amount'] / ($position['tax'] + 100) * $position['tax'], 2);
             }
             if ($position['amount'] <= 0) {
                 $this->_discount += $position['amount'];
@@ -535,11 +531,11 @@ class Shopware_Models_Document_Order extends Enlight_Class implements Enlight_Ho
     {
         $this->_billing = new ArrayObject(Shopware()->Db()->fetchRow('
         SELECT sob.*,sub.ustid,u.customernumber FROM s_order_billingaddress AS sob
-        LEFT JOIN s_user_billingaddress AS sub ON sub.userID = ?
-        LEFT JOIN s_user u ON u.id = sub.userID
+        LEFT JOIN s_user_addresses AS sub ON sub.id = ?
+        LEFT JOIN s_user u ON u.id = sub.user_id
         WHERE sob.userID = ? AND
         sob.orderID = ?
-        ', [$this->_userID, $this->_userID, $this->_id]), ArrayObject::ARRAY_AS_PROPS);
+        ', [$this->_user['default_billing_address_id'], $this->_userID, $this->_id]), ArrayObject::ARRAY_AS_PROPS);
 
         $this->_billing['country'] = new ArrayObject(Shopware()->Db()->fetchRow('
         SELECT * FROM s_core_countries

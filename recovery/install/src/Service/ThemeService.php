@@ -83,7 +83,7 @@ class ThemeService
      */
     private function updateDefaultTemplateId($templateId)
     {
-        $sql = <<<EOF
+        $sql = <<<'EOF'
 UPDATE s_core_shops
 SET template_id = :templateId,
     document_template_id = :templateId

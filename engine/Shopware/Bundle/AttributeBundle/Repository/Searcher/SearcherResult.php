@@ -44,8 +44,8 @@ class SearcherResult
     /**
      * SearchGatewayResult constructor.
      *
-     * @param \int[]|\string[] $identifiers
-     * @param int              $count
+     * @param int[]|string[] $identifiers
+     * @param int            $count
      */
     public function __construct($identifiers, $count)
     {
@@ -54,7 +54,7 @@ class SearcherResult
     }
 
     /**
-     * @return \int[]|\string[]
+     * @return int[]|string[]
      */
     public function getIdentifiers()
     {

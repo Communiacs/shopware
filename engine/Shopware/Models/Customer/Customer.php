@@ -73,6 +73,7 @@ class Customer extends LazyFetchModelEntity
     protected $number = '';
 
     /**
+     * @deprecated Since 5.2 removed in 5.4 use $defaultBillingAddress
      * INVERSE SIDE
      * The billing property is the inverse side of the association between customer and billing.
      * The association is joined over the billing userID field and the id field of the customer
@@ -85,6 +86,7 @@ class Customer extends LazyFetchModelEntity
     protected $billing;
 
     /**
+     * @deprecated Since 5.2 removed in 5.4 use $defaultShippingAddress
      * INVERSE SIDE
      * The shipping property is the inverse side of the association between customer and shipping.
      * The association is joined over the shipping userID field and the id field of the customer.
@@ -1048,6 +1050,7 @@ class Customer extends LazyFetchModelEntity
     }
 
     /**
+     * @deprecated Since 5.2 removed in 5.4 use getDefaultShipping()
      * Returns the instance of the Shopware\Models\Customer\Shipping model which
      * contains all data about the customer shipping address. The association is defined over
      * the Customer.shipping property (INVERSE SIDE) and the Shipping.customer (OWNING SIDE) property.
@@ -1061,6 +1064,7 @@ class Customer extends LazyFetchModelEntity
     }
 
     /**
+     * @deprecated Since 5.2 removed in 5.4 use setDefaultShipping()
      * Setter function for the shipping association property which contains an instance of the Shopware\Models\Customer\Shipping model which
      * contains all data about the customer shipping address. The association is defined over
      * the Customer.shipping property (INVERSE SIDE) and the Shipping.customer (OWNING SIDE) property.
@@ -1076,6 +1080,7 @@ class Customer extends LazyFetchModelEntity
     }
 
     /**
+     * @deprecated Since 5.2 removed in 5.4 use getDefaultBillingAddress()
      * Returns the instance of the Shopware\Models\Customer\Billing model which
      * contains all data about the customer billing address. The association is defined over
      * the Customer.billing property (INVERSE SIDE) and the Billing.customer (OWNING SIDE) property.
@@ -1089,6 +1094,7 @@ class Customer extends LazyFetchModelEntity
     }
 
     /**
+     * @deprecated Since 5.2 removed in 5.4 use setDefaultBillingAddress()
      * Setter function for the billing association property which contains an instance of the Shopware\Models\Customer\Billing model which
      * contains all data about the customer billing address. The association is defined over
      * the Customer.billing property (INVERSE SIDE) and the Billing.customer (OWNING SIDE) property.

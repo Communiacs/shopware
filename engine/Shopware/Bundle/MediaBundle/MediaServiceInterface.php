@@ -24,6 +24,8 @@
 
 namespace Shopware\Bundle\MediaBundle;
 
+use League\Flysystem\FilesystemInterface;
+
 /**
  * Interface MediaServiceInterface
  */
@@ -175,4 +177,9 @@ interface MediaServiceInterface
      * @return bool
      */
     public function migrateFile($path);
+
+    /**
+     * @return FilesystemInterface
+     */
+    public function getFilesystem();
 }

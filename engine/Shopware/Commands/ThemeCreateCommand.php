@@ -84,7 +84,7 @@ class ThemeCreateCommand extends ShopwareCommand
                 'Licence of the theme to be created.'
             )
             ->setHelp(
-                <<<EOF
+                <<<'EOF'
                 The <info>%command.name%</info> creates a theme.
 EOF
             );

@@ -22,201 +22,124 @@
  * our trademarks remain entirely with us.
  */
 
+use Doctrine\DBAL\Connection;
+use Shopware\Models\Article\Vote;
+
 /**
  * Shopware Vote Controller
  *
  * This controller handles all actions made by the user in the premium module.
  * It reads out all votes, accepts/declines them or sets an answer.
  */
-class Shopware_Controllers_Backend_Vote extends Shopware_Controllers_Backend_ExtJs
+class Shopware_Controllers_Backend_Vote extends Shopware_Controllers_Backend_Application
 {
-    /**
-     * @var \Shopware\Models\Article\Repository
-     */
-    protected $articleRepository = null;
+    protected $model = Vote::class;
+    protected $alias = 'vote';
 
-    public function initAcl()
+    public function save($data)
     {
-        $this->addAclPermission('getVotesAction', 'read', "You're not allowed to see the articles.");
-        $this->addAclPermission('deleteVoteAction', 'delete', "You're not allowed to delete articles.");
-    }
-
-    /**
-     * Disable template engine for all actions
-     */
-    public function preDispatch()
-    {
-        if (!in_array($this->Request()->getActionName(), ['index', 'load'])) {
-            $this->Front()->Plugins()->Json()->setRenderer(true);
+        if (!empty($data['answer']) && $data['answer_date'] == null) {
+            $data['answerDate'] = new DateTime();
         }
-    }
-
-    /*
-     * Index action for the controller
-     * @return void|string
-     */
-    public function indexAction()
-    {
-    }
-
-    /**
-     * Load action for the script renderer.
-     */
-    public function loadAction()
-    {
-    }
-
-    /**
-     * Function to get all votes with it's article and article-name
-     * Also used for searching articles
-     */
-    public function getVotesAction()
-    {
-        $start = $this->Request()->get('start');
-        $limit = $this->Request()->get('limit');
-
-        //order data
-        $order = (array) $this->Request()->getParam('sort', []);
-
-        $filterValue = null;
-        //filter from the search-field
-        if ($this->Request()->get('filter')) {
-            $filter = $this->Request()->get('filter');
-            $filterValue = $filter[0]['value'];
+        if (empty($data['shopId'])) {
+            $data['shop'] = null;
         }
 
-        $query = $this->getArticleRepository()->getVoteListQuery($filterValue, $start, $limit, $order);
-        //total count for paging
-        $totalResult = Shopware()->Models()->getQueryCount($query);
-        $result = $query->getArrayResult();
-
-        $this->View()->assign(['success' => true, 'data' => $result, 'total' => $totalResult]);
+        return parent::save($data);
     }
 
-    /**
-     * Function to accept a vote by setting the active-value to 1
-     */
-    public function editVoteAction()
+    protected function getList($offset, $limit, $sort = [], $filter = [], array $wholeParams = [])
     {
-        $params = $this->Request()->getParams();
-        unset($params['module']);
-        unset($params['controller']);
-        unset($params['action']);
-        unset($params['_dc']);
+        $list = parent::getList($offset, $limit, $sort, $filter, $wholeParams);
 
-        if ($params[0]) {
-            $data = [];
-            foreach ($params as $values) {
-                /**
-                 * @var \Shopware\Models\Article\Vote
-                 */
-                $voteModel = Shopware()->Models()->find('\Shopware\Models\Article\Vote', $values['id']);
-                //unset because the datum-format is wrong
-                unset($values['datum']);
-                $date = get_object_vars($voteModel->getAnswerDate());
+        $shopIds = array_column($list['data'], 'shopId');
+        $shopIds = array_keys(array_flip(array_filter($shopIds)));
 
-                //to prevent resetting an already set datum
-                if (substr($date['date'], 0, 4) == '0000') {
-                    //Set the datum of the answer manually
-                    $voteModel->setAnswerDate($values['answer_datum']);
-                }
-
-                //<br> is set, when the WYSIWYG-Editor is empty
-                //Delete the <br> then
-                if ($values['answer'] == '<br>') {
-                    $values['answer'] = '';
-                }
-
-                //Fill the model by using an array
-                $voteModel->fromArray($values);
-                //save model
-                Shopware()->Models()->persist($voteModel);
-                Shopware()->Models()->flush();
-
-                $data[] = Shopware()->Models()->toArray($voteModel);
-            }
-        } else {
-            /**
-             * @var \Shopware\Models\Article\Vote
-             */
-            $voteModel = Shopware()->Models()->find('\Shopware\Models\Article\Vote', $params['id']);
-            //unset because the datum-format is wrong
-            unset($params['datum']);
-            $date = get_object_vars($voteModel->getAnswerDate());
-
-            //to prevent resetting an already set datum
-            if (substr($date['date'], 0, 4) == '0000') {
-                //Set the datum of the answer manually
-                $voteModel->setAnswerDate($params['answer_datum']);
-            }
-
-            //<br> is set, when the WYSIWYG-Editor is empty
-            //Delete the <br> then
-            if ($params['answer'] == '<br>') {
-                $params['answer'] = '';
-            }
-
-            //Fill the model by using an array
-            $voteModel->fromArray($params);
-            //save model
-            Shopware()->Models()->persist($voteModel);
-            Shopware()->Models()->flush();
-
-            $data = Shopware()->Models()->toArray($voteModel);
+        if (empty($shopIds)) {
+            return $list;
         }
 
-        $this->View()->assign(['success' => true, 'data' => $data]);
+        //assign shops over additional query to improve performance
+        $shops = $this->getShops($shopIds);
+        $list = $this->assignShops($list, $shops);
+
+        return $list;
     }
 
-    /**
-     * Function to delete a single or multiple votes.
-     * This function is also called when deleting more than one vote at the same time
-     */
-    public function deleteVoteAction()
+    protected function getListQuery()
     {
-        $params = $this->Request()->getParams();
-        unset($params['module']);
-        unset($params['controller']);
-        unset($params['action']);
-        unset($params['_dc']);
+        $query = parent::getListQuery();
+        $query->addSelect(['PARTIAL article.{id, name}']);
+        $query->leftJoin('vote.article', 'article');
 
-        if ($params[0]) {
-            $data = [];
-            foreach ($params as $values) {
-                /**
-                 * @var \Shopware\Models\Article\Vote
-                 */
-                $voteModel = Shopware()->Models()->find('\Shopware\Models\Article\Vote', $values['id']);
-                //delete model
-                Shopware()->Models()->remove($voteModel);
-                Shopware()->Models()->flush();
-                $data[] = Shopware()->Models()->toArray($voteModel);
-            }
-        } else {
-            /**
-             * @var \Shopware\Models\Article\Vote
-             */
-            $voteModel = Shopware()->Models()->find('\Shopware\Models\Article\Vote', $params['id']);
-            //delete model
-            Shopware()->Models()->remove($voteModel);
-            Shopware()->Models()->flush();
-            $data = Shopware()->Models()->toArray($voteModel);
-        }
-
-        $this->View()->assign(['success' => true, 'data' => $data]);
+        return $query;
     }
 
     /**
-     * Helper function to get access to the article repository.
+     * @param int $id
      *
-     * @return \Shopware\Models\Article\Repository
+     * @return \Shopware\Components\Model\QueryBuilder
      */
-    private function getArticleRepository()
+    protected function getDetailQuery($id)
     {
-        if ($this->articleRepository === null) {
-            $this->articleRepository = Shopware()->Models()->getRepository('Shopware\Models\Article\Article');
+        $query = parent::getDetailQuery($id);
+        $query->addSelect(['PARTIAL article.{id, name}']);
+        $query->addSelect('shop');
+        $query->leftJoin('vote.article', 'article');
+        $query->leftJoin('vote.shop', 'shop');
+
+        return $query;
+    }
+
+    protected function getSearchAssociationQuery($association, $model, $search)
+    {
+        $query = parent::getSearchAssociationQuery($association, $model, $search);
+
+        if ($association == 'article') {
+            $query->innerJoin('article.votes', 'votes');
+            $query->groupBy('article.id');
         }
 
-        return $this->articleRepository;
+        return $query;
+    }
+
+    /**
+     * @param array[] $list
+     * @param array[] $shops indexed by id
+     *
+     * @return array[]
+     */
+    protected function assignShops($list, $shops)
+    {
+        foreach ($list['data'] as &$row) {
+            $id = $row['shopId'];
+            $row['shop'] = [];
+
+            if (isset($shops[$id])) {
+                $row['shop'] = $shops[$id];
+            }
+        }
+
+        return $list;
+    }
+
+    /**
+     * @param int[] $shopIds
+     *
+     * @return array indexed by id
+     */
+    private function getShops(array $shopIds)
+    {
+        if (empty($shopIds)) {
+            return [];
+        }
+
+        $query = $this->container->get('dbal_connection')->createQueryBuilder();
+        $query->select('*');
+        $query->from('s_core_shops', 'shops');
+        $query->where('shops.id IN (:ids)');
+        $query->setParameter(':ids', $shopIds, Connection::PARAM_INT_ARRAY);
+
+        return $query->execute()->fetchAll(PDO::FETCH_GROUP | PDO::FETCH_UNIQUE);
     }
 }

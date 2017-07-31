@@ -22,7 +22,6 @@
  * our trademarks remain entirely with us.
  */
 
-use Shopware\Components\Template\Security;
 use Shopware\Models\Mail\Attachment;
 use Shopware\Models\Mail\Mail;
 use Shopware\Models\Shop\Shop;
@@ -354,13 +353,6 @@ class Shopware_Controllers_Backend_Mail extends Shopware_Controllers_Backend_Ext
             $this->View()->assign(['success' => false, 'message' => 'Value not found']);
         }
 
-        $this->View()->Engine()->enableSecurity(
-            new Security(
-                $this->View()->Engine(),
-                $this->container->getParameter('shopware.template_security')
-            )
-        );
-
         $compiler = new Shopware_Components_StringCompiler($this->View()->Engine());
 
         $shop = Shopware()->Models()->getRepository(Shop::class)->getActiveDefault();
@@ -656,7 +648,7 @@ class Shopware_Controllers_Backend_Mail extends Shopware_Controllers_Backend_Ext
      *
      * @param $id
      *
-     * @return array
+     * @return array|bool
      */
     private function getMail($id)
     {

@@ -111,6 +111,6 @@ class RequirementsPath
     {
         $name = $this->basePath . $name;
 
-        return file_exists($name) && is_readable($name) && is_writeable($name);
+        return file_exists($name) && is_readable($name) && is_writable($name);
     }
 }
