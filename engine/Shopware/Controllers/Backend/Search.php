@@ -23,6 +23,7 @@
  */
 
 use Doctrine\DBAL\Connection;
+use Shopware\Models\Article\Article;
 
 /**
  * Backend search controller
@@ -253,7 +254,7 @@ class Shopware_Controllers_Backend_Search extends Shopware_Controllers_Backend_E
     private function hydrateSearchResult($entity, $data)
     {
         $data = array_map(function ($row) {
-            if (array_key_exists('_score', $row)) {
+            if (array_key_exists('_score', $row) && array_key_exists(0, $row)) {
                 return $row[0];
             }
 
@@ -352,6 +353,12 @@ class Shopware_Controllers_Backend_Search extends Shopware_Controllers_Backend_E
         $fields = array_map(function ($field) {
             return 'entity.' . $field;
         }, $fields);
+
+        switch ($entity) {
+            case Article::class:
+                $fields[] = 'mainDetail.number';
+                break;
+        }
 
         $builder->addSearchTerm($query, $term, $fields);
     }
