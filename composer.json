@@ -1,6 +1,6 @@
 {
     "name": "shopware/shopware",
-  	"version": "9.3.2",
+  	"version": "5.3.2",
     "description": "Shopware is the next generation of open source e-commerce software made in Germany",
     "keywords": ["shopware", "shop"],
     "homepage": "http://www.shopware.com",
@@ -124,7 +124,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "9.3.x-dev"
+            "dev-master": "5.3.x-dev"
         }
     },
     "scripts": {
