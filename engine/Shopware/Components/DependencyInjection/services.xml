@@ -605,6 +605,10 @@
             <argument type="service" id="dbal_connection" />
         </service>
 
+        <service id="shopware.emotion.emotion_landingpage_loader" class="Shopware\Components\Emotion\LandingPageViewLoader">
+            <argument type="service" id="emotion_device_configuration"/>
+        </service>
+
         <service id="shopware.emotion.translation_importer" class="Shopware\Components\Emotion\EmotionTranslationImporter">
             <argument type="service" id="dbal_connection" />
         </service>
@@ -681,7 +685,13 @@
         </service>
 
         <service id="shopware.model.search_builder" class="Shopware\Components\Model\SearchBuilder">
-            <argument id="shopware_searchdbal.search_term_helper" type="service"/>
+            <argument id="shopware_backend_searchdbal.search_term_helper" type="service"/>
+        </service>
+
+        <service id="shopware_backend_searchdbal.search_term_helper" class="Shopware\Bundle\SearchBundleDBAL\SearchTerm\TermHelper">
+            <argument type="service" id="config" />
+            <argument>false</argument>
+            <argument>false</argument>
         </service>
 
     </services>

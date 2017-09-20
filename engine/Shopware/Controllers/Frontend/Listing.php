@@ -44,6 +44,8 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
 {
     /**
      * Index action method
+     *
+     * @throws \Enlight_Controller_Exception
      */
     public function indexAction()
     {
@@ -115,6 +117,8 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
     /**
      * Listing of all manufacturer products.
      * Templates extends from the normal listing template.
+     *
+     * @throws \Enlight_Exception
      */
     public function manufacturerAction()
     {
@@ -123,8 +127,20 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
         /** @var $context ProductContextInterface */
         $context = $this->get('shopware_storefront.context_service')->getShopContext();
 
+        /** @var \Shopware\Bundle\StoreFrontBundle\Service\CustomSortingServiceInterface $service */
+        $sortingService = $this->get('shopware_storefront.custom_sorting_service');
+
         if (!$this->Request()->getParam('sCategory')) {
-            $this->Request()->setParam('sCategory', $context->getShop()->getCategory()->getId());
+            $categoryId = $context->getShop()->getCategory()->getId();
+
+            $this->Request()->setParam('sCategory', $categoryId);
+
+            $sortings = $sortingService->getSortingsOfCategories([$categoryId], $context);
+
+            /** @var CustomSorting[] $sortings */
+            $sortings = array_shift($sortings);
+
+            $this->setDefaultSorting($sortings);
         }
 
         /** @var $criteria Criteria */
@@ -157,7 +173,7 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
 
         $facets = [];
         foreach ($categoryArticles['facets'] as $facet) {
-            if (!$facet instanceof FacetResultInterface || $facet->getFacetName() == 'manufacturer') {
+            if (!$facet instanceof FacetResultInterface || $facet->getFacetName() === 'manufacturer') {
                 continue;
             }
             $facets[] = $facet;
@@ -194,6 +210,8 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
      * @param int  $categoryId
      * @param bool $withStreams
      *
+     * @throws \Exception
+     *
      * @return array
      */
     protected function getEmotionConfiguration($categoryId, $withStreams = false)
@@ -229,9 +247,10 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
 
     /**
      * @param array $categoryContent
-     * @param bool  $hasEmotion
+     * @param bool $hasEmotion
      *
      * @return array|bool
+     * @throws \Enlight_Controller_Exception
      */
     private function getRedirectLocation($categoryContent, $hasEmotion)
     {
@@ -246,10 +265,13 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
         if (!empty($categoryContent['external'])) {
             $location = $categoryContent['external'];
         } elseif (empty($categoryContent)) {
-            $location = ['controller' => 'index'];
+            throw new \Enlight_Controller_Exception(
+                'Category not found',
+                Enlight_Controller_Exception::Controller_Dispatcher_Controller_Not_Found
+            );
         } elseif ($this->isShopsBaseCategoryPage($categoryContent['id'])) {
             $location = ['controller' => 'index'];
-        } elseif ($this->get('config')->get('categoryDetailLink') && $checkRedirect) {
+        } elseif ($checkRedirect && $this->get('config')->get('categoryDetailLink')) {
             /** @var $context ShopContextInterface */
             $context = $this->get('shopware_storefront.context_service')->getShopContext();
 
@@ -329,7 +351,7 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
         $categoryRepository = Shopware()->Models()->getRepository('Shopware\Models\Category\Category');
         $categoryPath = $categoryRepository->getPathById($categoryId);
 
-        if (!in_array($defaultShopCategoryId, array_keys($categoryPath))) {
+        if (!array_key_exists($defaultShopCategoryId, $categoryPath)) {
             $this->Request()->setQuery('sCategory', $defaultShopCategoryId);
             $this->Response()->setHttpResponseCode(404);
 
@@ -343,7 +365,7 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
      * Helper function used in the listing action to detect if
      * the user is trying to open the page matching the shop's root category
      *
-     * @param $categoryId
+     * @param int $categoryId
      *
      * @return bool
      */
@@ -355,7 +377,7 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
         $queryParamsNames = array_keys($this->Request()->getParams());
         $paramsDiff = array_diff($queryParamsNames, $queryParamsWhiteList);
 
-        return $defaultShopCategoryId == $categoryId && !$paramsDiff;
+        return $defaultShopCategoryId === (int) $categoryId && !$paramsDiff;
     }
 
     /**
@@ -466,6 +488,8 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
     /**
      * @param int   $categoryId
      * @param array $categoryContent
+     *
+     * @throws \Enlight_Exception
      */
     private function loadCategoryListing($categoryId, array $categoryContent)
     {
@@ -527,7 +551,7 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
     }
 
     /**
-     * @param $requestCategoryId
+     * @param int $requestCategoryId
      *
      * @throws Enlight_Controller_Exception
      *

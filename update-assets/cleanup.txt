@@ -262,6 +262,8 @@ _sql/migrations/938-add-translations-for-facets.php
 _sql/migrations/939-fix-import-export-menu-entry.php
 _sql/migrations/944-change-customer-stream-type.php
 _sql/migrations/950-add-emotion-presets.php
+_sql/migrations/950-update-email-templates.php
+_sql/migrations/951-implement-growl-message-configuration.php
 _sql/update.sql
 _sql/update
 build/ApplyDeltas.php

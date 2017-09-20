@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="a4bb460b-89bc-4e7a-b450-980c555591e2" name="Default" comment="">
+      <change type="DELETED" beforePath="$PROJECT_DIR$/.gitignore" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/UPGRADE-5.3.md" afterPath="$PROJECT_DIR$/UPGRADE-5.3.md" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/composer.json" afterPath="$PROJECT_DIR$/composer.json" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Library/Enlight/Plugin/PluginCollection.php" afterPath="$PROJECT_DIR$/engine/Library/Enlight/Plugin/PluginCollection.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Application.php" afterPath="$PROJECT_DIR$/engine/Shopware/Application.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Bundle/ESIndexingBundle/ShopIndexer.php" afterPath="$PROJECT_DIR$/engine/Shopware/Bundle/ESIndexingBundle/ShopIndexer.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Bundle/PluginInstallerBundle/Service/PluginInitializer.php" afterPath="$PROJECT_DIR$/engine/Shopware/Bundle/PluginInstallerBundle/Service/PluginInitializer.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Bundle/PluginInstallerBundle/Service/PluginInstaller.php" afterPath="$PROJECT_DIR$/engine/Shopware/Bundle/PluginInstallerBundle/Service/PluginInstaller.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Bundle/PluginInstallerBundle/Service/PluginLicenceService.php" afterPath="$PROJECT_DIR$/engine/Shopware/Bundle/PluginInstallerBundle/Service/PluginLicenceService.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Bundle/PluginInstallerBundle/Service/PluginViewService.php" afterPath="$PROJECT_DIR$/engine/Shopware/Bundle/PluginInstallerBundle/Service/PluginViewService.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Bundle/PluginInstallerBundle/StoreClient.php" afterPath="$PROJECT_DIR$/engine/Shopware/Bundle/PluginInstallerBundle/StoreClient.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Bundle/PluginInstallerBundle/Struct/StructHydrator.php" afterPath="$PROJECT_DIR$/engine/Shopware/Bundle/PluginInstallerBundle/Struct/StructHydrator.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Bundle/SearchBundle/CriteriaRequestHandler/FacetCriteriaRequestHandler.php" afterPath="$PROJECT_DIR$/engine/Shopware/Bundle/SearchBundle/CriteriaRequestHandler/FacetCriteriaRequestHandler.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Bundle/SearchBundleDBAL/SearchTerm/TermHelper.php" afterPath="$PROJECT_DIR$/engine/Shopware/Bundle/SearchBundleDBAL/SearchTerm/TermHelper.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Bundle/StoreFrontBundle/Gateway/DBAL/CountryGateway.php" afterPath="$PROJECT_DIR$/engine/Shopware/Bundle/StoreFrontBundle/Gateway/DBAL/CountryGateway.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Commands/PluginReinstallCommand.php" afterPath="$PROJECT_DIR$/engine/Shopware/Commands/PluginReinstallCommand.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Commands/StoreDownloadCommand.php" afterPath="$PROJECT_DIR$/engine/Shopware/Commands/StoreDownloadCommand.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Components/Api/Resource/Address.php" afterPath="$PROJECT_DIR$/engine/Shopware/Components/Api/Resource/Address.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Components/Api/Resource/Article.php" afterPath="$PROJECT_DIR$/engine/Shopware/Components/Api/Resource/Article.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Components/Check/Data/Files.md5sums" afterPath="$PROJECT_DIR$/engine/Shopware/Components/Check/Data/Files.md5sums" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Components/CustomerStream/StreamIndexer.php" afterPath="$PROJECT_DIR$/engine/Shopware/Components/CustomerStream/StreamIndexer.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Components/DependencyInjection/services.xml" afterPath="$PROJECT_DIR$/engine/Shopware/Components/DependencyInjection/services.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Components/HttpClient/cacert.pem" afterPath="$PROJECT_DIR$/engine/Shopware/Components/HttpClient/cacert.pem" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Components/Model/SearchBuilder.php" afterPath="$PROJECT_DIR$/engine/Shopware/Components/Model/SearchBuilder.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Components/Plugin/Namespace.php" afterPath="$PROJECT_DIR$/engine/Shopware/Components/Plugin/Namespace.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Components/Plugin/RequirementValidator.php" afterPath="$PROJECT_DIR$/engine/Shopware/Components/Plugin/RequirementValidator.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Components/Translation.php" afterPath="$PROJECT_DIR$/engine/Shopware/Components/Translation.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Configs/Default.php" afterPath="$PROJECT_DIR$/engine/Shopware/Configs/Default.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Controllers/Api/GenerateArticleImages.php" afterPath="$PROJECT_DIR$/engine/Shopware/Controllers/Api/GenerateArticleImages.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Controllers/Backend/CanceledOrder.php" afterPath="$PROJECT_DIR$/engine/Shopware/Controllers/Backend/CanceledOrder.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Controllers/Backend/MediaManager.php" afterPath="$PROJECT_DIR$/engine/Shopware/Controllers/Backend/MediaManager.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Controllers/Backend/Search.php" afterPath="$PROJECT_DIR$/engine/Shopware/Controllers/Backend/Search.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Controllers/Frontend/Address.php" afterPath="$PROJECT_DIR$/engine/Shopware/Controllers/Frontend/Address.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Controllers/Frontend/Campaign.php" afterPath="$PROJECT_DIR$/engine/Shopware/Controllers/Frontend/Campaign.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Controllers/Frontend/Error.php" afterPath="$PROJECT_DIR$/engine/Shopware/Controllers/Frontend/Error.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Controllers/Frontend/Listing.php" afterPath="$PROJECT_DIR$/engine/Shopware/Controllers/Frontend/Listing.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Controllers/Widgets/Emotion.php" afterPath="$PROJECT_DIR$/engine/Shopware/Controllers/Widgets/Emotion.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Core/sOrder.php" afterPath="$PROJECT_DIR$/engine/Shopware/Core/sOrder.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Kernel.php" afterPath="$PROJECT_DIR$/engine/Shopware/Kernel.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Models/Customer/Address.php" afterPath="$PROJECT_DIR$/engine/Shopware/Models/Customer/Address.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Models/Customer/Billing.php" afterPath="$PROJECT_DIR$/engine/Shopware/Models/Customer/Billing.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Models/Customer/Customer.php" afterPath="$PROJECT_DIR$/engine/Shopware/Models/Customer/Customer.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Models/Customer/Shipping.php" afterPath="$PROJECT_DIR$/engine/Shopware/Models/Customer/Shipping.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Models/Order/Billing.php" afterPath="$PROJECT_DIR$/engine/Shopware/Models/Order/Billing.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Models/Order/Order.php" afterPath="$PROJECT_DIR$/engine/Shopware/Models/Order/Order.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Models/Order/Shipping.php" afterPath="$PROJECT_DIR$/engine/Shopware/Models/Order/Shipping.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Models/Partner/Partner.php" afterPath="$PROJECT_DIR$/engine/Shopware/Models/Partner/Partner.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/engine/Shopware/Plugins/Default/Core/CronRating/Bootstrap.php" afterPath="$PROJECT_DIR$/engine/Shopware/Plugins/Default/Core/CronRating/Bootstrap.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/_resources/resources/css/ext-all.css" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/_resources/resources/css/ext-all.css" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/_resources/resources/themes/stylesheets/shopware-ui/modules/_mediamanager.scss" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/_resources/resources/themes/stylesheets/shopware-ui/modules/_mediamanager.scss" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/_resources/resources/themes/stylesheets/shopware-ui/widgets/_menu.scss" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/_resources/resources/themes/stylesheets/shopware-ui/widgets/_menu.scss" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/_resources/resources/themes/stylesheets/shopware-ui/widgets/_toolbar.scss" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/_resources/resources/themes/stylesheets/shopware-ui/widgets/_toolbar.scss" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/base/attribute/Shopware.attribute.Window.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/base/attribute/Shopware.attribute.Window.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/base/bootstrap.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/base/bootstrap.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/base/component/Shopware.Notification.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/base/component/Shopware.Notification.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/base/component/Shopware.button.HoverButton.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/base/component/Shopware.button.HoverButton.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/base/component/Shopware.notification.SubscriptionWarning.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/base/component/Shopware.notification.SubscriptionWarning.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/base/component/element/interval.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/base/component/element/interval.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/base/store/category.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/base/store/category.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/canceled_order/controller/order.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/canceled_order/controller/order.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/config/view/element/interval.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/config/view/element/interval.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/customer/controller/stream.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/customer/controller/stream.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/customer/view/chart/amount_chart_factory.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/customer/view/chart/amount_chart_factory.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/customer/view/chart/chart.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/customer/view/chart/chart.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/customer/view/customer_stream/condition_field.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/customer/view/customer_stream/condition_field.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/customer/view/customer_stream/condition_panel.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/customer/view/customer_stream/condition_panel.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/customer/view/customer_stream/detail.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/customer/view/customer_stream/detail.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/customer/view/customer_stream/listing.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/customer/view/customer_stream/listing.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/customer/view/customer_stream/preview.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/customer/view/customer_stream/preview.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/customer/view/main/stream_view.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/customer/view/main/stream_view.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/index/view/widgets/window.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/index/view/widgets/window.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/media_manager/model/media.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/media_manager/model/media.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/media_manager/view/album/setting.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/media_manager/view/album/setting.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/media_manager/view/media/view.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/media_manager/view/media/view.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/order/controller/main.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/order/controller/main.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/order/model/shipping.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/order/model/shipping.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/order/view/detail/detail.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/order/view/detail/detail.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/order/view/detail/overview.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/order/view/detail/overview.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/order/view/detail/shipping.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/order/view/detail/shipping.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/product_feed/view/feed/window.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/product_feed/view/feed/window.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/translation/view/main/form.js" afterPath="$PROJECT_DIR$/themes/Backend/ExtJs/backend/translation/view/main/form.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Frontend/Bare/frontend/account/sidebar.tpl" afterPath="$PROJECT_DIR$/themes/Frontend/Bare/frontend/account/sidebar.tpl" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Frontend/Bare/frontend/campaign/index.tpl" afterPath="$PROJECT_DIR$/themes/Frontend/Bare/frontend/campaign/index.tpl" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Frontend/Responsive/frontend/_public/src/js/jquery.jump-to-tab.js" afterPath="$PROJECT_DIR$/themes/Frontend/Responsive/frontend/_public/src/js/jquery.jump-to-tab.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Frontend/Responsive/frontend/_public/src/js/jquery.last-seen-products.js" afterPath="$PROJECT_DIR$/themes/Frontend/Responsive/frontend/_public/src/js/jquery.last-seen-products.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Frontend/Responsive/frontend/_public/src/js/jquery.listing-actions.js" afterPath="$PROJECT_DIR$/themes/Frontend/Responsive/frontend/_public/src/js/jquery.listing-actions.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Frontend/Responsive/frontend/_public/src/js/jquery.modal.js" afterPath="$PROJECT_DIR$/themes/Frontend/Responsive/frontend/_public/src/js/jquery.modal.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Frontend/Responsive/frontend/_public/src/less/_modules/account.less" afterPath="$PROJECT_DIR$/themes/Frontend/Responsive/frontend/_public/src/less/_modules/account.less" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/Frontend/Responsive/frontend/_public/src/less/_modules/header.less" afterPath="$PROJECT_DIR$/themes/Frontend/Responsive/frontend/_public/src/less/_modules/header.less" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/update-assets/cleanup.txt" afterPath="$PROJECT_DIR$/update-assets/cleanup.txt" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/update-assets/snippets.sql" afterPath="$PROJECT_DIR$/update-assets/snippets.sql" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/update-assets/version" afterPath="$PROJECT_DIR$/update-assets/version" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/vendor/composer/autoload_classmap.php" afterPath="$PROJECT_DIR$/vendor/composer/autoload_classmap.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/vendor/composer/autoload_static.php" afterPath="$PROJECT_DIR$/vendor/composer/autoload_static.php" />
+    </list>
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="TRACKING_ENABLED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CreatePatchCommitExecutor">
+    <option name="PATCH_PATH" value="" />
+  </component>
+  <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
+  <component name="FileEditorManager">
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file leaf-file-name="composer.json" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/composer.json">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="598">
+              <caret line="128" column="6" lean-forward="false" selection-start-line="128" selection-start-column="6" selection-end-line="128" selection-end-column="6" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="composer-bak.json" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/composer-bak.json">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="523">
+              <caret line="128" column="6" lean-forward="true" selection-start-line="124" selection-start-column="4" selection-end-line="128" selection-end-column="6" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/composer.json" />
+      </list>
+    </option>
+  </component>
+  <component name="JsBuildToolGruntFileManager" detection-done="true" sorting="DEFINITION_ORDER" />
+  <component name="JsBuildToolPackageJson" detection-done="true" sorting="DEFINITION_ORDER" />
+  <component name="JsGulpfileManager">
+    <detection-done>true</detection-done>
+    <sorting>DEFINITION_ORDER</sorting>
+  </component>
+  <component name="PhpWorkspaceProjectConfiguration" backward_compatibility_performed="true" />
+  <component name="ProjectFrameBounds">
+    <option name="x" value="4" />
+    <option name="y" value="23" />
+    <option name="width" value="1436" />
+    <option name="height" value="877" />
+  </component>
+  <component name="ProjectView">
+    <navigator currentView="ProjectPane" proportions="" version="1">
+      <flattenPackages />
+      <showMembers />
+      <showModules />
+      <showLibraryContents />
+      <hideEmptyPackages />
+      <abbreviatePackageNames />
+      <autoscrollToSource />
+      <autoscrollFromSource />
+      <sortByType />
+      <manualOrder />
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="Scope" />
+      <pane id="ProjectPane">
+        <subPane>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="shopware" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="shopware" />
+              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="shopware" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="shopware" />
+              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="recovery" />
+              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="shopware" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="shopware" />
+              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="engine" />
+              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
+            </PATH_ELEMENT>
+          </PATH>
+        </subPane>
+      </pane>
+      <pane id="Scratches" />
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="HbShouldOpenHtmlAsHb" value="" />
+    <property name="nodejs_interpreter_path" value="$USER_HOME$/.nvm/versions/node/v4.2.2/bin/node" />
+    <property name="js.eslint.eslintPackage" value="" />
+    <property name="js-jscs-nodeInterpreter" value="$USER_HOME$/.nvm/versions/node/v4.2.2/bin/node" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+    </key>
+  </component>
+  <component name="ShelveChangesManager" show_recycled="false">
+    <option name="remove_strategy" value="false" />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="a4bb460b-89bc-4e7a-b450-980c555591e2" name="Default" comment="" />
+      <created>1497095055011</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1497095055011</updated>
+      <workItem from="1497095057652" duration="1078000" />
+      <workItem from="1499798416235" duration="1176000" />
+      <workItem from="1500319099642" duration="418000" />
+      <workItem from="1501525326787" duration="490000" />
+      <workItem from="1501526166644" duration="88000" />
+      <workItem from="1502820080989" duration="645000" />
+      <workItem from="1502820865814" duration="594000" />
+      <workItem from="1503514558752" duration="325000" />
+      <workItem from="1504981435615" duration="253000" />
+      <workItem from="1505040794764" duration="105000" />
+      <workItem from="1505064457462" duration="186000" />
+      <workItem from="1505935614279" duration="62000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TimeTrackingManager">
+    <option name="totallyTimeSpent" value="5420000" />
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="4" y="23" width="1436" height="877" extended-state="6" />
+    <editor active="true" />
+    <layout>
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.28909612" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.64076436" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+    </layout>
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="processedProjectFiles" value="true" />
+  </component>
+  <component name="VcsContentAnnotationSettings">
+    <option name="myLimit" value="2678400000" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager />
+    <watches-manager />
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/composer.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/composer.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/composer.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/composer.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/composer.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/composer.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/composer.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/composer.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/composer.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/composer.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/composer.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/composer.json_dist" />
+    <entry file="file://$PROJECT_DIR$/composer.json_dist" />
+    <entry file="file://$PROJECT_DIR$/composer.json_bak" />
+    <entry file="file://$PROJECT_DIR$/composer.lock">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-7275">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/composer_bak.json" />
+    <entry file="file://$PROJECT_DIR$/composer-bak.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="523">
+          <caret line="128" column="6" lean-forward="true" selection-start-line="124" selection-start-column="4" selection-end-line="128" selection-end-column="6" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/composer.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="598">
+          <caret line="128" column="6" lean-forward="false" selection-start-line="128" selection-start-column="6" selection-end-line="128" selection-end-column="6" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+  </component>
+</project>
