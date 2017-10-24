@@ -2,6 +2,31 @@
 
 This changelog references changes done in Shopware 5.3 patch versions.
 
+## 5.3.4
+
+[View all changes from v5.3.3...v5.3.4](https://github.com/shopware/shopware/compare/v5.3.3...v5.3.4)
+
+### Additions
+
+* Added method `Shopware\Models\Shop\Repository::getById()`
+* Added service `translation`
+* Added smarty function `is_object` to the list of allowed functions
+* Added grunt task support for child themes so that their tasks are run as well by the Shopware grunt
+* Added dispatch attributes to frontend
+
+### Changes
+
+* Changed article attribute filter in API 
+* Changed the pagination of the blog by adding the filters to the pagination links
+* Changed method `\Shopware\Components\SitemapXMLRepository::readCategoryUrls` to only export public category links 
+* Changed method visibility of `\Shopware_Controllers_Backend_Search::createEntitySearchQuery` from `private` to `public`
+* Changed the `I am` select option for the registration: If it is deactivated in the backend, it effects only the registration
+* Changed the update, delete and insert backlog from product number to the main detail product number by variant and price model
+
+### Removals
+
+* Removed the default option `touchControls: true` from the instantiation of the `swImageSlider`
+
 ## 5.3.3
 
 [View all changes from v5.3.2...v5.3.3](https://github.com/shopware/shopware/compare/v5.3.2...v5.3.3)
@@ -34,7 +59,6 @@ This changelog references changes done in Shopware 5.3 patch versions.
 * Changed `engine/Library/Smarty/sysplugins/smarty_internal_write_file.php` in order to prevent race condition when creating directories concurrently
 * Support namespaces for controllers. The event `Enlight_Controller_Dispatcher_ControllerPath_{module}_{controller}` now accepts a class name as return value to allow namespaces for controllers in plugins.
 * Changed representation of empty `conditions` in `s_customer_streams` to NULL instead of `{}`
-
 
 ## 5.3.0
 

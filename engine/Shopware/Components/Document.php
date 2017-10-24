@@ -510,7 +510,9 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
 
         $path = basename($this->_subshop['doc_template']);
 
-        $this->_template->security_policy->secure_dir[] = $frontendThemeDirectory . DIRECTORY_SEPARATOR . $path;
+        if ($this->_template->security_policy) {
+            $this->_template->security_policy->secure_dir[] = $frontendThemeDirectory . DIRECTORY_SEPARATOR . $path;
+        }
         $this->_template->setTemplateDir(['custom' => $path]);
         $this->_template->setCompileId(str_replace('/', '_', $path) . '_' . $this->_subshop['id']);
     }
@@ -520,7 +522,7 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
      */
     protected function setTranslationComponent()
     {
-        $this->translationComponent = new Shopware_Components_Translation();
+        $this->translationComponent = Shopware()->Container()->get('translation');
     }
 
     /**
@@ -532,7 +534,7 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
 
         $repository = Shopware()->Models()->getRepository('Shopware\Models\Shop\Shop');
         // "language" actually refers to a language-shop and not to a locale
-        $shop = $repository->getActiveById($this->_order->order->language);
+        $shop = $repository->getById($this->_order->order->language);
         if (!empty($this->_order->order->currencyID)) {
             $repository = Shopware()->Models()->getRepository('Shopware\Models\Shop\Currency');
             $shop->setCurrency($repository->find($this->_order->order->currencyID));

@@ -1268,6 +1268,8 @@ vendor/egulias/email-validator/tests
 vendor/guzzlehttp/guzzle/Makefile
 vendor/guzzlehttp/guzzle/phpunit.xml.dist
 vendor/ircmaxell
+vendor/monolog/monolog/CHANGELOG.mdown
+vendor/monolog/monolog/README.mdown
 vendor/oyejorge/less.php/phpunit.xml
 vendor/ramsey/array_column
 vendor/symfony/config/Symfony
