@@ -242,6 +242,7 @@ _sql/migrations/814-add-mail-template.php
 _sql/migrations/815-force-category-selection-for-category-teaser.php
 _sql/migrations/816-add-preview-id-for-emotions.php
 _sql/migrations/816-make-some-fields-in-order-table-nullable.php
+_sql/migrations/816-seperate-logmail-address.php
 _sql/migrations/817-add-emotion-presets.php
 _sql/migrations/850-add-sorting-module.php
 _sql/migrations/851-add-facet-module.php
@@ -260,10 +261,14 @@ _sql/migrations/932-add-customer-stream-menu.php
 _sql/migrations/935-add-type-field.php
 _sql/migrations/938-add-translations-for-facets.php
 _sql/migrations/939-fix-import-export-menu-entry.php
+_sql/migrations/943-add-http-cache-events-for-site.php
 _sql/migrations/944-change-customer-stream-type.php
 _sql/migrations/950-add-emotion-presets.php
 _sql/migrations/950-update-email-templates.php
 _sql/migrations/951-implement-growl-message-configuration.php
+_sql/migrations/954-site-active-status.php
+_sql/migrations/955-add-http-cache-events-for-site.php
+_sql/migrations/965-update-impressum-position.php
 _sql/update.sql
 _sql/update
 build/ApplyDeltas.php
@@ -691,9 +696,15 @@ engine/Shopware/Bundle/AccountBundle/Constraint/Repeated.php
 engine/Shopware/Bundle/AccountBundle/Constraint/RepeatedValidator.php
 engine/Shopware/Bundle/AccountBundle/Constraint/UniqueEmail.php
 engine/Shopware/Bundle/AccountBundle/Constraint/UniqueEmailValidator.php
+engine/Shopware/Bundle/AccountBundle/Constraint/UserEmail.php
+engine/Shopware/Bundle/AccountBundle/Constraint/UserEmailValidator.php
+engine/Shopware/Bundle/AccountBundle/Constraint/UserName.php
+engine/Shopware/Bundle/AccountBundle/Constraint/UserNameValidator.php
 engine/Shopware/Bundle/AccountBundle/Service/AddressImportService.php
 engine/Shopware/Bundle/AccountBundle/Service/AddressImportServiceInterface.php
 engine/Shopware/Bundle/AccountBundle/Service/Core
+engine/Shopware/Bundle/AccountBundle/Service/Validator/UserValidator.php
+engine/Shopware/Bundle/AccountBundle/Service/Validator/UserValidatorInterface.php
 engine/Shopware/Bundle/AttributeBundle/Repository/Reader/CustomerGroupReader.php
 engine/Shopware/Bundle/AttributeBundle/Repository/Searcher/CustomerGroupSearcher.php
 engine/Shopware/Bundle/AttributeBundle/Service/MigrationHelper.php
@@ -908,7 +919,6 @@ engine/Shopware/Plugins/Default/Core/PaymentMethods/Views/responsive/frontend/pl
 engine/Shopware/Plugins/Default/Core/PluginManager
 engine/Shopware/Plugins/Default/Core/RebuildIndex/Components/SearchIndex.php
 engine/Shopware/Plugins/Default/Core/SelfHealing
-engine/Shopware/Plugins/Default/Frontend/AdvancedMenu/Views/frontend/plugins
 engine/Shopware/Plugins/Default/Frontend/Compare
 engine/Shopware/Plugins/Default/Frontend/Facebook
 engine/Shopware/Plugins/Default/Frontend/Google

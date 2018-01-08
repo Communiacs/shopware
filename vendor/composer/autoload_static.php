@@ -26,6 +26,7 @@ class ComposerStaticInitShopware
         'S' => 
         array (
             'Symfony\\Polyfill\\Mbstring\\' => 26,
+            'Symfony\\Polyfill\\Apcu\\' => 22,
             'Symfony\\Component\\Validator\\' => 28,
             'Symfony\\Component\\Translation\\' => 30,
             'Symfony\\Component\\Serializer\\' => 29,
@@ -109,6 +110,10 @@ class ComposerStaticInitShopware
         'Symfony\\Polyfill\\Mbstring\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-mbstring',
+        ),
+        'Symfony\\Polyfill\\Apcu\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/symfony/polyfill-apcu',
         ),
         'Symfony\\Component\\Validator\\' => 
         array (
@@ -2114,6 +2119,7 @@ class ComposerStaticInitShopware
         'Shopware\\Bundle\\AccountBundle\\Service\\Validator\\CustomerValidatorInterface' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/AccountBundle/Service/Validator/CustomerValidatorInterface.php',
         'Shopware\\Bundle\\AccountBundle\\Type\\SalutationType' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/AccountBundle/Type/SalutationType.php',
         'Shopware\\Bundle\\AttributeBundle\\DependencyInjection\\Compiler\\SearchRepositoryCompilerPass' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/AttributeBundle/DependencyInjection/Compiler/SearchRepositoryCompilerPass.php',
+        'Shopware\\Bundle\\AttributeBundle\\DependencyInjection\\Compiler\\StaticResourcesCompilerPass' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/AttributeBundle/DependencyInjection/Compiler/StaticResourcesCompilerPass.php',
         'Shopware\\Bundle\\AttributeBundle\\DependencyInjection\\EventListener\\ControllerSubscriber' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/AttributeBundle/DependencyInjection/EventListener/ControllerSubscriber.php',
         'Shopware\\Bundle\\AttributeBundle\\Repository\\GenericRepository' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/AttributeBundle/Repository/GenericRepository.php',
         'Shopware\\Bundle\\AttributeBundle\\Repository\\ProductRepository' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/AttributeBundle/Repository/ProductRepository.php',
@@ -2866,6 +2872,7 @@ class ComposerStaticInitShopware
         'Shopware\\Commands\\FirstRunWizardEnableCommand' => __DIR__ . '/../..' . '/engine/Shopware/Commands/FirstRunWizardEnableCommand.php',
         'Shopware\\Commands\\GenerateAttributesCommand' => __DIR__ . '/../..' . '/engine/Shopware/Commands/GenerateAttributesCommand.php',
         'Shopware\\Commands\\GenerateProductFeedCommand' => __DIR__ . '/../..' . '/engine/Shopware/Commands/GenerateProductFeedCommand.php',
+        'Shopware\\Commands\\ListProductFeedCommand' => __DIR__ . '/../..' . '/engine/Shopware/Commands/ListProductFeedCommand.php',
         'Shopware\\Commands\\MigrateArticleAttributeTranslationsCommand' => __DIR__ . '/../..' . '/engine/Shopware/Commands/MigrateArticleAttributeTranslationsCommand.php',
         'Shopware\\Commands\\MigrationsMigrateCommand' => __DIR__ . '/../..' . '/engine/Shopware/Commands/MigrationsMigrateCommand.php',
         'Shopware\\Commands\\PluginActivateCommand' => __DIR__ . '/../..' . '/engine/Shopware/Commands/PluginActivateCommand.php',
@@ -2932,8 +2939,15 @@ class ComposerStaticInitShopware
         'Shopware\\Components\\Api\\Resource\\Resource' => __DIR__ . '/../..' . '/engine/Shopware/Components/Api/Resource/Resource.php',
         'Shopware\\Components\\Api\\Resource\\Shop' => __DIR__ . '/../..' . '/engine/Shopware/Components/Api/Resource/Shop.php',
         'Shopware\\Components\\Api\\Resource\\Translation' => __DIR__ . '/../..' . '/engine/Shopware/Components/Api/Resource/Translation.php',
+        'Shopware\\Components\\Api\\Resource\\User' => __DIR__ . '/../..' . '/engine/Shopware/Components/Api/Resource/User.php',
         'Shopware\\Components\\Api\\Resource\\Variant' => __DIR__ . '/../..' . '/engine/Shopware/Components/Api/Resource/Variant.php',
         'Shopware\\Components\\AttributeSubscriber' => __DIR__ . '/../..' . '/engine/Shopware/Components/AttributeSubscriber.php',
+        'Shopware\\Components\\Auth\\Constraint\\UserEmail' => __DIR__ . '/../..' . '/engine/Shopware/Components/Auth/Constraint/UserEmail.php',
+        'Shopware\\Components\\Auth\\Constraint\\UserEmailValidator' => __DIR__ . '/../..' . '/engine/Shopware/Components/Auth/Constraint/UserEmailValidator.php',
+        'Shopware\\Components\\Auth\\Constraint\\UserName' => __DIR__ . '/../..' . '/engine/Shopware/Components/Auth/Constraint/UserName.php',
+        'Shopware\\Components\\Auth\\Constraint\\UserNameValidator' => __DIR__ . '/../..' . '/engine/Shopware/Components/Auth/Constraint/UserNameValidator.php',
+        'Shopware\\Components\\Auth\\Validator\\UserValidator' => __DIR__ . '/../..' . '/engine/Shopware/Components/Auth/Validator/UserValidator.php',
+        'Shopware\\Components\\Auth\\Validator\\UserValidatorInterface' => __DIR__ . '/../..' . '/engine/Shopware/Components/Auth/Validator/UserValidatorInterface.php',
         'Shopware\\Components\\BasketSignature\\BasketPersister' => __DIR__ . '/../..' . '/engine/Shopware/Components/BasketSignature/BasketPersister.php',
         'Shopware\\Components\\BasketSignature\\BasketSignatureGenerator' => __DIR__ . '/../..' . '/engine/Shopware/Components/BasketSignature/BasketSignatureGenerator.php',
         'Shopware\\Components\\BasketSignature\\BasketSignatureGeneratorInterface' => __DIR__ . '/../..' . '/engine/Shopware/Components/BasketSignature/BasketSignatureGeneratorInterface.php',
@@ -2987,6 +3001,7 @@ class ComposerStaticInitShopware
         'Shopware\\Components\\DependencyInjection\\Compiler\\EmotionPresetCompilerPass' => __DIR__ . '/../..' . '/engine/Shopware/Components/DependencyInjection/Compiler/EmotionPresetCompilerPass.php',
         'Shopware\\Components\\DependencyInjection\\Compiler\\EventListenerCompilerPass' => __DIR__ . '/../..' . '/engine/Shopware/Components/DependencyInjection/Compiler/EventListenerCompilerPass.php',
         'Shopware\\Components\\DependencyInjection\\Compiler\\EventSubscriberCompilerPass' => __DIR__ . '/../..' . '/engine/Shopware/Components/DependencyInjection/Compiler/EventSubscriberCompilerPass.php',
+        'Shopware\\Components\\DependencyInjection\\Compiler\\RouterCompilerPass' => __DIR__ . '/../..' . '/engine/Shopware/Components/DependencyInjection/Compiler/RouterCompilerPass.php',
         'Shopware\\Components\\DependencyInjection\\Compiler\\TagReplaceTrait' => __DIR__ . '/../..' . '/engine/Shopware/Components/DependencyInjection/Compiler/TagReplaceTrait.php',
         'Shopware\\Components\\DependencyInjection\\Container' => __DIR__ . '/../..' . '/engine/Shopware/Components/DependencyInjection/Container.php',
         'Shopware\\Components\\DependencyInjection\\ContainerAwareInterface' => __DIR__ . '/../..' . '/engine/Shopware/Components/DependencyInjection/ContainerAwareInterface.php',
@@ -3047,6 +3062,7 @@ class ComposerStaticInitShopware
         'Shopware\\Components\\HolidayTableUpdater' => __DIR__ . '/../..' . '/engine/Shopware/Components/HolidayTableUpdater.php',
         'Shopware\\Components\\HttpCache\\AppCache' => __DIR__ . '/../..' . '/engine/Shopware/Components/HttpCache/AppCache.php',
         'Shopware\\Components\\HttpCache\\BlackHoleStore' => __DIR__ . '/../..' . '/engine/Shopware/Components/HttpCache/BlackHoleStore.php',
+        'Shopware\\Components\\HttpCache\\CacheRouteInstaller' => __DIR__ . '/../..' . '/engine/Shopware/Components/HttpCache/CacheRouteInstaller.php',
         'Shopware\\Components\\HttpCache\\CacheWarmer' => __DIR__ . '/../..' . '/engine/Shopware/Components/HttpCache/CacheWarmer.php',
         'Shopware\\Components\\HttpCache\\Store' => __DIR__ . '/../..' . '/engine/Shopware/Components/HttpCache/Store.php',
         'Shopware\\Components\\HttpClient\\GuzzleFactory' => __DIR__ . '/../..' . '/engine/Shopware/Components/HttpClient/GuzzleFactory.php',
@@ -3213,6 +3229,8 @@ class ComposerStaticInitShopware
         'Shopware\\Components\\UploadMaxSizeValidator' => __DIR__ . '/../..' . '/engine/Shopware/Components/UploadMaxSizeValidator.php',
         'Shopware\\Components\\Validator\\EmailValidator' => __DIR__ . '/../..' . '/engine/Shopware/Components/Validator/EmailValidator.php',
         'Shopware\\Components\\Validator\\EmailValidatorInterface' => __DIR__ . '/../..' . '/engine/Shopware/Components/Validator/EmailValidatorInterface.php',
+        'Shopware\\Components\\Validator\\UserNameValidator' => __DIR__ . '/../..' . '/engine/Shopware/Components/Validator/UserNameValidator.php',
+        'Shopware\\Components\\Validator\\UserNameValidatorInterface' => __DIR__ . '/../..' . '/engine/Shopware/Components/Validator/UserNameValidatorInterface.php',
         'Shopware\\Kernel' => __DIR__ . '/../..' . '/engine/Shopware/Kernel.php',
         'Shopware\\Models\\Analytics\\Repository' => __DIR__ . '/../..' . '/engine/Shopware/Models/Analytics/Repository.php',
         'Shopware\\Models\\Article\\Article' => __DIR__ . '/../..' . '/engine/Shopware/Models/Article/Article.php',
@@ -3451,6 +3469,7 @@ class ComposerStaticInitShopware
         'Shopware_Controllers_Api_Rest' => __DIR__ . '/../..' . '/engine/Shopware/Controllers/Api/Rest.php',
         'Shopware_Controllers_Api_Shops' => __DIR__ . '/../..' . '/engine/Shopware/Controllers/Api/Shops.php',
         'Shopware_Controllers_Api_Translations' => __DIR__ . '/../..' . '/engine/Shopware/Controllers/Api/Translations.php',
+        'Shopware_Controllers_Api_Users' => __DIR__ . '/../..' . '/engine/Shopware/Controllers/Api/Users.php',
         'Shopware_Controllers_Api_Variants' => __DIR__ . '/../..' . '/engine/Shopware/Controllers/Api/Variants.php',
         'Shopware_Controllers_Api_Version' => __DIR__ . '/../..' . '/engine/Shopware/Controllers/Api/Version.php',
         'Shopware_Controllers_Backend_Address' => __DIR__ . '/../..' . '/engine/Shopware/Controllers/Backend/Address.php',
@@ -4713,6 +4732,7 @@ class ComposerStaticInitShopware
         'Symfony\\Component\\Validator\\Violation\\ConstraintViolationBuilder' => __DIR__ . '/..' . '/symfony/validator/Violation/ConstraintViolationBuilder.php',
         'Symfony\\Component\\Validator\\Violation\\ConstraintViolationBuilderInterface' => __DIR__ . '/..' . '/symfony/validator/Violation/ConstraintViolationBuilderInterface.php',
         'Symfony\\Component\\Validator\\Violation\\LegacyConstraintViolationBuilder' => __DIR__ . '/..' . '/symfony/validator/Violation/LegacyConstraintViolationBuilder.php',
+        'Symfony\\Polyfill\\Apcu\\Apcu' => __DIR__ . '/..' . '/symfony/polyfill-apcu/Apcu.php',
         'Symfony\\Polyfill\\Mbstring\\Mbstring' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/Mbstring.php',
         'Zend\\Code\\Annotation\\AnnotationCollection' => __DIR__ . '/..' . '/zendframework/zend-code/src/Annotation/AnnotationCollection.php',
         'Zend\\Code\\Annotation\\AnnotationInterface' => __DIR__ . '/..' . '/zendframework/zend-code/src/Annotation/AnnotationInterface.php',
