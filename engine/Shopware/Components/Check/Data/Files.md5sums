@@ -1,4 +1,4 @@
-8b12347448c87e744c329e220b7e4ac4  engine/Shopware/Application.php
+c138aa14b3adddd629f80cd99550e835  engine/Shopware/Application.php
 6b5d467ca708c63479ef9731ebe8343c  engine/Shopware/Bootstrap.php
 14591d8596d06184b11058be863789d5  engine/Shopware/Bundle/AccountBundle/Constraint/CurrentPassword.php
 842fbc0f2245e382a9783068a8e9fe98  engine/Shopware/Bundle/AccountBundle/Constraint/CurrentPasswordValidator.php
@@ -470,6 +470,7 @@ e79c90eccdefb2567b200ddb56e12f28  engine/Shopware/Bundle/SearchBundleDBAL/Sortin
 ddda9d6bd676cc9f5c807d441b402c8b  engine/Shopware/Bundle/SearchBundleDBAL/SortingHandler/PriceSortingHandler.php
 38f1f2315b77bfaf01711f282b292250  engine/Shopware/Bundle/SearchBundleDBAL/SortingHandler/ProductAttributeSortingHandler.php
 5dcde1b830577377afee969772c98193  engine/Shopware/Bundle/SearchBundleDBAL/SortingHandler/ProductNameSortingHandler.php
+7d7fa9bc1fefb848f3c26f18f39bdcf7  engine/Shopware/Bundle/SearchBundleDBAL/SortingHandler/ProductStockSortingHandler.php
 4beac0ad7c86a5638f159e33f0a2b89a  engine/Shopware/Bundle/SearchBundleDBAL/SortingHandler/RandomSortingHandler.php
 61d8a61e65a64ef08e211a769a2b8612  engine/Shopware/Bundle/SearchBundleDBAL/SortingHandler/ReleaseDateSortingHandler.php
 a870a03ccb0238cc09b015e5fd86ab87  engine/Shopware/Bundle/SearchBundleDBAL/SortingHandler/SearchRankingSortingHandler.php
@@ -522,6 +523,7 @@ a26966ae6b09549979bf84d739a0bf01  engine/Shopware/Bundle/SearchBundleES/ResultHy
 f7e8c86b2e63552440232c021a46f1fe  engine/Shopware/Bundle/SearchBundleES/SortingHandler/PriceSortingHandler.php
 2637db46556f87adc2b654795cd39ccb  engine/Shopware/Bundle/SearchBundleES/SortingHandler/ProductAttributeSortingHandler.php
 9a914d75fe0f56fd9f1d5a10bbec34a4  engine/Shopware/Bundle/SearchBundleES/SortingHandler/ProductNameSortingHandler.php
+161a13a7d6cba87c68dbc62772359bed  engine/Shopware/Bundle/SearchBundleES/SortingHandler/ProductStockSortingHandler.php
 9866eeed74fdc7e5b5259e1e2d95fc7e  engine/Shopware/Bundle/SearchBundleES/SortingHandler/RandomSortingHandler.php
 c353fe558b0776adb75da4755cd6e352  engine/Shopware/Bundle/SearchBundleES/SortingHandler/ReleaseDateSortingHandler.php
 a758cefbb76bfd429bf55469b4e30c16  engine/Shopware/Bundle/SearchBundleES/SortingHandler/SearchRankingSortingHandler.php
@@ -566,6 +568,7 @@ a2f7458413d57370d9d5605c087bd8ec  engine/Shopware/Bundle/SearchBundle/Sorting/Po
 be5fc6aa628cbffdb5e47ddccdfcb1d3  engine/Shopware/Bundle/SearchBundle/Sorting/PriceSorting.php
 049d6a37361ae3765a8697b317249200  engine/Shopware/Bundle/SearchBundle/Sorting/ProductAttributeSorting.php
 f2868a77d42b259cc2ece2bb1884e55d  engine/Shopware/Bundle/SearchBundle/Sorting/ProductNameSorting.php
+2c8b511d50b714c756854339348223e5  engine/Shopware/Bundle/SearchBundle/Sorting/ProductStockSorting.php
 84de029cb8aa853a9533f8d6845a2509  engine/Shopware/Bundle/SearchBundle/Sorting/RandomSorting.php
 31342907efce5f41d84818df3b6ca529  engine/Shopware/Bundle/SearchBundle/Sorting/ReleaseDateSorting.php
 5445e8899cc1dccc1ca22f6e87e529e3  engine/Shopware/Bundle/SearchBundle/Sorting/SearchRankingSorting.php
@@ -960,7 +963,7 @@ c0c995ee088c97cdc8dacf478b76cc82  engine/Shopware/Components/Emotion/Preset/Pres
 6420a589ed99c6efdf97cf33ebb1847e  engine/Shopware/Components/Emotion/Preset/PresetLoaderInterface.php
 5b4277dd5dd6653dbc37d565635e20ae  engine/Shopware/Components/Emotion/Preset/PresetLoader.php
 6a9917b242c9b94d210f18e3ce752621  engine/Shopware/Components/Emotion/Preset/PresetMetaDataInterface.php
-1e19755627937bbde5e0cb0837fa2f62  engine/Shopware/Components/ErrorSubscriber.php
+d041045c86676c2d2f24ace653704e40  engine/Shopware/Components/ErrorSubscriber.php
 1bd4cce21ef93389956d6dc43b1263f9  engine/Shopware/Components/Escaper/EscaperInterface.php
 1cb367d77d9e99b4a758d8338d1c8337  engine/Shopware/Components/Escaper/Escaper.php
 5fc58dd6d0c30f79d3fc6487a98d2084  engine/Shopware/Components/Form/Base.php
