@@ -6,7 +6,7 @@
     "homepage": "http://www.shopware.com",
     "type": "shopware-core",
     "license": [
-        "AGPL-3.0",
+        "AGPL-3.0-only",
         "proprietary"
     ],
     "support": {
