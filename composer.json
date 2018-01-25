@@ -1,5 +1,5 @@
 {
-    "name": "shopware/shopware",
+    "name": "communiacs/shopware",
     "version": "5.3.7",
     "description": "Shopware is the next generation of open source e-commerce software made in Germany",
     "keywords": ["shopware", "shop"],
@@ -65,7 +65,7 @@
         "setasign/fpdf": "1.8.1",
         "setasign/fpdi": "1.6.1",
         "ocramius/proxy-manager": "^1.0",
-        "wlwwt/sw-composer-installers": "0.4.x-dev"
+        "communiacs/sw-composer-installers": "0.5.0"
     },
     "suggest": {
         "ext-apcu": "*",
