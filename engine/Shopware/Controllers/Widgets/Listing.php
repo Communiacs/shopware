@@ -21,13 +21,11 @@
  * trademark license. Therefore any rights, title and interest in
  * our trademarks remain entirely with us.
  */
-
 use Shopware\Bundle\SearchBundle\ProductSearchInterface;
 use Shopware\Bundle\SearchBundle\ProductSearchResult;
 use Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\Search\CustomFacet;
 use Shopware\Components\Compatibility\LegacyStructConverter;
-use Shopware\Components\Routing\RouterInterface;
 
 /**
  * Shopware Listing Widgets
@@ -35,7 +33,7 @@ use Shopware\Components\Routing\RouterInterface;
 class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
 {
     /**
-     * product navigation as json string
+     * Product navigation as json string
      */
     public function productNavigationAction()
     {
@@ -43,11 +41,12 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
 
         try {
             $ordernumber = $this->Request()->get('ordernumber');
+
             if (!$ordernumber) {
                 throw new \InvalidArgumentException('Argument ordernumber missing');
             }
 
-            $categoryId = $this->Request()->get('categoryId');
+            $categoryId = (int) $this->Request()->get('categoryId');
             if (!$categoryId) {
                 throw new \InvalidArgumentException('Argument categoryId missing');
             }
@@ -60,48 +59,39 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
             /** @var $articleModule \sArticles */
             $articleModule = Shopware()->Modules()->Articles();
             $navigation = $articleModule->getProductNavigation($ordernumber, $categoryId, $this->Request());
+
+            $linkRewriter = function ($link) {
+                return Shopware()->Modules()->Core()->sRewriteLink($link);
+            };
+
+            if (isset($navigation['previousProduct'])) {
+                $navigation['previousProduct']['href'] = $linkRewriter($navigation['previousProduct']['link']);
+            }
+
+            if (isset($navigation['nextProduct'])) {
+                $navigation['nextProduct']['href'] = $linkRewriter($navigation['nextProduct']['link']);
+            }
+
+            $navigation['currentListing']['href'] = $linkRewriter($navigation['currentListing']['link']);
+            $responseCode = 200;
+            $body = json_encode($navigation, JSON_PRETTY_PRINT | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
         } catch (\InvalidArgumentException $e) {
+            $responseCode = 500;
             $result = ['error' => $e->getMessage()];
             $body = json_encode($result, JSON_PRETTY_PRINT | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
-            $this->Response()->setBody($body);
-            $this->Response()->setHeader('Content-type', 'application/json', true);
-            $this->Response()->setHttpResponseCode(500);
-
-            return;
         } catch (\Exception $e) {
+            $responseCode = 500;
             $result = ['exception' => $e];
             $body = json_encode($result, JSON_PRETTY_PRINT | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
-            $this->Response()->setBody($body);
-            $this->Response()->setHeader('Content-type', 'application/json', true);
-            $this->Response()->setHttpResponseCode(500);
-
-            return;
         }
 
-        $linkRewriter = function ($link) {
-            /** @var $core sCore */
-            $core = Shopware()->Modules()->Core();
-
-            return $core->sRewriteLink($link);
-        };
-
-        if (isset($navigation['previousProduct'])) {
-            $navigation['previousProduct']['href'] = $linkRewriter($navigation['previousProduct']['link']);
-        }
-
-        if (isset($navigation['nextProduct'])) {
-            $navigation['nextProduct']['href'] = $linkRewriter($navigation['nextProduct']['link']);
-        }
-
-        $navigation['currentListing']['href'] = $linkRewriter($navigation['currentListing']['link']);
-
-        $body = json_encode($navigation, JSON_PRETTY_PRINT | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
-        $this->Response()->setBody($body);
         $this->Response()->setHeader('Content-type', 'application/json', true);
+        $this->Response()->setHttpResponseCode($responseCode);
+        $this->Response()->setBody($body);
     }
 
     /**
-     * topseller action for getting topsellers
+     * Topseller action for getting topsellers
      * by category with perPage filtering
      */
     public function topSellerAction()
@@ -120,7 +110,7 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
             $numbers = array_filter(explode('|', $numbers));
         }
 
-        if ($this->Request()->get('type') == 'slider') {
+        if ($this->Request()->get('type') === 'slider') {
             $this->View()->loadTemplate('frontend/_includes/product_slider.tpl');
         } else {
             $this->View()->loadTemplate('frontend/listing/listing_ajax.tpl');
@@ -177,7 +167,7 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
     }
 
     /**
-     * tag cloud by category
+     * Tag cloud by category
      */
     public function tagCloudAction()
     {
@@ -209,7 +199,7 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
             return;
         }
 
-        $categoryId = $this->Request()->getParam('sCategory');
+        $categoryId = (int) $this->Request()->getParam('sCategory');
         $productStreamId = $this->findStreamIdByCategoryId($categoryId);
 
         if ($productStreamId) {
@@ -226,15 +216,13 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
     /**
      * @deprecated since 5.3, remove in 5.5. Use \Shopware_Controllers_Widgets_Listing::listingCountAction instead
      *
-     * listing action for asynchronous fetching listing pages
+     * Listing action for asynchronous fetching listing pages
      * by infinite scrolling plugin
      */
     public function ajaxListingAction()
     {
-        Shopware()->Plugins()->Controller()->Json()->setPadding();
-
-        $categoryId = $this->Request()->getParam('sCategory');
-        $pageIndex = $this->Request()->getParam('sPage');
+        $categoryId = (int) $this->Request()->getParam('sCategory');
+        $pageIndex = (int) $this->Request()->getParam('sPage');
 
         $context = $this->get('shopware_storefront.context_service')->getShopContext();
         $productStreamId = $this->findStreamIdByCategoryId($categoryId);
@@ -272,8 +260,7 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
      */
     public function getCategoryAction()
     {
-        $categoryId = $this->Request()->getParam('categoryId');
-        $categoryId = (int) $categoryId;
+        $categoryId = (int) $this->Request()->getParam('categoryId');
 
         $category = $this->getCategoryById($categoryId);
 
@@ -326,7 +313,7 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
     }
 
     /**
-     * @param $categoryId
+     * @param int $categoryId
      *
      * @throws Exception
      *
@@ -386,6 +373,7 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
     }
 
     /**
+     * @param int $categoryId
      * @param int $productStreamId
      *
      * @return ProductSearchResult
@@ -442,7 +430,9 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
         return new ProductSearchResult(
             $result->getProducts(),
             $result->getTotalCount(),
-            $facetFilter->filter($result->getFacets(), $criteria)
+            $facetFilter->filter($result->getFacets(), $criteria),
+            $criteria,
+            $context
         );
     }
 
@@ -515,13 +505,15 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
      */
     private function fetchListing(ProductSearchResult $result)
     {
-        $categoryId = $this->Request()->getParam('sCategory', null);
+        $categoryId = (int) $this->Request()->getParam('sCategory');
 
         if ($this->Request()->has('productBoxLayout')) {
             $boxLayout = $this->Request()->get('productBoxLayout');
         } else {
-            $boxLayout = $categoryId ? Shopware()->Modules()->Categories()
-                ->getProductBoxLayout($categoryId) : $this->get('config')->get('searchProductBoxLayout');
+            $boxLayout = $this->get('config')->get('searchProductBoxLayout');
+            if ($categoryId) {
+                $boxLayout = Shopware()->Modules()->Categories()->getProductBoxLayout($categoryId);
+            }
         }
 
         $articles = $this->convertArticlesResult($result, $categoryId);
@@ -532,9 +524,10 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
 
         $this->View()->assign([
             'sArticles' => $articles,
-            'pageIndex' => $this->Request()->getParam('sPage'),
+            'pageIndex' => (int) $this->Request()->getParam('sPage'),
             'productBoxLayout' => $boxLayout,
             'sCategoryCurrent' => $categoryId,
+            'sCategoryContent' => Shopware()->Modules()->Categories()->sGetCategoryContent($categoryId),
         ]);
 
         return $this->View()->fetch('frontend/listing/listing_ajax.tpl');
@@ -547,9 +540,14 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
      */
     private function fetchPagination(ProductSearchResult $result)
     {
-        $sPerPage = $this->Request()->getParam('sPerPage');
+        $sPerPage = (int) $this->Request()->getParam('sPerPage');
+
+        if ($sPerPage <= 0) {
+            $sPerPage = 1;
+        }
+
         $this->View()->assign([
-            'sPage' => $this->Request()->getParam('sPage'),
+            'sPage' => (int) $this->Request()->getParam('sPage'),
             'pages' => ceil($result->getTotalCount() / $sPerPage),
             'baseUrl' => $this->Request()->getBaseUrl() . $this->Request()->getPathInfo(),
             'pageSizes' => explode('|', $this->container->get('config')->get('numberArticlesToShow')),
@@ -570,8 +568,6 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
     {
         /** @var LegacyStructConverter $converter */
         $converter = $this->get('legacy_struct_converter');
-        /** @var RouterInterface $router */
-        $router = $this->get('router');
 
         $articles = $converter->convertListProductStructList($result->getProducts());
 
@@ -579,24 +575,12 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
             return $articles;
         }
 
-        $urls = array_map(function ($article) use ($categoryId) {
-            if ($categoryId !== null) {
-                return $article['linkDetails'] . '&sCategory=' . (int) $categoryId;
-            }
-
-            return $article['linkDetails'];
-        }, $articles);
-
-        $rewrite = $router->generateList($urls);
-
-        foreach ($articles as $key => &$article) {
-            if (!array_key_exists($key, $rewrite)) {
-                continue;
-            }
-            $article['linkDetails'] = $rewrite[$key];
-        }
-
-        return $articles;
+        return $this->get('shopware_storefront.listing_link_rewrite_service')->rewriteLinks(
+            $result->getCriteria(),
+            $articles,
+            $result->getContext(),
+            $categoryId
+        );
     }
 
     private function loadThemeConfig()

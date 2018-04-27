@@ -34,8 +34,13 @@ class FileType extends AbstractType
 
             if ($options['multiple']) {
                 $data = array();
+                $files = $event->getData();
 
-                foreach ($event->getData() as $file) {
+                if (!is_array($files)) {
+                    $files = array();
+                }
+
+                foreach ($files as $file) {
                     if ($requestHandler->isFileUpload($file)) {
                         $data[] = $file;
                     }
@@ -87,9 +92,12 @@ class FileType extends AbstractType
      */
     public function configureOptions(OptionsResolver $resolver)
     {
-        $dataClass = function (Options $options) {
-            return $options['multiple'] ? null : 'Symfony\Component\HttpFoundation\File\File';
-        };
+        $dataClass = null;
+        if (class_exists('Symfony\Component\HttpFoundation\File\File')) {
+            $dataClass = function (Options $options) {
+                return $options['multiple'] ? null : 'Symfony\Component\HttpFoundation\File\File';
+            };
+        }
 
         $emptyData = function (Options $options) {
             return $options['multiple'] ? array() : null;

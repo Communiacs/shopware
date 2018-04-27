@@ -6,6 +6,7 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
+    'mPDF' => array($baseDir . '/engine/Library/Mpdf'),
     'Zend' => array($baseDir . '/engine/Library'),
     'Shopware' => array($baseDir . '/engine'),
     'ProxyManager\\' => array($vendorDir . '/ocramius/proxy-manager/src'),

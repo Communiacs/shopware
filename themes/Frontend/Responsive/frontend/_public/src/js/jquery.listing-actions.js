@@ -277,7 +277,12 @@
             /**
              * selector for the jquery.add-article plugin to enable support for the off canvas cart
              */
-            addArticleSelector: '*[data-add-article="true"]'
+            addArticleSelector: '*[data-add-article="true"]',
+
+            /**
+             * Threshold for the scroll position when the user switches pages (in both modes e.g. infinite scrolling & page change)
+             */
+            listingScrollThreshold: -10
         },
 
         /**
@@ -1118,10 +1123,11 @@
          */
         updateListing: function (response) {
             var html,
+                listing = this.$listing,
                 pages;
 
             if (!response.hasOwnProperty('listing')) {
-                this.$listing.removeClass(this.opts.isLoadingCls);
+                listing.removeClass(this.opts.isLoadingCls);
                 return;
             }
 
@@ -1131,8 +1137,11 @@
 
             html = response.listing.trim();
 
-            this.$listing.html(html);
-            this.$listing.removeClass(this.opts.isLoadingCls);
+            listing.html(html);
+
+            window.picturefill();
+
+            listing.removeClass(this.opts.isLoadingCls);
 
             window.history.pushState('data', '', window.location.href.split('?')[0] + this.urlParams);
 
@@ -1144,12 +1153,34 @@
                 pages = Math.ceil(response.totalCount / this.$perPageInput.val());
 
                 // update infinite scrolling plugin and data attributes for infinite scrolling
-                this.$listing.attr('data-pages', pages);
-                this.$listing.data('plugin_swInfiniteScrolling').destroy();
+                listing.attr('data-pages', pages);
+                listing.data('plugin_swInfiniteScrolling').destroy();
                 StateManager.addPlugin(this.opts.listingSelector, 'swInfiniteScrolling');
                 $.publish('plugin/swListingActions/updateInfiniteScrolling', [this, html, pages]);
             } else {
                 this.updatePagination(response);
+                this.scrollToTopPagination();
+            }
+        },
+
+        /**
+         * Scrolls to the top paging bar
+         */
+        scrollToTopPagination: function () {
+            var $htmlBodyCt = $('html, body'),
+                listingScrollThreshold = this.opts.listingScrollThreshold,
+                listingActionPos = this.$el.offset().top + listingScrollThreshold,
+                scrollTop = $htmlBodyCt.scrollTop();
+
+            // Browser compatibility
+            if (scrollTop === 0) {
+                scrollTop = $('body').scrollTop();
+            }
+
+            if (scrollTop > listingActionPos) {
+                $htmlBodyCt.animate({
+                    scrollTop: listingActionPos
+                }, this.opts.animationSpeed);
             }
         },
 

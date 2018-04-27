@@ -30,6 +30,10 @@ _sql/install/4.0.6.sql
 _sql/install/4.0.7.sql
 _sql/install/4.0.8.sql
 _sql/migrations/1000-add-customer-streams.php
+_sql/migrations/1205-add-laststock-field-to-variants.php
+_sql/migrations/1206-add-new-seo-alias-for-variants.php
+_sql/migrations/1209-change-description-of-article-cover-setting.php
+_sql/migrations/1215-change-smtp-password-fieldtype.php
 _sql/migrations/136-remove-lastarticles-save-time.php
 _sql/migrations/137-fix-typo-last-articles-headline.php
 _sql/migrations/138-http-cache-events.php
@@ -218,6 +222,7 @@ _sql/migrations/768-fixing-ordernumber-schema-order-notes.php
 _sql/migrations/786-create-configurator-options-attribute-table.php
 _sql/migrations/786-increase-password-hash-size.php
 _sql/migrations/790-add-bcc-mail-field.php
+_sql/migrations/793-add-productbox-for-manufacturer.php
 _sql/migrations/794-remove-salutation-snippets.php
 _sql/migrations/800-add-last-articles-config-elements.php
 _sql/migrations/801-add-vote-shop-id.php
@@ -262,13 +267,16 @@ _sql/migrations/935-add-type-field.php
 _sql/migrations/938-add-translations-for-facets.php
 _sql/migrations/939-fix-import-export-menu-entry.php
 _sql/migrations/943-add-http-cache-events-for-site.php
+_sql/migrations/943-add-productbox-for-manufacturer.php
 _sql/migrations/944-change-customer-stream-type.php
 _sql/migrations/950-add-emotion-presets.php
 _sql/migrations/950-update-email-templates.php
 _sql/migrations/951-implement-growl-message-configuration.php
 _sql/migrations/954-site-active-status.php
 _sql/migrations/955-add-http-cache-events-for-site.php
+_sql/migrations/955-remove-blog-indexpage-configuration.php
 _sql/migrations/965-update-impressum-position.php
+_sql/migrations/999-add-template-source.php
 _sql/update.sql
 _sql/update
 build/ApplyDeltas.php
@@ -279,6 +287,11 @@ build/scripts
 cache
 check
 check_files.php
+dev-ops/bamboo.shopware.com/templates
+dev-ops/docker/containers/mysql/createuser.sh
+dev-ops/docker/containers/php7
+dev-ops/docker/containers/scriptcreator.sh
+dev-ops/docker/templates/php-dockerfile.tpl
 engine/Library/Behat
 engine/Library/CodeMirror/keymap
 engine/Library/CodeMirror/lib/util
@@ -413,6 +426,7 @@ engine/Library/Enlight/Controller/Response/ResponseCli.php
 engine/Library/Enlight/Controller/Router
 engine/Library/Enlight/Enlight.php
 engine/Library/Enlight/Extensions
+engine/Library/Enlight/Hook/HookExecutionContext.php
 engine/Library/Enlight/Template/Plugins/compiler.themeTimestamp.php
 engine/Library/Enlight/Template/Plugins/function.booster.php
 engine/Library/Enlight/Template/Plugins/function.compileTheme.php
@@ -463,8 +477,11 @@ engine/Library/ExtJs/resources/themes/stylesheets/neptune
 engine/Library/Fpdf
 engine/Library/Gedmo
 engine/Library/Mpdf/FONT INFO.txt
+engine/Library/Mpdf/README.txt
+engine/Library/Mpdf/classes/desktop.ini
 engine/Library/Mpdf/classes/form.php
 engine/Library/Mpdf/config_cp.php
+engine/Library/Mpdf/graph_cache/dummy.txt
 engine/Library/Mpdf/includes/ind_bn_1_001.volt.php
 engine/Library/Mpdf/includes/ind_gu_1_001.volt.php
 engine/Library/Mpdf/includes/ind_hi_1_001.volt.php
@@ -474,13 +491,15 @@ engine/Library/Mpdf/includes/ind_or_1_001.volt.php
 engine/Library/Mpdf/includes/ind_pa_1_001.volt.php
 engine/Library/Mpdf/includes/ind_ta_1_001.volt.php
 engine/Library/Mpdf/includes/ind_te_1_001.volt.php
-engine/Library/Mpdf/includes/out.php
+engine/Library/Mpdf/mpdfi
+engine/Library/Mpdf/tmp/dummy.txt
 engine/Library/Mpdf/ttfontdata/arial.mtx.php
 engine/Library/Mpdf/ttfontdata/arialB.mtx.php
 engine/Library/Mpdf/ttfontdata/dejavusanscondensed.mtx.php
 engine/Library/Mpdf/ttfontdata/dejavusanscondensedB.mtx.php
 engine/Library/Mpdf/ttfontdata/dejavuserifcondensed.mtx.php
 engine/Library/Mpdf/ttfontdata/dejavuserifcondensedB.mtx.php
+engine/Library/Mpdf/ttfontdata/dummy.txt
 engine/Library/Mpdf/ttfontdata/timesnewroman.mtx.php
 engine/Library/Mpdf/ttfontdata/timesnewromanB.mtx.php
 engine/Library/Mpdf/ttfonts/AboriginalSansREGULAR.ttf
@@ -559,13 +578,29 @@ engine/Library/Mpdf/ttfonts/XB RiyazBdIt.ttf
 engine/Library/Mpdf/ttfonts/XB RiyazIt.ttf
 engine/Library/Mpdf/ttfonts/XW Zar Font Info.txt
 engine/Library/Mpdf/ttfonts/ZawgyiOne.ttf
+engine/Library/Mpdf/ttfonts/arial.afm
+engine/Library/Mpdf/ttfonts/arialbd.afm
+engine/Library/Mpdf/ttfonts/arialbi.afm
+engine/Library/Mpdf/ttfonts/ariali.afm
 engine/Library/Mpdf/ttfonts/ayar.ttf
+engine/Library/Mpdf/ttfonts/cour.afm
+engine/Library/Mpdf/ttfonts/courbd.afm
+engine/Library/Mpdf/ttfonts/courbi.afm
+engine/Library/Mpdf/ttfonts/couri.afm
 engine/Library/Mpdf/ttfonts/damase_v.2.ttf
 engine/Library/Mpdf/ttfonts/kaputaunicode.ttf
 engine/Library/Mpdf/ttfonts/lannaalif-v1-03.ttf
 engine/Library/Mpdf/ttfonts/ocrb10.ttf
 engine/Library/Mpdf/ttfonts/ocrbinfo.txt
+engine/Library/Mpdf/ttfonts/print_glyphs.ps
+engine/Library/Mpdf/ttfonts/symbol.afm
+engine/Library/Mpdf/ttfonts/symbol.ttf
+engine/Library/Mpdf/ttfonts/times.afm
+engine/Library/Mpdf/ttfonts/timesbd.afm
+engine/Library/Mpdf/ttfonts/timesbi.afm
+engine/Library/Mpdf/ttfonts/timesi.afm
 engine/Library/Mpdf/utilities
+engine/Library/Mpdf/utils
 engine/Library/PasswordCompat
 engine/Library/Slim
 engine/Library/Symfony
@@ -727,6 +762,7 @@ engine/Shopware/Bundle/CustomerSearchBundle/SortingHandler
 engine/Shopware/Bundle/CustomerSearchBundle/SortingHandlerInterface.php
 engine/Shopware/Bundle/CustomerSearchBundle/services.xml
 engine/Shopware/Bundle/CustomerSearchBundleDBAL/SortingHandler/ProductAvgSortingHandler.php~
+engine/Shopware/Bundle/ESIndexingBundle/Product/ProductListingVisibilityLoader.php
 engine/Shopware/Bundle/FormBundle/Constraints/Repeated.php
 engine/Shopware/Bundle/FormBundle/Constraints/RepeatedValidator.php
 engine/Shopware/Bundle/FormBundle/Extension/EnlightExtension.php
@@ -747,10 +783,13 @@ engine/Shopware/Bundle/SearchBundle/DependencyInjection/Compiler/DBALCompilerPas
 engine/Shopware/Bundle/SearchBundle/SearchProduct.php
 engine/Shopware/Bundle/SearchBundle/Sorting/DescriptionSorting.php
 engine/Shopware/Bundle/SearchBundleDBAL/ConditionHandler/HasPriceConditionHandler.php
+engine/Shopware/Bundle/SearchBundleDBAL/ConditionHandler/VariantPriceConditionHandler.php
+engine/Shopware/Bundle/SearchBundleDBAL/FacetHandler/VariantPriceFacetHandler.php
 engine/Shopware/Bundle/SearchBundleES/SimilarProductsService.php
 engine/Shopware/Bundle/StoreFrontBundle/Gateway/DBAL/ProductGateway.php
 engine/Shopware/Bundle/StoreFrontBundle/Gateway/ProductGatewayInterface.php
 engine/Shopware/Bundle/StoreFrontBundle/Struct/AddressStruct.php
+engine/Shopware/Bundle/StoreFrontBundle/Struct/Configurator/GroupsByGroup.php
 engine/Shopware/Bundle/StoreFrontBundle/Struct/Context.php
 engine/Shopware/Bundle/StoreFrontBundle/Struct/CoreAttribute.php
 engine/Shopware/Commands/SearchIndexPopulateCommand.php
@@ -1069,6 +1108,8 @@ tests/Unit/Components/BasketSignature/BasketTest.php
 tests/Unit/Components/Config
 tests/Unit/Components/Emotion
 tests/Unit/Components/Event/ManagerTest.php
+tests/Unit/Components/Hook/HookManagerTest.php
+tests/Unit/Components/Hook/HookManagerTestTarget.php
 themes/Backend/ExtJs/backend/_resources/images/activate
 themes/Backend/ExtJs/backend/_resources/images/customer_stream/ekw_usage.png
 themes/Backend/ExtJs/backend/_resources/images/customer_stream/quick_view.png
@@ -1089,6 +1130,8 @@ themes/Backend/ExtJs/backend/_resources/images/index/tabs
 themes/Backend/ExtJs/backend/_resources/images/index/window
 themes/Backend/ExtJs/backend/_resources/resources/themes/images/shopware-ui/emotion_preset_teaser.png
 themes/Backend/ExtJs/backend/_resources/resources/themes/images/shopware-ui/plugin_manager/toggle-button-sprite.png
+themes/Backend/ExtJs/backend/_resources/resources/themes/images/shopware-ui/shopware_connect.png
+themes/Backend/ExtJs/backend/_resources/resources/themes/stylesheets/shopware-ui/modules/_connect.scss
 themes/Backend/ExtJs/backend/_resources/styles/Ext.ux.FileUploadField.css
 themes/Backend/ExtJs/backend/_resources/styles/activate.css
 themes/Backend/ExtJs/backend/_resources/styles/index.css

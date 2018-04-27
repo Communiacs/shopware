@@ -36,6 +36,8 @@ class HttpCache implements HttpKernelInterface, TerminableInterface
     private $traces = array();
 
     /**
+     * Constructor.
+     *
      * The available options are:
      *
      *   * debug:                 If true, the traces are added as a HTTP header to ease debugging
@@ -170,7 +172,7 @@ class HttpCache implements HttpKernelInterface, TerminableInterface
      */
     public function getEsi()
     {
-        @trigger_error('The '.__METHOD__.' method is deprecated since version 2.6 and will be removed in 3.0. Use the getSurrogate() method instead.', E_USER_DEPRECATED);
+        @trigger_error('The '.__METHOD__.' method is deprecated since Symfony 2.6 and will be removed in 3.0. Use the getSurrogate() method instead.', E_USER_DEPRECATED);
 
         return $this->getSurrogate();
     }

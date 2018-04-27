@@ -21,7 +21,6 @@
  * trademark license. Therefore any rights, title and interest in
  * our trademarks remain entirely with us.
  */
-
 use Shopware\Bundle\StoreFrontBundle;
 use Shopware\Bundle\StoreFrontBundle\Struct\ListProduct;
 use Shopware\Components\Random;
@@ -199,7 +198,7 @@ class sBasket
     {
         $result = $this->db->fetchAll(
             'SELECT (d.instock - b.quantity) as diffStock, b.ordernumber,
-                a.laststock, IF(a.active=1, d.active, 0) as active
+                d.laststock, IF(a.active=1, d.active, 0) as active
             FROM s_order_basket b
             LEFT JOIN s_articles_details d
               ON d.ordernumber = b.ordernumber
@@ -242,7 +241,7 @@ class sBasket
         }
 
         $extraConditions = [];
-        if (is_array($articles)) {
+        if (!empty($articles) && is_array($articles)) {
             $extraConditions[] = $this->db->quoteInto('ordernumber IN (?) ', $articles);
         }
         if (!empty($supplier)) {
@@ -1199,20 +1198,18 @@ class sBasket
                     $t = round(str_replace(',', '.', $value['amountWithTax']), 2);
                 } else {
                     $t = str_replace(',', '.', $value['price']);
-                    $t = floatval(round($t * $value['quantity'], 2));
+                    $t = (float) round($t * $value['quantity'], 2);
                 }
                 if (!$this->sSYSTEM->sUSERGROUPDATA['tax'] && $this->sSYSTEM->sUSERGROUPDATA['id']) {
-                    $p = floatval($this->moduleManager->Articles()->sRound(
+                    $p = (float) $this->moduleManager->Articles()->sRound(
                         $this->moduleManager->Articles()->sRound(
                             round($value['netprice'], 2) * $value['quantity'])
-                        )
-                    );
+                        );
                 } else {
-                    $p = floatval($this->moduleManager->Articles()->sRound(
+                    $p = (float) $this->moduleManager->Articles()->sRound(
                         $this->moduleManager->Articles()->sRound(
                             $value['netprice'] * $value['quantity'])
-                        )
-                    );
+                        );
                 }
                 $calcDifference = $this->moduleManager->Articles()->sFormatPrice($t - $p);
                 $result['content'][$key]['tax'] = $calcDifference;
@@ -1329,8 +1326,8 @@ class sBasket
     {
         $responseCookies = $this->front->Response()->getCookies();
 
-        if (isset($responseCookies['sUniqueID']['value']) && $responseCookies['sUniqueID']['value']) {
-            $uniqueId = $responseCookies['sUniqueID']['value'];
+        if (!empty($responseCookies['sUniqueID-/']['value']) && $responseCookies['sUniqueID-/']['value']) {
+            $uniqueId = $responseCookies['sUniqueID-/']['value'];
         } else {
             $uniqueId = $this->front->Request()->getCookie('sUniqueID');
         }
@@ -1541,8 +1538,8 @@ class sBasket
      * Add product to cart
      * Used in multiple locations
      *
-     * @param int $id       Order number (s_articles_details.ordernumber)
-     * @param int $quantity Amount
+     * @param string $id       Order number (s_articles_details.ordernumber)
+     * @param int    $quantity Amount
      *
      * @throws \Exception
      * @throws \Enlight_Exception         If no price could be determined, or a database error occurs
@@ -2138,7 +2135,7 @@ class sBasket
                 $taxRate = $this->config->get('sVOUCHERTAX');
             } elseif ($voucherDetails['taxconfig'] === 'auto') {
                 $taxRate = $this->getMaxTax();
-            } elseif (intval($voucherDetails['taxconfig'])) {
+            } elseif ((int) $voucherDetails['taxconfig']) {
                 $temporaryTax = $voucherDetails['taxconfig'];
                 $getTaxRate = $this->db->fetchOne(
                     'SELECT tax FROM s_core_tax WHERE id = ?',
@@ -2150,13 +2147,13 @@ class sBasket
             if ($voucherDetails['taxconfig'] === 'default' || empty($voucherDetails['taxconfig'])) {
                 $tax = round($voucherDetails['value'] / (100 + $this->config->get('sVOUCHERTAX')) * 100, 3) * -1;
                 $taxRate = $this->config->get('sVOUCHERTAX');
-                // Pre 3.5.4 behaviour
+            // Pre 3.5.4 behaviour
             } elseif ($voucherDetails['taxconfig'] === 'auto') {
                 // Check max. used tax-rate from basket
                 $tax = $this->getMaxTax();
                 $taxRate = $tax;
                 $tax = round($voucherDetails['value'] / (100 + $tax) * 100, 3) * -1;
-            } elseif (intval($voucherDetails['taxconfig'])) {
+            } elseif ((int) $voucherDetails['taxconfig']) {
                 // Fix defined tax
                 $temporaryTax = $voucherDetails['taxconfig'];
                 $getTaxRate = $this->db->fetchOne(
@@ -2164,7 +2161,7 @@ class sBasket
                     [$temporaryTax]
                 );
                 $taxRate = $getTaxRate;
-                $tax = round($voucherDetails['value'] / (100 + (intval($getTaxRate))) * 100, 3) * -1;
+                $tax = round($voucherDetails['value'] / (100 + ((int) $getTaxRate)) * 100, 3) * -1;
             } else {
                 // No tax
                 $tax = $voucherDetails['value'] * -1;
@@ -2394,7 +2391,7 @@ class sBasket
                     }
                 } elseif ($getArticles[$key]['modus'] == 3) {
                     $getArticles[$key]['amountWithTax'] = round(1 * (round($price, 2) / 100 * (100 + $tax)), 2);
-                    // Basket discount
+                // Basket discount
                 } elseif ($getArticles[$key]['modus'] == 2) {
                     $getArticles[$key]['amountWithTax'] = round(1 * (round($price, 2) / 100 * (100 + $tax)), 2);
 
@@ -2518,7 +2515,7 @@ class sBasket
             ad.purchasesteps,
             ad.purchaseunit,
             COALESCE (ad.unitID, mad.unitID) AS unitID,
-            a.laststock,
+            ad.laststock,
             ad.shippingtime,
             ad.releasedate,
             ad.releasedate AS sReleaseDate,
@@ -2593,8 +2590,8 @@ class sBasket
             $queryAdditionalInfo['purchasesteps'] = 1;
         }
 
-        if (($quantity / $queryAdditionalInfo['purchasesteps']) != intval($quantity / $queryAdditionalInfo['purchasesteps'])) {
-            $quantity = intval($quantity / $queryAdditionalInfo['purchasesteps']) * $queryAdditionalInfo['purchasesteps'];
+        if (($quantity / $queryAdditionalInfo['purchasesteps']) != (int) ($quantity / $queryAdditionalInfo['purchasesteps'])) {
+            $quantity = (int) ($quantity / $queryAdditionalInfo['purchasesteps']) * $queryAdditionalInfo['purchasesteps'];
         }
 
         $maxPurchase = $this->config->get('sMAXPURCHASE');
@@ -2855,7 +2852,7 @@ class sBasket
     /**
      * Get article data for sAddArticle
      *
-     * @param int $id Article ordernumber
+     * @param string $id Article ordernumber
      *
      * @throws \Exception
      *
@@ -2865,7 +2862,7 @@ class sBasket
     {
         $sql = '
             SELECT s_articles.id AS articleID, s_articles.main_detail_id, name AS articleName, taxID,
-              additionaltext, s_articles_details.shippingfree, laststock, instock,
+              additionaltext, s_articles_details.shippingfree, s_articles_details.laststock, instock,
               s_articles_details.id as articledetailsID, ordernumber,
               s_articles.configurator_set_id
             FROM s_articles, s_articles_details

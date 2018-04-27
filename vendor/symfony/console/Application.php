@@ -116,11 +116,10 @@ class Application
             $e = null;
             $exitCode = $this->doRun($input, $output);
         } catch (\Exception $e) {
-        } catch (\Throwable $e) {
         }
 
         if (null !== $e) {
-            if (!$this->catchExceptions || !$e instanceof \Exception) {
+            if (!$this->catchExceptions) {
                 throw $e;
             }
 
@@ -502,7 +501,7 @@ class Application
     public function find($name)
     {
         $this->init();
-
+        $aliases = array();
         $allCommands = array_keys($this->commands);
         $expr = preg_replace_callback('{([^:]+|)}', function ($matches) { return preg_quote($matches[1]).'[^:]*'; }, $name);
         $commands = preg_grep('{^'.$expr.'}', $allCommands);
@@ -530,15 +529,16 @@ class Application
         // filter out aliases for commands which are already on the list
         if (count($commands) > 1) {
             $commandList = $this->commands;
-            $commands = array_filter($commands, function ($nameOrAlias) use ($commandList, $commands) {
+            $commands = array_filter($commands, function ($nameOrAlias) use ($commandList, $commands, &$aliases) {
                 $commandName = $commandList[$nameOrAlias]->getName();
+                $aliases[$nameOrAlias] = $commandName;
 
                 return $commandName === $nameOrAlias || !in_array($commandName, $commands);
             });
         }
 
-        $exact = in_array($name, $commands, true);
-        if (count($commands) > 1 && !$exact) {
+        $exact = in_array($name, $commands, true) || isset($aliases[$name]);
+        if (!$exact && count($commands) > 1) {
             $suggestions = $this->getAbbreviationSuggestions(array_values($commands));
 
             throw new CommandNotFoundException(sprintf('Command "%s" is ambiguous (%s).', $name, $suggestions), array_values($commands));
@@ -606,7 +606,7 @@ class Application
      */
     public function asText($namespace = null, $raw = false)
     {
-        @trigger_error('The '.__METHOD__.' method is deprecated since version 2.3 and will be removed in 3.0.', E_USER_DEPRECATED);
+        @trigger_error('The '.__METHOD__.' method is deprecated since Symfony 2.3 and will be removed in 3.0.', E_USER_DEPRECATED);
 
         $descriptor = new TextDescriptor();
         $output = new BufferedOutput(BufferedOutput::VERBOSITY_NORMAL, !$raw);
@@ -627,7 +627,7 @@ class Application
      */
     public function asXml($namespace = null, $asDom = false)
     {
-        @trigger_error('The '.__METHOD__.' method is deprecated since version 2.3 and will be removed in 3.0.', E_USER_DEPRECATED);
+        @trigger_error('The '.__METHOD__.' method is deprecated since Symfony 2.3 and will be removed in 3.0.', E_USER_DEPRECATED);
 
         $descriptor = new XmlDescriptor();
 
@@ -1026,8 +1026,8 @@ class Application
      * Finds alternative of $name among $collection,
      * if nothing is found in $collection, try in $abbrevs.
      *
-     * @param string             $name       The string
-     * @param array|\Traversable $collection The collection
+     * @param string   $name       The string
+     * @param iterable $collection The collection
      *
      * @return string[] A sorted array of similar string
      */

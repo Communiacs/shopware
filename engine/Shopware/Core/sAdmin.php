@@ -21,7 +21,6 @@
  * trademark license. Therefore any rights, title and interest in
  * our trademarks remain entirely with us.
  */
-
 use Shopware\Bundle\AccountBundle\Service\AddressServiceInterface;
 use Shopware\Bundle\AttributeBundle\Service\CrudService;
 use Shopware\Bundle\StoreFrontBundle;
@@ -230,7 +229,7 @@ class sAdmin
      */
     public function sGetPaymentMeanById($id, $user = false)
     {
-        $id = intval($id);
+        $id = (int) $id;
         $resetPayment = false;
 
         $data = $this->db->fetchRow(
@@ -1110,14 +1109,10 @@ class sAdmin
 
         /** @var Shopware\Bundle\StoreFrontBundle\Struct\Shop $shop */
         $shop = $this->contextService->getShopContext()->getShop();
-        $shopUrl = 'http://' . $shop->getHost() . $shop->getPath();
-        // The -Secure variables don't fall back to the normal values, so we need to do some checks
+        $shopUrl = 'http://' . $shop->getHost() . $shop->getUrl();
+
         if ($shop->getSecure()) {
-            if ($shop->getSecureHost() && $shop->getSecurePath()) {
-                $shopUrl = 'https://' . $shop->getSecureHost() . $shop->getSecurePath();
-            } else {
-                $shopUrl = 'https://' . $shop->getHost() . $shop->getPath();
-            }
+            $shopUrl = 'https://' . $shop->getHost() . $shop->getUrl();
         }
 
         $context = [
@@ -1488,13 +1483,13 @@ class sAdmin
             if ($this->session->offsetGet('sCountry')
                 && $this->session->offsetGet('sCountry') != $register['billing']['country']
             ) {
-                $register['billing']['country'] = intval($this->session->offsetGet('sCountry'));
+                $register['billing']['country'] = (int) $this->session->offsetGet('sCountry');
                 $this->session->offsetSet('sRegister', $register);
             }
 
             $userData['additional']['country'] = $this->db->fetchRow(
                 $countryQuery,
-                [intval($register['billing']['country'])]
+                [(int) $register['billing']['country']]
             );
             $userData['additional']['country'] = $userData['additional']['country'] ?: [];
             $userData['additional']['countryShipping'] = $userData['additional']['country'];
@@ -1594,9 +1589,9 @@ class sAdmin
     /**
      * Risk management - Order value greater then
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -1614,9 +1609,9 @@ class sAdmin
     /**
      * Risk management - Order value less then
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -1634,9 +1629,9 @@ class sAdmin
     /**
      * Risk management Customer group matches value
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -1648,9 +1643,9 @@ class sAdmin
     /**
      * Risk management Customer group doesn't match value
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -1662,9 +1657,9 @@ class sAdmin
     /**
      * Risk management - Shipping zip code match value
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -1680,9 +1675,9 @@ class sAdmin
     /**
      * Risk management - Billing zip code match value
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -1698,9 +1693,9 @@ class sAdmin
     /**
      * Risk management - Country zone matches value
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -1712,9 +1707,9 @@ class sAdmin
     /**
      * Risk management - Country zone doesn't match value
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -1726,9 +1721,9 @@ class sAdmin
     /**
      * Risk management - Billing Country zone matches value
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -1740,9 +1735,9 @@ class sAdmin
     /**
      * Risk management - Billing Country zone doesn't match value
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -1754,9 +1749,9 @@ class sAdmin
     /**
      * Risk management - Country matches value
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -1772,9 +1767,9 @@ class sAdmin
     /**
      * Risk management - Country doesn't match value
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -1790,9 +1785,9 @@ class sAdmin
     /**
      * Risk management - Billing Country matches value
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -1808,9 +1803,9 @@ class sAdmin
     /**
      * Risk management - Billing Country doesn't match value
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -1826,9 +1821,9 @@ class sAdmin
     /**
      * Risk management - Customer is new
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -1843,9 +1838,9 @@ class sAdmin
     /**
      * Risk management - Order has more then value positions
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -1859,9 +1854,9 @@ class sAdmin
     /**
      * Risk management - Article attribute x from basket - positions is y
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -1901,9 +1896,9 @@ class sAdmin
     /**
      * Risk management - article attribute x from basket is not y
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -1947,9 +1942,9 @@ class sAdmin
      * Risk management
      * Check if at least one order of the customer has a payment status 13
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -1962,9 +1957,9 @@ class sAdmin
      * Risk management
      * Check if at least one order of the customer has a payment status 14
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -1977,9 +1972,9 @@ class sAdmin
      * Risk management
      * Check if at least one order of the customer has a payment status 15
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -1992,9 +1987,9 @@ class sAdmin
      * Risk management
      * Check if at least one order of the customer has a payment status 16 (Encashment)
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -2006,9 +2001,9 @@ class sAdmin
     /**
      * Risk management - Last order less x days
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -2036,9 +2031,9 @@ class sAdmin
     /**
      * Risk management - Articles from a certain category
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -2059,9 +2054,9 @@ class sAdmin
     /**
      * Risk management - Order value greater then
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -2083,9 +2078,9 @@ class sAdmin
     /**
      * Risk management - Block if street contains pattern
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -2102,9 +2097,9 @@ class sAdmin
     /**
      * Risk management - Block if street contains pattern
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -2121,9 +2116,9 @@ class sAdmin
     /**
      * Risk management - Block if billing address not equal to shipping address
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -2148,9 +2143,9 @@ class sAdmin
     /**
      * Risk management - Block if customer number matches pattern
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -2162,9 +2157,9 @@ class sAdmin
     /**
      * Risk management - Block if last name matches pattern
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -2181,9 +2176,9 @@ class sAdmin
     /**
      * Risk management -  Block if subshop id is x
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -2195,9 +2190,9 @@ class sAdmin
     /**
      * Risk management -  Block if subshop id is not x
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -2209,9 +2204,9 @@ class sAdmin
     /**
      * Risk management - Block if currency id is not x
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -2223,9 +2218,9 @@ class sAdmin
     /**
      * Risk management - Block if currency id is x
      *
-     * @param  $user User data
-     * @param  $order Order data
-     * @param  $value Value to compare against
+     * @param array $user  User data
+     * @param array $order Order data
+     * @param mixed $value Value to compare against
      *
      * @return bool Rule validation result
      */
@@ -2436,7 +2431,7 @@ class sAdmin
         if (!empty($cache[$payment]['surchargestring'])) {
             foreach (explode(';', $cache[$payment]['surchargestring']) as $countrySurcharge) {
                 list($key, $value) = explode(':', $countrySurcharge);
-                $value = floatval(str_replace(',', '.', $value));
+                $value = (float) str_replace(',', '.', $value);
                 if (!empty($value)) {
                     $cache[$payment]['country_surcharge'][$key] = $value;
                 }
@@ -3939,7 +3934,7 @@ SQL;
             $payment['surcharge'] = 0;
             if (empty($this->sSYSTEM->sUSERGROUPDATA['tax']) && !empty($this->sSYSTEM->sUSERGROUPDATA['id'])) {
                 $surcharge_net = $surcharge;
-                //$tax_rate = 0;
+            //$tax_rate = 0;
             } else {
                 $surcharge_net = round($surcharge / (100 + $discount_tax) * 100, 2);
             }
