@@ -34,6 +34,8 @@ _sql/migrations/1205-add-laststock-field-to-variants.php
 _sql/migrations/1206-add-new-seo-alias-for-variants.php
 _sql/migrations/1209-change-description-of-article-cover-setting.php
 _sql/migrations/1215-change-smtp-password-fieldtype.php
+_sql/migrations/1219-add-double-opt-in-register.php
+_sql/migrations/1220-add-double-opt-in-register.php
 _sql/migrations/136-remove-lastarticles-save-time.php
 _sql/migrations/137-fix-typo-last-articles-headline.php
 _sql/migrations/138-http-cache-events.php
@@ -738,6 +740,8 @@ engine/Shopware/Bundle/AccountBundle/Constraint/UserNameValidator.php
 engine/Shopware/Bundle/AccountBundle/Service/AddressImportService.php
 engine/Shopware/Bundle/AccountBundle/Service/AddressImportServiceInterface.php
 engine/Shopware/Bundle/AccountBundle/Service/Core
+engine/Shopware/Bundle/AccountBundle/Service/MaintenanceService.php
+engine/Shopware/Bundle/AccountBundle/Service/MaintenanceServiceInterface.php
 engine/Shopware/Bundle/AccountBundle/Service/Validator/UserValidator.php
 engine/Shopware/Bundle/AccountBundle/Service/Validator/UserValidatorInterface.php
 engine/Shopware/Bundle/AttributeBundle/Repository/Reader/CustomerGroupReader.php
@@ -845,6 +849,7 @@ engine/Shopware/Components/Plugin/Manager.php
 engine/Shopware/Components/Plugin/PluginContext.php
 engine/Shopware/Components/PluginStore
 engine/Shopware/Components/ProductStreamRepository.php
+engine/Shopware/Components/Register
 engine/Shopware/Components/ResourceLoader.php
 engine/Shopware/Components/Search.php
 engine/Shopware/Components/Search
@@ -956,6 +961,7 @@ engine/Shopware/Plugins/Default/Core/PaymentMethods/Views/frontend/plugins/payme
 engine/Shopware/Plugins/Default/Core/PaymentMethods/Views/responsive/backend
 engine/Shopware/Plugins/Default/Core/PaymentMethods/Views/responsive/frontend/plugins/sepa
 engine/Shopware/Plugins/Default/Core/PluginManager
+engine/Shopware/Plugins/Default/Core/Privacy
 engine/Shopware/Plugins/Default/Core/RebuildIndex/Components/SearchIndex.php
 engine/Shopware/Plugins/Default/Core/SelfHealing
 engine/Shopware/Plugins/Default/Frontend/Compare
@@ -1320,7 +1326,6 @@ vendor/egulias/email-validator/documentation
 vendor/egulias/email-validator/tests
 vendor/guzzlehttp/guzzle/Makefile
 vendor/guzzlehttp/guzzle/phpunit.xml.dist
-vendor/ircmaxell
 vendor/monolog/monolog/CHANGELOG.mdown
 vendor/monolog/monolog/README.mdown
 vendor/oyejorge/less.php/phpunit.xml

@@ -7,7 +7,11 @@ namespace Composer\Autoload;
 class ComposerStaticInitShopware
 {
     public static $files = array (
+        '320cde22f66dd4f5d3fd621d3e88b98f' => __DIR__ . '/..' . '/symfony/polyfill-ctype/bootstrap.php',
         '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
+        'e40631d46120a9c38ea139981f8dab26' => __DIR__ . '/..' . '/ircmaxell/password-compat/lib/password.php',
+        'edc6464955a37aa4d5fbf39d40fb6ee7' => __DIR__ . '/..' . '/symfony/polyfill-php55/bootstrap.php',
+        '3e2471375464aac821502deb0ac64275' => __DIR__ . '/..' . '/symfony/polyfill-php54/bootstrap.php',
         '32dcc8afd4335739640db7d200c1971d' => __DIR__ . '/..' . '/symfony/polyfill-apcu/bootstrap.php',
         'ad155f8f1cf0d418fe49e248db8c661b' => __DIR__ . '/..' . '/react/promise/src/functions_include.php',
         '5255c38a0faeba867671b61dfda6d864' => __DIR__ . '/..' . '/paragonie/random_compat/lib/random.php',
@@ -25,7 +29,10 @@ class ComposerStaticInitShopware
         ),
         'S' => 
         array (
+            'Symfony\\Polyfill\\Php55\\' => 23,
+            'Symfony\\Polyfill\\Php54\\' => 23,
             'Symfony\\Polyfill\\Mbstring\\' => 26,
+            'Symfony\\Polyfill\\Ctype\\' => 23,
             'Symfony\\Polyfill\\Apcu\\' => 22,
             'Symfony\\Component\\Validator\\' => 28,
             'Symfony\\Component\\Translation\\' => 30,
@@ -107,9 +114,21 @@ class ComposerStaticInitShopware
         array (
             0 => __DIR__ . '/..' . '/zendframework/zend-code/src',
         ),
+        'Symfony\\Polyfill\\Php55\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/symfony/polyfill-php55',
+        ),
+        'Symfony\\Polyfill\\Php54\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/symfony/polyfill-php54',
+        ),
         'Symfony\\Polyfill\\Mbstring\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-mbstring',
+        ),
+        'Symfony\\Polyfill\\Ctype\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/symfony/polyfill-ctype',
         ),
         'Symfony\\Polyfill\\Apcu\\' => 
         array (
@@ -355,6 +374,7 @@ class ComposerStaticInitShopware
         'Assert\\LazyAssertion' => __DIR__ . '/..' . '/beberlei/assert/lib/Assert/LazyAssertion.php',
         'Assert\\LazyAssertionException' => __DIR__ . '/..' . '/beberlei/assert/lib/Assert/LazyAssertionException.php',
         'Bcremer\\LineReader\\LineReader' => __DIR__ . '/..' . '/bcremer/line-reader/src/LineReader.php',
+        'CallbackFilterIterator' => __DIR__ . '/..' . '/symfony/polyfill-php54/Resources/stubs/CallbackFilterIterator.php',
         'Cocur\\Slugify\\Bridge\\Laravel\\SlugifyFacade' => __DIR__ . '/..' . '/cocur/slugify/src/Bridge/Laravel/SlugifyFacade.php',
         'Cocur\\Slugify\\Bridge\\Laravel\\SlugifyServiceProvider' => __DIR__ . '/..' . '/cocur/slugify/src/Bridge/Laravel/SlugifyServiceProvider.php',
         'Cocur\\Slugify\\Bridge\\Latte\\SlugifyHelper' => __DIR__ . '/..' . '/cocur/slugify/src/Bridge/Latte/SlugifyHelper.php',
@@ -2067,6 +2087,8 @@ class ComposerStaticInitShopware
         'React\\Promise\\PromisorInterface' => __DIR__ . '/..' . '/react/promise/src/PromisorInterface.php',
         'React\\Promise\\RejectedPromise' => __DIR__ . '/..' . '/react/promise/src/RejectedPromise.php',
         'React\\Promise\\UnhandledRejectionException' => __DIR__ . '/..' . '/react/promise/src/UnhandledRejectionException.php',
+        'RecursiveCallbackFilterIterator' => __DIR__ . '/..' . '/symfony/polyfill-php54/Resources/stubs/RecursiveCallbackFilterIterator.php',
+        'SessionHandlerInterface' => __DIR__ . '/..' . '/symfony/polyfill-php54/Resources/stubs/SessionHandlerInterface.php',
         'Shopware' => __DIR__ . '/../..' . '/engine/Shopware/Application.php',
         'ShopwarePlugin\\PaymentMethods\\Components\\BasePaymentMethod' => __DIR__ . '/../..' . '/engine/Shopware/Plugins/Default/Core/PaymentMethods/Components/BasePaymentMethod.php',
         'ShopwarePlugin\\PaymentMethods\\Components\\DebitPaymentMethod' => __DIR__ . '/../..' . '/engine/Shopware/Plugins/Default/Core/PaymentMethods/Components/DebitPaymentMethod.php',
@@ -2123,6 +2145,8 @@ class ComposerStaticInitShopware
         'Shopware\\Bundle\\AccountBundle\\Service\\AddressServiceInterface' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/AccountBundle/Service/AddressServiceInterface.php',
         'Shopware\\Bundle\\AccountBundle\\Service\\CustomerService' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/AccountBundle/Service/CustomerService.php',
         'Shopware\\Bundle\\AccountBundle\\Service\\CustomerServiceInterface' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/AccountBundle/Service/CustomerServiceInterface.php',
+        'Shopware\\Bundle\\AccountBundle\\Service\\CustomerUnlockService' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/AccountBundle/Service/CustomerUnlockService.php',
+        'Shopware\\Bundle\\AccountBundle\\Service\\CustomerUnlockServiceInterface' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/AccountBundle/Service/CustomerUnlockServiceInterface.php',
         'Shopware\\Bundle\\AccountBundle\\Service\\RegisterService' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/AccountBundle/Service/RegisterService.php',
         'Shopware\\Bundle\\AccountBundle\\Service\\RegisterServiceInterface' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/AccountBundle/Service/RegisterServiceInterface.php',
         'Shopware\\Bundle\\AccountBundle\\Service\\StoreFrontCustomerGreetingService' => __DIR__ . '/../..' . '/engine/Shopware/Bundle/AccountBundle/Service/StoreFrontCustomerGreetingService.php',
@@ -3204,6 +3228,9 @@ class ComposerStaticInitShopware
         'Shopware\\Components\\Plugin\\XmlCronjobReader' => __DIR__ . '/../..' . '/engine/Shopware/Components/Plugin/XmlCronjobReader.php',
         'Shopware\\Components\\Plugin\\XmlMenuReader' => __DIR__ . '/../..' . '/engine/Shopware/Components/Plugin/XmlMenuReader.php',
         'Shopware\\Components\\Plugin\\XmlPluginInfoReader' => __DIR__ . '/../..' . '/engine/Shopware/Components/Plugin/XmlPluginInfoReader.php',
+        'Shopware\\Components\\Privacy\\PrivacyCleanupCronSubscriber' => __DIR__ . '/../..' . '/engine/Shopware/Components/Privacy/PrivacyCleanupCronSubscriber.php',
+        'Shopware\\Components\\Privacy\\PrivacyService' => __DIR__ . '/../..' . '/engine/Shopware/Components/Privacy/PrivacyService.php',
+        'Shopware\\Components\\Privacy\\PrivacyServiceInterface' => __DIR__ . '/../..' . '/engine/Shopware/Components/Privacy/PrivacyServiceInterface.php',
         'Shopware\\Components\\ProductStream\\CriteriaFactory' => __DIR__ . '/../..' . '/engine/Shopware/Components/ProductStream/CriteriaFactory.php',
         'Shopware\\Components\\ProductStream\\CriteriaFactoryInterface' => __DIR__ . '/../..' . '/engine/Shopware/Components/ProductStream/CriteriaFactoryInterface.php',
         'Shopware\\Components\\ProductStream\\FacetFilter' => __DIR__ . '/../..' . '/engine/Shopware/Components/ProductStream/FacetFilter.php',
@@ -4209,6 +4236,7 @@ class ComposerStaticInitShopware
         'Symfony\\Component\\HttpFoundation\\Session\\Session' => __DIR__ . '/..' . '/symfony/http-foundation/Session/Session.php',
         'Symfony\\Component\\HttpFoundation\\Session\\SessionBagInterface' => __DIR__ . '/..' . '/symfony/http-foundation/Session/SessionBagInterface.php',
         'Symfony\\Component\\HttpFoundation\\Session\\SessionInterface' => __DIR__ . '/..' . '/symfony/http-foundation/Session/SessionInterface.php',
+        'Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\LegacyPdoSessionHandler' => __DIR__ . '/..' . '/symfony/http-foundation/Session/Storage/Handler/LegacyPdoSessionHandler.php',
         'Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\MemcacheSessionHandler' => __DIR__ . '/..' . '/symfony/http-foundation/Session/Storage/Handler/MemcacheSessionHandler.php',
         'Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\MemcachedSessionHandler' => __DIR__ . '/..' . '/symfony/http-foundation/Session/Storage/Handler/MemcachedSessionHandler.php',
         'Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\MongoDbSessionHandler' => __DIR__ . '/..' . '/symfony/http-foundation/Session/Storage/Handler/MongoDbSessionHandler.php',
@@ -4779,7 +4807,11 @@ class ComposerStaticInitShopware
         'Symfony\\Component\\Validator\\Violation\\ConstraintViolationBuilderInterface' => __DIR__ . '/..' . '/symfony/validator/Violation/ConstraintViolationBuilderInterface.php',
         'Symfony\\Component\\Validator\\Violation\\LegacyConstraintViolationBuilder' => __DIR__ . '/..' . '/symfony/validator/Violation/LegacyConstraintViolationBuilder.php',
         'Symfony\\Polyfill\\Apcu\\Apcu' => __DIR__ . '/..' . '/symfony/polyfill-apcu/Apcu.php',
+        'Symfony\\Polyfill\\Ctype\\Ctype' => __DIR__ . '/..' . '/symfony/polyfill-ctype/Ctype.php',
         'Symfony\\Polyfill\\Mbstring\\Mbstring' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/Mbstring.php',
+        'Symfony\\Polyfill\\Php54\\Php54' => __DIR__ . '/..' . '/symfony/polyfill-php54/Php54.php',
+        'Symfony\\Polyfill\\Php55\\Php55' => __DIR__ . '/..' . '/symfony/polyfill-php55/Php55.php',
+        'Symfony\\Polyfill\\Php55\\Php55ArrayColumn' => __DIR__ . '/..' . '/symfony/polyfill-php55/Php55ArrayColumn.php',
         'Zend\\Code\\Annotation\\AnnotationCollection' => __DIR__ . '/..' . '/zendframework/zend-code/src/Annotation/AnnotationCollection.php',
         'Zend\\Code\\Annotation\\AnnotationInterface' => __DIR__ . '/..' . '/zendframework/zend-code/src/Annotation/AnnotationInterface.php',
         'Zend\\Code\\Annotation\\AnnotationManager' => __DIR__ . '/..' . '/zendframework/zend-code/src/Annotation/AnnotationManager.php',

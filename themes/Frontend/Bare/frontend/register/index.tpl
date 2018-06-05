@@ -13,14 +13,16 @@
 {* Back to the shop button *}
 {block name='frontend_index_logo_trusted_shops'}
     {$smarty.block.parent}
-    {if $theme.checkoutHeader && !$toAccount}
-        <a href="{url controller='index'}"
-           class="btn is--small btn--back-top-shop is--icon-left"
-           title="{"{s name='FinishButtonBackToShop' namespace='frontend/checkout/finish'}{/s}"|escape}">
-            <i class="icon--arrow-left"></i>
-            {s name="FinishButtonBackToShop" namespace="frontend/checkout/finish"}{/s}
-        </a>
-    {/if}
+    {block name='frontend_register_index_back_to_shop_button'}
+        {if $theme.checkoutHeader && !$toAccount}
+            <a href="{url controller='index'}"
+               class="btn is--small btn--back-top-shop is--icon-left"
+               title="{"{s name='FinishButtonBackToShop' namespace='frontend/checkout/finish'}{/s}"|escape}">
+                <i class="icon--arrow-left"></i>
+                {s name="FinishButtonBackToShop" namespace="frontend/checkout/finish"}{/s}
+            </a>
+        {/if}
+    {/block}
 {/block}
 
 {* Hide breadcrumb *}
@@ -155,7 +157,7 @@
                     {* Data protection information *}
                     {if !$update}
                         {block name="frontend_register_index_form_privacy"}
-                            {if {config name=ACTDPRTEXT}}
+                            {if {config name=ACTDPRTEXT} || {config name=ACTDPRCHECK}}
                                 {block name="frontend_register_index_form_privacy_title"}
                                     <h2 class="panel--title is--underline">
                                         {s name="PrivacyTitle" namespace="frontend/index/privacy"}{/s}
@@ -168,7 +170,7 @@
                                                 {* Privacy checkbox *}
                                                 {block name="frontend_register_index_form_privacy_content_checkbox"}
                                                     <input name="register[personal][dpacheckbox]" type="checkbox" id="dpacheckbox"{if $form_data.dpacheckbox} checked="checked"{/if} required="required" aria-required="true" value="1" class="is--required" />
-                                                    <label for="privacy-text">
+                                                    <label for="dpacheckbox">
                                                         {s name="PrivacyText" namespace="frontend/index/privacy"}{/s}
                                                     </label>
                                                 {/block}
