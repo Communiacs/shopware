@@ -66,7 +66,7 @@
         "setasign/fpdf": "1.8.1",
         "setasign/fpdi": "1.6.2",
         "ocramius/proxy-manager": "^1.0",
-        "communiacs/sw-composer-installers": "0.8.0"
+        "communiacs/sw-composer-installers": "dev-master"
     },
     "suggest": {
         "ext-apcu": "*",
