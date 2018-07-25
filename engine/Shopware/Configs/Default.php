@@ -21,6 +21,9 @@
  * trademark license. Therefore any rights, title and interest in
  * our trademarks remain entirely with us.
  */
+
+use Shopware\Components\Logger;
+
 if (file_exists($this->DocPath() . 'config_' . $this->Environment() . '.php')) {
     $customConfig = $this->loadConfig($this->DocPath() . 'config_' . $this->Environment() . '.php');
 } elseif (file_exists($this->DocPath() . 'config.php')) {
@@ -117,7 +120,7 @@ return array_replace_recursive([
     'store' => [
         'apiEndpoint' => 'https://api.shopware.com',
         'timeout' => 7,
-        'connect_timeout' => 5
+        'connect_timeout' => 5,
     ],
     'plugin_directories' => [
         'Default' => $this->AppPath('Plugins_Default'),
@@ -195,6 +198,9 @@ return array_replace_recursive([
         'use_trans_sid' => 0,
         'locking' => true,
     ],
+    'sitemap' => [
+        'batchsize' => 10000,
+    ],
     'phpsettings' => [
         'error_reporting' => E_ALL & ~E_USER_DEPRECATED,
         'display_errors' => 0,
@@ -253,4 +259,7 @@ return array_replace_recursive([
         'webDir' => $this->DocPath('web'),
         'cacheDir' => $this->DocPath('web_cache'),
     ],
+    'logger' => [
+        'level' => $this->Environment() !== 'production' ? Logger::DEBUG : Logger::ERROR
+    ]
 ], $customConfig);
