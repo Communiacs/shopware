@@ -6,9 +6,9 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
-    'mPDF' => array($baseDir . '/engine/Library/Mpdf'),
     'Zend' => array($baseDir . '/engine/Library'),
     'Shopware' => array($baseDir . '/engine'),
+    'Rize\\UriTemplate' => array($vendorDir . '/rize/uri-template/src'),
     'ProxyManager\\' => array($vendorDir . '/ocramius/proxy-manager/src'),
     'Less' => array($vendorDir . '/oyejorge/less.php/lib'),
     'JSMin' => array($baseDir . '/engine/Library/minify'),
@@ -21,5 +21,4 @@ return array(
     'Doctrine\\Common\\Lexer\\' => array($vendorDir . '/doctrine/lexer/lib'),
     'Doctrine\\Common\\Inflector\\' => array($vendorDir . '/doctrine/inflector/lib'),
     'Doctrine\\Common\\Collections\\' => array($vendorDir . '/doctrine/collections/lib'),
-    'Assert' => array($vendorDir . '/beberlei/assert/lib'),
 );

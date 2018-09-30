@@ -648,10 +648,10 @@ abstract class Smarty_Resource
  *
  * @author Rodney Rehm
  *
- * @property int $timestamp Source Timestamp
- * @property bool $exists    Source Existance
- * @property bool $template  Extended Template reference
- * @property string  $content   Source Content
+ * @property int    $timestamp Source Timestamp
+ * @property bool   $exists    Source Existance
+ * @property bool   $template  Extended Template reference
+ * @property string $content   Source Content
  */
 class Smarty_Template_Source
 {

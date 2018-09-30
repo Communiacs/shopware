@@ -24,6 +24,7 @@
 
 namespace   Shopware\Models\Order;
 
+use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
@@ -226,6 +227,14 @@ class Order extends ModelEntity
     private $id;
 
     /**
+     * Time of the last modification of the order
+     *
+     * @var DateTime
+     * @ORM\Column(name="changed", type="datetime", nullable=false)
+     */
+    private $changed;
+
+    /**
      * Contains the alphanumeric order number. If the
      *
      * @var string
@@ -317,6 +326,13 @@ class Order extends ModelEntity
      * @ORM\Column(name="invoice_shipping_net", type="float", nullable=false)
      */
     private $invoiceShippingNet;
+
+    /**
+     * @var float
+     *
+     * @ORM\Column(name="invoice_shipping_tax_rate", type="decimal", nullable=true)
+     */
+    private $invoiceShippingTaxRate;
 
     /**
      * @var \DateTime
@@ -450,6 +466,13 @@ class Order extends ModelEntity
      */
     private $deviceType = 'desktop';
 
+    /**
+     * @var bool
+     *
+     * @ORM\Column(name="is_proportional_calculation",type="boolean", nullable=false)
+     */
+    private $isProportionalCalculation = false;
+
     public function __construct()
     {
         $this->details = new ArrayCollection();
@@ -466,6 +489,14 @@ class Order extends ModelEntity
     public function getId()
     {
         return $this->id;
+    }
+
+    /**
+     * @return DateTime
+     */
+    public function getChanged()
+    {
+        return $this->changed;
     }
 
     /**
@@ -586,6 +617,22 @@ class Order extends ModelEntity
     public function getInvoiceShippingNet()
     {
         return $this->invoiceShippingNet;
+    }
+
+    /**
+     * @return float
+     */
+    public function getInvoiceShippingTaxRate()
+    {
+        return $this->invoiceShippingTaxRate;
+    }
+
+    /**
+     * @param float $invoiceShippingTaxRate
+     */
+    public function setInvoiceShippingTaxRate($invoiceShippingTaxRate)
+    {
+        $this->invoiceShippingTaxRate = $invoiceShippingTaxRate;
     }
 
     /**
@@ -1282,5 +1329,30 @@ class Order extends ModelEntity
     public function getDeviceType()
     {
         return $this->deviceType;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isProportionalCalculation()
+    {
+        return $this->isProportionalCalculation;
+    }
+
+    /**
+     * @param bool $proportionalCalculation
+     */
+    public function setIsProportionalCalculation($proportionalCalculation)
+    {
+        $this->isProportionalCalculation = $proportionalCalculation;
+    }
+
+    /**
+     * @ORM\PrePersist()
+     * @ORM\PreUpdate()
+     */
+    public function updateChangedTimestamp()
+    {
+        $this->changed = new DateTime();
     }
 }

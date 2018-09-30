@@ -11,16 +11,15 @@
 
 namespace Symfony\Component\Form;
 
-use Symfony\Component\Form\Exception\RuntimeException;
-use Symfony\Component\Form\Exception\UnexpectedTypeException;
 use Symfony\Component\Form\Exception\AlreadySubmittedException;
-use Symfony\Component\Form\Exception\TransformationFailedException;
 use Symfony\Component\Form\Exception\LogicException;
 use Symfony\Component\Form\Exception\OutOfBoundsException;
+use Symfony\Component\Form\Exception\RuntimeException;
+use Symfony\Component\Form\Exception\TransformationFailedException;
+use Symfony\Component\Form\Exception\UnexpectedTypeException;
 use Symfony\Component\Form\Util\FormUtil;
 use Symfony\Component\Form\Util\InheritDataAwareIterator;
 use Symfony\Component\Form\Util\OrderedHashMap;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PropertyAccess\PropertyPath;
 
 /**
@@ -323,7 +322,7 @@ class Form implements \IteratorAggregate, FormInterface
             return $this;
         }
 
-        if (is_object($modelData) && !$this->config->getByReference()) {
+        if (\is_object($modelData) && !$this->config->getByReference()) {
             $modelData = clone $modelData;
         }
 
@@ -355,9 +354,9 @@ class Form implements \IteratorAggregate, FormInterface
             $dataClass = $this->config->getDataClass();
 
             if (null !== $dataClass && !$viewData instanceof $dataClass) {
-                $actualType = is_object($viewData)
-                    ? 'an instance of class '.get_class($viewData)
-                    : 'a(n) '.gettype($viewData);
+                $actualType = \is_object($viewData)
+                    ? 'an instance of class '.\get_class($viewData)
+                    : 'a(n) '.\gettype($viewData);
 
                 throw new LogicException(
                     'The form\'s view data is expected to be an instance of class '.
@@ -377,7 +376,7 @@ class Form implements \IteratorAggregate, FormInterface
 
         // It is not necessary to invoke this method if the form doesn't have children,
         // even if the form is compound.
-        if (count($this->children) > 0) {
+        if (\count($this->children) > 0) {
             // Update child forms from the data
             $iterator = new InheritDataAwareIterator($this->children);
             $iterator = new \RecursiveIteratorIterator($iterator);
@@ -506,10 +505,6 @@ class Form implements \IteratorAggregate, FormInterface
      */
     public function submit($submittedData, $clearMissing = true)
     {
-        if ($submittedData instanceof Request) {
-            @trigger_error('Passing a Symfony\Component\HttpFoundation\Request object to the '.__CLASS__.'::bind and '.__METHOD__.' methods is deprecated since Symfony 2.3 and will be removed in 3.0. Use the '.__CLASS__.'::handleRequest method instead. If you want to test whether the form was submitted separately, you can use the '.__CLASS__.'::isSubmitted method.', E_USER_DEPRECATED);
-        }
-
         if ($this->submitted) {
             throw new AlreadySubmittedException('A form can only be submitted once');
         }
@@ -566,7 +561,7 @@ class Form implements \IteratorAggregate, FormInterface
                     $submittedData = array();
                 }
 
-                if (!is_array($submittedData)) {
+                if (!\is_array($submittedData)) {
                     throw new TransformationFailedException('Compound forms expect an array or NULL on submission.');
                 }
 
@@ -623,7 +618,7 @@ class Form implements \IteratorAggregate, FormInterface
                 // Merge form data from children into existing view data
                 // It is not necessary to invoke this method if the form has no children,
                 // even if it is compound.
-                if (count($this->children) > 0) {
+                if (\count($this->children) > 0) {
                     // Use InheritDataAwareIterator to process children of
                     // descendants that inherit this form's data.
                     // These descendants will not be submitted normally (see the check
@@ -674,23 +669,6 @@ class Form implements \IteratorAggregate, FormInterface
     }
 
     /**
-     * Alias of {@link submit()}.
-     *
-     * @deprecated since version 2.3, to be removed in 3.0.
-     *             Use {@link submit()} instead.
-     */
-    public function bind($submittedData)
-    {
-        // This method is deprecated for Request too, but the error is
-        // triggered in Form::submit() method.
-        if (!$submittedData instanceof Request) {
-            @trigger_error('The '.__METHOD__.' method is deprecated since Symfony 2.3 and will be removed in 3.0. Use the '.__CLASS__.'::submit method instead.', E_USER_DEPRECATED);
-        }
-
-        return $this->submit($submittedData);
-    }
-
-    /**
      * {@inheritdoc}
      */
     public function addError(FormError $error)
@@ -713,19 +691,6 @@ class Form implements \IteratorAggregate, FormInterface
      */
     public function isSubmitted()
     {
-        return $this->submitted;
-    }
-
-    /**
-     * Alias of {@link isSubmitted()}.
-     *
-     * @deprecated since version 2.3, to be removed in 3.0.
-     *             Use {@link isSubmitted()} instead.
-     */
-    public function isBound()
-    {
-        @trigger_error('The '.__METHOD__.' method is deprecated since Symfony 2.3 and will be removed in 3.0. Use the '.__CLASS__.'::isSubmitted method instead.', E_USER_DEPRECATED);
-
         return $this->submitted;
     }
 
@@ -758,7 +723,7 @@ class Form implements \IteratorAggregate, FormInterface
 
         return FormUtil::isEmpty($this->modelData) ||
             // arrays, countables
-            ((is_array($this->modelData) || $this->modelData instanceof \Countable) && 0 === count($this->modelData)) ||
+            ((\is_array($this->modelData) || $this->modelData instanceof \Countable) && 0 === \count($this->modelData)) ||
             // traversables that are not countable
             ($this->modelData instanceof \Traversable && 0 === iterator_count($this->modelData));
     }
@@ -769,6 +734,8 @@ class Form implements \IteratorAggregate, FormInterface
     public function isValid()
     {
         if (!$this->submitted) {
+            @trigger_error('Call Form::isValid() with an unsubmitted form is deprecated since Symfony 3.2 and will throw an exception in 4.0. Use Form::isSubmitted() before Form::isValid() instead.', E_USER_DEPRECATED);
+
             return false;
         }
 
@@ -776,7 +743,7 @@ class Form implements \IteratorAggregate, FormInterface
             return true;
         }
 
-        return 0 === count($this->getErrors(true));
+        return 0 === \count($this->getErrors(true));
     }
 
     /**
@@ -813,7 +780,7 @@ class Form implements \IteratorAggregate, FormInterface
 
                 $iterator = $child->getErrors(true, $flatten);
 
-                if (0 === count($iterator)) {
+                if (0 === \count($iterator)) {
                     continue;
                 }
 
@@ -828,25 +795,6 @@ class Form implements \IteratorAggregate, FormInterface
         }
 
         return new FormErrorIterator($this, $errors);
-    }
-
-    /**
-     * Returns a string representation of all form errors (including children errors).
-     *
-     * This method should only be used to help debug a form.
-     *
-     * @param int $level The indentation level (used internally)
-     *
-     * @return string A string representation of all errors
-     *
-     * @deprecated since version 2.5, to be removed in 3.0.
-     *             Use {@link getErrors()} instead and cast the result to a string.
-     */
-    public function getErrorsAsString($level = 0)
-    {
-        @trigger_error('The '.__METHOD__.' method is deprecated since Symfony 2.5 and will be removed in 3.0. Use (string) Form::getErrors(true, false) instead.', E_USER_DEPRECATED);
-
-        return self::indent((string) $this->getErrors(true, false), $level);
     }
 
     /**
@@ -894,11 +842,11 @@ class Form implements \IteratorAggregate, FormInterface
         }
 
         if (!$child instanceof FormInterface) {
-            if (!is_string($child) && !is_int($child)) {
+            if (!\is_string($child) && !\is_int($child)) {
                 throw new UnexpectedTypeException($child, 'string, integer or Symfony\Component\Form\FormInterface');
             }
 
-            if (null !== $type && !is_string($type) && !$type instanceof FormTypeInterface) {
+            if (null !== $type && !\is_string($type) && !$type instanceof FormTypeInterface) {
                 throw new UnexpectedTypeException($type, 'string or Symfony\Component\Form\FormTypeInterface');
             }
 
@@ -1046,7 +994,7 @@ class Form implements \IteratorAggregate, FormInterface
      */
     public function count()
     {
-        return count($this->children);
+        return \count($this->children);
     }
 
     /**
@@ -1117,7 +1065,7 @@ class Form implements \IteratorAggregate, FormInterface
         try {
             $transformers = $this->config->getModelTransformers();
 
-            for ($i = count($transformers) - 1; $i >= 0; --$i) {
+            for ($i = \count($transformers) - 1; $i >= 0; --$i) {
                 $value = $transformers[$i]->reverseTransform($value);
             }
         } catch (TransformationFailedException $exception) {
@@ -1184,7 +1132,7 @@ class Form implements \IteratorAggregate, FormInterface
         }
 
         try {
-            for ($i = count($transformers) - 1; $i >= 0; --$i) {
+            for ($i = \count($transformers) - 1; $i >= 0; --$i) {
                 $value = $transformers[$i]->reverseTransform($value);
             }
         } catch (TransformationFailedException $exception) {
@@ -1196,20 +1144,5 @@ class Form implements \IteratorAggregate, FormInterface
         }
 
         return $value;
-    }
-
-    /**
-     * Utility function for indenting multi-line strings.
-     *
-     * @param string $string The string
-     * @param int    $level  The number of spaces to use for indentation
-     *
-     * @return string The indented string
-     */
-    private static function indent($string, $level)
-    {
-        $indentation = str_repeat(' ', $level);
-
-        return rtrim($indentation.str_replace("\n", "\n".$indentation, $string), ' ');
     }
 }

@@ -242,7 +242,7 @@ class Shopware_Controllers_Backend_Seo extends Shopware_Controllers_Backend_ExtJ
     public function seoSupplierAction()
     {
         $seoSupplierConfig = Shopware()->Config()->get('sSEOSUPPLIER');
-        if (is_null($seoSupplierConfig) || $seoSupplierConfig === false) {
+        if ($seoSupplierConfig === null || $seoSupplierConfig === false) {
             $this->View()->assign([
                 'success' => true,
             ]);
@@ -256,12 +256,12 @@ class Shopware_Controllers_Backend_Seo extends Shopware_Controllers_Backend_ExtJ
         $shopId = (int) $this->Request()->getParam('shopId', 1);
 
         // Create shop
-        $shop = $this->SeoIndex()->registerShop($shopId);
+        $this->SeoIndex()->registerShop($shopId);
         $context = $this->get('shopware_storefront.context_service')->createShopContext($shopId);
 
         // Make sure a template is available
         $this->RewriteTable()->baseSetup();
-        $this->RewriteTable()->sCreateRewriteTableSuppliers($offset, $limit, $context);
+        $this->RewriteTable()->createManufacturerUrls($context, $offset, $limit);
 
         $this->View()->assign([
             'success' => true,

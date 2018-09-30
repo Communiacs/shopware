@@ -81,8 +81,8 @@ class SepaPaymentMethod extends GenericPaymentMethod
     {
         $lastPayment = $this->getCurrentPaymentDataAsArray($userId);
 
-        $paymentMean = Shopware()->Models()->getRepository('\Shopware\Models\Payment\Payment')->
-        getPaymentsQuery(['name' => 'Sepa'])->getOneOrNullResult(AbstractQuery::HYDRATE_ARRAY);
+        $paymentMean = Shopware()->Models()->getRepository(\Shopware\Models\Payment\Payment::class)->
+        getAllPaymentsQuery(['name' => 'Sepa'])->getOneOrNullResult(AbstractQuery::HYDRATE_ARRAY);
 
         $data = [
             'use_billing_data' => ($request->getParam('sSepaUseBillingData') === 'true' ? 1 : 0),
@@ -193,7 +193,7 @@ class SepaPaymentMethod extends GenericPaymentMethod
 
     private function validateIBAN($value)
     {
-        if (null === $value || '' === $value) {
+        if ($value === null || $value === '') {
             return false;
         }
 
@@ -265,11 +265,12 @@ class SepaPaymentMethod extends GenericPaymentMethod
         Shopware()->Template()->addTemplateDir(__DIR__ . '/../Views/');
         $data = Shopware()->Template()->fetch('frontend/plugins/sepa/email.tpl');
 
-        $mpdf = new \mPDF('utf-8', 'A4', '', '');
+        $mpdfConfig = Shopware()->Container()->getParameter('shopware.mpdf.defaultConfig');
+        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
         $mpdf->WriteHTML($data);
         $pdfFileContent = $mpdf->Output('', 'S');
 
-        if (false === $pdfFileContent) {
+        if ($pdfFileContent === false) {
             throw new \Enlight_Exception('Could not generate SEPA attachment file');
         }
 

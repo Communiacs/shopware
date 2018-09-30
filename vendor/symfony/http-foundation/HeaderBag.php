@@ -38,14 +38,14 @@ class HeaderBag implements \IteratorAggregate, \Countable
      */
     public function __toString()
     {
-        if (!$this->headers) {
+        if (!$headers = $this->all()) {
             return '';
         }
 
-        $max = max(array_map('strlen', array_keys($this->headers))) + 1;
+        ksort($headers);
+        $max = max(array_map('strlen', array_keys($headers))) + 1;
         $content = '';
-        ksort($this->headers);
-        foreach ($this->headers as $name => $values) {
+        foreach ($headers as $name => $values) {
             $name = implode('-', array_map('ucfirst', explode('-', $name)));
             foreach ($values as $value) {
                 $content .= sprintf("%-{$max}s %s\r\n", $name.':', $value);
@@ -72,7 +72,7 @@ class HeaderBag implements \IteratorAggregate, \Countable
      */
     public function keys()
     {
-        return array_keys($this->headers);
+        return array_keys($this->all());
     }
 
     /**
@@ -101,17 +101,18 @@ class HeaderBag implements \IteratorAggregate, \Countable
     /**
      * Returns a header value by name.
      *
-     * @param string          $key     The header name
-     * @param string|string[] $default The default value
-     * @param bool            $first   Whether to return the first value or all header values
+     * @param string               $key     The header name
+     * @param string|string[]|null $default The default value
+     * @param bool                 $first   Whether to return the first value or all header values
      *
-     * @return string|string[] The first header value or default value if $first is true, an array of values otherwise
+     * @return string|string[]|null The first header value or default value if $first is true, an array of values otherwise
      */
     public function get($key, $default = null, $first = true)
     {
         $key = str_replace('_', '-', strtolower($key));
+        $headers = $this->all();
 
-        if (!array_key_exists($key, $this->headers)) {
+        if (!array_key_exists($key, $headers)) {
             if (null === $default) {
                 return $first ? null : array();
             }
@@ -120,10 +121,10 @@ class HeaderBag implements \IteratorAggregate, \Countable
         }
 
         if ($first) {
-            return count($this->headers[$key]) ? $this->headers[$key][0] : $default;
+            return \count($headers[$key]) ? $headers[$key][0] : $default;
         }
 
-        return $this->headers[$key];
+        return $headers[$key];
     }
 
     /**
@@ -137,12 +138,20 @@ class HeaderBag implements \IteratorAggregate, \Countable
     {
         $key = str_replace('_', '-', strtolower($key));
 
-        $values = array_values((array) $values);
+        if (\is_array($values)) {
+            $values = array_values($values);
 
-        if (true === $replace || !isset($this->headers[$key])) {
-            $this->headers[$key] = $values;
+            if (true === $replace || !isset($this->headers[$key])) {
+                $this->headers[$key] = $values;
+            } else {
+                $this->headers[$key] = array_merge($this->headers[$key], $values);
+            }
         } else {
-            $this->headers[$key] = array_merge($this->headers[$key], $values);
+            if (true === $replace || !isset($this->headers[$key])) {
+                $this->headers[$key] = array($values);
+            } else {
+                $this->headers[$key][] = $values;
+            }
         }
 
         if ('cache-control' === $key) {
@@ -159,7 +168,7 @@ class HeaderBag implements \IteratorAggregate, \Countable
      */
     public function has($key)
     {
-        return array_key_exists(str_replace('_', '-', strtolower($key)), $this->headers);
+        return array_key_exists(str_replace('_', '-', strtolower($key)), $this->all());
     }
 
     /**
@@ -172,7 +181,7 @@ class HeaderBag implements \IteratorAggregate, \Countable
      */
     public function contains($key, $value)
     {
-        return in_array($value, $this->get($key, null, false));
+        return \in_array($value, $this->get($key, null, false));
     }
 
     /**
@@ -280,7 +289,7 @@ class HeaderBag implements \IteratorAggregate, \Countable
      */
     public function count()
     {
-        return count($this->headers);
+        return \count($this->headers);
     }
 
     protected function getCacheControlHeader()

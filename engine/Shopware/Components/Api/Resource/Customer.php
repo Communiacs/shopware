@@ -25,7 +25,9 @@
 namespace Shopware\Components\Api\Resource;
 
 use Doctrine\ORM\Query\Expr\Join;
+use Shopware\Bundle\StoreFrontBundle\Struct\Attribute;
 use Shopware\Components\Api\Exception as ApiException;
+use Shopware\Models\Attribute\Customer as CustomerAttribute;
 use Shopware\Models\Country\Country as CountryModel;
 use Shopware\Models\Country\State as StateModel;
 use Shopware\Models\Customer\Address as AddressModel;
@@ -48,7 +50,7 @@ class Customer extends Resource
      */
     public function getRepository()
     {
-        return $this->getManager()->getRepository('Shopware\Models\Customer\Customer');
+        return $this->getManager()->getRepository(\Shopware\Models\Customer\Customer::class);
     }
 
     /**
@@ -69,7 +71,7 @@ class Customer extends Resource
 
         $builder = Shopware()->Models()->createQueryBuilder();
         $builder->select(['customer.id'])
-                ->from('\Shopware\Models\Customer\Customer', 'customer')
+                ->from(\Shopware\Models\Customer\Customer::class, 'customer')
                 ->where('customer.number = ?1')
                 ->setParameter(1, $number);
 
@@ -176,10 +178,10 @@ class Customer extends Resource
 
         $paginator = $this->getManager()->createPaginator($query);
 
-        //returns the total count of the query
+        // Returns the total count of the query
         $totalResult = $paginator->count();
 
-        //returns the customer data
+        // Returns the customer data
         $customers = $paginator->getIterator()->getArrayCopy();
 
         return ['data' => $customers, 'total' => $totalResult];
@@ -195,8 +197,10 @@ class Customer extends Resource
         $this->checkPrivilege('create');
         $this->setupContext($params['shopId']);
 
-        // create models
+        // Create models
         $customer = new CustomerModel();
+        $customer->setAttribute(new CustomerAttribute());
+
         $params = $this->prepareCustomerData($params, $customer);
         $params = $this->prepareAssociatedData($params, $customer);
         $customer->fromArray($params);
@@ -207,9 +211,11 @@ class Customer extends Resource
         $registerService = $this->getContainer()->get('shopware_account.register_service');
         $context = $this->getContainer()->get('shopware_storefront.context_service')->getShopContext()->getShop();
 
-        $sendOptinMail = $params['sendOptinMail'] === true;
+        $context->addAttribute('sendOptinMail', new Attribute([
+            'sendOptinMail' => $params['sendOptinMail'] === true,
+        ]));
 
-        $registerService->register($context, $customer, $billing, $shipping, $sendOptinMail);
+        $registerService->register($context, $customer, $billing, $shipping);
 
         return $customer;
     }
@@ -389,7 +395,7 @@ class Customer extends Resource
 
             if (isset($paymentDataData['paymentMeanId'])) {
                 $paymentMean = $this->getManager()->getRepository('Shopware\Models\Payment\Payment')->find($paymentDataData['paymentMeanId']);
-                if (is_null($paymentMean)) {
+                if ($paymentMean === null) {
                     throw new ApiException\CustomValidationException(
                         sprintf('%s by %s %s not found', 'Shopware\Models\Payment\Payment', 'id', $paymentDataData['paymentMeanId'])
                     );

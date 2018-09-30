@@ -82,30 +82,6 @@ class Shopware_Controllers_Widgets_Emotion extends Enlight_Controller_Action
 
     /**
      * Action that will be triggered by product slider type top seller
-     *
-     * @deprecated Will be removed in 5.5. Use emotionArticleSliderAction instead.
-     */
-    public function emotionTopSellerAction()
-    {
-        trigger_error(sprintf('%s::%s() is deprecated and will be removed in 5.5. Use emotionArticleSliderAction instead.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
-        $this->Request()->setParam('sort', 'topseller');
-        $this->emotionArticleSliderAction();
-    }
-
-    /**
-     * Action that will be triggered by product slider type newcomer
-     *
-     * @deprecated Will be removed in 5.5. Use emotionArticleSliderAction instead.
-     */
-    public function emotionNewcomerAction()
-    {
-        trigger_error(sprintf('%s::%s() is deprecated and will be removed in 5.5. Use emotionArticleSliderAction instead.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
-        $this->Request()->setParam('sort', 'newcomer');
-        $this->emotionArticleSliderAction();
-    }
-
-    /**
-     * Action that will be triggered by product slider type top seller
      */
     public function emotionArticleSliderAction()
     {

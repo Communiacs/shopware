@@ -26,46 +26,35 @@ namespace Shopware;
 
 use Enlight_Controller_Request_RequestHttp as EnlightRequest;
 use Enlight_Controller_Response_ResponseHttp as EnlightResponse;
-use Shopware\Bundle\AttributeBundle\DependencyInjection\Compiler\SearchRepositoryCompilerPass;
 use Shopware\Bundle\AttributeBundle\DependencyInjection\Compiler\StaticResourcesCompilerPass;
+use Shopware\Bundle\BenchmarkBundle\DependencyInjection\Compiler\MatcherCompilerPass;
 use Shopware\Bundle\ControllerBundle\DependencyInjection\Compiler\RegisterControllerCompilerPass;
-use Shopware\Bundle\CustomerSearchBundleDBAL\DependencyInjection\Compiler\HandlerRegistryCompilerPass;
-use Shopware\Bundle\EmotionBundle\DependencyInjection\Compiler\EmotionComponentHandlerCompilerPass;
-use Shopware\Bundle\ESIndexingBundle\DependencyInjection\CompilerPass\DataIndexerCompilerPass;
-use Shopware\Bundle\ESIndexingBundle\DependencyInjection\CompilerPass\MappingCompilerPass;
-use Shopware\Bundle\ESIndexingBundle\DependencyInjection\CompilerPass\SettingsCompilerPass;
-use Shopware\Bundle\ESIndexingBundle\DependencyInjection\CompilerPass\SynchronizerCompilerPass;
 use Shopware\Bundle\FormBundle\DependencyInjection\CompilerPass\AddConstraintValidatorsPass;
 use Shopware\Bundle\FormBundle\DependencyInjection\CompilerPass\FormPass;
-use Shopware\Bundle\MediaBundle\DependencyInjection\Compiler\MediaAdapterCompilerPass;
-use Shopware\Bundle\MediaBundle\DependencyInjection\Compiler\MediaOptimizerCompilerPass;
 use Shopware\Bundle\PluginInstallerBundle\Service\PluginInitializer;
-use Shopware\Bundle\SearchBundle\DependencyInjection\Compiler\CriteriaRequestHandlerCompilerPass;
-use Shopware\Bundle\SearchBundleDBAL\DependencyInjection\Compiler\DBALCompilerPass;
-use Shopware\Bundle\SearchBundleES\DependencyInjection\CompilerPass\SearchHandlerCompilerPass;
 use Shopware\Components\ConfigLoader;
-use Shopware\Components\DependencyInjection\Compiler\AddCaptchaCompilerPass;
-use Shopware\Components\DependencyInjection\Compiler\AddConsoleCommandPass;
 use Shopware\Components\DependencyInjection\Compiler\DoctrineEventSubscriberCompilerPass;
-use Shopware\Components\DependencyInjection\Compiler\EmotionPresetCompilerPass;
 use Shopware\Components\DependencyInjection\Compiler\EventListenerCompilerPass;
 use Shopware\Components\DependencyInjection\Compiler\EventSubscriberCompilerPass;
-use Shopware\Components\DependencyInjection\Compiler\RouterCompilerPass;
 use Shopware\Components\DependencyInjection\Container;
+use Shopware\Components\DependencyInjection\LegacyPhpDumper;
 use Shopware\Components\Plugin;
 use Symfony\Component\Config\ConfigCache;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Config\Resource\FileResource;
+use Symfony\Component\Console\DependencyInjection\AddConsoleCommandPass;
 use Symfony\Component\DependencyInjection\Compiler\PassConfig;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Dumper\PhpDumper;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
+use Symfony\Component\HttpKernel\Event\PostResponseEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\Kernel as SymfonyKernel;
+use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\HttpKernel\TerminableInterface;
 
 /**
  * Middleware class between the old Shopware bootstrap mechanism
@@ -75,12 +64,10 @@ use Symfony\Component\HttpKernel\Kernel as SymfonyKernel;
  *
  * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
-class Kernel implements HttpKernelInterface
+class Kernel implements HttpKernelInterface, TerminableInterface
 {
     /**
-     * @Deprecated
-     *
-     * Will be removed in Shopware v5.6
+     * @Deprecated Since 5.4, to be removed in 5.6
      *
      * Use the following parameters from the DIC instead:
      *      'shopware.release.version'
@@ -184,7 +171,7 @@ class Kernel implements HttpKernelInterface
         }
 
         if ($trustedProxies = $this->config['trustedproxies']) {
-            SymfonyRequest::setTrustedProxies($trustedProxies);
+            SymfonyRequest::setTrustedProxies($trustedProxies, $this->config['trustedheaderset']);
         }
     }
 
@@ -201,7 +188,7 @@ class Kernel implements HttpKernelInterface
      */
     public function handle(SymfonyRequest $request, $type = HttpKernelInterface::MASTER_REQUEST, $catch = true)
     {
-        if (false === $this->booted) {
+        if ($this->booted === false) {
             $this->boot();
         }
 
@@ -242,7 +229,7 @@ class Kernel implements HttpKernelInterface
         // Overwrite superglobals with state of the SymfonyRequest
         $request->overrideGlobals();
 
-        // Create englight request from global state
+        // Create enlight request from global state
         $enlightRequest = new EnlightRequest();
 
         // Let the symfony request handle the trusted proxies
@@ -296,7 +283,7 @@ class Kernel implements HttpKernelInterface
     }
 
     /**
-     * Boots the shopware and symfony di container
+     * Boots the Shopware and Symfony DI container
      *
      * @param bool $skipDatabase
      *
@@ -485,6 +472,19 @@ class Kernel implements HttpKernelInterface
         return $this->release;
     }
 
+    /**
+     * {@inheritdoc}
+     */
+    public function terminate(SymfonyRequest $request, SymfonyResponse $response)
+    {
+        if ($this->container && $this->container->initialized('events')) {
+            $this->container->get('events')->notify(KernelEvents::TERMINATE, [
+                'postResponseEvent' => new PostResponseEvent($this, $request, $response),
+                'container' => $this->container,
+            ]);
+        }
+    }
+
     protected function initializePlugins()
     {
         $initializer = new PluginInitializer(
@@ -522,24 +522,6 @@ class Kernel implements HttpKernelInterface
         $this->config = $configLoader->loadConfig(
             $this->getConfigPath()
         );
-
-        // Set up mpdf cache dirs
-        if (!defined('_MPDF_TEMP_PATH')) {
-            define('_MPDF_TEMP_PATH', $this->getCacheDir() . '/mpdf/tmp/');
-        }
-
-        if (!defined('_MPDF_TTFONTDATAPATH')) {
-            define('_MPDF_TTFONTDATAPATH', $this->getCacheDir() . '/mpdf/ttfontdata/');
-        }
-
-        // Set up custom mPDF fonts
-        if (!defined('_MPDF_SYSTEM_TTFONTS_CONFIG')) {
-            define('_MPDF_SYSTEM_TTFONTS_CONFIG', $this->getRootDir() . '/engine/Library/Mpdf/config_fonts.php');
-        }
-
-        if (!defined('_MPDF_SYSTEM_TTFONTS')) {
-            define('_MPDF_SYSTEM_TTFONTS', $this->getRootDir() . '/engine/Library/Mpdf/ttfonts/');
-        }
     }
 
     /**
@@ -604,7 +586,7 @@ class Kernel implements HttpKernelInterface
     protected function dumpContainer(ConfigCache $cache, ContainerBuilder $container, $class, $baseClass)
     {
         // cache the container
-        $dumper = new PhpDumper($container);
+        $dumper = new LegacyPhpDumper($container);
 
         $content = $dumper->dump(['class' => $class, 'base_class' => $baseClass]);
 
@@ -628,14 +610,14 @@ class Kernel implements HttpKernelInterface
         $runtimeDirectories = [
             'cache' => $this->getCacheDir(),
             'coreCache' => $this->config['cache']['backendOptions']['cache_dir'],
-            'mpdfTemp' => _MPDF_TEMP_PATH,
-            'mpdfFontData' => _MPDF_TTFONTDATAPATH,
+            'mpdfTemp' => $this->config['mpdf']['defaultConfig']['tempDir'],
+            'mpdfFontData' => $this->config['mpdf']['defaultConfig']['tempDir'] . '/ttfontdata',
             'logs' => $this->getLogDir(),
         ];
 
         foreach ($runtimeDirectories as $name => $dir) {
             if (!is_dir($dir)) {
-                if (false === @mkdir($dir, 0777, true) && !is_dir($dir)) {
+                if (@mkdir($dir, 0777, true) === false && !is_dir($dir)) {
                     throw new \RuntimeException(sprintf("Unable to create the %s directory (%s)\n", $name, $dir));
                 }
             } elseif (!is_writable($dir)) {
@@ -663,6 +645,7 @@ class Kernel implements HttpKernelInterface
         $loader->load('services.xml');
         $loader->load('theme.xml');
         $loader->load('logger.xml');
+        $loader->load('commands.xml');
 
         $loader = new XmlFileLoader($container, new FileLocator(__DIR__ . '/Bundle/'));
         $loader->load('SearchBundle/services.xml');
@@ -677,6 +660,9 @@ class Kernel implements HttpKernelInterface
         $loader->load('EmotionBundle/services.xml');
         $loader->load('SearchBundleES/services.xml');
         $loader->load('CustomerSearchBundleDBAL/services.xml');
+        $loader->load('BenchmarkBundle/services.xml');
+        $loader->load('EsBackendBundle/services.xml');
+        $loader->load('SitemapBundle/services.xml');
 
         if (is_file($file = __DIR__ . '/Components/DependencyInjection/services_local.xml')) {
             $loader->load($file);
@@ -688,25 +674,11 @@ class Kernel implements HttpKernelInterface
         $container->addCompilerPass(new EventListenerCompilerPass(), PassConfig::TYPE_BEFORE_REMOVING);
         $container->addCompilerPass(new EventSubscriberCompilerPass(), PassConfig::TYPE_BEFORE_REMOVING);
         $container->addCompilerPass(new DoctrineEventSubscriberCompilerPass());
-        $container->addCompilerPass(new DBALCompilerPass());
-        $container->addCompilerPass(new CriteriaRequestHandlerCompilerPass());
-        $container->addCompilerPass(new MappingCompilerPass());
-        $container->addCompilerPass(new SynchronizerCompilerPass());
-        $container->addCompilerPass(new DataIndexerCompilerPass());
-        $container->addCompilerPass(new SettingsCompilerPass());
         $container->addCompilerPass(new FormPass());
         $container->addCompilerPass(new AddConstraintValidatorsPass());
-        $container->addCompilerPass(new SearchRepositoryCompilerPass());
         $container->addCompilerPass(new StaticResourcesCompilerPass());
         $container->addCompilerPass(new AddConsoleCommandPass());
-        $container->addCompilerPass(new AddCaptchaCompilerPass());
-        $container->addCompilerPass(new EmotionComponentHandlerCompilerPass());
-        $container->addCompilerPass(new MediaAdapterCompilerPass());
-        $container->addCompilerPass(new MediaOptimizerCompilerPass());
-        $container->addCompilerPass(new HandlerRegistryCompilerPass());
-        $container->addCompilerPass(new SearchHandlerCompilerPass());
-        $container->addCompilerPass(new EmotionPresetCompilerPass());
-        $container->addCompilerPass(new RouterCompilerPass());
+        $container->addCompilerPass(new MatcherCompilerPass());
 
         $container->setParameter('active_plugins', $this->activePlugins);
 

@@ -21,7 +21,6 @@
  * trademark license. Therefore any rights, title and interest in
  * our trademarks remain entirely with us.
  */
-
 use Shopware\Components\NumberRangeIncrementerInterface;
 
 /**
@@ -74,6 +73,14 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
      * @var bool
      */
     public $_valuesAssigend = false;
+
+    /**
+     * Does this document support the creation of multiple documents of the same type instead of overwriting
+     * existing ones?
+     *
+     * @var bool
+     */
+    public $_allowMultipleDocuments = false;
 
     /**
      * Subshop-Configuration
@@ -198,6 +205,9 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
             if (empty($document->_subshop['id'])) {
                 throw new Enlight_Exception("Could not load template path for order $orderID");
             }
+            if (!empty($config['_allowMultipleDocuments'])) {
+                $document->_allowMultipleDocuments = $config['_allowMultipleDocuments'];
+            }
         } else {
             $document->_subshop = Shopware()->Db()->fetchRow("
             SELECT
@@ -249,22 +259,44 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
             $this->_template->setTemplateDir($inheritance);
         }
 
-        $data = $this->_template->fetch('documents/' . $this->_document['template'], $this->_view);
+        $html = $this->_template->fetch('documents/' . $this->_document['template'], $this->_view);
+
+        /** @var \Enlight_Event_EventManager $eventManager */
+        $eventManager = Shopware()->Container()->get('events');
+        $html = $eventManager->filter('Shopware_Components_Document_Render_FilterHtml', $html, [
+            'subject' => $this,
+        ]);
 
         if ($this->_renderer === 'html' || !$this->_renderer) {
-            echo $data;
+            echo $html;
         } elseif ($this->_renderer === 'pdf') {
+            $mpdfConfig = array_replace_recursive(
+                Shopware()->Container()->getParameter('shopware.mpdf.defaultConfig'),
+                [
+                    'margin_left' => $this->_document['left'],
+                    'margin_right' => $this->_document['right'],
+                    'margin_top' => $this->_document['top'],
+                    'margin_bottom' => $this->_document['bottom'],
+                ]
+            );
             if ($this->_preview == true || !$this->_documentHash) {
-                $mpdf = new mPDF('utf-8', 'A4', '', '', $this->_document['left'], $this->_document['right'], $this->_document['top'], $this->_document['bottom']);
-                $mpdf->WriteHTML($data);
+                $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+                $mpdf->WriteHTML($html);
                 $mpdf->Output();
                 exit;
             }
-            $documentsPath = rtrim(Shopware()->Container()->getParameter('shopware.app.documentsdir'), '/');
-            $path = $documentsPath . '/' . $this->_documentHash . '.pdf';
-            $mpdf = new mPDF('utf-8', 'A4', '', '', $this->_document['left'], $this->_document['right'], $this->_document['top'], $this->_document['bottom']);
-            $mpdf->WriteHTML($data);
-            $mpdf->Output($path, 'F');
+
+            $tmpFile = tempnam(sys_get_temp_dir(), 'document');
+            $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+            $mpdf->WriteHTML($html);
+            $mpdf->Output($tmpFile, 'F');
+
+            $stream = fopen($tmpFile, 'rb');
+            $path = sprintf('documents/%s.pdf', $this->_documentHash);
+
+            $filesystem = Shopware()->Container()->get('shopware.filesystem.private');
+            $filesystem->putStream($path, $stream);
+            unlink($tmpFile);
         }
     }
 
@@ -361,6 +393,26 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
     }
 
     /**
+     * Get user_attributes (s_user_attributes)
+     *
+     * @param int $userID
+     *
+     * @throws \Exception
+     *
+     * @return array
+     */
+    public function getUserAttributes($userID)
+    {
+        if (empty($userID)) {
+            return [];
+        }
+
+        $service = Shopware()->Container()->get('shopware_attribute.data_loader');
+
+        return $service->load('s_user_attributes', $userID);
+    }
+
+    /**
      * Assign configuration / data to template, new template base
      */
     protected function assignValues4x()
@@ -446,6 +498,7 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
                 'countryShipping' => $order->shipping->country,
                 'country' => $order->billing->country,
             ],
+            'attributes' => $this->getUserAttributes($order->userID),
         ];
         $this->_view->assign('User', $user);
     }
@@ -601,11 +654,11 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
         $typID = $this->_typID;
 
         $checkForExistingDocument = Shopware()->Db()->fetchRow('
-        SELECT ID,docID,hash FROM s_order_documents WHERE userID = ? AND orderID = ? AND type = ?
+        SELECT id , docID , hash FROM s_order_documents WHERE userID = ? AND orderID = ? AND `type` = ?
         ', [$this->_order->userID, $this->_order->id, $typID]);
 
-        if (!empty($checkForExistingDocument['ID'])) {
-            // Document already exist. Update date and amount!
+        if (!$this->_allowMultipleDocuments && !empty($checkForExistingDocument['id'])) {
+            // Document already exist, and multiple documents are not allowed. Update date and amount!
             $update = '
             UPDATE `s_order_documents` SET `date` = now(),`amount` = ?
             WHERE `type` = ? AND userID = ? AND orderID = ? LIMIT 1
@@ -642,7 +695,7 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
                 Shopware()->Models()->flush($updatedDocument->getAttribute());
             }
 
-            $rowID = $checkForExistingDocument['ID'];
+            $rowID = $checkForExistingDocument['id'];
             $bid = $checkForExistingDocument['docID'];
             $hash = $checkForExistingDocument['hash'];
         } else {
@@ -700,7 +753,7 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
                 $nextNumber = $incrementer->increment($numberrange);
 
                 Shopware()->Db()->query('
-                    UPDATE `s_order_documents` SET `docID` = ? WHERE `ID` = ? LIMIT 1 ;
+                    UPDATE `s_order_documents` SET `docID` = ? WHERE `id` = ? LIMIT 1 ;
                 ', [$nextNumber, $rowID]);
 
                 $bid = $nextNumber;

@@ -11,8 +11,8 @@
 
 namespace Symfony\Component\Process\Pipes;
 
-use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\RuntimeException;
+use Symfony\Component\Process\Process;
 
 /**
  * WindowsPipes implementation uses temporary files as handles.
@@ -32,13 +32,13 @@ class WindowsPipes extends AbstractPipes
         Process::STDOUT => 0,
         Process::STDERR => 0,
     );
-    private $disableOutput;
+    private $haveReadSupport;
 
-    public function __construct($disableOutput, $input)
+    public function __construct($input, $haveReadSupport)
     {
-        $this->disableOutput = (bool) $disableOutput;
+        $this->haveReadSupport = (bool) $haveReadSupport;
 
-        if (!$this->disableOutput) {
+        if ($this->haveReadSupport) {
             // Fix for PHP bug #51800: reading from STDOUT pipe hangs forever on Windows if the output is too big.
             // Workaround for this problem is to use temporary files instead of pipes on Windows platform.
             //
@@ -93,7 +93,7 @@ class WindowsPipes extends AbstractPipes
      */
     public function getDescriptors()
     {
-        if ($this->disableOutput) {
+        if (!$this->haveReadSupport) {
             $nullstream = fopen('NUL', 'c');
 
             return array(
@@ -141,7 +141,7 @@ class WindowsPipes extends AbstractPipes
             $data = stream_get_contents($fileHandle, -1, $this->readBytes[$type]);
 
             if (isset($data[0])) {
-                $this->readBytes[$type] += strlen($data);
+                $this->readBytes[$type] += \strlen($data);
                 $read[$type] = $data;
             }
             if ($close) {
@@ -151,6 +151,14 @@ class WindowsPipes extends AbstractPipes
         }
 
         return $read;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function haveReadSupport()
+    {
+        return $this->haveReadSupport;
     }
 
     /**
@@ -171,19 +179,6 @@ class WindowsPipes extends AbstractPipes
             fclose($handle);
         }
         $this->fileHandles = array();
-    }
-
-    /**
-     * Creates a new WindowsPipes instance.
-     *
-     * @param Process $process The process
-     * @param $input
-     *
-     * @return static
-     */
-    public static function create(Process $process, $input)
-    {
-        return new static($process->isOutputDisabled(), $input);
     }
 
     /**

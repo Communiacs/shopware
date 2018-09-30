@@ -213,23 +213,6 @@ class Settings extends ModelEntity
     }
 
     /**
-     * If the album settings updated and the thumbnail configuration changed,
-     * the new configuration have to be executed on each assigned media.
-     * To notify the configuration change the model gets the entity change set
-     * over the doctrine unit of work instance.
-     * When update is checked whether the old thumbnails should be deleted,
-     * and whether new thumbnail files must be generated.
-     *
-     * @ORM\PreUpdate
-     *
-     * @deprecated Will be removed in 5.5.
-     */
-    public function onUpdate()
-    {
-        trigger_error(sprintf('%s::%s() is deprecated and will be removed in 5.5.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
-    }
-
-    /**
      * @return \Shopware\Models\Media\Album
      */
     public function getAlbum()

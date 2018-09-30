@@ -21,7 +21,6 @@
  * trademark license. Therefore any rights, title and interest in
  * our trademarks remain entirely with us.
  */
-
 use Shopware\Bundle\StoreFrontBundle;
 use Shopware\Models\Banner\Banner;
 
@@ -563,8 +562,8 @@ class sMarketing
         if (!$getCampaigns) {
             return false;
         }
-            // Fetch all positions
-            $sql = "
+        // Fetch all positions
+        $sql = "
             SELECT id, type, description, value FROM s_campaigns_containers
             WHERE promotionID=$id
             ORDER BY position
@@ -592,7 +591,7 @@ class sMarketing
                             $getBanner['image'] = $mediaService->getUrl($getBanner['image']);
                         }
 
-                        if (!preg_match('/http/', $getBanner['link']) && $getBanner['link']) {
+                        if (strpos($getBanner['link'], 'http') === false && $getBanner['link']) {
                             $getBanner['link'] = 'http://' . $getBanner['link'];
                         }
 
@@ -627,7 +626,7 @@ class sMarketing
                         if ($getText['image']) {
                             $getText['image'] = $mediaService->getUrl($getText['image']);
                         }
-                        if (!preg_match('/http/', $getText['link']) && $getText['link']) {
+                        if (strpos($getText['link'], 'http') === false && $getText['link']) {
                             $getText['link'] = 'http://' . $getText['link'];
                         }
                         $getCampaignContainers[$campaignKey]['description'] = $getText['headline'];

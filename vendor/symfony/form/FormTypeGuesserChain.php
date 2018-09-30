@@ -11,8 +11,8 @@
 
 namespace Symfony\Component\Form;
 
-use Symfony\Component\Form\Guess\Guess;
 use Symfony\Component\Form\Exception\UnexpectedTypeException;
+use Symfony\Component\Form\Guess\Guess;
 
 class FormTypeGuesserChain implements FormTypeGuesserInterface
 {
@@ -23,8 +23,12 @@ class FormTypeGuesserChain implements FormTypeGuesserInterface
      *
      * @throws UnexpectedTypeException if any guesser does not implement FormTypeGuesserInterface
      */
-    public function __construct(array $guessers)
+    public function __construct($guessers)
     {
+        if (!\is_array($guessers) && !$guessers instanceof \Traversable) {
+            throw new UnexpectedTypeException($guessers, 'array or Traversable');
+        }
+
         foreach ($guessers as $guesser) {
             if (!$guesser instanceof FormTypeGuesserInterface) {
                 throw new UnexpectedTypeException($guesser, 'Symfony\Component\Form\FormTypeGuesserInterface');

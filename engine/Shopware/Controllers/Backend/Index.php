@@ -21,7 +21,6 @@
  * trademark license. Therefore any rights, title and interest in
  * our trademarks remain entirely with us.
  */
-
 use Shopware\Components\CSRFWhitelistAware;
 
 /**
@@ -83,6 +82,8 @@ class Shopware_Controllers_Backend_Index extends Enlight_Controller_Action imple
         if (strpos($this->Request()->getPathInfo(), '/backend/') !== 0) {
             $this->redirect('backend/', ['code' => 301]);
         }
+
+        $this->View()->assign('esEnabled', $this->container->getParameter('shopware.es.backend.enabled'));
     }
 
     /**
@@ -151,6 +152,8 @@ class Shopware_Controllers_Backend_Index extends Enlight_Controller_Action imple
         $this->View()->assign('SHOPWARE_REVISION', $shopwareRelease->getRevision());
         $this->View()->assign('updateWizardStarted', $config->get('updateWizardStarted'));
         $this->View()->assign('feedbackRequired', $this->checkIsFeedbackRequired());
+        $this->View()->assign('biOverviewEnabled', $this->isBIOverviewEnabled());
+        $this->View()->assign('biIsActive', $this->isBIActive());
     }
 
     public function authAction()
@@ -324,6 +327,36 @@ class Shopware_Controllers_Backend_Index extends Enlight_Controller_Action imple
         $now = new \DateTime();
         $interval = $installationDate->diff($now);
 
-        return self::MIN_DAYS_INSTALLATION_SURVEY <= $interval->days;
+        return $interval->days >= self::MIN_DAYS_INSTALLATION_SURVEY;
+    }
+
+    /**
+     * @return bool
+     */
+    private function isBIOverviewEnabled()
+    {
+        if (!$this->get('config')->get('benchmarkTeaser')) {
+            return false;
+        }
+
+        /** @var \Shopware\Models\Benchmark\Repository $configRepository */
+        $configRepository = $this->get('shopware.benchmark_bundle.repository.config');
+
+        $shopwareVersionText = $this->container->getParameter('shopware.release.version_text');
+
+        return !in_array($shopwareVersionText, ['', '___VERSION_TEXT___'], true) && $configRepository->getConfigsCount() === 0;
+    }
+
+    /**
+     * @return bool
+     */
+    private function isBIActive()
+    {
+        /** @var \Shopware\Models\Benchmark\Repository $configRepository */
+        $configRepository = $this->get('shopware.benchmark_bundle.repository.config');
+
+        $validShopCount = count($configRepository->getValidShops());
+
+        return $validShopCount > 0;
     }
 }

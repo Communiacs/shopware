@@ -20,11 +20,13 @@ Features
 --------
 
 - Removes all special characters from a string.
-- Provides custom replacements for Arabic, Austrian, Azerbaijani, Bulgarian, Burmese, Croatian, Czech, Esperanto, Estonian, Finnish, French, Georgian, German, Greek, Hindi, Italien, Latvian, Lithuanian, Norwegian, Polish, Romanian, Russian, Serbian, Spanish, Swedish, Turkish, Ukrainian and Vietnamese special characters. Instead of
-removing these characters, Slugify approximates them (e.g., `ae` replaces `ä`).
+- Provides custom replacements for Arabic, Austrian, Azerbaijani, Brazilian Portuguese, Bulgarian, Burmese, Chinese, Croatian, 
+Czech, Esperanto, Estonian, Finnish, French, Georgian, German, Greek, Hindi, Hungarian, Italian, Latvian, Lithuanian, 
+Macedonian, Norwegian, Polish, Romanian, Russian, Serbian, Spanish, Swedish, Turkish, Ukrainian and Vietnamese special 
+characters. Instead of removing these characters, Slugify approximates them (e.g., `ae` replaces `ä`).
 - No external dependencies.
 - PSR-4 compatible.
-- Compatible with PHP >= 5.5.9, PHP 7 and [HHVM](http://hhvm.com).
+- Compatible with PHP >= 5.5.9 and PHP 7.
 - Integrations for [Symfony (2 and 3)](http://symfony.com), [Silex (1 and 2)](http://silex.sensiolabs.org), [Laravel](http://laravel.com),
 [Twig (1 and 2)](http://twig.sensiolabs.org), [Zend Framework 2](http://framework.zend.com/), [Nette Framework](http://nette.org/),
 [Latte](http://latte.nette.org/) and [Plum](https://github.com/plumphp/plum).
@@ -39,6 +41,10 @@ You can install Slugify through [Composer](https://getcomposer.org):
 $ composer require cocur/slugify
 ```
 
+Slugify requires the Multibyte String extension from PHP. Typically you can use the configure option `--enable-mbstring` while compiling PHP. More information can be found in the [PHP documentation](http://php.net/manual/en/mbstring.installation.php).
+ 
+
+Further steps may be needed for [integrations](#integrations).
 
 Usage
 -----
@@ -80,7 +86,7 @@ prefer the Turkish transliteration you have to possibilities. You can activate i
 ```php
 $slugify = new Slugify();
 $slugify->slugify('ä'); // -> "ae"
-$slugify->activateRuleset('turkish');
+$slugify->activateRuleSet('turkish');
 $slugify->slugify('ä'); // -> "a"
 ```
 
@@ -91,7 +97,7 @@ $slugify = new Slugify(['rulesets' => ['default', 'turkish']]);
 $slugify->slugify('ä'); // -> "a"
 ```
 
-You can find a list of the available rulesets in `Resources/rules`.
+You can find a list of the available rulesets in [Resources/rules](https://github.com/cocur/slugify/tree/master/Resources/rules).
 
 ### More options
 
@@ -118,6 +124,14 @@ By default Slugify will use dashes as separators. If you want to use a different
 ```php
 $slugify = new Slugify(['separator' => '_']);
 $slugify->slugify('Hello World'); // -> "hello_world"
+```
+
+By default Slugify will remove leading and trailing separators before returning the slug. If you do not want the slug to 
+be trimmed you can set the `trim` option to false.
+
+```php
+$slugify = new Slugify(['trim' => false]);
+$slugify->slugify('Hello World '); // -> "hello-world-"
 ```
 
 ### Changing options on the fly
@@ -147,12 +161,29 @@ $slugify->slugify('für'); // -> "fuer"
 
 ### Contributing
 
-Feel free to ask for new rules for languages that is not already here.
+We really appreciate if you report bugs and errors in the transliteration, especially if you are a native speaker of
+the language and question. Feel free to ask for additional languages in the issues, but please note that the
+maintainer of this repository does not speak all languages. If you can provide a Pull Request with rules for
+a new language or extend the rules for an existing language that would be amazing.
 
-All you need to do is:
+To add a new language you need to:
 
-1. Provide transliteration rules for your language, in any form, e.g. `'ї' => 'ji'`
-2. Provide some examples of texts transliterated with this rules e.g. `'Україна' => 'Ukrajina'`
+1. Create a `[language].json` in `Resources/rules`
+2. If you believe the language should be a default ruleset you can add the language to 
+`Cocur\Slugify\Slugify::$options`. If you add the language there all existing tests still have to pass
+3. Run `php bin/generate-default.php`
+4. Add tests for the language in `tests/SlugifyTest.php`. If the language is in the default ruleset add your
+test cases to `defaultRuleProvider()`, otherwise to `customRulesProvider()`.
+
+Submit PR. Thank you very much. 💚
+
+### Code of Conduct
+
+In the interest of fostering an open and welcoming environment, we as contributors and maintainers pledge to making participation in our project and our community a harassment-free experience for everyone, regardless of age, body size, disability, ethnicity, gender identity and expression, level of experience, nationality, personal appearance, race, religion, or sexual identity and orientation.
+
+The full Code of Conduct can be found [here](https://github.com/cocur/slugify/blob/master/CODE_OF_CONDUCT.md).
+
+This project is no place for hate. If you have any problems please contact Florian: [florian@eckerstorfer.net](mailto:florian@eckerstorfer.net) ✌🏻🏳️‍🌈
 
 ### Further information
 
@@ -198,14 +229,20 @@ The bundle also provides an alias `slugify` for the `cocur_slugify` service:
 $slug = $this->get('slugify')->slugify('Hello World!');
 ```
 
-You can set the following configuration settings in `app/config.yml` to adjust the slugify service:
+If you use `autowire` (Symfony >=3.3), you can inject it into your services like this:
+
+```php
+public function __construct(\Cocur\Slugify\SlugifyInterface $slugify)
+```
+
+You can set the following configuration settings in `config.yml` to adjust the slugify service:
 
 ```yaml
 cocur_slugify:
     lowercase: <boolean>
     separator: <string>
     regexp: <string>
-    rulesets: { }
+    rulesets: { } # List of rulesets: https://github.com/cocur/slugify/tree/master/Resources/rules
 ```
 
 ### Twig
@@ -486,6 +523,28 @@ $slugify = $container->get(Slugify\SlugifyInterface::class);
 Change Log
 ----------
 
+### Version 3.1 (22 January 2018)
+
+- [#195](https://github.com/cocur/slugify/pull/195) Add support for Chinese (Pinyin) (by [SuN-80](https://github.com/SuN-80), [franmomu](https://github.com/franmomu))
+- [#189](https://github.com/cocur/slugify/pull/189) Add trim option (by [sforsberg](https://github.com/sforsberg))
+
+### Version 3.0.1 (24 September 2017)
+
+- [#183](https://github.com/cocur/slugify/pull/183) Fix invalid JSON ([RusiPapazov](https://github.com/RusiPapazov))
+- [#185](https://github.com/cocur/slugify/pull/185) Fix support for Symfony > 3.3 (by [FabienPapet](https://github.com/FabienPapet))
+- [#186](https://github.com/cocur/slugify/pull/186) Require Multibyte extension in `composer.json` (by [wandersonwhcr](https://github.com/wandersonwhcr))
+
+### Version 3.0 (11 August 2017)
+
+- HHVM is no longer supported
+- Bugfix [#165](https://github.com/cocur/slugify/issues/165) Added missing French rules to `DefaultRuleProvider` (by [gsouf](https://github.com/gsouf))
+- [#168](https://github.com/cocur/slugify/pull/168) Add Persian rules (by [mohammad6006](https://github.com/mohammad6006))
+- Bugfix [#169](https://github.com/cocur/slugify/issues/169) Add missing `getName()` to `Cocur\Slugify\Bridge\Twig\SlugifyExtension` (by [TomCan](https://github.com/TomCan))
+- [#172](https://github.com/cocur/slugify/pull/172) Sort rules in `DefaultRuleProvider` alphabetically (by [tbmatuka](https://github.com/tbmatuka))
+- [#174](https://github.com/cocur/slugify/pull/174) Add Hungarian rules (by [rviktor87](https://github.com/rviktor87))
+- [#180](https://github.com/cocur/slugify/pull/180) Add Brazilian Portuguese rules (by [tallesairan](https://github.com/tallesairan))
+- Bugfix [#181](https://github.com/cocur/slugify/pull/181) Add missing French rules (by [FabienPapet](https://github.com/FabienPapet))
+
 ### Version 2.5 (23 March 2017)
 
 - [#150](https://github.com/cocur/slugify/pull/150) Add Romanian rules (by [gabiudrescu](https://github.com/gabiudrescu))
@@ -644,6 +703,8 @@ Authors
 - [Marchenko Alexandr](http://mac-blog.org.ua)
 - And many [great contributors](https://github.com/cocur/slugify/graphs/contributors)
 
+Support for Chinese is adapted from [jifei/Pinyin](https://github.com/jifei/Pinyin) with permission.
+
 > Slugify is a project of [Cocur](http://cocur.co). You can contact us on Twitter:
 > [**@cocurco**](https://twitter.com/cocurco)
 
@@ -670,7 +731,7 @@ License
 
 The MIT License (MIT)
 
-Copyright (c) 2012-2014 Florian Eckerstorfer
+Copyright (c) 2012-2017 Florian Eckerstorfer
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 documentation files (the "Software"), to deal in the Software without restriction, including without limitation the

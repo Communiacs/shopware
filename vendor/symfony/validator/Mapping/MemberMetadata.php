@@ -13,7 +13,6 @@ namespace Symfony\Component\Validator\Mapping;
 
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Exception\ConstraintDefinitionException;
-use Symfony\Component\Validator\ValidationVisitorInterface;
 
 /**
  * Stores all metadata needed for validating a class property.
@@ -27,7 +26,7 @@ use Symfony\Component\Validator\ValidationVisitorInterface;
  *
  * @see PropertyMetadataInterface
  */
-abstract class MemberMetadata extends ElementMetadata implements PropertyMetadataInterface
+abstract class MemberMetadata extends GenericMetadata implements PropertyMetadataInterface
 {
     /**
      * @internal This property is public in order to reduce the size of the
@@ -69,29 +68,13 @@ abstract class MemberMetadata extends ElementMetadata implements PropertyMetadat
 
     /**
      * {@inheritdoc}
-     *
-     * @deprecated since version 2.5, to be removed in 3.0.
-     */
-    public function accept(ValidationVisitorInterface $visitor, $value, $group, $propertyPath, $propagatedGroup = null)
-    {
-        @trigger_error('The '.__METHOD__.' method is deprecated since Symfony 2.5 and will be removed in 3.0.', E_USER_DEPRECATED);
-
-        $visitor->visit($this, $value, $group, $propertyPath);
-
-        if ($this->isCascaded()) {
-            $visitor->validate($value, $propagatedGroup ?: $group, $propertyPath, $this->isCollectionCascaded(), $this->isCollectionCascadedDeeply());
-        }
-    }
-
-    /**
-     * {@inheritdoc}
      */
     public function addConstraint(Constraint $constraint)
     {
-        if (!in_array(Constraint::PROPERTY_CONSTRAINT, (array) $constraint->getTargets())) {
+        if (!\in_array(Constraint::PROPERTY_CONSTRAINT, (array) $constraint->getTargets())) {
             throw new ConstraintDefinitionException(sprintf(
                 'The constraint %s cannot be put on properties or getters',
-                get_class($constraint)
+                \get_class($constraint)
             ));
         }
 
@@ -175,53 +158,6 @@ abstract class MemberMetadata extends ElementMetadata implements PropertyMetadat
     }
 
     /**
-     * Returns whether objects stored in this member should be validated.
-     *
-     * @return bool
-     *
-     * @deprecated since version 2.5, to be removed in 3.0.
-     *             Use {@link getCascadingStrategy()} instead.
-     */
-    public function isCascaded()
-    {
-        @trigger_error('The '.__METHOD__.' method is deprecated since Symfony 2.5 and will be removed in 3.0. Use the getCascadingStrategy() method instead.', E_USER_DEPRECATED);
-
-        return (bool) ($this->cascadingStrategy & CascadingStrategy::CASCADE);
-    }
-
-    /**
-     * Returns whether arrays or traversable objects stored in this member
-     * should be traversed and validated in each entry.
-     *
-     * @return bool
-     *
-     * @deprecated since version 2.5, to be removed in 3.0.
-     *             Use {@link getTraversalStrategy()} instead.
-     */
-    public function isCollectionCascaded()
-    {
-        @trigger_error('The '.__METHOD__.' method is deprecated since Symfony 2.5 and will be removed in 3.0. Use the getTraversalStrategy() method instead.', E_USER_DEPRECATED);
-
-        return (bool) ($this->traversalStrategy & (TraversalStrategy::IMPLICIT | TraversalStrategy::TRAVERSE));
-    }
-
-    /**
-     * Returns whether arrays or traversable objects stored in this member
-     * should be traversed recursively for inner arrays/traversable objects.
-     *
-     * @return bool
-     *
-     * @deprecated since version 2.5, to be removed in 3.0.
-     *             Use {@link getTraversalStrategy()} instead.
-     */
-    public function isCollectionCascadedDeeply()
-    {
-        @trigger_error('The '.__METHOD__.' method is deprecated since Symfony 2.5 and will be removed in 3.0. Use the getTraversalStrategy() method instead.', E_USER_DEPRECATED);
-
-        return !($this->traversalStrategy & TraversalStrategy::STOP_RECURSION);
-    }
-
-    /**
      * Returns the reflection instance for accessing the member's value.
      *
      * @param object|string $objectOrClassName The object or the class name
@@ -230,7 +166,7 @@ abstract class MemberMetadata extends ElementMetadata implements PropertyMetadat
      */
     public function getReflectionMember($objectOrClassName)
     {
-        $className = is_string($objectOrClassName) ? $objectOrClassName : get_class($objectOrClassName);
+        $className = \is_string($objectOrClassName) ? $objectOrClassName : \get_class($objectOrClassName);
         if (!isset($this->reflMember[$className])) {
             $this->reflMember[$className] = $this->newReflectionMember($objectOrClassName);
         }

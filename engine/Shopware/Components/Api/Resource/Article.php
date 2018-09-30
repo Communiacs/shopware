@@ -258,7 +258,7 @@ class Article extends Resource implements BatchInterface
         $this->checkPrivilege('read');
 
         $builder = $this->getRepository()->createQueryBuilder('article')
-            ->addSelect(['attribute'])
+            ->addSelect(['mainDetail', 'attribute'])
             ->addSelect('mainDetail.lastStock')
             ->leftJoin('article.mainDetail', 'mainDetail')
             ->leftJoin('mainDetail.attribute', 'attribute')
@@ -277,7 +277,7 @@ class Article extends Resource implements BatchInterface
         $totalResult = $paginator->count();
 
         /**
-         * @Deprecated
+         * @Deprecated Since 5.4, to be removed in 5.6
          *
          * To support Shopware <= 5.3 we make sure the lastStock-column of the main variant is being used instead of the
          * one on the product itself.
@@ -345,7 +345,7 @@ class Article extends Resource implements BatchInterface
         }
 
         /*
-         * @Deprecated
+         * @Deprecated Since 5.4, to be removed in 5.6
          *
          * Necessary for backward compatibility with < 5.4, will be removed in 5.6
          *
@@ -408,7 +408,7 @@ class Article extends Resource implements BatchInterface
             'tax',
             'supplier',
         ])
-            ->from('Shopware\Models\Article\Article', 'article')
+            ->from(\Shopware\Models\Article\Article::class, 'article')
             ->leftJoin('article.mainDetail', 'mainDetail')
             ->leftJoin('mainDetail.prices', 'mainDetailPrices')
             ->leftJoin('article.tax', 'tax')
@@ -448,7 +448,7 @@ class Article extends Resource implements BatchInterface
     }
 
     /**
-     * convenience function to delete a article by number
+     * Convenience function to delete a article by number
      *
      * @param string $number
      *
@@ -730,7 +730,7 @@ class Article extends Resource implements BatchInterface
             return false;
         }
 
-        $model = $this->getManager()->find('Shopware\Models\Article\Article', $id);
+        $model = $this->getManager()->find(\Shopware\Models\Article\Article::class, $id);
 
         if ($model) {
             return $id;
@@ -781,7 +781,7 @@ class Article extends Resource implements BatchInterface
             ->leftJoin('configuratorSet.groups', 'groups')
             ->addOrderBy('groups.position', 'ASC')
             ->where('article.id = :articleId')
-            ->setParameters(['articleId' => $articleId]);
+            ->setParameter(':articleId', $articleId);
 
         return $this->getSingleResult($builder);
     }
@@ -803,7 +803,7 @@ class Article extends Resource implements BatchInterface
             ->where('article.id = :articleId')
             ->orderBy('images.position', 'ASC')
             ->andWhere('images.parentId IS NULL')
-            ->setParameters(['articleId' => $articleId]);
+            ->setParameter('articleId', $articleId);
 
         return $this->getFullResult($builder);
     }
@@ -1075,7 +1075,7 @@ class Article extends Resource implements BatchInterface
 
         foreach ($data['variants'] as $variantData) {
             /*
-             * @Deprecated
+             * @Deprecated Since 5.4, to be removed in 5.6
              *
              * Necessary for backward compatibility with <= 5.3, will be removed in 5.6
              *
@@ -2436,7 +2436,7 @@ class Article extends Resource implements BatchInterface
             $image = $this->getOneToManySubElement(
                 $images,
                 $imageData,
-                '\Shopware\Models\Article\Image'
+                \Shopware\Models\Article\Image::class
             );
 
             if (isset($imageData['link'])) {
@@ -2455,7 +2455,7 @@ class Article extends Resource implements BatchInterface
                 ++$position;
             } elseif (!empty($imageData['mediaId'])) {
                 $media = $this->getManager()->find(
-                    'Shopware\Models\Media\Media',
+                    \Shopware\Models\Media\Media::class,
                     (int) $imageData['mediaId']
                 );
 
@@ -2511,14 +2511,15 @@ class Article extends Resource implements BatchInterface
      */
     private function getAttributeProperties()
     {
-        $metaData = $this->getManager()->getClassMetadata('\Shopware\Models\Attribute\Article');
+        $metaData = $this->getManager()->getClassMetadata(\Shopware\Models\Attribute\Article::class);
         $properties = [];
 
         foreach ($metaData->getReflectionProperties() as $property) {
             if ($metaData->hasAssociation($property->getName())) {
                 continue;
             }
-            $properties[$property->getName()] = $property->getName();
+            $propertyName = $property->getName();
+            $properties[$propertyName] = $propertyName;
         }
 
         foreach ($metaData->getAssociationMappings() as $property => $mapping) {

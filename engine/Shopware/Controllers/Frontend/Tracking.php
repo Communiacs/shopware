@@ -21,7 +21,6 @@
  * trademark license. Therefore any rights, title and interest in
  * our trademarks remain entirely with us.
  */
-
 use Shopware\Models\Banner\Banner;
 
 /**
@@ -56,13 +55,13 @@ class Shopware_Controllers_Frontend_Tracking extends Enlight_Controller_Action
     public function countBannerClickAction()
     {
         $bannerId = $this->Request()->getParam('bannerId', null);
-        if (is_null($bannerId)) {
+        if ($bannerId === null) {
             return false;
         }
         /** @var $bannerMgn \Shopware\Models\Banner\Repository */
         $bannerMgn = Shopware()->Models()->getRepository(Banner::class);
         $banner = $bannerMgn->findOneBy(['id' => $bannerId]);
-        if (is_null($banner)) {
+        if ($banner === null) {
             return false;
         }
         /** @var $statRepository \Shopware\Models\Tracking\Repository */
@@ -88,7 +87,7 @@ class Shopware_Controllers_Frontend_Tracking extends Enlight_Controller_Action
     public function countBannerViewAction()
     {
         $bannerId = $this->Request()->getParam('bannerId', null);
-        if (is_null($bannerId)) {
+        if ($bannerId === null) {
             return false;
         }
         try {

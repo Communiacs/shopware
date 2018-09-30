@@ -110,7 +110,7 @@ class Store extends BaseStore
     public function purgeByHeader($name, $value = null)
     {
         // optimized purging for x-shopware-cache-id
-        if ($this->lookupOptimization && $name == 'x-shopware-cache-id') {
+        if ($this->lookupOptimization && $name === 'x-shopware-cache-id') {
             return $this->purgeByShopwareId($value);
         }
 
@@ -371,7 +371,7 @@ class Store extends BaseStore
     private function save($key, $data)
     {
         $path = $this->getPath($key);
-        if (!is_dir(dirname($path)) && false === @mkdir(dirname($path), 0777, true) && !is_dir(dirname($path))) {
+        if (!is_dir(dirname($path)) && @mkdir(dirname($path), 0777, true) === false && !is_dir(dirname($path))) {
             return false;
         }
 
@@ -386,7 +386,7 @@ class Store extends BaseStore
             return false;
         }
 
-        if (false === @rename($tmpFile, $path)) {
+        if (@rename($tmpFile, $path) === false) {
             return false;
         }
 

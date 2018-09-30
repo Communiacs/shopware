@@ -441,7 +441,7 @@
                     .trigger('change');
             } else {
                 me.$minInputEl.val(me.formatValueFloat(value))
-                    .removeAttr('disabled')
+                    .prop('disabled', false)
                     .trigger('change');
             }
 
@@ -460,7 +460,7 @@
                     .trigger('change');
             } else {
                 me.$maxInputEl.val(me.formatValueFloat(value))
-                    .removeAttr('disabled')
+                    .prop('disabled', false)
                     .trigger('change');
             }
 

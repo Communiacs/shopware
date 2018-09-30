@@ -77,7 +77,7 @@ class Shopware_Controllers_Backend_Deprecated extends Enlight_Controller_Action 
 
         $module = basename($this->Request()->getParam('includeDir'));
         $module = preg_replace('/[^a-z0-9_.:-]/i', '', $module);
-        if ('' !== $module) {
+        if ($module !== '') {
             $module .= '/';
         }
         $include = (string) $this->Request()->getParam('include', 'skeleton.php');

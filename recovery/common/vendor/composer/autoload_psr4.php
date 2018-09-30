@@ -10,4 +10,5 @@ return array(
     'Shopware\\Recovery\\Update\\' => array($baseDir . '/../update/src'),
     'Shopware\\Recovery\\Install\\' => array($baseDir . '/../install/src'),
     'Shopware\\Recovery\\Common\\' => array($baseDir . '/src'),
+    'Ramsey\\Uuid\\' => array($vendorDir . '/ramsey/uuid/src'),
 );

@@ -275,13 +275,27 @@ class DqlHelper
     }
 
     /**
-     * Returns a single row with (almost) all possibly relevant information of an article
+     * Returns a single row with (almost) all possibly relevant information of a product
      *
-     * @param $detailId
+     * @param int $detailId
      *
      * @return mixed
      */
     public function getProductForListing($detailId)
+    {
+        $products = $this->getProductsForListing([$detailId]);
+
+        return array_shift($products);
+    }
+
+    /**
+     * Returns a multiple row with (almost) all possibly relevant information of products
+     *
+     * @param int[] $ids
+     *
+     * @return array[]
+     */
+    public function getProductsForListing(array $ids)
     {
         $columns = $this->getColumnsForProductListing();
 
@@ -325,12 +339,16 @@ class DqlHelper
             LEFT JOIN `s_core_tax`
             ON s_core_tax.id = s_articles.taxID
 
-            WHERE s_articles_details.id = ?
+            WHERE s_articles_details.id IN (:ids)
         ";
-        $article = $this->getDb()->fetchRow($sql, [$detailId]);
-        $article = $this->addInfo($article);
 
-        return $article;
+        $articles = $this->em->getConnection()->fetchAll(
+            $sql,
+            ['ids' => $ids],
+            ['ids' => \Doctrine\DBAL\Connection::PARAM_INT_ARRAY]
+        );
+
+        return $this->addInfo($articles);
     }
 
     /**
@@ -685,7 +703,7 @@ class DqlHelper
                 // Non-numeric tokens will become their quotes removed:
                 if (!is_numeric($token['token'])) {
                     $params[] = substr($token['token'], 1, -1);
-                    // Numeric tokens can simple be appended to the params array
+                // Numeric tokens can simple be appended to the params array
                 } else {
                     $params[] = $token['token'];
                 }
@@ -968,33 +986,59 @@ class DqlHelper
      *  * images?
      *
      *
-     * @param $article
+     * @param array[] $articles
      *
-     * @return mixed
+     * @return array[]
      */
-    protected function addInfo($article)
+    protected function addInfo(array $articles)
     {
-        // Check for configurator
-        $article['hasConfigurator'] = !empty($article['Article_configuratorSetId']);
+        $articles = array_filter($articles);
 
-        // Check for Image
-        $image = $this->getDb()->fetchOne(
-            'SELECT img FROM s_articles_img WHERE articleID = ? AND main = 1 AND article_detail_id IS NULL',
-            $article['Article_id']
-        );
+        if (empty($articles)) {
+            return $articles;
+        }
+        $ids = array_filter(array_column($articles, 'Article_id'));
 
-        if ($image) {
-            $article['imageSrc'] = $image . '_140x140.jpg';
+        if (empty($ids)) {
+            return $articles;
         }
 
-        // Check for Categories
-        $hasCategories = $this->getDb()->fetchOne(
-            'SELECT id FROM s_articles_categories_ro WHERE articleID = ?',
-            $article['Article_id']
-        );
-        $article['hasCategories'] = ($hasCategories !== false);
+        $implode = array_map(function ($id) {
+            return (int) $id;
+        }, $ids);
 
-        return $article;
+        $qb = $this->em->getConnection()->createQueryBuilder();
+        $images = $qb->from('s_articles_img', 'img')
+            ->addSelect('img.articleID, img.img')
+            ->where('img.articleID IN (:ids)')
+            ->andWhere('img.main = 1')
+            ->andWhere('img.article_detail_id IS NULL')
+            ->setParameter('ids', $implode, \Doctrine\DBAL\Connection::PARAM_INT_ARRAY)
+            ->execute()
+            ->fetchAll(\PDO::FETCH_KEY_PAIR);
+
+        $qb = $this->em->getConnection()->createQueryBuilder();
+        $categories = $qb->from('s_articles_categories_ro', 'cat')
+            ->addSelect('DISTINCT articleID')
+            ->where('cat.articleID IN (:ids)')
+            ->setParameter('ids', $implode, \Doctrine\DBAL\Connection::PARAM_INT_ARRAY)
+            ->execute()
+            ->fetchAll(\PDO::FETCH_COLUMN);
+
+        foreach ($articles as &$article) {
+            $id = $article['Article_id'];
+
+            $article['hasConfigurator'] = !empty($article['Article_configuratorSetId']);
+            $article['imageSrc'] = null;
+
+            if (array_key_exists($id, $images)) {
+                $article['imageSrc'] = $images[$id] . '_140x140.jpg';
+            }
+
+            $article['hasCategories'] = in_array($id, $categories, true);
+        }
+
+        return $articles;
     }
 
     /**

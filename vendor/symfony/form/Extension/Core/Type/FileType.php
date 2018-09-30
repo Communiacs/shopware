@@ -36,7 +36,7 @@ class FileType extends AbstractType
                 $data = array();
                 $files = $event->getData();
 
-                if (!is_array($files)) {
+                if (!\is_array($files)) {
                     $files = array();
                 }
 
@@ -106,14 +106,6 @@ class FileType extends AbstractType
             'empty_data' => $emptyData,
             'multiple' => false,
         ));
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getName()
-    {
-        return $this->getBlockPrefix();
     }
 
     /**

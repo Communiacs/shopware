@@ -57,7 +57,7 @@ class Shopware_Controllers_Backend_ProductStream extends Shopware_Controllers_Ba
 
             $sorting = $this->Request()->getParam('sort');
 
-            if (null !== $sorting) {
+            if ($sorting !== null) {
                 $sorting = $streamRepo->unserialize($sorting);
 
                 foreach ($sorting as $sort) {
@@ -67,7 +67,7 @@ class Shopware_Controllers_Backend_ProductStream extends Shopware_Controllers_Ba
 
             $conditions = $this->Request()->getParam('conditions');
 
-            if (null !== $conditions) {
+            if ($conditions !== null) {
                 $conditions = json_decode($conditions, true);
 
                 if (json_last_error() !== JSON_ERROR_NONE) {

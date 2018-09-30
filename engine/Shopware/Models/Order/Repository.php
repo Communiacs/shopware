@@ -81,7 +81,6 @@ class Repository extends ModelRepository
         $builder->select([
             'status.id as id',
             'status.name as name',
-            'status.description as description',
         ]);
         $builder->from(\Shopware\Models\Order\Status::class, 'status')
             ->where('status.group = ?1')
@@ -135,7 +134,6 @@ class Repository extends ModelRepository
         $builder->select([
             'status.id as id',
             'status.name as name',
-            'status.description as description',
         ]);
         $builder->from(\Shopware\Models\Order\Status::class, 'status');
         $builder->where('status.group = ?1')
@@ -662,6 +660,30 @@ class Repository extends ModelRepository
      *
      * @return int[]
      */
+    protected function searchInOrders($term)
+    {
+        $query = $this->getEntityManager()->getConnection()->createQueryBuilder();
+        $query->select('orders.id');
+        $query->from('s_order', 'orders');
+        $builder = Shopware()->Container()->get('shopware.model.search_builder');
+        $builder->addSearchTerm($query, $term, [
+            'orders.ordernumber^3',
+            'orders.transactionID^1',
+            'orders.comment^0.2',
+            'orders.customercomment^0.2',
+            'orders.internalcomment^0.2',
+        ]);
+
+        $query->setMaxResults(self::SEARCH_TERM_LIMIT);
+
+        return $query->execute()->fetchAll(\PDO::FETCH_COLUMN);
+    }
+
+    /**
+     * @param string $term
+     *
+     * @return int[]
+     */
     private function searchOrderIds($term)
     {
         $orders = $this->searchInOrders($term);
@@ -746,30 +768,6 @@ class Repository extends ModelRepository
             $query->andWhere('address.orderID NOT IN (:ids)');
             $query->setParameter(':ids', $excludedOrderIds, Connection::PARAM_INT_ARRAY);
         }
-        $query->setMaxResults(self::SEARCH_TERM_LIMIT);
-
-        return $query->execute()->fetchAll(\PDO::FETCH_COLUMN);
-    }
-
-    /**
-     * @param string $term
-     *
-     * @return int[]
-     */
-    private function searchInOrders($term)
-    {
-        $query = $this->getEntityManager()->getConnection()->createQueryBuilder();
-        $query->select('orders.id');
-        $query->from('s_order', 'orders');
-        $builder = Shopware()->Container()->get('shopware.model.search_builder');
-        $builder->addSearchTerm($query, $term, [
-            'orders.ordernumber^3',
-            'orders.transactionID^1',
-            'orders.comment^0.2',
-            'orders.customercomment^0.2',
-            'orders.internalcomment^0.2',
-        ]);
-
         $query->setMaxResults(self::SEARCH_TERM_LIMIT);
 
         return $query->execute()->fetchAll(\PDO::FETCH_COLUMN);

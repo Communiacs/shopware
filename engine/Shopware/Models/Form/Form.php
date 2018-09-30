@@ -79,10 +79,10 @@ class Form extends ModelEntity
     private $id;
 
     /**
-    * @var bool
-    *
-    * @ORM\Column(name="active", type="boolean", nullable=false)
-    */
+     * @var bool
+     *
+     * @ORM\Column(name="active", type="boolean", nullable=false)
+     */
     private $active = true;
 
     /**

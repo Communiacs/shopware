@@ -48,14 +48,6 @@ class Widget extends ModelEntity
     private $name;
 
     /**
-     * @var string
-     * @ORM\Column(name="label", type="string", nullable=false)
-     *
-     * @deprecated Will be removed in 5.5.
-     */
-    private $label;
-
-    /**
      * @var
      * @ORM\OneToMany(targetEntity="Shopware\Models\Widget\View", mappedBy="widget")
      */
@@ -99,31 +91,7 @@ class Widget extends ModelEntity
     }
 
     /**
-     * @deprecated Will be removed in 5.5. Use 'label' snippet from 'backend/widget/<your-widget-name>' namespace instead.
-     *
-     * @return string
-     */
-    public function getLabel()
-    {
-        trigger_error(sprintf("%s::%s() is deprecated and will be removed in 5.5. Use 'label' snippet from 'backend/widget/<your-widget-name>' namespace instead.", __CLASS__, __METHOD__), E_USER_DEPRECATED);
-
-        return $this->label;
-    }
-
-    /**
-     * @deprecated Will be removed in 5.5. Use 'label' snippet from 'backend/widget/<your-widget-name>' namespace instead.
-     *
-     * @param string $label
-     */
-    public function setLabel($label)
-    {
-        trigger_error(sprintf("%s::%s() is deprecated and will be removed in 5.5. Use 'label' snippet from 'backend/widget/<your-widget-name>' namespace instead.", __CLASS__, __METHOD__), E_USER_DEPRECATED);
-
-        $this->label = $label;
-    }
-
-    /**
-     * @return
+     * @return \Shopware\Models\Widget\View[]
      */
     public function getViews()
     {
@@ -131,7 +99,7 @@ class Widget extends ModelEntity
     }
 
     /**
-     * @param  $views
+     * @param \Shopware\Models\Widget\View[] $views
      */
     public function setViews($views)
     {

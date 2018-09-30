@@ -21,9 +21,9 @@
  * trademark license. Therefore any rights, title and interest in
  * our trademarks remain entirely with us.
  */
-
 use Doctrine\DBAL\Query\QueryBuilder;
 use Shopware\Models\Category\Category;
+use Shopware\Models\Media\Media;
 
 /**
  * Shopware Categories
@@ -167,7 +167,7 @@ class Shopware_Controllers_Backend_Category extends Shopware_Controllers_Backend
         $data = $paginator->getIterator()->getArrayCopy();
         $data = $data[0];
 
-        $data['imagePath'] = $data['media']['path'];
+        $data['imagePath'] = $data['media']['id'];
 
         $this->View()->assign(['success' => true, 'data' => $data]);
     }
@@ -371,7 +371,7 @@ class Shopware_Controllers_Backend_Category extends Shopware_Controllers_Backend
             ->innerJoin('articles.supplier', 'suppliers')
             ->innerJoin('articles.mainDetail', 'details')
             ->where('categories.id = :categoryId')
-            ->setParameters(['categoryId' => $categoryId]);
+            ->setParameter('categoryId', $categoryId);
 
         if (!empty($search)) {
             $builder->andWhere('(articles.name LIKE :search OR suppliers.name LIKE :search OR details.number LIKE :search)');
@@ -862,11 +862,7 @@ class Shopware_Controllers_Backend_Category extends Shopware_Controllers_Backend
     protected function prepareMediaAssociatedData($data)
     {
         if (!empty($data['imagePath'])) {
-            $mediaService = Shopware()->Container()->get('shopware_media.media_service');
-            $data['imagePath'] = $mediaService->normalize($data['imagePath']);
-            $mediaQuery = $this->getMediaRepository()->getMediaByPathQuery($data['imagePath']);
-            $mediaModel = $mediaQuery->getOneOrNullResult();
-            $data['media'] = $mediaModel;
+            $data['media'] = $this->get('models')->find(Media::class, $data['imagePath']);
         } else {
             $data['media'] = null;
         }

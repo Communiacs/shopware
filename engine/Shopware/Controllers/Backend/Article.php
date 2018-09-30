@@ -131,7 +131,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
      */
     public function preDispatch()
     {
-        if (!in_array($this->Request()->getActionName(), ['index', 'load', 'validateNumber'])) {
+        if (!in_array($this->Request()->getActionName(), ['index', 'load', 'validateNumber', 'getEsdDownload'])) {
             $this->Front()->Plugins()->Json()->setRenderer();
         }
     }
@@ -156,7 +156,22 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
     {
         $data = $this->Request()->getParams();
         if ($this->Request()->has('id')) {
+            /** @var Article $article */
             $article = $this->getRepository()->find((int) $this->Request()->getParam('id'));
+            // Check whether the article has been modified in the meantime
+            $lastChanged = new \DateTime($data['changed']);
+            if ($article->getChanged()->getTimestamp() != $lastChanged->getTimestamp()) {
+                $namespace = Shopware()->Snippets()->getNamespace('backend/article/controller/main');
+
+                $this->View()->assign([
+                    'success' => false,
+                    'overwriteAble' => true,
+                    'data' => $this->getArticle($article->getId()),
+                    'message' => $namespace->get('article_has_been_changed', 'The article has been changed in the meantime. To prevent overwriting these changes, saving the article was aborted. Please close the article and re-open it.'),
+                ]);
+
+                return;
+            }
         } else {
             $article = new Article();
         }
@@ -756,7 +771,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
         $builder->select(['categories.id'])
             ->from(\Shopware\Models\Category\Category::class, 'categories', 'categories.id')
             ->andWhere(':articleId MEMBER OF categories.articles')
-            ->setParameters(['articleId' => $articleId]);
+            ->setParameter('articleId', $articleId);
 
         $result = $builder->getQuery()->getArrayResult();
         if (empty($result)) {
@@ -859,7 +874,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
                 ->where('article.id = :articleId')
                 ->andWhere('images.parentId IS NULL')
                 ->orderBy('images.position')
-                ->setParameters(['articleId' => $articleId]);
+                ->setParameter('articleId', $articleId);
 
         $result = $builder->getQuery()->getArrayResult();
 
@@ -967,7 +982,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
             ->addOrderBy('options.groupId', 'ASC')
             ->addOrderBy('options.position', 'ASC')
             ->where('article.id = :articleId')
-            ->setParameters(['articleId' => $articleId]);
+            ->setParameter('articleId', $articleId);
 
         $result = $builder->getQuery()->getArrayResult();
 
@@ -1748,25 +1763,16 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
      */
     public function getEsdFilesAction()
     {
-        $projectDir = $this->container->getParameter('shopware.app.rootdir');
-        $filePath = $projectDir . 'files' . DIRECTORY_SEPARATOR . Shopware()->Config()->get('sESDKEY');
+        $filesystem = $this->container->get('shopware.filesystem.private');
+        $contents = $filesystem->listContents($this->container->get('config')->offsetGet('esdKey'));
 
-        if (!file_exists($filePath)) {
-            $this->View()->assign([
-                'message' => 'noFolder',
-                'success' => false,
-            ]);
-
-            return;
-        }
         $result = [];
-        foreach (new DirectoryIterator($filePath) as $file) {
-            if ($file->isDot() || strpos($file->getFilename(), '.') === 0) {
+        foreach ($contents as $file) {
+            if ($file['type'] !== 'file') {
                 continue;
             }
-            $result[] = [
-                'filename' => $file->getFilename(),
-            ];
+
+            $result[] = ['filename' => $file['basename']];
         }
 
         $this->View()->assign([
@@ -1782,9 +1788,6 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
      */
     public function uploadEsdFileAction()
     {
-        $projectDir = $this->container->getParameter('shopware.app.rootdir');
-        $destinationDir = $projectDir . 'files' . DIRECTORY_SEPARATOR . Shopware()->Config()->get('sESDKEY');
-
         $fileBag = new \Symfony\Component\HttpFoundation\FileBag($_FILES);
         /** @var $file Symfony\Component\HttpFoundation\File\UploadedFile */
         $file = $fileBag->get('fileId');
@@ -1794,7 +1797,14 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
 
             return;
         }
-        $file->move($destinationDir, $file->getClientOriginalName());
+
+        $filesystem = $this->container->get('shopware.filesystem.private');
+        $destinationPath = $this->container->get('config')->offsetGet('esdKey') . '/' . $file->getClientOriginalName();
+
+        $upstream = fopen($file->getRealPath(), 'rb');
+        $filesystem->writeStream($destinationPath, $upstream);
+        fclose($upstream);
+
         $this->View()->assign(['success' => true]);
     }
 
@@ -1804,19 +1814,40 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
      */
     public function getEsdDownloadAction()
     {
-        $filename = $this->Request()->getParam('filename');
-        $file = 'files/' . Shopware()->Config()->get('sESDKEY') . '/' . $filename;
+        $filesystem = $this->container->get('shopware.filesystem.private');
+        $path = $this->container->get('config')->offsetGet('esdKey') . '/' . $this->Request()->getParam('filename');
 
-        $projectDir = $this->container->getParameter('shopware.app.rootdir');
-        if (!file_exists($projectDir . $file)) {
-            $this->View()->assign([
-                'message' => 'File not found',
-                'success' => false,
-            ]);
+        if ($filesystem->has($path) === false) {
+            $this->Front()->Plugins()->Json()->setRenderer();
+            $this->View()->assign(['message' => 'File not found', 'success' => false]);
 
             return;
         }
-        $this->redirect($file);
+
+        $meta = $filesystem->getMetadata($path);
+        $mimeType = $filesystem->getMimetype($path) ?: 'application/octet-stream';
+
+        @set_time_limit(0);
+
+        $this->Front()->Plugins()->ViewRenderer()->setNoRender();
+
+        $response = $this->Response();
+        $response->setHeader('Content-Type', $mimeType);
+        $response->setHeader('Content-Disposition', sprintf('attachment; filename="%s"', basename($path)));
+        $response->setHeader('Content-Length', $meta['size']);
+        $response->setHeader('Content-Transfer-Encoding', 'binary');
+        $response->sendHeaders();
+        $response->sendResponse();
+
+        $upstream = $filesystem->readStream($path);
+        $downstream = fopen('php://output', 'wb');
+
+        ob_end_clean();
+
+        while (!feof($upstream)) {
+            fwrite($downstream, fread($upstream, 4096));
+            flush();
+        }
     }
 
     /**
@@ -1878,7 +1909,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
         $offset = $this->Request()->getParam('offset', null);
         $limit = $this->Request()->getParam('limit', null);
 
-        if (!($articleId > 0) || '' === $syntax) {
+        if (!($articleId > 0) || $syntax === '') {
             return;
         }
 
@@ -3149,7 +3180,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
             $builder = Shopware()->Models()->createQueryBuilder();
             $builder->delete(\Shopware\Models\Attribute\Article::class, 'attribute')
                 ->where('attribute.articleDetailId IN (:articleDetailIds)')
-                ->setParameters(['articleDetailIds' => $ids])
+                ->setParameter('articleDetailIds', $ids)
                 ->getQuery()
                 ->execute();
         }
@@ -3326,7 +3357,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
             ->leftJoin('detail.attribute', 'attribute')
             ->leftJoin('prices.attribute', 'priceAttribute')
             ->where('detail.id = :id')
-            ->setParameters(['id' => $article->getMainDetail()->getId()]);
+            ->setParameter('id', $article->getMainDetail()->getId());
 
         $data = $builder->getQuery()->getArrayResult();
         $data = $data[0];
@@ -3593,7 +3624,8 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
             $data['propertyGroup'] = null;
         }
 
-        $data['changed'] = new \DateTime();
+        // The 'changed' value (time of last change of the dataset) gets automatically updated in the doctrine model
+        unset($data['changed']);
 
         return $data;
     }
@@ -4154,7 +4186,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
      */
     protected function prepareNumberSyntax($syntax)
     {
-        preg_match_all('#\{(.*?)\}#msi', $syntax, $result);
+        preg_match_all('#\{(.*?)\}#ms', $syntax, $result);
         $syntax = $result[1];
 
         $properties = [];

@@ -76,7 +76,7 @@ class ProductNumberSearch implements ProductNumberSearchInterface
     public function search(Criteria $criteria, ShopContextInterface $context)
     {
         $search = $this->buildSearch($criteria, $context);
-        $index = $this->indexFactory->createShopIndex($context->getShop());
+        $index = $this->indexFactory->createShopIndex($context->getShop(), ProductMapping::TYPE);
 
         $data = $this->client->search([
             'index' => $index->getName(),

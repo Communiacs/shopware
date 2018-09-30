@@ -110,22 +110,6 @@ class Shopware_Components_Snippet_Manager extends Enlight_Components_Snippet_Man
      * @param string $namespace
      *
      * @return Enlight_Components_Snippet_Namespace
-     *
-     * @deprecated  Since 4.0, will be removed in 5.5.
-     */
-    public function getSnippet($namespace = null)
-    {
-        trigger_error(sprintf('%s::%s() is deprecated since version 4.0 and will be removed in 5.5.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
-
-        return parent::getNamespace($namespace);
-    }
-
-    /**
-     * Returns a snippet model instance
-     *
-     * @param string $namespace
-     *
-     * @return Enlight_Components_Snippet_Namespace
      */
     public function getNamespace($namespace = null)
     {
@@ -193,7 +177,7 @@ class Shopware_Components_Snippet_Manager extends Enlight_Components_Snippet_Man
     }
 
     /**
-     * @param   $dir
+     * @param $dir
      *
      * @return Shopware_Components_Snippet_Manager
      */

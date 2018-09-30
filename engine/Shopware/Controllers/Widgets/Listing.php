@@ -208,50 +208,6 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
     }
 
     /**
-     * @deprecated since 5.3, will be removed in 5.5. Use Shopware_Controllers_Widgets_Listing::listingCountAction instead.
-     *
-     * Listing action for asynchronous fetching listing pages
-     * by infinite scrolling plugin
-     */
-    public function ajaxListingAction()
-    {
-        trigger_error(sprintf('%s::%s() is deprecated since 5.3 and will be removed in 5.5. Use Shopware_Controllers_Widgets_Listing::listingCountAction() instead.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
-
-        $categoryId = (int) $this->Request()->getParam('sCategory');
-        $pageIndex = (int) $this->Request()->getParam('sPage');
-
-        $context = $this->get('shopware_storefront.context_service')->getShopContext();
-        $productStreamId = $this->findStreamIdByCategoryId($categoryId);
-
-        if ($productStreamId) {
-            /** @var \Shopware\Components\ProductStream\CriteriaFactoryInterface $factory */
-            $factory = $this->get('shopware_product_stream.criteria_factory');
-            $criteria = $factory->createCriteria($this->Request(), $context);
-
-            /** @var \Shopware\Components\ProductStream\RepositoryInterface $streamRepository */
-            $streamRepository = $this->get('shopware_product_stream.repository');
-            $streamRepository->prepareCriteria($criteria, $productStreamId);
-        } else {
-            $criteria = $this->get('shopware_search.store_front_criteria_factory')
-                ->createAjaxListingCriteria($this->Request(), $context);
-        }
-
-        $products = Shopware()->Modules()->Articles()->sGetArticlesByCategory($categoryId, $criteria);
-        $products = $products['sArticles'];
-
-        $this->View()->loadTemplate('frontend/listing/listing_ajax.tpl');
-
-        $layout = Shopware()->Modules()->Categories()->getProductBoxLayout($categoryId);
-
-        $this->View()->assign([
-            'sArticles' => $products,
-            'pageIndex' => $pageIndex,
-            'productBoxLayout' => $layout,
-            'sCategoryCurrent' => $categoryId,
-        ]);
-    }
-
-    /**
      * Gets a Callback-Function (callback) and the Id of an category (categoryID) from Request and read its first child-level
      */
     public function getCategoryAction()

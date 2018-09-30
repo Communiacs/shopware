@@ -30,9 +30,7 @@ use Shopware\Bundle\EmotionBundle\Struct\Element;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
 /**
- * Class EventComponentHandler
- *
- * @deprecated Since 5.3, will be removed in 5.5. This is a legacy layer which supports a deprecated event. Implement a ComponentHandler instead.
+ * @deprecated Since 5.3, will be removed in 6.0. This is a legacy layer which supports a deprecated event. Implement a ComponentHandler instead for performance benefit
  */
 class EventComponentHandler implements ComponentHandlerInterface
 {
@@ -98,7 +96,7 @@ class EventComponentHandler implements ComponentHandlerInterface
     {
         $types = ['emotion-components-html-code', 'emotion-components-html-element', 'emotion-components-iframe', 'emotion-components-youtube'];
         if (!in_array($element->getComponent()->getType(), $types, true)) {
-            $message = sprintf('%s is deprecated since 5.3 and will be removed with 5.5. Implement a ComponentHandler instead.', __CLASS__);
+            $message = sprintf('%s is deprecated since 5.3 and will be removed with 6.0. Implement a ComponentHandler instead for performance benefit.', __CLASS__);
             trigger_error($message, E_USER_DEPRECATED);
         }
     }

@@ -110,7 +110,7 @@ class sOrder
     /**
      * Pointer to sSystem object
      *
-     * @var sSYSTEM
+     * @var \sSystem
      */
     public $sSYSTEM;
 
@@ -148,20 +148,6 @@ class sOrder
      * @var bool
      */
     public $sNet;    // Completely taxfree
-
-    /**
-     * Custom attributes
-     *
-     * @var string
-     *
-     * @deprecated Since 5.2, will be removed in 5.5. Use orderAttributes instead.
-     */
-    public $o_attr_1;
-    public $o_attr_2;
-    public $o_attr_3;
-    public $o_attr_4;
-    public $o_attr_5;
-    public $o_attr_6;
 
     /**
      * Custom attributes
@@ -378,6 +364,8 @@ class sOrder
 
     /**
      * Create temporary order (for order cancellation reports)
+     *
+     * @throws Enlight_Exception
      */
     public function sCreateTemporaryOrder()
     {
@@ -467,16 +455,7 @@ class sOrder
         }
 
         // Create order attributes
-        $attributeData = [
-            'attribute1' => $this->o_attr_1,
-            'attribute2' => $this->o_attr_2,
-            'attribute3' => $this->o_attr_3,
-            'attribute4' => $this->o_attr_4,
-            'attribute5' => $this->o_attr_5,
-            'attribute6' => $this->o_attr_6,
-        ];
-        $attributeData = array_merge($attributeData, $this->orderAttributes);
-        $this->attributePersister->persist($attributeData, 's_order_attributes', $orderID);
+        $this->attributePersister->persist($this->orderAttributes, 's_order_attributes', $orderID);
 
         $position = 0;
         foreach ($this->sBasketData['content'] as $basketRow) {
@@ -508,6 +487,7 @@ class sOrder
                 'orderID' => $orderID,
                 'ordernumber' => 0,
                 'articleID' => $basketRow['articleID'],
+                'articleDetailID' => $basketRow['additional_details']['articleDetailsID'],
                 'articleordernumber' => $basketRow['ordernumber'],
                 'price' => $basketRow['priceNumeric'],
                 'quantity' => $basketRow['quantity'],
@@ -534,14 +514,14 @@ class sOrder
     }
 
     /**
-     * Finaly save order and send order confirmation to customer
+     * Finally save order and send order confirmation to customer
      */
     public function sSaveOrder()
     {
         $this->sComment = stripslashes($this->sComment);
         $this->sComment = stripcslashes($this->sComment);
 
-        $this->sShippingData['AmountNumeric'] = $this->sShippingData['AmountNumeric'] ? $this->sShippingData['AmountNumeric'] : '0';
+        $this->sShippingData['AmountNumeric'] = $this->sShippingData['AmountNumeric'] ?: '0';
 
         if ($this->isTransactionExist($this->bookingId)) {
             return false;
@@ -605,7 +585,9 @@ class sOrder
             'invoice_amount_net' => $this->sBasketData['AmountNetNumeric'],
             'invoice_shipping' => (float) $this->sShippingcostsNumeric,
             'invoice_shipping_net' => (float) $this->sShippingcostsNumericNet,
+            'invoice_shipping_tax_rate' => isset($this->sBasketData['sShippingcostsTaxProportional']) ? 0 : $this->sBasketData['sShippingcostsTax'],
             'ordertime' => new Zend_Db_Expr('NOW()'),
+            'changed' => new Zend_Db_Expr('NOW()'),
             'status' => 0,
             'cleared' => 17,
             'paymentID' => $this->getPaymentId(),
@@ -623,6 +605,7 @@ class sOrder
             'subshopID' => $mainShop->getId(),
             'remote_addr' => $ip,
             'deviceType' => $this->deviceType,
+            'is_proportional_calculation' => isset($this->sBasketData['sShippingcostsTaxProportional']) ? 1 : 0,
         ];
 
         $orderParams = $this->eventManager->filter('Shopware_Modules_Order_SaveOrder_FilterParams', $orderParams, ['subject' => $this]);
@@ -651,20 +634,9 @@ class sOrder
             //Payment method code failure
         }
 
-        $attributeData = [
-            'attribute1' => $this->o_attr_1,
-            'attribute2' => $this->o_attr_2,
-            'attribute3' => $this->o_attr_3,
-            'attribute4' => $this->o_attr_4,
-            'attribute5' => $this->o_attr_5,
-            'attribute6' => $this->o_attr_6,
-        ];
-
-        $attributeData = array_merge($attributeData, $this->orderAttributes);
-
         $attributeData = $this->eventManager->filter(
             'Shopware_Modules_Order_SaveOrder_FilterAttributes',
-            $attributeData,
+            $this->orderAttributes,
             [
                 'subject' => $this,
                 'orderID' => $orderID,
@@ -700,9 +672,10 @@ class sOrder
                 tax_rate,
                 ean,
                 unit,
-                pack_unit
+                pack_unit,
+                articleDetailID
                 )
-                VALUES (%d, %s, %d, %s, %f, %d, %s, %d, %s, %d, %d, %d, %f, %s, %s, %s)
+                VALUES (%d, %s, %d, %s, %f, %d, %s, %d, %s, %d, %d, %d, %f, %s, %s, %s, %d)
             ';
 
             $sql = sprintf($preparedQuery,
@@ -721,7 +694,8 @@ class sOrder
                 $basketRow['tax_rate'],
                 $this->db->quote((string) $basketRow['ean']),
                 $this->db->quote((string) $basketRow['itemUnit']),
-                $this->db->quote((string) $basketRow['packunit'])
+                $this->db->quote((string) $basketRow['packunit']),
+                $basketRow['additional_details']['articleDetailsID']
             );
 
             $sql = $this->eventManager->filter('Shopware_Modules_Order_SaveOrder_FilterDetailsSQL', $sql, ['subject' => $this, 'row' => $basketRow, 'user' => $this->sUserData, 'order' => ['id' => $orderID, 'number' => $orderNumber]]);
@@ -749,7 +723,7 @@ class sOrder
 
             $this->sBasketData['content'][$key]['orderDetailId'] = $orderdetailsID;
 
-            // save attributes
+            // Save attributes
             $attributeData = $this->attributeLoader->load('s_order_basket_attributes', $basketRow['id']);
 
             $attributeData = $this->eventManager->filter(
@@ -1269,7 +1243,7 @@ class sOrder
 
         if (!empty($order['dispatchID'])) {
             $dispatch = $this->db->fetchRow('
-                SELECT name, description FROM s_premium_dispatch
+                SELECT id, name, description FROM s_premium_dispatch
                 WHERE id=?
             ', [$order['dispatchID']]);
         }
@@ -1286,6 +1260,9 @@ class sOrder
         $shop = $repository->getById($shopId);
         $shop->registerResources();
 
+        $dispatch = Shopware()->Modules()->Admin()->sGetDispatchTranslation($dispatch);
+        $payment = Shopware()->Modules()->Admin()->sGetPaymentTranslation(['id' => $order['paymentID']]);
+
         $order['status_description'] = Shopware()->Snippets()->getNamespace('backend/static/order_status')->get(
             $order['status_name'],
             $order['status_description']
@@ -1294,6 +1271,10 @@ class sOrder
             $order['cleared_name'],
             $order['cleared_description']
         );
+
+        if (!empty($payment['description'])) {
+            $order['payment_description'] = $payment['description'];
+        }
 
         /* @var $mailModel \Shopware\Models\Mail\Mail */
         $mailModel = Shopware()->Models()->getRepository('Shopware\Models\Mail\Mail')->findOneBy(

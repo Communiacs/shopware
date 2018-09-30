@@ -260,6 +260,7 @@ class Shopware_Controllers_Backend_Customer extends Shopware_Controllers_Backend
     {
         $id = $this->Request()->getParam('id', null);
         $paymentId = $this->Request()->getParam('paymentId', null);
+        $params = $this->Request()->getParams();
 
         /** @var $namespace Enlight_Components_Snippet_Namespace */
         $namespace = Shopware()->Snippets()->getNamespace('backend/customer');
@@ -281,6 +282,21 @@ class Shopware_Controllers_Backend_Customer extends Shopware_Controllers_Backend
             $paymentData = $this->getManager()->getRepository('Shopware\Models\Customer\PaymentData')->findOneBy(
                 ['customer' => $customer, 'paymentMean' => $paymentId]
             );
+
+            // Check whether the customer has been modified in the meantime
+            $changed = new \DateTime($params['changed']);
+            if ($customer->getChanged() !== null && $customer->getChanged()->getTimestamp() != $changed->getTimestamp()) {
+                $namespace = Shopware()->Snippets()->getNamespace('backend/customer/controller/main');
+
+                $this->View()->assign([
+                    'success' => false,
+                    'data' => $this->getCustomer($customer->getId()),
+                    'overwriteAble' => true,
+                    'message' => $namespace->get('customer_has_been_changed', 'The customer has been changed in the meantime. To prevent overwriting these changes, saving the customer was aborted. Please close the customer and re-open it.'),
+                ]);
+
+                return;
+            }
         } else {
             //check if the user has the rights to create a new customer
             if (!$this->_isAllowed('create', 'customer')) {
@@ -295,8 +311,6 @@ class Shopware_Controllers_Backend_Customer extends Shopware_Controllers_Backend
             $customer = new Customer();
         }
 
-        $params = $this->Request()->getParams();
-
         if (!$paymentData instanceof PaymentData && !empty($params['paymentData']) && array_filter($params['paymentData'][0])) {
             $paymentData = new PaymentData();
             $customer->addPaymentData($paymentData);
@@ -309,6 +323,11 @@ class Shopware_Controllers_Backend_Customer extends Shopware_Controllers_Backend
 
         //set parameter to the customer model.
         $customer->fromArray($params);
+
+        // If user will be activated, but the first login is still 0, because he was in doi-process
+        if ($customer->getActive() && $customer->getFirstLogin()->getTimestamp() === 0) {
+            $customer->setFirstLogin(new DateTime());
+        }
 
         $password = $this->Request()->getParam('newPassword', null);
 
@@ -707,30 +726,18 @@ class Shopware_Controllers_Backend_Customer extends Shopware_Controllers_Backend
             $data['birthday'] = $birthday->format('d.m.Y');
         }
 
-        if (empty($data['billing'])) {
-            $billingAddress = $this->fetchAddress($data['default_billing_address_id']);
-
-            if ($billingAddress) {
-                $data['billing'] = new \Shopware\Models\Customer\Billing();
-                $data['billing']->fromAddress($billingAddress);
-                $data['billing'] = $this->container->get('models')->toArray($data['billing']);
-            }
-        }
-
-        if (empty($data['shipping'])) {
-            $shippingAddress = $this->fetchAddress($data['default_shipping_address_id']);
-
-            if ($shippingAddress) {
-                $data['shipping'] = new \Shopware\Models\Customer\Shipping();
-                $data['shipping']->fromAddress($shippingAddress);
-                $data['shipping'] = $this->container->get('models')->toArray($data['shipping']);
-            }
-        }
-
         $namespace = Shopware()->Container()->get('snippets')->getNamespace('frontend/salutation');
-        $data['billing']['salutationSnippet'] = $namespace->get($data['billing']['salutation']);
-        $data['shipping']['salutationSnippet'] = $namespace->get($data['shipping']['salutation']);
+        $data['defaultBillingAddress']['salutationSnippet'] = $namespace->get($data['defaultBillingAddress']['salutation']);
+        $data['defaultShippingAddress']['salutationSnippet'] = $namespace->get($data['defaultShippingAddress']['salutation']);
         $data['customerStreamIds'] = $this->fetchCustomerStreams($id);
+
+        if ($data['firstLogin'] instanceof \DateTime && $data['firstLogin']->getTimestamp() < 0) {
+            $data['firstLogin'] = new \DateTime('@0');
+        }
+
+        if ($data['lastLogin'] instanceof \DateTime && $data['lastLogin']->getTimestamp() < 0) {
+            $data['lastLogin'] = new \DateTime('@0');
+        }
 
         return $data;
     }

@@ -34,16 +34,16 @@
      */
     window.StorageManager = (function () {
         var storage = {
-        }, p;
+            }, p;
 
         var enableBlackHoleStorage = function () {
             var blackHoleStorage = {
                 length: 0,
                 clear: function () {},
-                getItem: function () {return null;},
-                key: function () {return null;},
-                removeItem: function () {return null;},
-                setItem: function () {return null;},
+                getItem: function () { return null; },
+                key: function () { return null; },
+                removeItem: function () { return null; },
+                setItem: function () { return null; }
             };
 
             storage = {

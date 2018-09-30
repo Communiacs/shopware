@@ -92,7 +92,7 @@ class ProductSearch implements ProductSearchInterface
         foreach ($searchProducts as $searchProduct) {
             $number = $searchProduct->getNumber();
 
-            if(!isset($products[$number])) {
+            if (!isset($products[$number])) {
                 continue;
             }
 

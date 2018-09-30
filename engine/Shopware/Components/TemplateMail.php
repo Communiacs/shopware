@@ -21,7 +21,6 @@
  * trademark license. Therefore any rights, title and interest in
  * our trademarks remain entirely with us.
  */
-
 use Shopware\Components\Model\ModelManager;
 use Shopware\Models\Mail\Mail;
 use Shopware\Models\Shop\Shop;
@@ -123,7 +122,7 @@ class Shopware_Components_TemplateMail
      */
     public function getTranslationReader()
     {
-        if (null === $this->translationReader) {
+        if ($this->translationReader === null) {
             $this->translationReader = Shopware()->Container()->get('translation');
         }
 
@@ -164,9 +163,9 @@ class Shopware_Components_TemplateMail
 
     /**
      * @param string|Mail $mailModel
-     * @param array                             $context
-     * @param Shop                              $shop
-     * @param array                             $overrideConfig
+     * @param array       $context
+     * @param Shop        $shop
+     * @param array       $overrideConfig
      *
      * @throws \Enlight_Exception
      *
@@ -174,7 +173,7 @@ class Shopware_Components_TemplateMail
      */
     public function createMail($mailModel, $context = [], $shop = null, $overrideConfig = [])
     {
-        if (null !== $shop) {
+        if ($shop !== null) {
             $this->setShop($shop);
         }
 
@@ -245,9 +244,9 @@ class Shopware_Components_TemplateMail
     /**
      * Loads values from MailModel into Mail
      *
-     * @param \Enlight_Components_Mail   $mail
-     * @param Mail                       $mailModel
-     * @param array                      $overrideConfig
+     * @param \Enlight_Components_Mail $mail
+     * @param Mail                     $mailModel
+     * @param array                    $overrideConfig
      *
      * @throws \Enlight_Exception
      *

@@ -152,12 +152,12 @@ class Repository extends ModelRepository
                 ->leftJoin('dispatch.holidays', 'holidays')
                 ->leftJoin('dispatch.attribute', 'attribute')
                 ->leftJoin('dispatch.payments', 'payments');
-        if (null !== $dispatchId) {
+        if ($dispatchId !== null) {
             $builder->where('dispatch.id = ?2')->setParameter(2, $dispatchId);
         }
 
         // Set the filtering logic
-        if (null !== $filter) {
+        if ($filter !== null) {
             $builder->andWhere('(dispatch.name LIKE ?1 OR dispatch.description LIKE ?1)');
             $builder->setParameter(1, '%' . $filter . '%');
         }
@@ -185,7 +185,7 @@ class Repository extends ModelRepository
         $builder->select(['dispatch']);
 
         // Set the filtering logic
-        if (null !== $filter) {
+        if ($filter !== null) {
             $builder->andWhere('(dispatch.name LIKE ?1 OR dispatch.description LIKE ?1)');
             $builder->setParameter(1, '%' . $filter . '%');
         }
@@ -229,7 +229,7 @@ class Repository extends ModelRepository
         $builder->from('Shopware\Models\Dispatch\ShippingCost', 'shippingcosts')->select(['shippingcosts']);
 
         // assure that we will get an empty result set when no dispatch ID is provided
-        if (is_null($dispatchId) || empty($dispatchId)) {
+        if ($dispatchId === null || empty($dispatchId)) {
             $dispatchId = '-1';
         }
         $builder->where('shippingcosts.dispatchId = :dispatchId')->setParameter('dispatchId', $dispatchId);
@@ -290,7 +290,7 @@ class Repository extends ModelRepository
         $builder = $this->getEntityManager()->createQueryBuilder();
 
         $filters = [];
-        if (null !== $filter && is_array($filter)) {
+        if ($filter !== null && is_array($filter)) {
             foreach ($filter as $singleFilter) {
                 $filters[$singleFilter['property']] = $singleFilter['value'];
             }
@@ -344,7 +344,7 @@ class Repository extends ModelRepository
     public function getCountryQueryBuilder($filter = null, $order = null)
     {
         $filters = [];
-        if (null !== $filter && is_array($filter)) {
+        if ($filter !== null && is_array($filter)) {
             foreach ($filter as $singleFilter) {
                 $filters[$singleFilter['property']] = $singleFilter['value'];
             }

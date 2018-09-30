@@ -11,14 +11,14 @@
 
 namespace Symfony\Component\Form;
 
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\EventDispatcher\ImmutableEventDispatcher;
 use Symfony\Component\Form\Exception\BadMethodCallException;
 use Symfony\Component\Form\Exception\InvalidArgumentException;
 use Symfony\Component\Form\Exception\UnexpectedTypeException;
 use Symfony\Component\PropertyAccess\PropertyPath;
 use Symfony\Component\PropertyAccess\PropertyPathInterface;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\EventDispatcher\ImmutableEventDispatcher;
 
 /**
  * A basic form configuration.
@@ -138,7 +138,7 @@ class FormConfigBuilder implements FormConfigBuilderInterface
     private $data;
 
     /**
-     * @var string
+     * @var string|null
      */
     private $dataClass;
 
@@ -181,7 +181,7 @@ class FormConfigBuilder implements FormConfigBuilderInterface
      * Creates an empty form configuration.
      *
      * @param string|int               $name       The form name
-     * @param string                   $dataClass  The class of the form's data
+     * @param string|null              $dataClass  The class of the form's data
      * @param EventDispatcherInterface $dispatcher The event dispatcher
      * @param array                    $options    The form options
      *
@@ -344,21 +344,6 @@ class FormConfigBuilder implements FormConfigBuilderInterface
     public function getInheritData()
     {
         return $this->inheritData;
-    }
-
-    /**
-     * Alias of {@link getInheritData()}.
-     *
-     * @return bool
-     *
-     * @deprecated since version 2.3, to be removed in 3.0.
-     *             Use {@link getInheritData()} instead.
-     */
-    public function getVirtual()
-    {
-        @trigger_error('The '.__METHOD__.' method is deprecated since Symfony 2.3 and will be removed in 3.0. Use the FormConfigBuilder::getInheritData() method instead.', E_USER_DEPRECATED);
-
-        return $this->getInheritData();
     }
 
     /**
@@ -711,21 +696,6 @@ class FormConfigBuilder implements FormConfigBuilderInterface
     }
 
     /**
-     * Alias of {@link setInheritData()}.
-     *
-     * @param bool $inheritData Whether the form should inherit its parent's data
-     *
-     * @deprecated since version 2.3, to be removed in 3.0.
-     *             Use {@link setInheritData()} instead.
-     */
-    public function setVirtual($inheritData)
-    {
-        @trigger_error('The '.__METHOD__.' method is deprecated since Symfony 2.3 and will be removed in 3.0. Use the FormConfigBuilder::setInheritData() method instead.', E_USER_DEPRECATED);
-
-        $this->setInheritData($inheritData);
-    }
-
-    /**
      * {@inheritdoc}
      */
     public function setCompound($compound)
@@ -820,7 +790,7 @@ class FormConfigBuilder implements FormConfigBuilderInterface
 
         $upperCaseMethod = strtoupper($method);
 
-        if (!in_array($upperCaseMethod, self::$allowedMethods)) {
+        if (!\in_array($upperCaseMethod, self::$allowedMethods)) {
             throw new InvalidArgumentException(sprintf(
                 'The form method is "%s", but should be one of "%s".',
                 $method,
@@ -887,7 +857,7 @@ class FormConfigBuilder implements FormConfigBuilderInterface
      */
     public static function validateName($name)
     {
-        if (null !== $name && !is_string($name) && !is_int($name)) {
+        if (null !== $name && !\is_string($name) && !\is_int($name)) {
             throw new UnexpectedTypeException($name, 'string, integer or null');
         }
 

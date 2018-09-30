@@ -25,6 +25,7 @@
 namespace Shopware\Bundle\AccountBundle\Service;
 
 use Doctrine\DBAL\Connection;
+use Enlight_Controller_Request_Request as Request;
 use Shopware\Bundle\AccountBundle\Service\Validator\CustomerValidatorInterface;
 use Shopware\Bundle\StoreFrontBundle\Service\Core\ContextService;
 use Shopware\Bundle\StoreFrontBundle\Struct\Shop;
@@ -108,7 +109,6 @@ class RegisterService implements RegisterServiceInterface
      * @param Customer     $customer
      * @param Address      $billing
      * @param Address|null $shipping
-     * @param bool         $sendOptinMail
      *
      * @throws \Exception
      */
@@ -116,14 +116,14 @@ class RegisterService implements RegisterServiceInterface
         Shop $shop,
         Customer $customer,
         Address $billing,
-        Address $shipping = null,
-        $sendOptinMail = false
+        Address $shipping = null
     ) {
         $this->modelManager->beginTransaction();
         try {
             $this->saveCustomer($shop, $customer);
             if (
-                $sendOptinMail &&
+                ($optinAttribute = $shop->getAttribute('sendOptinMail')) !== null &&
+                $optinAttribute->get('sendOptinMail') === true &&
                 $customer->getDoubleOptinRegister() &&
                 $customer->getDoubleOptinConfirmDate() === null
             ) {
@@ -188,7 +188,7 @@ class RegisterService implements RegisterServiceInterface
             $customer->setDoubleOptinEmailSentDate(new \DateTime());
         }
 
-        //password validation
+        // Password validation
         if ($customer->getPassword()) {
             $customer->setEncoderName(
                 $this->passwordManager->getDefaultPasswordEncoderName()
@@ -201,7 +201,7 @@ class RegisterService implements RegisterServiceInterface
             );
         }
 
-        //account mode validation
+        // Account mode validation
         if ($customer->getAccountMode() == Customer::ACCOUNT_MODE_FAST_LOGIN) {
             $customer->setPassword(md5(uniqid(rand())));
             $customer->setEncoderName('md5');
@@ -212,16 +212,16 @@ class RegisterService implements RegisterServiceInterface
         }
 
         $customer->setShop(
-            $this->modelManager->find('Shopware\Models\Shop\Shop', $shop->getParentId())
+            $this->modelManager->find(\Shopware\Models\Shop\Shop::class, $shop->getParentId())
         );
 
         $customer->setLanguageSubShop(
-            $this->modelManager->find('Shopware\Models\Shop\Shop', $shop->getId())
+            $this->modelManager->find(\Shopware\Models\Shop\Shop::class, $shop->getId())
         );
 
-        if (is_null($customer->getGroup())) {
+        if ($customer->getGroup() === null) {
             $customer->setGroup(
-                $this->modelManager->find('Shopware\Models\Customer\Group', $shop->getCustomerGroup()->getId())
+                $this->modelManager->find(\Shopware\Models\Customer\Group::class, $shop->getCustomerGroup()->getId())
             );
         }
 
@@ -307,6 +307,10 @@ class RegisterService implements RegisterServiceInterface
      */
     private function doubleOptInSaveHash(Customer $customer, $hash)
     {
+        /** @var Request $request */
+        $request = Shopware()->Container()->get('front')->Request();
+        $fromCheckout = ($request && $request->getParam('sTarget') === 'checkout');
+
         $sql = "INSERT INTO `s_core_optin` (`type`, `datum`, `hash`, `data`)
                 VALUES ('swRegister', ?, ?, ?)";
 
@@ -314,12 +318,13 @@ class RegisterService implements RegisterServiceInterface
         $storedData = [
             'customerId' => $customer->getId(),
             'register' => [
-                    'billing' => [
-                            'firstname' => $customer->getFirstname(),
-                            'lastname' => $customer->getLastname(),
-                            'salutation' => $customer->getSalutation(),
-                        ],
+                'billing' => [
+                    'firstname' => $customer->getFirstname(),
+                    'lastname' => $customer->getLastname(),
+                    'salutation' => $customer->getSalutation(),
+                    ],
                 ],
+            'fromCheckout' => $fromCheckout,
         ];
 
         $this->connection->executeQuery($sql, [$customer->getDoubleOptinEmailSentDate()->format('Y-m-d H:i:s'), $hash, serialize($storedData)]);

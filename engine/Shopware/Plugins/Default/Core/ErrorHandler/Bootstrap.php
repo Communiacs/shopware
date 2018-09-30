@@ -37,7 +37,7 @@ use Shopware\Components\Logger;
 class Shopware_Plugins_Core_ErrorHandler_Bootstrap extends Shopware_Components_Plugin_Bootstrap
 {
     /**
-     * @var callback
+     * @var callable
      */
     protected static $_origErrorHandler;
 

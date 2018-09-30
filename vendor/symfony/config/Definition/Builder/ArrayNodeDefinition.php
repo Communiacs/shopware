@@ -12,8 +12,8 @@
 namespace Symfony\Component\Config\Definition\Builder;
 
 use Symfony\Component\Config\Definition\ArrayNode;
-use Symfony\Component\Config\Definition\PrototypedArrayNode;
 use Symfony\Component\Config\Definition\Exception\InvalidDefinitionException;
+use Symfony\Component\Config\Definition\PrototypedArrayNode;
 
 /**
  * This class provides a fluent interface for defining an array node.
@@ -73,6 +73,62 @@ class ArrayNodeDefinition extends NodeDefinition implements ParentNodeDefinition
     public function prototype($type)
     {
         return $this->prototype = $this->getNodeBuilder()->node(null, $type)->setParent($this);
+    }
+
+    /**
+     * @return VariableNodeDefinition
+     */
+    public function variablePrototype()
+    {
+        return $this->prototype('variable');
+    }
+
+    /**
+     * @return ScalarNodeDefinition
+     */
+    public function scalarPrototype()
+    {
+        return $this->prototype('scalar');
+    }
+
+    /**
+     * @return BooleanNodeDefinition
+     */
+    public function booleanPrototype()
+    {
+        return $this->prototype('boolean');
+    }
+
+    /**
+     * @return IntegerNodeDefinition
+     */
+    public function integerPrototype()
+    {
+        return $this->prototype('integer');
+    }
+
+    /**
+     * @return FloatNodeDefinition
+     */
+    public function floatPrototype()
+    {
+        return $this->prototype('float');
+    }
+
+    /**
+     * @return ArrayNodeDefinition
+     */
+    public function arrayPrototype()
+    {
+        return $this->prototype('array');
+    }
+
+    /**
+     * @return EnumNodeDefinition
+     */
+    public function enumPrototype()
+    {
+        return $this->prototype('enum');
     }
 
     /**
@@ -356,6 +412,10 @@ class ArrayNodeDefinition extends NodeDefinition implements ParentNodeDefinition
                 $node->setKeyAttribute($this->key, $this->removeKeyItem);
             }
 
+            if (false === $this->allowEmptyValue) {
+                @trigger_error(sprintf('Using %s::cannotBeEmpty() at path "%s" has no effect, consider requiresAtLeastOneElement() instead. In 4.0 both methods will behave the same.', __CLASS__, $node->getPath()), E_USER_DEPRECATED);
+            }
+
             if (true === $this->atLeastOne) {
                 $node->setMinNumberOfElements(1);
             }
@@ -381,6 +441,7 @@ class ArrayNodeDefinition extends NodeDefinition implements ParentNodeDefinition
         $node->addEquivalentValue(false, $this->falseEquivalent);
         $node->setPerformDeepMerging($this->performDeepMerging);
         $node->setRequired($this->required);
+        $node->setDeprecated($this->deprecationMessage);
         $node->setIgnoreExtraKeys($this->ignoreExtraKeys, $this->removeExtraKeys);
         $node->setNormalizeKeys($this->normalizeKeys);
 
@@ -414,6 +475,10 @@ class ArrayNodeDefinition extends NodeDefinition implements ParentNodeDefinition
             throw new InvalidDefinitionException(
                 sprintf('->useAttributeAsKey() is not applicable to concrete nodes at path "%s"', $path)
             );
+        }
+
+        if (false === $this->allowEmptyValue) {
+            @trigger_error(sprintf('->cannotBeEmpty() is not applicable to concrete nodes at path "%s". In 4.0 it will throw an exception.', $path), E_USER_DEPRECATED);
         }
 
         if (true === $this->atLeastOne) {
@@ -457,13 +522,13 @@ class ArrayNodeDefinition extends NodeDefinition implements ParentNodeDefinition
                 );
             }
 
-            if (null !== $this->key && (null === $this->addDefaultChildren || is_int($this->addDefaultChildren) && $this->addDefaultChildren > 0)) {
+            if (null !== $this->key && (null === $this->addDefaultChildren || \is_int($this->addDefaultChildren) && $this->addDefaultChildren > 0)) {
                 throw new InvalidDefinitionException(
                     sprintf('->addDefaultChildrenIfNoneSet() should set default children names as ->useAttributeAsKey() is used at path "%s"', $path)
                 );
             }
 
-            if (null === $this->key && (is_string($this->addDefaultChildren) || is_array($this->addDefaultChildren))) {
+            if (null === $this->key && (\is_string($this->addDefaultChildren) || \is_array($this->addDefaultChildren))) {
                 throw new InvalidDefinitionException(
                     sprintf('->addDefaultChildrenIfNoneSet() might not set default children names as ->useAttributeAsKey() is not used at path "%s"', $path)
                 );

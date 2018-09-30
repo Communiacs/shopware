@@ -11,10 +11,15 @@
 
 namespace Symfony\Component\HttpKernel;
 
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpFoundation\Exception\RequestExceptionInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Controller\ArgumentResolver;
+use Symfony\Component\HttpKernel\Controller\ArgumentResolverInterface;
 use Symfony\Component\HttpKernel\Controller\ControllerResolverInterface;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Symfony\Component\HttpKernel\Event\FilterControllerArgumentsEvent;
 use Symfony\Component\HttpKernel\Event\FilterControllerEvent;
 use Symfony\Component\HttpKernel\Event\FilterResponseEvent;
 use Symfony\Component\HttpKernel\Event\FinishRequestEvent;
@@ -22,11 +27,9 @@ use Symfony\Component\HttpKernel\Event\GetResponseEvent;
 use Symfony\Component\HttpKernel\Event\GetResponseForControllerResultEvent;
 use Symfony\Component\HttpKernel\Event\GetResponseForExceptionEvent;
 use Symfony\Component\HttpKernel\Event\PostResponseEvent;
-use Symfony\Component\HttpFoundation\Exception\ConflictingHeadersException;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * HttpKernel notifies events to convert a Request object to a Response one.
@@ -38,12 +41,20 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
     protected $dispatcher;
     protected $resolver;
     protected $requestStack;
+    private $argumentResolver;
 
-    public function __construct(EventDispatcherInterface $dispatcher, ControllerResolverInterface $resolver, RequestStack $requestStack = null)
+    public function __construct(EventDispatcherInterface $dispatcher, ControllerResolverInterface $resolver, RequestStack $requestStack = null, ArgumentResolverInterface $argumentResolver = null)
     {
         $this->dispatcher = $dispatcher;
         $this->resolver = $resolver;
         $this->requestStack = $requestStack ?: new RequestStack();
+        $this->argumentResolver = $argumentResolver;
+
+        if (null === $this->argumentResolver) {
+            @trigger_error(sprintf('As of 3.1 an %s is used to resolve arguments. In 4.0 the $argumentResolver becomes the %s if no other is provided instead of using the $resolver argument.', ArgumentResolverInterface::class, ArgumentResolver::class), E_USER_DEPRECATED);
+            // fallback in case of deprecations
+            $this->argumentResolver = $resolver;
+        }
     }
 
     /**
@@ -56,8 +67,8 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
         try {
             return $this->handleRaw($request, $type);
         } catch (\Exception $e) {
-            if ($e instanceof ConflictingHeadersException) {
-                $e = new BadRequestHttpException('The request headers contain conflicting information regarding the origin of this request.', $e);
+            if ($e instanceof RequestExceptionInterface) {
+                $e = new BadRequestHttpException($e->getMessage(), $e);
             }
             if (false === $catch) {
                 $this->finishRequest($request, $type);
@@ -129,7 +140,12 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
         $controller = $event->getController();
 
         // controller arguments
-        $arguments = $this->resolver->getArguments($request, $controller);
+        $arguments = $this->argumentResolver->getArguments($request, $controller);
+
+        $event = new FilterControllerArgumentsEvent($this, $controller, $arguments, $request, $type);
+        $this->dispatcher->dispatch(KernelEvents::CONTROLLER_ARGUMENTS, $event);
+        $controller = $event->getController();
+        $arguments = $event->getArguments();
 
         // call controller
         $response = \call_user_func_array($controller, $arguments);
@@ -224,10 +240,12 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
 
         // the developer asked for a specific status code
         if ($response->headers->has('X-Status-Code')) {
+            @trigger_error(sprintf('Using the X-Status-Code header is deprecated since Symfony 3.3 and will be removed in 4.0. Use %s::allowCustomResponseCode() instead.', GetResponseForExceptionEvent::class), E_USER_DEPRECATED);
+
             $response->setStatusCode($response->headers->get('X-Status-Code'));
 
             $response->headers->remove('X-Status-Code');
-        } elseif (!$response->isClientError() && !$response->isServerError() && !$response->isRedirect()) {
+        } elseif (!$event->isAllowingCustomResponseCode() && !$response->isClientError() && !$response->isServerError() && !$response->isRedirect()) {
             // ensure that we actually have an error response
             if ($e instanceof HttpExceptionInterface) {
                 // keep the HTTP status code and headers
@@ -247,11 +265,11 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
 
     private function varToString($var)
     {
-        if (is_object($var)) {
-            return sprintf('Object(%s)', get_class($var));
+        if (\is_object($var)) {
+            return sprintf('Object(%s)', \get_class($var));
         }
 
-        if (is_array($var)) {
+        if (\is_array($var)) {
             $a = array();
             foreach ($var as $k => $v) {
                 $a[] = sprintf('%s => %s', $k, $this->varToString($v));
@@ -260,7 +278,7 @@ class HttpKernel implements HttpKernelInterface, TerminableInterface
             return sprintf('Array(%s)', implode(', ', $a));
         }
 
-        if (is_resource($var)) {
+        if (\is_resource($var)) {
             return sprintf('Resource(%s)', get_resource_type($var));
         }
 

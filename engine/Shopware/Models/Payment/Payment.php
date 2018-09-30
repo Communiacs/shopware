@@ -83,12 +83,14 @@ class Payment extends ModelEntity
      * @ORM\OneToMany(targetEntity="Shopware\Models\Payment\PaymentInstance", mappedBy="paymentMean")
      */
     protected $paymentInstances;
+
     /**
      * @var \Doctrine\Common\Collections\ArrayCollection
      *
      * @ORM\OneToMany(targetEntity="Shopware\Models\Customer\PaymentData", mappedBy="paymentMean")
      */
     protected $paymentData;
+
     /**
      * @var int
      *

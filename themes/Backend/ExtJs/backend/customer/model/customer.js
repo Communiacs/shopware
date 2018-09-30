@@ -50,6 +50,7 @@ Ext.define('Shopware.apps.Customer.model.Customer', {
     fields: [
         // {block name="backend/customer/model/customer/fields"}{/block}
         { name: 'newPassword', type: 'string' },
+        { name: 'changed', type: 'date' },
         { name: 'amount', type: 'float' },
         { name: 'orderCount', type: 'int' },
         { name: 'failedLogins', type: 'int' },
@@ -123,8 +124,8 @@ Ext.define('Shopware.apps.Customer.model.Customer', {
      * @array
      */
     associations: [
-        { type: 'hasMany', model: 'Shopware.apps.Customer.model.Billing', name: 'getBilling', associationKey: 'billing' },
-        { type: 'hasMany', model: 'Shopware.apps.Customer.model.Shipping', name: 'getShipping', associationKey: 'shipping' },
+        { type: 'hasMany', model: 'Shopware.apps.Customer.model.Address', name: 'getDefaultBillingAddress', associationKey: 'defaultBillingAddress' },
+        { type: 'hasMany', model: 'Shopware.apps.Customer.model.Address', name: 'getDefaultShippingAddress', associationKey: 'defaultShippingAddress' },
         { type: 'hasMany', model: 'Shopware.apps.Customer.model.Debit', name: 'getDebit', associationKey: 'debit' },
         { type: 'hasMany', model: 'Shopware.apps.Customer.model.PaymentData', name: 'getPaymentData', associationKey: 'paymentData' }
     ]

@@ -24,6 +24,8 @@
 
 namespace Shopware\Bundle\EmotionBundle\Service;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use IteratorAggregate;
 use Shopware\Bundle\EmotionBundle\ComponentHandler\ComponentHandlerInterface;
 use Shopware\Bundle\EmotionBundle\ComponentHandler\EventComponentHandler;
 use Shopware\Bundle\EmotionBundle\Service\Gateway\EmotionElementGateway;
@@ -40,9 +42,9 @@ class EmotionElementService implements EmotionElementServiceInterface
     private $gateway;
 
     /**
-     * @var array
+     * @var ComponentHandlerInterface[]
      */
-    private $componentHandler = [];
+    private $componentHandler;
 
     /**
      * @var EventComponentHandler
@@ -55,17 +57,29 @@ class EmotionElementService implements EmotionElementServiceInterface
     private $dataCollectionResolver;
 
     /**
-     * @param array                           $componentHandler
+     * @var \Enlight_Event_EventManager
+     */
+    private $eventManager;
+
+    /**
+     * @param IteratorAggregate               $componentHandler
      * @param EmotionElementGateway           $gateway
      * @param EventComponentHandler           $eventComponentHandler
      * @param DataCollectionResolverInterface $dataCollectionResolver
+     * @param \Enlight_Event_EventManager     $eventManager
      */
-    public function __construct(array $componentHandler, EmotionElementGateway $gateway, EventComponentHandler $eventComponentHandler, DataCollectionResolverInterface $dataCollectionResolver)
-    {
+    public function __construct(
+        IteratorAggregate $componentHandler,
+        EmotionElementGateway $gateway,
+        EventComponentHandler $eventComponentHandler,
+        DataCollectionResolverInterface $dataCollectionResolver,
+        \Enlight_Event_EventManager $eventManager
+    ) {
         $this->gateway = $gateway;
         $this->eventComponentHandler = $eventComponentHandler;
-        $this->componentHandler = $componentHandler;
         $this->dataCollectionResolver = $dataCollectionResolver;
+        $this->eventManager = $eventManager;
+        $this->componentHandler = $this->registerComponentHandlers(iterator_to_array($componentHandler, false));
     }
 
     /**
@@ -91,10 +105,8 @@ class EmotionElementService implements EmotionElementServiceInterface
     {
         $prepareCollection = new PrepareDataCollection();
 
-        /**
-         * @var int
-         * @var Element[] $elements
-         */
+        /** @var int $emotionId */
+        /** @var Element[] $elements */
         foreach ($elementList as $emotionId => $elements) {
             foreach ($elements as $element) {
                 $this->prepareElement($prepareCollection, $element, $context);
@@ -103,10 +115,8 @@ class EmotionElementService implements EmotionElementServiceInterface
 
         $resolvedCollection = $this->dataCollectionResolver->resolve($prepareCollection, $context);
 
-        /**
-         * @var int
-         * @var Element[] $elements
-         */
+        /** @var int $emotionId */
+        /** @var Element[] $elements */
         foreach ($elementList as $emotionId => $elements) {
             foreach ($elements as $element) {
                 $this->handleElement($resolvedCollection, $element, $context);
@@ -143,6 +153,7 @@ class EmotionElementService implements EmotionElementServiceInterface
      */
     private function findElementHandler(Element $element)
     {
+        /** @var ComponentHandlerInterface $handler */
         foreach ($this->componentHandler as $handler) {
             if ($handler->supports($element)) {
                 return $handler;
@@ -150,5 +161,23 @@ class EmotionElementService implements EmotionElementServiceInterface
         }
 
         return $this->eventComponentHandler;
+    }
+
+    /**
+     * @param array $serviceComponentHandlers
+     *
+     * @throws \Enlight_Event_Exception
+     *
+     * @return array
+     */
+    private function registerComponentHandlers(array $serviceComponentHandlers)
+    {
+        $componentHandlers = new ArrayCollection();
+        $componentHandlers = $this->eventManager->collect(
+            'Shopware_Emotion_Collect_Emotion_Component_Handlers',
+            $componentHandlers
+        );
+
+        return array_merge($serviceComponentHandlers, $componentHandlers->toArray());
     }
 }

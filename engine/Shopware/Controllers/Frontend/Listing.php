@@ -352,14 +352,6 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
         ];
 
         $content['canonicalParams'] = $canonicalParams;
-
-        $path = $this->Front()->Router()->assemble($canonicalParams);
-
-        if ($path) {
-            /* @deprecated */
-            $content['sSelfCanonical'] = $path;
-        }
-
         $content['metaTitle'] = $manufacturer->getMetaTitle();
         $content['title'] = $manufacturer->getName();
         $content['productBoxLayout'] = $this->get('config')->get('manufacturerProductBoxLayout');

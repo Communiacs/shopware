@@ -658,13 +658,27 @@ class Repository extends ModelRepository
         }
 
         $builder->select($selection)
-                ->from('Shopware\Models\Category\Category', 'category')
+                ->from(Category::class, 'category')
                 ->where('category.id = :id')
-                ->setParameter('id', $id);
+                ->setParameter('id', (int) $id);
 
         $result = $builder->getQuery()->getOneOrNullResult(
             \Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY
         );
+
+        if (Shopware()->Container()->initialized('shop')) {
+            $translationComponent = Shopware()->Container()->get('translation');
+            $shopId = Shopware()->Shop()->getId();
+            $fallbackId = null;
+            if (Shopware()->Shop()->getFallback()) {
+                $fallbackId = Shopware()->Shop()->getFallback()->getId();
+            }
+
+            $translations = $translationComponent->readWithFallback($shopId, $fallbackId, 'category', $id);
+            if (isset($translations) && isset($translations['description']) && (isset($result['name']) || $fields === 'name')) {
+                $result['name'] = $translations['description'];
+            }
+        }
 
         if (is_array($fields)) {
             return $result;

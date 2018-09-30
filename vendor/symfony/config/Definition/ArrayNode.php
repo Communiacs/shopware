@@ -52,7 +52,7 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
      */
     protected function preNormalize($value)
     {
-        if (!$this->normalizeKeys || !is_array($value)) {
+        if (!$this->normalizeKeys || !\is_array($value)) {
             return $value;
         }
 
@@ -196,7 +196,7 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
     public function addChild(NodeInterface $node)
     {
         $name = $node->getName();
-        if (!strlen($name)) {
+        if (!\strlen($name)) {
             throw new \InvalidArgumentException('Child nodes must be named.');
         }
         if (isset($this->children[$name])) {
@@ -240,6 +240,10 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
                 continue;
             }
 
+            if ($child->isDeprecated()) {
+                @trigger_error($child->getDeprecationMessage($name, $this->getPath()), E_USER_DEPRECATED);
+            }
+
             try {
                 $value[$name] = $child->finalize($value[$name]);
             } catch (UnsetKeyException $e) {
@@ -259,11 +263,11 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
      */
     protected function validateType($value)
     {
-        if (!is_array($value) && (!$this->allowFalse || false !== $value)) {
+        if (!\is_array($value) && (!$this->allowFalse || false !== $value)) {
             $ex = new InvalidTypeException(sprintf(
                 'Invalid type for path "%s". Expected array, but got %s',
                 $this->getPath(),
-                gettype($value)
+                \gettype($value)
             ));
             if ($hint = $this->getInfo()) {
                 $ex->addHint($hint);
@@ -302,8 +306,8 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
         }
 
         // if extra fields are present, throw exception
-        if (count($value) && !$this->ignoreExtraKeys) {
-            $msg = sprintf('Unrecognized option%s "%s" under "%s"', 1 === count($value) ? '' : 's', implode(', ', array_keys($value)), $this->getPath());
+        if (\count($value) && !$this->ignoreExtraKeys) {
+            $msg = sprintf('Unrecognized option%s "%s" under "%s"', 1 === \count($value) ? '' : 's', implode(', ', array_keys($value)), $this->getPath());
             $ex = new InvalidConfigurationException($msg);
             $ex->setPath($this->getPath());
 
@@ -322,9 +326,7 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
      */
     protected function remapXml($value)
     {
-        foreach ($this->xmlRemappings as $transformation) {
-            list($singular, $plural) = $transformation;
-
+        foreach ($this->xmlRemappings as list($singular, $plural)) {
             if (!isset($value[$singular])) {
                 continue;
             }

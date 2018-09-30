@@ -25,7 +25,6 @@
 namespace Shopware\Commands;
 
 use Shopware\Bundle\PluginInstallerBundle\Service\InstallerService;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -95,6 +94,6 @@ EOF
 
         $pluginManager->activatePlugin($plugin);
 
-        $output->writeln(sprintf('Plugin %s has been activated successfully.', $pluginName));
+        $output->writeln(sprintf('Plugin %s has been activated successfully. Consider sw:cache:clear to enable possible behaviors that come with the plugin.', $pluginName));
     }
 }

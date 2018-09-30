@@ -11,8 +11,8 @@
 
 namespace Symfony\Component\Config\Definition\Builder;
 
-use Symfony\Component\Config\Definition\NodeInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidDefinitionException;
+use Symfony\Component\Config\Definition\NodeInterface;
 
 /**
  * This class provides a fluent interface for defining a node.
@@ -27,6 +27,7 @@ abstract class NodeDefinition implements NodeParentInterface
     protected $defaultValue;
     protected $default = false;
     protected $required = false;
+    protected $deprecationMessage = null;
     protected $merge;
     protected $allowEmptyValue = true;
     protected $nullEquivalent;
@@ -156,6 +157,23 @@ abstract class NodeDefinition implements NodeParentInterface
     public function isRequired()
     {
         $this->required = true;
+
+        return $this;
+    }
+
+    /**
+     * Sets the node as deprecated.
+     *
+     * You can use %node% and %path% placeholders in your message to display,
+     * respectively, the node name and its complete path.
+     *
+     * @param string $message Deprecation message
+     *
+     * @return $this
+     */
+    public function setDeprecated($message = 'The child node "%node%" at path "%path%" is deprecated.')
+    {
+        $this->deprecationMessage = $message;
 
         return $this;
     }

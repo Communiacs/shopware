@@ -25,6 +25,8 @@ use Doctrine\DBAL\Connection;
 use Shopware\Bundle\AccountBundle\Service\AddressServiceInterface;
 use Shopware\Bundle\AttributeBundle\Service\CrudService;
 use Shopware\Bundle\StoreFrontBundle;
+use Shopware\Components\Cart\BasketHelperInterface;
+use Shopware\Components\Cart\Struct\DiscountContext;
 use Shopware\Components\NumberRangeIncrementerInterface;
 use Shopware\Components\Random;
 use Shopware\Components\Validator\EmailValidatorInterface;
@@ -166,6 +168,19 @@ class sAdmin
     private $connection;
 
     /**
+     * @var BasketHelperInterface
+     */
+    private $basketHelper;
+
+    /**
+     * @var array
+     */
+    private $cache = [
+        'country' => [],
+        'payment' => [],
+    ];
+
+    /**
      * @param Enlight_Components_Db_Adapter_Pdo_Mysql|null          $db
      * @param Enlight_Event_EventManager|null                       $eventManager
      * @param Shopware_Components_Config|null                       $config
@@ -174,7 +189,7 @@ class sAdmin
      * @param \Shopware\Components\Password\Manager|null            $passwordEncoder
      * @param Shopware_Components_Snippet_Manager|null              $snippetManager
      * @param Shopware_Components_Modules|null                      $moduleManager
-     * @param sSystem|null                                          $systemModule
+     * @param \sSystem|null                                         $systemModule
      * @param StoreFrontBundle\Service\ContextServiceInterface|null $contextService
      * @param EmailValidatorInterface|null                          $emailValidator
      * @param AddressServiceInterface|null                          $addressService
@@ -191,7 +206,7 @@ class sAdmin
         \Shopware\Components\Password\Manager $passwordEncoder = null,
         Shopware_Components_Snippet_Manager $snippetManager = null,
         Shopware_Components_Modules $moduleManager = null,
-        sSystem $systemModule = null,
+        \sSystem $systemModule = null,
         StoreFrontBundle\Service\ContextServiceInterface $contextService = null,
         EmailValidatorInterface $emailValidator = null,
         AddressServiceInterface $addressService = null,
@@ -221,6 +236,7 @@ class sAdmin
         $this->numberRangeIncrementer = $numberRangeIncrementer ?: Shopware()->Container()->get('shopware.number_range_incrementer');
         $this->translationComponent = $translationComponent ?: Shopware()->Container()->get('translation');
         $this->connection = $connection ?: Shopware()->Container()->get('dbal_connection');
+        $this->basketHelper = Shopware()->Container()->get('shopware.cart.basket_helper');
     }
 
     /**
@@ -247,7 +263,7 @@ class sAdmin
         ) ?: [];
 
         $sEsd = $this->moduleManager->Basket()->sCheckForESD();
-        $isMobile = ($this->front->Request()->getDeviceType() == 'mobile');
+        $isMobile = $this->front->Request()->getDeviceType() === 'mobile';
 
         if (!count($user)) {
             $user = [];
@@ -1082,8 +1098,8 @@ class sAdmin
             }
 
             $countryList[$key]['flag'] =
-                ($countryList[$key]['id'] == $this->front->Request()->getPost('country')
-                    || $countryList[$key]['id'] == $this->front->Request()->getPost('countryID')
+                ($this->front->Request()->getPost('country') == $countryList[$key]['id']
+                    || $this->front->Request()->getPost('countryID') == $countryList[$key]['id']
                 );
         }
 
@@ -1648,7 +1664,7 @@ class sAdmin
      */
     public function sRiskCUSTOMERGROUPIS($user, $order, $value)
     {
-        return $user['additional']['user']['customergroup'] == $value;
+        return $value == $user['additional']['user']['customergroup'];
     }
 
     /**
@@ -1662,7 +1678,7 @@ class sAdmin
      */
     public function sRiskCUSTOMERGROUPISNOT($user, $order, $value)
     {
-        return $user['additional']['user']['customergroup'] != $value;
+        return $value != $user['additional']['user']['customergroup'];
     }
 
     /**
@@ -1680,7 +1696,7 @@ class sAdmin
             $value = '';
         }
 
-        return $user['shippingaddress']['zipcode'] == $value;
+        return $value == $user['shippingaddress']['zipcode'];
     }
 
     /**
@@ -1698,7 +1714,7 @@ class sAdmin
             $value = '';
         }
 
-        return $user['billingaddress']['zipcode'] == $value;
+        return $value == $user['billingaddress']['zipcode'];
     }
 
     /**
@@ -1712,7 +1728,7 @@ class sAdmin
      */
     public function sRiskZONEIS($user, $order, $value)
     {
-        return $user['additional']['countryShipping']['countryarea'] == $value;
+        return $value == $user['additional']['countryShipping']['countryarea'];
     }
 
     /**
@@ -1726,7 +1742,7 @@ class sAdmin
      */
     public function sRiskZONEISNOT($user, $order, $value)
     {
-        return $user['additional']['countryShipping']['countryarea'] != $value;
+        return $value != $user['additional']['countryShipping']['countryarea'];
     }
 
     /**
@@ -1740,7 +1756,7 @@ class sAdmin
      */
     public function sRiskBILLINGZONEIS($user, $order, $value)
     {
-        return $user['additional']['country']['countryarea'] == $value;
+        return $value == $user['additional']['country']['countryarea'];
     }
 
     /**
@@ -1754,7 +1770,7 @@ class sAdmin
      */
     public function sRiskBILLINGZONEISNOT($user, $order, $value)
     {
-        return $user['additional']['country']['countryarea'] != $value;
+        return $value != $user['additional']['country']['countryarea'];
     }
 
     /**
@@ -1772,7 +1788,7 @@ class sAdmin
             return true;
         }
 
-        return $user['additional']['countryShipping']['countryiso'] == $value;
+        return $value == $user['additional']['countryShipping']['countryiso'];
     }
 
     /**
@@ -1790,7 +1806,7 @@ class sAdmin
             return true;
         }
 
-        return $user['additional']['countryShipping']['countryiso'] != $value;
+        return $value != $user['additional']['countryShipping']['countryiso'];
     }
 
     /**
@@ -1808,7 +1824,7 @@ class sAdmin
             return true;
         }
 
-        return $user['additional']['country']['countryiso'] == $value;
+        return $value == $user['additional']['country']['countryiso'];
     }
 
     /**
@@ -1826,7 +1842,7 @@ class sAdmin
             return true;
         }
 
-        return $user['additional']['country']['countryiso'] != $value;
+        return $value != $user['additional']['country']['countryiso'];
     }
 
     /**
@@ -1841,9 +1857,8 @@ class sAdmin
     public function sRiskNEWCUSTOMER($user, $order, $value)
     {
         return
-            $user['additional']['user']['firstlogin'] == date('Y-m-d')
-            || !$user['additional']['user']['firstlogin']
-            ;
+            date('Y-m-d') == $user['additional']['user']['firstlogin']
+            || !$user['additional']['user']['firstlogin'];
     }
 
     /**
@@ -1858,8 +1873,7 @@ class sAdmin
     public function sRiskORDERPOSITIONSMORE($user, $order, $value)
     {
         return
-            is_array($order['content']) ? count($order['content']) : $order['content'] >= $value
-            ;
+            is_array($order['content']) ? count($order['content']) : $order['content'] >= $value;
     }
 
     /**
@@ -2147,8 +2161,7 @@ class sAdmin
             ) || (
                 trim($user['shippingaddress']['zipcode'])
                 != trim($user['billingaddress']['zipcode'])
-            )
-            ;
+            );
     }
 
     /**
@@ -2162,7 +2175,7 @@ class sAdmin
      */
     public function sRiskCUSTOMERNR($user, $order, $value)
     {
-        return $user['additional']['user']['customernumber'] == $value && !empty($value);
+        return $value == $user['additional']['user']['customernumber'] && !empty($value);
     }
 
     /**
@@ -2180,8 +2193,7 @@ class sAdmin
 
         return
             preg_match("/$value/", strtolower($user['shippingaddress']['lastname']))
-            || preg_match("/$value/", strtolower($user['billingaddress']['lastname']))
-            ;
+            || preg_match("/$value/", strtolower($user['billingaddress']['lastname']));
     }
 
     /**
@@ -2411,12 +2423,11 @@ class sAdmin
      */
     public function sGetCountry($country)
     {
-        static $cache = [];
         if (empty($country)) {
             return false;
         }
-        if (isset($cache[$country])) {
-            return $cache[$country];
+        if (isset($this->cache['country'][$country])) {
+            return $this->cache['country'][$country];
         }
 
         if (is_numeric($country)) {
@@ -2435,7 +2446,7 @@ class sAdmin
             WHERE $sql
         ";
 
-        return $cache[$country] = $this->db->fetchRow($sql) ?: [];
+        return $this->cache['country'][$country] = $this->db->fetchRow($sql) ?: [];
     }
 
     /**
@@ -2448,12 +2459,11 @@ class sAdmin
      */
     public function sGetPaymentMean($payment)
     {
-        static $cache = [];
         if (empty($payment)) {
             return false;
         }
-        if (isset($cache[$payment])) {
-            return $cache[$payment];
+        if (isset($this->cache['payment'][$payment])) {
+            return $this->cache['payment'][$payment];
         }
         if (is_numeric($payment)) {
             $sql = $this->db->quoteInto('id = ?', $payment);
@@ -2467,20 +2477,20 @@ class sAdmin
             SELECT * FROM s_core_paymentmeans
             WHERE $sql
         ";
-        $cache[$payment] = $this->db->fetchRow($sql) ?: [];
+        $this->cache['payment'][$payment] = $this->db->fetchRow($sql) ?: [];
 
-        $cache[$payment]['country_surcharge'] = [];
-        if (!empty($cache[$payment]['surchargestring'])) {
-            foreach (explode(';', $cache[$payment]['surchargestring']) as $countrySurcharge) {
+        $this->cache['payment'][$payment]['country_surcharge'] = [];
+        if (!empty($this->cache['payment'][$payment]['surchargestring'])) {
+            foreach (explode(';', $this->cache['payment'][$payment]['surchargestring']) as $countrySurcharge) {
                 list($key, $value) = explode(':', $countrySurcharge);
                 $value = (float) str_replace(',', '.', $value);
                 if (!empty($value)) {
-                    $cache[$payment]['country_surcharge'][$key] = $value;
+                    $this->cache['payment'][$payment]['country_surcharge'][$key] = $value;
                 }
             }
         }
 
-        return $cache[$payment];
+        return $this->cache['payment'][$payment];
     }
 
     /**
@@ -2495,24 +2505,31 @@ class sAdmin
      */
     public function sGetDispatchBasket($countryID = null, $paymentID = null, $stateId = null)
     {
-        $sql_select = '';
+        $addSelect = [];
         $premiumShippingBasketSelect = $this->config->get('sPREMIUMSHIPPIUNGASKETSELECT');
         if (!empty($premiumShippingBasketSelect)) {
-            $sql_select .= ', ' . $premiumShippingBasketSelect;
+            $addSelect[] = $premiumShippingBasketSelect;
         }
-        $calculations = $this->db->fetchPairs(
-            'SELECT id, calculation_sql
-            FROM s_premium_dispatch
-            WHERE active = 1 AND calculation = 3'
-        );
+
+        $calculations = $this->connection->createQueryBuilder()
+            ->select(['id', 'calculation_sql'])
+            ->from('s_premium_dispatch')
+            ->where('active = 1')
+            ->andWhere('calculation = 3')
+            ->execute()->fetchAll(\PDO::FETCH_KEY_PAIR);
+
         if (!empty($calculations)) {
             foreach ($calculations as $dispatchID => $calculation) {
                 if (empty($calculation)) {
                     $calculation = $this->db->quote($calculation);
                 }
-                $sql_select .= ', (' . $calculation . ') as calculation_value_' . $dispatchID;
+                $addSelect[] = '(' . $calculation . ') as calculation_value_' . $dispatchID;
             }
         }
+
+        $userId = $this->session->offsetGet('sUserId');
+        $sessionId = $this->session->offsetGet('sessionId');
+
         if (empty($this->sSYSTEM->sUSERGROUPDATA['tax']) && !empty($this->sSYSTEM->sUSERGROUPDATA['id'])) {
             $amount = 'b.quantity*ROUND(CAST(b.price as DECIMAL(10,2))*(100+t.tax)/100,2)';
             $amount_net = 'b.quantity*CAST(b.price as DECIMAL(10,2))';
@@ -2521,67 +2538,30 @@ class sAdmin
             $amount_net = 'b.quantity*ROUND(CAST(b.price as DECIMAL(10,2))/(100+t.tax)*100,2)';
         }
 
-        $sql = "
-            SELECT
-                MIN(d.instock>=b.quantity) as instock,
-                MIN(d.instock>=(b.quantity+d.stockmin)) as stockmin,
-                MIN(a.laststock) as laststock,
-                SUM(d.weight*b.quantity) as weight,
-                SUM(IF(a.id,b.quantity,0)) as count_article,
-                MAX(b.shippingfree) as shippingfree,
-                SUM(IF(b.modus=0,$amount/b.currencyFactor,0)) as amount,
-                SUM(IF(b.modus=0,$amount_net/b.currencyFactor,0)) as amount_net,
-                SUM(CAST(b.price as DECIMAL(10,2))*b.quantity) as amount_display,
-                MAX(d.length) as `length`,
-                MAX(d.height) as height,
-                MAX(d.width) as width,
-                u.id as userID
-                $sql_select
-            FROM s_order_basket b
+        $queryBuilder = $this->getBasketQueryBuilder($amount, $amount_net);
 
-            LEFT JOIN s_articles a
-            ON b.articleID = a.id
-            AND b.modus = 0
-            AND b.esdarticle = 0
+        $queryBuilder->setParameters([
+            'userId' => $userId,
+            'sessionId' => empty($sessionId) ? session_id() : $sessionId,
+            'billingAddressId' => $this->getBillingAddressId(),
+            'shippingAddressId' => $this->getShippingAddressId(),
+        ]);
 
-            LEFT JOIN s_articles_details d
-            ON (d.ordernumber = b.ordernumber)
-            AND d.articleID = a.id
+        foreach ($addSelect as $select) {
+            $queryBuilder->addSelect($select);
+        }
 
-            LEFT JOIN s_articles_attributes at
-            ON at.articledetailsID = d.id
-
-            LEFT JOIN s_core_tax t
-            ON t.id = a.taxID
-
-            LEFT JOIN s_user u
-            ON u.id = :userId
-            AND u.active = 1
-
-            LEFT JOIN s_user_addresses as ub
-                ON ub.user_id = u.id
-                AND ub.id = :billingAddressId
-              
-            LEFT JOIN s_user_addresses as us
-                ON us.user_id = u.id
-                AND us.id = :shippingAddressId
-                
-            WHERE b.sessionID = :sessionId
-
-            GROUP BY b.sessionID
-        ";
-
-        $userId = $this->session->offsetGet('sUserId');
-        $sessionId = $this->session->offsetGet('sessionId');
-        $basket = $this->db->fetchRow(
-            $sql,
+        $this->eventManager->notify(
+            'Shopware_Modules_Admin_GetDispatchBasket_QueryBuilder',
             [
-                'userId' => $userId,
-                'sessionId' => empty($sessionId) ? session_id() : $sessionId,
-                'billingAddressId' => $this->getBillingAddressId(),
-                'shippingAddressId' => $this->getShippingAddressId(),
+                'queryBuilder' => $queryBuilder,
+                'amount' => $amount,
+                'amount_net' => $amount_net,
             ]
         );
+
+        $basket = $queryBuilder->execute()->fetch(\PDO::FETCH_ASSOC);
+
         if ($basket === false) {
             return false;
         }
@@ -2625,7 +2605,7 @@ class sAdmin
             [(int) $this->contextService->getShopContext()->getShop()->getId()]
         );
         // Main id is null, so we use the current shop id
-        if (is_null($mainId)) {
+        if ($mainId === null) {
             $mainId = (int) $this->contextService->getShopContext()->getShop()->getId();
         }
         $basket['basketStateId'] = (int) $stateId;
@@ -2681,115 +2661,103 @@ class sAdmin
 
         $basket = $this->sGetDispatchBasket($countryID, $paymentID, $stateId);
 
-        $statements = $this->db->fetchPairs("
-            SELECT id, bind_sql
-            FROM s_premium_dispatch
-            WHERE active = 1 AND type IN (0)
-            AND bind_sql IS NOT NULL AND bind_sql != ''
-        ");
+        $statements = $this->connection->createQueryBuilder()
+            ->select('id', 'bind_sql')
+            ->from('s_premium_dispatch')
+            ->where('active = 1 AND type IN (0)')
+            ->andWhere('bind_sql IS NOT NULL AND bind_sql != ""')
+            ->execute()
+            ->fetchAll(\PDO::FETCH_KEY_PAIR);
 
         if (empty($basket)) {
             return [];
         }
 
-        $sql_where = '';
+        $sqlAndWhere = [];
         foreach ($statements as $dispatchID => $statement) {
-            $sql_where .= " AND ( d.id != $dispatchID OR ($statement)) ";
+            $sqlAndWhere[] = "(d.id != $dispatchID OR ($statement))";
         }
 
-        $sql_basket = [];
+        $sqlBasket = [];
         foreach ($basket as $key => $value) {
-            $sql_basket[] = $this->db->quote($value) . " as `$key`";
+            $sqlBasket[] = $this->connection->quote($value) . " as `$key`";
         }
-        $sql_basket = implode(', ', $sql_basket);
+        $sqlBasket = implode(',', $sqlBasket);
 
-        $sql = "
-            SELECT
-                d.id as `key`,
-                d.id, d.name,
-                d.description,
-                d.calculation,
-                d.status_link,
-                b.*
-            FROM s_premium_dispatch d
+        $joinSubSelect = $this->connection->createQueryBuilder()
+            ->select('dc.dispatchID')
+            ->from('s_order_basket', 'b')
+            ->join('b', 's_articles_categories_ro', 'ac', 'ac.articleID = b.articleID')
+            ->join('ac', 's_premium_dispatch_categories', 'dc', 'dc.categoryID = ac.categoryID')
+            ->where('b.modus = 0')
+            ->andWhere('b.sessionID = :sessionId')
+            ->groupBy('dc.dispatchID');
 
-            JOIN ( SELECT $sql_basket ) b
-            JOIN s_premium_dispatch_countries dc
-            ON d.id = dc.dispatchID
-            AND dc.countryID=b.countryID
-            JOIN s_premium_dispatch_paymentmeans dp
-            ON d.id = dp.dispatchID
-            AND dp.paymentID=b.paymentID
-            LEFT JOIN s_premium_holidays h
-            ON h.date = CURDATE()
-            LEFT JOIN s_premium_dispatch_holidays dh
-            ON d.id=dh.dispatchID
-            AND h.id=dh.holidayID
-
-            LEFT JOIN (
-                SELECT dc.dispatchID
-                FROM s_order_basket b
-                JOIN s_articles_categories_ro ac
-                ON ac.articleID=b.articleID
-                JOIN s_premium_dispatch_categories dc
-                ON dc.categoryID=ac.categoryID
-                WHERE b.modus=0
-                AND b.sessionID='{$this->session->offsetGet('sessionId')}'
-                GROUP BY dc.dispatchID
-            ) as dk
-            ON dk.dispatchID=d.id
-
-            LEFT JOIN s_user u
-            ON u.id=b.userID
-            AND u.active=1
-
-            LEFT JOIN s_user_addresses as ub
-                ON ub.user_id = u.id
-                AND ub.id = :billingAddressId
-              
-            LEFT JOIN s_user_addresses as us
-                ON us.user_id = u.id
-                AND us.id = :shippingAddressId
-
-            WHERE d.active=1
-            AND (
+        $queryBuilder = $this->connection->createQueryBuilder();
+        $queryBuilder->select([
+            'd.id as `key`',
+            'd.id, d.name',
+            'd.description',
+            'd.calculation',
+            'd.status_link',
+            'b.*',
+        ])
+            ->from('s_premium_dispatch', 'd')
+            ->join('d', sprintf('(SELECT %s)', $sqlBasket), 'b', '1=1')
+            ->join('d', 's_premium_dispatch_countries', 'dc', 'd.id = dc.dispatchID AND dc.countryID=b.countryID')
+            ->join('d', 's_premium_dispatch_paymentmeans', 'dp', 'd.id = dp.dispatchID AND dp.paymentID=b.paymentID')
+            ->leftJoin('d', 's_premium_holidays', 'h', 'h.date = CURDATE()')
+            ->leftJoin('d', 's_premium_dispatch_holidays', 'dh', 'd.id=dh.dispatchID AND h.id=dh.holidayID')
+            ->leftJoin('d', sprintf('(%s)', $joinSubSelect->getSQL()), 'dk', 'dk.dispatchID=d.id')
+            ->leftJoin('b', 's_user', 'u', ' u.id=b.userID AND u.active=1')
+            ->leftJoin('u', 's_user_addresses', 'ub', 'ub.user_id = u.id AND ub.id = :billingAddressId')
+            ->leftJoin('u', 's_user_addresses', 'us', 'us.user_id = u.id AND us.id = :shippingAddressId')
+            ->where('d.active = 1')
+            ->andWhere('(
                 (bind_time_from IS NULL AND bind_time_to IS NULL)
-            OR
-                (IFNULL(bind_time_from,0) <= IFNULL(bind_time_to,86400) AND TIME_TO_SEC(DATE_FORMAT(NOW(),'%H:%i:00')) BETWEEN IFNULL(bind_time_from,0) AND IFNULL(bind_time_to,86400))
-            OR
-                (bind_time_from > bind_time_to AND TIME_TO_SEC(DATE_FORMAT(NOW(),'%H:%i:00')) NOT BETWEEN bind_time_to AND bind_time_from)
-            )
-            AND (
+                OR
+                (IFNULL(bind_time_from,0) <= IFNULL(bind_time_to,86400) AND TIME_TO_SEC(DATE_FORMAT(NOW(),"%H:%i:00")) BETWEEN IFNULL(bind_time_from,0) AND IFNULL(bind_time_to,86400))
+                OR
+                (bind_time_from > bind_time_to AND TIME_TO_SEC(DATE_FORMAT(NOW(),"%H:%i:00")) NOT BETWEEN bind_time_to AND bind_time_from)
+            )')
+            ->andWhere('(
                 (bind_weekday_from IS NULL AND bind_weekday_to IS NULL)
-            OR
+                OR
                 (IFNULL(bind_weekday_from,1) <= IFNULL(bind_weekday_to,7) AND WEEKDAY(NOW())+1 BETWEEN IFNULL(bind_weekday_from,1) AND IFNULL(bind_weekday_to,7))
-            OR
+                OR
                 (bind_weekday_from > bind_weekday_to AND WEEKDAY(NOW())+1 NOT BETWEEN bind_weekday_to AND bind_weekday_from)
-            )
-            AND (bind_weight_from IS NULL OR bind_weight_from <= b.weight)
-            AND (bind_weight_to IS NULL OR bind_weight_to >= b.weight)
-            AND (bind_price_from IS NULL OR bind_price_from <= b.amount)
-            AND (bind_price_to IS NULL OR bind_price_to >= b.amount)
-            AND (bind_instock=0 OR bind_instock IS NULL OR (bind_instock=1 AND b.instock) OR (bind_instock=2 AND b.stockmin))
-            AND (bind_laststock=0 OR (bind_laststock=1 AND b.laststock))
-            AND (bind_shippingfree!=1 OR NOT b.shippingfree)
-            AND dh.holidayID IS NULL
-            AND (d.multishopID IS NULL OR d.multishopID=b.multishopID)
-            AND (d.customergroupID IS NULL OR d.customergroupID=b.customergroupID)
-            AND dk.dispatchID IS NULL
-            AND d.type IN (0)
-            $sql_where
-            GROUP BY d.id
-            ORDER BY d.position, d.name
-        ";
+            )')
+            ->andWhere('(bind_weight_from IS NULL OR bind_weight_from <= b.weight)')
+            ->andWhere('(bind_weight_to IS NULL OR bind_weight_to >= b.weight)')
+            ->andWhere('(bind_price_from IS NULL OR bind_price_from <= b.amount)')
+            ->andWhere('(bind_price_to IS NULL OR bind_price_to >= b.amount)')
+            ->andWhere('(bind_instock=0 OR bind_instock IS NULL OR (bind_instock=1 AND b.instock) OR (bind_instock=2 AND b.stockmin))')
+            ->andWhere('(bind_laststock=0 OR (bind_laststock=1 AND b.laststock))')
+            ->andWhere('(bind_shippingfree!=1 OR NOT b.shippingfree)')
+            ->andWhere('dh.holidayID IS NULL')
+            ->andWhere('(d.multishopID IS NULL OR d.multishopID=b.multishopID)')
+            ->andWhere('(d.customergroupID IS NULL OR d.customergroupID=b.customergroupID)')
+            ->andWhere('dk.dispatchID IS NULL')
+            ->andWhere('d.type IN (0)')
+            ->groupBy('d.id')
+            ->orderBy('d.position, d.name');
 
-        $dispatches = $this->db->fetchAssoc(
-            $sql,
+        foreach ($sqlAndWhere as $andWhere) {
+            $queryBuilder->andWhere($andWhere);
+        }
+
+        $queryBuilder->setParameter('sessionId', $this->session->offsetGet('sessionId'));
+        $queryBuilder->setParameter('billingAddressId', $this->getBillingAddressId());
+        $queryBuilder->setParameter('shippingAddressId', $this->getShippingAddressId());
+
+        $this->eventManager->notify(
+            'Shopware_Modules_Admin_GetPremiumDispatches_QueryBuilder',
             [
-                'billingAddressId' => $this->getBillingAddressId(),
-                'shippingAddressId' => $this->getShippingAddressId(),
+                'queryBuilder' => $queryBuilder,
             ]
         );
+
+        $dispatches = $queryBuilder->execute()->fetchAll(\PDO::FETCH_GROUP | \PDO::FETCH_UNIQUE);
 
         if (empty($dispatches)) {
             $sql = '
@@ -2958,16 +2926,23 @@ class sAdmin
             GROUP BY d.id
         ";
 
-        return $this->calculateDispatchSurcharge(
-            $basket,
-            $this->db->fetchAll(
-                $sql,
-                [
-                    'billingAddressId' => $this->getBillingAddressId(),
-                    'shippingAddressId' => $this->getShippingAddressId(),
-                ]
-            )
+        $dispatches = $this->db->fetchAll(
+            $sql,
+            [
+                'billingAddressId' => $this->getBillingAddressId(),
+                'shippingAddressId' => $this->getShippingAddressId(),
+            ]
         );
+
+        $surcharge = $this->calculateDispatchSurcharge($basket, $dispatches);
+
+        $surcharge = $this->eventManager->filter(
+            'Shopware_Modules_Admin_sGetPremiumDispatchSurcharge_FilterSurcharge',
+            $surcharge,
+            ['subject' => $this, 'dispatches' => $dispatches]
+        );
+
+        return $surcharge;
     }
 
     /**
@@ -3134,6 +3109,9 @@ class sAdmin
         if ($result['brutto'] < 0) {
             return ['brutto' => 0, 'netto' => 0];
         }
+
+        $result['taxMode'] = $dispatch['tax_calculation'];
+
         if (empty($dispatch['tax_calculation'])) {
             $result['tax'] = $basket['max_tax'];
         } else {
@@ -3218,8 +3196,8 @@ class sAdmin
      * Sends a mail to the given recipient with a given template.
      * If the opt in parameter is set, the sConfirmLink variable will be filled by the opt in link.
      *
-     * @param $recipient
-     * @param $template
+     * @param        $recipient
+     * @param        $template
      * @param string $optIn
      */
     private function sendMail($recipient, $template, $optIn = '')
@@ -3434,15 +3412,19 @@ SQL;
      * Called when provided user data is incorrect
      * Handles account lockdown detection and brute force protection
      *
-     * @param $addScopeSql
-     * @param $email
-     * @param $sErrorMessages
-     * @param $password
+     * @param string        $addScopeSql
+     * @param string        $email
+     * @param null|string[] $sErrorMessages
+     * @param string        $password
      *
      * @return array
      */
     private function failedLoginUser($addScopeSql, $email, $sErrorMessages, $password)
     {
+        if ($sErrorMessages === null) {
+            $sErrorMessages = [];
+        }
+
         // Check if account is disabled or not verified yet
         $sql = 'SELECT id, doubleOptinRegister, doubleOptinEmailSentDate, doubleOptinConfirmDate, email, firstname, lastname, salutation
                 FROM s_user
@@ -3507,7 +3489,7 @@ SQL;
 
         $this->eventManager->notify(
             'Shopware_Modules_Admin_Login_Failure',
-            ['subject' => $this, 'email' => $getUser['email'], 'password' => $password, 'error' => $sErrorMessages]
+            ['subject' => $this, 'email' => $email, 'password' => $password, 'error' => $sErrorMessages]
         );
 
         $this->session->offsetUnset('sUserMail');
@@ -4000,22 +3982,37 @@ SQL;
             $basket_discount_net = $basket_discount_net * -1;
             $basket_discount = $basket_discount * -1;
 
-            $this->db->insert(
-                's_order_basket',
-                [
-                    'sessionID' => $this->session->offsetGet('sessionId'),
-                    'articlename' => '- ' . $percent . ' % ' . $discount_basket_name,
-                    'articleID' => 0,
-                    'ordernumber' => $discount_basket_ordernumber,
-                    'quantity' => 1,
-                    'price' => $basket_discount,
-                    'netprice' => $basket_discount_net,
-                    'tax_rate' => $tax_rate,
-                    'datum' => new Zend_Date(),
-                    'modus' => 3,
-                    'currencyFactor' => $currencyFactor,
-                ]
-            );
+            if ($this->config->get('proportionalTaxCalculation') && !$this->session->get('taxFree')) {
+                $this->basketHelper->addProportionalDiscount(
+                    new DiscountContext(
+                        $this->session->get('sessionId'),
+                        BasketHelperInterface::DISCOUNT_ABSOLUTE,
+                        $basket_discount,
+                        '- ' . $percent . ' % ' . $discount_basket_name,
+                        $discount_basket_ordernumber,
+                        3,
+                        $this->sSYSTEM->sCurrency['factor'],
+                        !$this->sSYSTEM->sUSERGROUPDATA['tax'] && $this->sSYSTEM->sUSERGROUPDATA['id']
+                    )
+                );
+            } else {
+                $this->db->insert(
+                    's_order_basket',
+                    [
+                        'sessionID' => $this->session->offsetGet('sessionId'),
+                        'articlename' => '- ' . $percent . ' % ' . $discount_basket_name,
+                        'articleID' => 0,
+                        'ordernumber' => $discount_basket_ordernumber,
+                        'quantity' => 1,
+                        'price' => $basket_discount,
+                        'netprice' => $basket_discount_net,
+                        'tax_rate' => $tax_rate,
+                        'datum' => new Zend_Date(),
+                        'modus' => 3,
+                        'currencyFactor' => $currencyFactor,
+                    ]
+                );
+            }
         }
     }
 
@@ -4046,22 +4043,37 @@ SQL;
             }
             $tax_rate = $discount_tax;
 
-            $this->db->insert(
-                's_order_basket',
-                [
-                    'sessionID' => $this->session->offsetGet('sessionId'),
-                    'articlename' => $discount_name,
-                    'articleID' => 0,
-                    'ordernumber' => $discount_ordernumber,
-                    'quantity' => 1,
-                    'price' => $discount,
-                    'netprice' => $discount_net,
-                    'tax_rate' => $tax_rate,
-                    'datum' => new Zend_Date(),
-                    'modus' => 4,
-                    'currencyFactor' => $currencyFactor,
-                ]
-            );
+            if (!$this->session->get('taxFree') && $this->config->get('proportionalTaxCalculation')) {
+                $this->basketHelper->addProportionalDiscount(
+                    new DiscountContext(
+                        $this->session->get('sessionId'),
+                        BasketHelperInterface::DISCOUNT_ABSOLUTE,
+                        $discount,
+                        $discount_name,
+                        $discount_ordernumber,
+                        4,
+                        $this->sSYSTEM->sCurrency['factor'],
+                        !$this->sSYSTEM->sUSERGROUPDATA['tax'] && $this->sSYSTEM->sUSERGROUPDATA['id']
+                    )
+                );
+            } else {
+                $this->db->insert(
+                    's_order_basket',
+                    [
+                        'sessionID' => $this->session->offsetGet('sessionId'),
+                        'articlename' => $discount_name,
+                        'articleID' => 0,
+                        'ordernumber' => $discount_ordernumber,
+                        'quantity' => 1,
+                        'price' => $discount,
+                        'netprice' => $discount_net,
+                        'tax_rate' => $tax_rate,
+                        'datum' => new Zend_Date(),
+                        'modus' => 4,
+                        'currencyFactor' => $currencyFactor,
+                    ]
+                );
+            }
         }
     }
 
@@ -4077,9 +4089,6 @@ SQL;
      */
     private function handlePaymentMeanSurcharge($country, $payment, $currencyFactor, $dispatch, $discount_tax)
     {
-        $surcharge_name = $this->snippetManager
-            ->getNamespace('backend/static/discounts_surcharges')
-            ->get('payment_surcharge_absolute', 'Surcharge for payment');
         $surcharge_ordernumber = $this->config->get('sPAYMENTSURCHARGEABSOLUTENUMBER', 'PAYMENTSURCHARGEABSOLUTENUMBER');
         $percent_ordernumber = $this->config->get('sPAYMENTSURCHARGENUMBER', 'PAYMENTSURCHARGE');
 
@@ -4095,28 +4104,53 @@ SQL;
             $payment['surcharge'] = 0;
             if (empty($this->sSYSTEM->sUSERGROUPDATA['tax']) && !empty($this->sSYSTEM->sUSERGROUPDATA['id'])) {
                 $surcharge_net = $surcharge;
-            //$tax_rate = 0;
             } else {
                 $surcharge_net = round($surcharge / (100 + $discount_tax) * 100, 2);
             }
 
             $tax_rate = $discount_tax;
-            $this->db->insert(
-                's_order_basket',
-                [
-                    'sessionID' => $this->session->offsetGet('sessionId'),
-                    'articlename' => $surcharge_name,
-                    'articleID' => 0,
-                    'ordernumber' => $surcharge_ordernumber,
-                    'quantity' => 1,
-                    'price' => $surcharge,
-                    'netprice' => $surcharge_net,
-                    'tax_rate' => $tax_rate,
-                    'datum' => new Zend_Date(),
-                    'modus' => 4,
-                    'currencyFactor' => $currencyFactor,
-                ]
-            );
+
+            if ($surcharge > 0) {
+                $surcharge_name = $this->snippetManager
+                    ->getNamespace('backend/static/discounts_surcharges')
+                    ->get('payment_surcharge_add');
+            } else {
+                $surcharge_name = $this->snippetManager
+                    ->getNamespace('backend/static/discounts_surcharges')
+                    ->get('payment_surcharge_dev');
+            }
+
+            if ($this->config->get('proportionalTaxCalculation') && !$this->session->get('taxFree')) {
+                $this->basketHelper->addProportionalDiscount(
+                    new DiscountContext(
+                        $this->session->get('sessionId'),
+                        BasketHelperInterface::DISCOUNT_ABSOLUTE,
+                        $surcharge,
+                        $surcharge_name,
+                        $surcharge_ordernumber,
+                        4,
+                        $this->sSYSTEM->sCurrency['factor'],
+                        !$this->sSYSTEM->sUSERGROUPDATA['tax'] && $this->sSYSTEM->sUSERGROUPDATA['id']
+                    )
+                );
+            } else {
+                $this->db->insert(
+                    's_order_basket',
+                    [
+                        'sessionID' => $this->session->offsetGet('sessionId'),
+                        'articlename' => $surcharge_name,
+                        'articleID' => 0,
+                        'ordernumber' => $surcharge_ordernumber,
+                        'quantity' => 1,
+                        'price' => $surcharge,
+                        'netprice' => $surcharge_net,
+                        'tax_rate' => $tax_rate,
+                        'datum' => new Zend_Date(),
+                        'modus' => 4,
+                        'currencyFactor' => $currencyFactor,
+                    ]
+                );
+            }
         }
 
         // Percentage surcharge
@@ -4147,22 +4181,38 @@ SQL;
             }
 
             $tax_rate = $discount_tax;
-            $this->db->insert(
-                's_order_basket',
-                [
-                    'sessionID' => $this->session->offsetGet('sessionId'),
-                    'articlename' => $percent_name,
-                    'articleID' => 0,
-                    'ordernumber' => $percent_ordernumber,
-                    'quantity' => 1,
-                    'price' => $percent,
-                    'netprice' => $percent_net,
-                    'tax_rate' => $tax_rate,
-                    'datum' => new Zend_Date(),
-                    'modus' => 4,
-                    'currencyFactor' => $currencyFactor,
-                ]
-            );
+
+            if ($this->config->get('proportionalTaxCalculation') && !$this->session->get('taxFree')) {
+                $this->basketHelper->addProportionalDiscount(
+                    new DiscountContext(
+                        $this->session->get('sessionId'),
+                        BasketHelperInterface::DISCOUNT_PERCENT,
+                        $payment['debit_percent'],
+                        $percent_name,
+                        $percent_ordernumber,
+                        4,
+                        $this->sSYSTEM->sCurrency['factor'],
+                        !$this->sSYSTEM->sUSERGROUPDATA['tax'] && $this->sSYSTEM->sUSERGROUPDATA['id']
+                    )
+                );
+            } else {
+                $this->db->insert(
+                    's_order_basket',
+                    [
+                        'sessionID' => $this->session->offsetGet('sessionId'),
+                        'articlename' => $percent_name,
+                        'articleID' => 0,
+                        'ordernumber' => $percent_ordernumber,
+                        'quantity' => 1,
+                        'price' => $percent,
+                        'netprice' => $percent_net,
+                        'tax_rate' => $tax_rate,
+                        'datum' => new Zend_Date(),
+                        'modus' => 4,
+                        'currencyFactor' => $currencyFactor,
+                    ]
+                );
+            }
         }
 
         return $payment;
@@ -4259,5 +4309,43 @@ SQL;
     {
         return $config->get('newsletterCaptcha') !== 'nocaptcha' &&
             !($config->get('noCaptchaAfterLogin') && Shopware()->Modules()->Admin()->sCheckUser());
+    }
+
+    /**
+     * @param string $amount
+     * @param string $amount_net
+     *
+     * @return \Doctrine\DBAL\Query\QueryBuilder
+     */
+    private function getBasketQueryBuilder($amount, $amount_net)
+    {
+        $queryBuilder = $this->connection->createQueryBuilder()
+            ->select([
+                'MIN(d.instock>=b.quantity) as instock',
+                'MIN(d.instock>=(b.quantity+d.stockmin)) as stockmin',
+                'MIN(a.laststock) as laststock',
+                'SUM(d.weight*b.quantity) as weight',
+                'SUM(IF(a.id,b.quantity,0)) as count_article',
+                'MAX(b.shippingfree) as shippingfree',
+                'SUM(IF(b.modus=0,' . $amount . '/b.currencyFactor,0)) as amount',
+                'SUM(IF(b.modus=0,' . $amount_net . '/b.currencyFactor,0)) as amount_net',
+                'SUM(CAST(b.price as DECIMAL(10,2))*b.quantity) as amount_display',
+                'MAX(d.length) as `length`',
+                'MAX(d.height) as height',
+                'MAX(d.width) as width',
+                'u.id as userID',
+            ])
+            ->from('s_order_basket', 'b')
+            ->leftJoin('b', 's_articles', 'a', 'b.articleID = a.id AND b.modus = 0 AND b.esdarticle = 0')
+            ->leftJoin('a', 's_articles_details', 'd', '(d.ordernumber = b.ordernumber) AND d.articleID = a.id')
+            ->leftJoin('d', 's_articles_attributes', 'at', 'at.articledetailsID = d.id')
+            ->leftJoin('a', 's_core_tax', 't', 't.id = a.taxID')
+            ->leftJoin('b', 's_user', 'u', 'u.id = :userId AND u.active = 1')
+            ->leftJoin('u', 's_user_addresses', 'ub', 'ub.user_id = u.id AND ub.id = :billingAddressId')
+            ->leftJoin('u', 's_user_addresses', 'us', 'us.user_id = u.id AND us.id = :shippingAddressId')
+            ->where('b.sessionID = :sessionId')
+            ->groupBy('b.sessionID');
+
+        return $queryBuilder;
     }
 }

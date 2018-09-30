@@ -555,7 +555,7 @@ class ProductListingVariationLoader
     {
         $cheapestPrices = [];
 
-        if (null !== $variantFacet) {
+        if ($variantFacet !== null) {
             $expandGroupIds = $variantFacet->getExpandGroupIds();
         } else {
             $expandGroupIds = [];
@@ -617,7 +617,7 @@ class ProductListingVariationLoader
     {
         $availabilityList = [];
 
-        if (null !== $variantFacet) {
+        if ($variantFacet !== null) {
             $expandGroupIds = $variantFacet->getExpandGroupIds();
         } else {
             $expandGroupIds = [];

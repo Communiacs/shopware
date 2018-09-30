@@ -82,6 +82,10 @@ Ext.define('Shopware.apps.Customer.controller.Detail', {
             errorTitle: '{s name=message/account/error_title}Failure{/s}',
             errorText: '{s name=message/account/error_text}There is an error occurred while saving.{/s}'
         },
+        overwriteCustomer: {
+            title: '{s name=overwriteCustomer/title}Overwrite most recent changes{/s}',
+            message: '{s name=overwriteCustomer/message}Do you really want to overwrite the latest changes?{/s}',
+        },
 
         unlock: {
             successTitle: '{s name=base/unlock_customer/success_title}Successfully{/s}',
@@ -373,15 +377,7 @@ Ext.define('Shopware.apps.Customer.controller.Detail', {
                 addressData[field.getName()] = field.getValue();
             });
 
-            var addressModel = Ext.create('Shopware.apps.Customer.model.Address', addressData),
-                billingModel = Ext.create('Shopware.apps.Customer.model.Billing'),
-                shippingModel = Ext.create('Shopware.apps.Customer.model.Shipping');
-
-            billingModel.fromAddress(addressModel);
-            shippingModel.fromAddress(addressModel);
-
-            model.getBilling().add(billingModel);
-            model.getShipping().add(shippingModel);
+            var addressModel = Ext.create('Shopware.apps.Customer.model.Address', addressData);
         }
 
         form.getForm().updateRecord(model);
@@ -419,6 +415,15 @@ Ext.define('Shopware.apps.Customer.controller.Detail', {
                     quickView.getStore().load();
                 } else {
                     Shopware.Notification.createGrowlMessage(me.snippets.password.errorTitle, me.snippets.password.errorText + '<br> ' + rawData.message, me.snippets.growlMessage);
+
+                    if (rawData.overwriteAble) {
+                        Ext.MessageBox.confirm(me.snippets.overwriteCustomer.title, me.snippets.overwriteCustomer.message, function (response) {
+                            if (response === 'yes') {
+                                record.set('changed', rawData.data.changed);
+                                me.onSaveCustomer(btn);
+                            }
+                        });
+                    }
                 }
             }
         });

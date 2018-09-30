@@ -38,6 +38,8 @@ use Shopware\Models\Category\Category;
  * @category  Shopware
  *
  * @copyright Copyright (c) shopware AG (http://www.shopware.com)
+ *
+ * @deprecated Will be removed in Shopware 5.6
  */
 class SitemapXMLRepository
 {
@@ -228,7 +230,7 @@ class SitemapXMLRepository
     {
         $blogs = [];
 
-        $categoryRepository = $this->em->getRepository('Shopware\Models\Category\Category');
+        $categoryRepository = $this->em->getRepository(\Shopware\Models\Category\Category::class);
         $query = $categoryRepository->getBlogCategoriesByParentQuery($parentId);
         $blogCategories = $query->getArrayResult();
 
@@ -305,10 +307,10 @@ class SitemapXMLRepository
     private function getSitesByShopId($shopId)
     {
         $sql = '
-            SELECT groups.key
+            SELECT static_groups.key
             FROM s_core_shop_pages shopPages
-              INNER JOIN s_cms_static_groups groups
-                ON groups.id = shopPages.group_id
+              INNER JOIN s_cms_static_groups static_groups
+                ON static_groups.id = shopPages.group_id
             WHERE shopPages.shop_id = ?
         ';
 
@@ -322,7 +324,8 @@ class SitemapXMLRepository
         foreach ($keys as $key) {
             $current = $siteRepository->getSitesByNodeNameQueryBuilder($key, $shopId)
                 ->resetDQLPart('from')
-                ->from('Shopware\Models\Site\Site', 'sites', 'sites.id')
+                ->from(\Shopware\Models\Site\Site::class, 'sites', 'sites.id')
+                ->andWhere('sites.active = 1')
                 ->getQuery()
                 ->getArrayResult();
 

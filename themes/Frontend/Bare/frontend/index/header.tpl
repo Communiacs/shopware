@@ -42,6 +42,12 @@
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="default">
     {/block}
+
+    {block name="frontend_index_header_hreflangs"}
+        {foreach from=$sHrefLinks item=hrefLink}
+            <link rel="alternate" hreflang="{$hrefLink->getLocale()}" href="{$hrefLink->getLink()}" />
+        {/foreach}
+    {/block}
 {/block}
 
 {* Set favicons and touch icons for all different sizes *}
@@ -97,9 +103,6 @@
         <script src="{link file='frontend/_public/src/js/vendors/modernizr/modernizr.custom.35977.js'}"></script>
     {/if}
 {/block}
-
-{* Block for IE specific stylesheets - @deprecated due to the stylesheets are now merged *}
-{block name="frontend_index_header_css_ie"}{/block}
 
 {* Block for tracking codes which are required to include in the `head` section of the document *}
 {block name="frontend_index_header_javascript_tracking"}{/block}

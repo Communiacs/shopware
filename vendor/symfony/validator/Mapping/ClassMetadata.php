@@ -17,7 +17,6 @@ use Symfony\Component\Validator\Constraints\Traverse;
 use Symfony\Component\Validator\Constraints\Valid;
 use Symfony\Component\Validator\Exception\ConstraintDefinitionException;
 use Symfony\Component\Validator\Exception\GroupDefinitionException;
-use Symfony\Component\Validator\ValidationVisitorInterface;
 
 /**
  * Default implementation of {@link ClassMetadataInterface}.
@@ -27,7 +26,7 @@ use Symfony\Component\Validator\ValidationVisitorInterface;
  * @author Bernhard Schussek <bschussek@gmail.com>
  * @author Fabien Potencier <fabien@symfony.com>
  */
-class ClassMetadata extends ElementMetadata implements ClassMetadataInterface
+class ClassMetadata extends GenericMetadata implements ClassMetadataInterface
 {
     /**
      * @var string
@@ -128,47 +127,6 @@ class ClassMetadata extends ElementMetadata implements ClassMetadataInterface
 
     /**
      * {@inheritdoc}
-     *
-     * @deprecated since version 2.5, to be removed in 3.0.
-     */
-    public function accept(ValidationVisitorInterface $visitor, $value, $group, $propertyPath, $propagatedGroup = null)
-    {
-        @trigger_error('The '.__METHOD__.' method is deprecated since Symfony 2.5 and will be removed in 3.0.', E_USER_DEPRECATED);
-
-        if (null === $propagatedGroup && Constraint::DEFAULT_GROUP === $group
-                && ($this->hasGroupSequence() || $this->isGroupSequenceProvider())) {
-            if ($this->hasGroupSequence()) {
-                $groups = $this->getGroupSequence()->groups;
-            } else {
-                $groups = $value->getGroupSequence();
-            }
-
-            foreach ($groups as $group) {
-                $this->accept($visitor, $value, $group, $propertyPath, Constraint::DEFAULT_GROUP);
-
-                if (count($visitor->getViolations()) > 0) {
-                    break;
-                }
-            }
-
-            return;
-        }
-
-        $visitor->visit($this, $value, $group, $propertyPath);
-
-        if (null !== $value) {
-            $pathPrefix = empty($propertyPath) ? '' : $propertyPath.'.';
-
-            foreach ($this->getConstrainedProperties() as $property) {
-                foreach ($this->getPropertyMetadata($property) as $member) {
-                    $member->accept($visitor, $member->getPropertyValue($value), $group, $pathPrefix.$property, $propagatedGroup);
-                }
-            }
-        }
-    }
-
-    /**
-     * {@inheritdoc}
      */
     public function __sleep()
     {
@@ -221,17 +179,17 @@ class ClassMetadata extends ElementMetadata implements ClassMetadataInterface
      */
     public function addConstraint(Constraint $constraint)
     {
-        if (!in_array(Constraint::CLASS_CONSTRAINT, (array) $constraint->getTargets())) {
+        if (!\in_array(Constraint::CLASS_CONSTRAINT, (array) $constraint->getTargets())) {
             throw new ConstraintDefinitionException(sprintf(
                 'The constraint "%s" cannot be put on classes.',
-                get_class($constraint)
+                \get_class($constraint)
             ));
         }
 
         if ($constraint instanceof Valid) {
             throw new ConstraintDefinitionException(sprintf(
                 'The constraint "%s" cannot be put on classes.',
-                get_class($constraint)
+                \get_class($constraint)
             ));
         }
 
@@ -377,7 +335,7 @@ class ClassMetadata extends ElementMetadata implements ClassMetadataInterface
     /**
      * Merges the constraints of the given metadata into this object.
      */
-    public function mergeConstraints(ClassMetadata $source)
+    public function mergeConstraints(self $source)
     {
         if ($source->isGroupSequenceProvider()) {
             $this->setGroupSequenceProvider(true);
@@ -392,7 +350,7 @@ class ClassMetadata extends ElementMetadata implements ClassMetadataInterface
                 $member = clone $member;
 
                 foreach ($member->getConstraints() as $constraint) {
-                    if (in_array($constraint::DEFAULT_GROUP, $constraint->groups, true)) {
+                    if (\in_array($constraint::DEFAULT_GROUP, $constraint->groups, true)) {
                         $member->constraintsByGroup[$this->getDefaultGroup()][] = $constraint;
                     }
 
@@ -412,52 +370,6 @@ class ClassMetadata extends ElementMetadata implements ClassMetadataInterface
                 }
             }
         }
-    }
-
-    /**
-     * Adds a member metadata.
-     *
-     * @param MemberMetadata $metadata
-     *
-     * @deprecated since version 2.6, to be removed in 3.0.
-     */
-    protected function addMemberMetadata(MemberMetadata $metadata)
-    {
-        @trigger_error('The '.__METHOD__.' method is deprecated since Symfony 2.6 and will be removed in 3.0. Use the addPropertyMetadata() method instead.', E_USER_DEPRECATED);
-
-        $this->addPropertyMetadata($metadata);
-    }
-
-    /**
-     * Returns true if metadatas of members is present for the given property.
-     *
-     * @param string $property The name of the property
-     *
-     * @return bool
-     *
-     * @deprecated since version 2.6, to be removed in 3.0. Use {@link hasPropertyMetadata} instead.
-     */
-    public function hasMemberMetadatas($property)
-    {
-        @trigger_error('The '.__METHOD__.' method is deprecated since Symfony 2.6 and will be removed in 3.0. Use the hasPropertyMetadata() method instead.', E_USER_DEPRECATED);
-
-        return $this->hasPropertyMetadata($property);
-    }
-
-    /**
-     * Returns all metadatas of members describing the given property.
-     *
-     * @param string $property The name of the property
-     *
-     * @return MemberMetadata[] An array of MemberMetadata
-     *
-     * @deprecated since version 2.6, to be removed in 3.0. Use {@link getPropertyMetadata} instead.
-     */
-    public function getMemberMetadatas($property)
-    {
-        @trigger_error('The '.__METHOD__.' method is deprecated since Symfony 2.6 and will be removed in 3.0. Use the getPropertyMetadata() method instead.', E_USER_DEPRECATED);
-
-        return $this->getPropertyMetadata($property);
     }
 
     /**
@@ -503,15 +415,15 @@ class ClassMetadata extends ElementMetadata implements ClassMetadataInterface
             throw new GroupDefinitionException('Defining a static group sequence is not allowed with a group sequence provider');
         }
 
-        if (is_array($groupSequence)) {
+        if (\is_array($groupSequence)) {
             $groupSequence = new GroupSequence($groupSequence);
         }
 
-        if (in_array(Constraint::DEFAULT_GROUP, $groupSequence->groups, true)) {
+        if (\in_array(Constraint::DEFAULT_GROUP, $groupSequence->groups, true)) {
             throw new GroupDefinitionException(sprintf('The group "%s" is not allowed in group sequences', Constraint::DEFAULT_GROUP));
         }
 
-        if (!in_array($this->getDefaultGroup(), $groupSequence->groups, true)) {
+        if (!\in_array($this->getDefaultGroup(), $groupSequence->groups, true)) {
             throw new GroupDefinitionException(sprintf('The group "%s" is missing in the group sequence', $this->getDefaultGroup()));
         }
 
@@ -525,7 +437,7 @@ class ClassMetadata extends ElementMetadata implements ClassMetadataInterface
      */
     public function hasGroupSequence()
     {
-        return $this->groupSequence && count($this->groupSequence->groups) > 0;
+        return $this->groupSequence && \count($this->groupSequence->groups) > 0;
     }
 
     /**

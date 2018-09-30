@@ -21,15 +21,19 @@
  * trademark license. Therefore any rights, title and interest in
  * our trademarks remain entirely with us.
  */
-
 use Doctrine\DBAL\Connection;
+use Doctrine\ORM\AbstractQuery;
+use Shopware\Bundle\AttributeBundle\Repository\SearchCriteria;
 use Shopware\Components\CSRFWhitelistAware;
+use Shopware\Components\Model\QueryBuilder;
 use Shopware\Components\Random;
 use Shopware\Models\Article\Detail as ArticleDetail;
 use Shopware\Models\Country\Country;
 use Shopware\Models\Country\State;
 use Shopware\Models\Customer\Customer;
 use Shopware\Models\Dispatch\Dispatch;
+use Shopware\Models\Document\Document as DocumentType;
+use Shopware\Models\Mail\Mail;
 use Shopware\Models\Order\Billing;
 use Shopware\Models\Order\Detail;
 use Shopware\Models\Order\DetailStatus;
@@ -262,20 +266,20 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
 
     /**
      * Event listener method which fires when the order store is loaded. Returns an array of order data
-     * which displayed in an Ext.grid.Panel. The order data contains all associations of an order (positions, shop, customer, ...).
-     * The limit, filter and order parameter are used in the id query. The result of the id query are used
-     * to filter the detailed query which created over the getListQuery function.
+     * which displayed in an Ext.grid.Panel. The order data contains all associations of an order (positions, shop,
+     * customer, ...). The limit, filter and order parameter are used in the id query. The result of the id query are
+     * used to filter the detailed query which created over the getListQuery function.
      */
     public function getListAction()
     {
-        //read store parameter to filter and paginate the data.
-        $limit = $this->Request()->getParam('limit', 20);
-        $offset = $this->Request()->getParam('start', 0);
+        // Read store parameter to filter and paginate the data.
+        $limit = (int) $this->Request()->getParam('limit', 20);
+        $offset = (int) $this->Request()->getParam('start', 0);
         $sort = $this->Request()->getParam('sort', []);
         $filter = $this->Request()->getParam('filter', []);
         $orderId = $this->Request()->getParam('orderID');
 
-        if (null !== $orderId) {
+        if ($orderId !== null) {
             $orderIdFilter = ['property' => 'orders.id', 'value' => $orderId];
             if (!is_array($filter)) {
                 $filter = [];
@@ -289,7 +293,8 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
     }
 
     /**
-     * Returns an array of all defined taxes. Used for the position grid combo box on the detail page of the backend order module.
+     * Returns an array of all defined taxes. Used for the position grid combo box on the detail page of the backend
+     * order module.
      */
     public function getTaxAction()
     {
@@ -364,12 +369,12 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
      */
     public function saveAction()
     {
-        $id = $this->Request()->getParam('id');
+        $id = (int) $this->Request()->getParam('id');
 
         /** @var $namespace Enlight_Components_Snippet_Namespace */
-        $namespace = Shopware()->Snippets()->getNamespace('backend/order');
+        $namespace = Shopware()->Snippets()->getNamespace('backend/order/main');
 
-        //the backend order module have no function to create a new order so an order id must be passed.
+        // The backend order module have no function to create a new order so an order id must be passed.
         if (empty($id)) {
             $this->View()->assign([
                 'success' => false,
@@ -382,7 +387,7 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
 
         $order = $this->getRepository()->find($id);
 
-        //the backend order module have no function to create a new order so an order id must be passed.
+        // The backend order module have no function to create a new order so an order id must be passed.
         if (!($order instanceof Order)) {
             $this->View()->assign([
                 'success' => false,
@@ -396,7 +401,7 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
         $billing = $order->getBilling();
         $shipping = $order->getShipping();
 
-        //check if the shipping and billing model already exist. If not create a new instance.
+        // Check if the shipping and billing model already exist. If not create a new instance.
         if (!$shipping instanceof \Shopware\Models\Order\Shipping) {
             $shipping = new Shipping();
         }
@@ -404,14 +409,27 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
         if (!$billing instanceof \Shopware\Models\Order\Billing) {
             $billing = new Billing();
         }
-        //get all passed order data
+        // Get all passed order data
         $data = $this->Request()->getParams();
 
-        //prepares the associated data of an order.
+        $changed = new \DateTime($data['changed']);
+        // Check whether the order has been modified in the meantime
+        if ($order->getChanged() !== null && $order->getChanged()->getTimestamp() != $changed->getTimestamp()) {
+            $this->View()->assign([
+                'success' => false,
+                'data' => $this->getOrder($order->getId()),
+                'overwriteAble' => true,
+                'message' => $namespace->get('order_has_been_changed', 'The order has been changed in the meantime. To prevent overwriting these changes, saving the order was aborted. Please close the order and re-open it.'),
+            ]);
+
+            return;
+        }
+
+        // Prepares the associated data of an order.
         $data = $this->getAssociatedData($data, $order, $billing, $shipping);
 
-        //before we can create the status mail, we need to save the order data. Otherwise
-        //the status mail would be created with the old order status and amount.
+        // Before we can create the status mail, we need to save the order data. Otherwise
+        // the status mail would be created with the old order status and amount.
         /** @var $order \Shopware\Models\Order\Order */
         $statusBefore = $order->getOrderStatus();
         $clearedBefore = $order->getPaymentStatus();
@@ -428,11 +446,11 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
 
         $order->fromArray($data);
 
-        //check if the invoice shipping has been changed
+        // Check if the invoice shipping has been changed
         $invoiceShippingChanged = (bool) ($invoiceShippingBefore != $order->getInvoiceShipping());
         $invoiceShippingNetChanged = (bool) ($invoiceShippingNetBefore != $order->getInvoiceShippingNet());
         if ($invoiceShippingChanged || $invoiceShippingNetChanged) {
-            //recalculate the new invoice amount
+            // Recalculate the new invoice amount
             $order->calculateInvoiceAmount();
         }
 
@@ -472,7 +490,7 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
         /** @var $namespace Enlight_Components_Snippet_Namespace */
         $namespace = Shopware()->Snippets()->getNamespace('backend/order');
 
-        //get posted customers
+        // Get posted customers
         $orderId = $this->Request()->getParam('id');
 
         if (empty($orderId) || !is_numeric($orderId)) {
@@ -488,7 +506,7 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
         $entity = $this->getRepository()->find($orderId);
         $this->getManager()->remove($entity);
 
-        //Performs all of the collected actions.
+        // Performs all of the collected actions.
         $this->getManager()->flush();
 
         $this->View()->assign(['success' => true]);
@@ -507,9 +525,9 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
         $orderId = $this->Request()->getParam('orderId');
 
         /** @var $namespace Enlight_Components_Snippet_Namespace */
-        $namespace = Shopware()->Snippets()->getNamespace('backend/order');
+        $namespace = Shopware()->Snippets()->getNamespace('backend/order/controller/main');
 
-        //check if an order id is passed. If no order id passed, return success false
+        // Check if an order id is passed. If no order id passed, return success false
         if (empty($orderId)) {
             $this->View()->assign([
                 'success' => false,
@@ -520,7 +538,7 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
             return;
         }
 
-        //find the order model. If no model founded, return success false
+        // Find the order model. If no model founded, return success false
         $order = $this->getRepository()->find($orderId);
         if (empty($order)) {
             $this->View()->assign([
@@ -532,7 +550,22 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
             return;
         }
 
-        //check if the passed position data is a new position or an existing position.
+        // Check whether the order has been modified in the meantime
+        $lastOrderChange = new \DateTime($this->Request()->getParam('changed'));
+        if ($order->getChanged() !== null && $order->getChanged()->getTimestamp() != $lastOrderChange->getTimestamp()) {
+            $params = $this->Request()->getParams();
+            $params['changed'] = $order->getChanged();
+            $this->View()->assign([
+                'success' => false,
+                'data' => $params,
+                'overwriteAble' => true,
+                'message' => $namespace->get('order_has_been_changed', 'The order has been changed in the meantime. To prevent overwriting these changes, saving the order was aborted. Please close the order and re-open it.'),
+            ]);
+
+            return;
+        }
+
+        // Check if the passed position data is a new position or an existing position.
         if (empty($id)) {
             $position = new Detail();
             $attribute = new Shopware\Models\Attribute\OrderDetail();
@@ -563,11 +596,11 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
 
         Shopware()->Models()->flush();
 
-        //If the passed data is a new position, the flush function will add the new id to the position model
+        // If the passed data is a new position, the flush function will add the new id to the position model
         $data['id'] = $position->getId();
 
-        //The position model will refresh the article stock, so the article stock
-        //will be assigned to the view to refresh the grid or form panel.
+        // The position model will refresh the article stock, so the article stock
+        // will be assigned to the view to refresh the grid or form panel.
         $articleRepository = Shopware()->Models()->getRepository(ArticleDetail::class);
         $article = $articleRepository->findOneBy(['number' => $position->getArticleNumber()]);
         if ($article instanceof ArticleDetail) {
@@ -579,15 +612,18 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
         Shopware()->Models()->flush();
 
         $invoiceAmount = $order->getInvoiceAmount();
+        $changed = $order->getChanged();
 
         if ($position->getOrder() instanceof \Shopware\Models\Order\Order) {
             $invoiceAmount = $position->getOrder()->getInvoiceAmount();
+            $changed = $position->getOrder()->getChanged();
         }
 
         $this->View()->assign([
             'success' => true,
             'data' => $data,
             'invoiceAmount' => $invoiceAmount,
+            'changed' => $changed,
         ]);
     }
 
@@ -600,11 +636,11 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
     public function deletePositionAction()
     {
         /** @var $namespace Enlight_Components_Snippet_Namespace */
-        $namespace = Shopware()->Snippets()->getNamespace('backend/order');
+        $namespace = Shopware()->Snippets()->getNamespace('backend/order/controller/main');
 
         $positions = $this->Request()->getParam('positions', [['id' => $this->Request()->getParam('id')]]);
 
-        //check if any positions is passed.
+        // Check if any positions is passed.
         if (empty($positions)) {
             $this->View()->assign([
                 'success' => false,
@@ -615,7 +651,7 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
             return;
         }
 
-        //if no order id passed it isn't possible to update the order amount, so we will cancel the position deletion here.
+        // If no order id passed it isn't possible to update the order amount, so we will cancel the position deletion here.
         $orderId = $this->Request()->getParam('orderID');
 
         if (empty($orderId)) {
@@ -628,24 +664,48 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
             return;
         }
 
+        /** @var $order \Shopware\Models\Order\Order */
+        $order = $this->getRepository()->find($orderId);
+        if (empty($order)) {
+            $this->View()->assign([
+                'success' => false,
+                'data' => $this->Request()->getParams(),
+                'message' => $namespace->get('no_order_id_passed', 'No valid order id passed.'),
+            ]);
+
+            return;
+        }
+
+        // Check whether the order has been modified in the meantime
+        $lastOrderChange = new \DateTime($this->Request()->getParam('changed'));
+        if ($order->getChanged() !== null && $order->getChanged()->getTimestamp() != $lastOrderChange->getTimestamp()) {
+            $params = $this->Request()->getParams();
+            $params['changed'] = $order->getChanged();
+            $this->View()->assign([
+                'success' => false,
+                'data' => $params,
+                'overwriteAble' => true,
+                'message' => $namespace->get('order_has_been_changed', 'The order has been changed in the meantime. To prevent overwriting these changes, saving the order was aborted. Please close the order and re-open it.'),
+            ]);
+
+            return;
+        }
+
         foreach ($positions as $position) {
             if (empty($position['id'])) {
                 continue;
             }
             $model = Shopware()->Models()->find(Detail::class, $position['id']);
 
-            //check if the model was founded.
+            // Check if the model was founded.
             if ($model instanceof \Shopware\Models\Order\Detail) {
                 Shopware()->Models()->remove($model);
             }
         }
-        //after each model has been removed to executes the doctrine flush.
+        // After each model has been removed to executes the doctrine flush.
         Shopware()->Models()->flush();
 
-        /** @var $order \Shopware\Models\Order\Order */
-        $order = $this->getRepository()->find($orderId);
         $order->calculateInvoiceAmount();
-
         Shopware()->Models()->flush();
 
         $data = $this->getOrder($order->getId());
@@ -699,13 +759,15 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
                 continue;
             }
 
-            //we have to flush the status changes directly, because the "createStatusMail" function in the
-            //sOrder.php core class, use the order data from the database. So we have to save the new status before we
-            //create the status mail
+            /*
+                We have to flush the status changes directly, because the "createStatusMail" function in the
+                sOrder.php core class, use the order data from the database. So we have to save the new status before we
+                create the status mail
+            */
             $statusBefore = $order->getOrderStatus();
             $clearedBefore = $order->getPaymentStatus();
 
-            //refresh the status models to return the new status data which will be displayed in the batch list
+            // Refresh the status models to return the new status data which will be displayed in the batch list
             if (!empty($data['status']) || $data['status'] === 0) {
                 $order->setOrderStatus(Shopware()->Models()->find(Status::class, $data['status']));
             }
@@ -719,9 +781,10 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
                 continue;
             }
 
-            // the setOrder function of the Shopware_Components_Document change the currency of the shop.
-            // this would create a new Shop if we execute an flush();
-            // Only create order documents when requested.
+            /*
+                The setOrder function of the Shopware_Components_Document change the currency of the shop.
+                This would create a new Shop if we execute an flush(); Only create order documents when requested.
+            */
             if ($documentType) {
                 $this->createOrderDocuments($documentType, $documentMode, $order);
             }
@@ -730,7 +793,7 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
             $data['orderStatus'] = Shopware()->Models()->toArray($order->getOrderStatus());
 
             $data['mail'] = $this->checkOrderStatus($order, $statusBefore, $clearedBefore, $autoSend, $documentType, $addAttachments);
-            //return the modified data array.
+            // Return the modified data array.
             $orders[$key] = $data;
         }
 
@@ -777,10 +840,16 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
         $models = $query->getResult();
         foreach ($models as $model) {
             foreach ($model->getDocuments() as $document) {
-                $files[] = Shopware()->Container()->getParameter('shopware.app.documentsdir') . '/' . $document->getHash() . '.pdf';
+                $files[] = $this->downloadFileFromFilesystem(sprintf('documents/%s.pdf', $document->getHash()));
             }
         }
+
         $this->mergeDocuments($files);
+
+        // Remove temporary files
+        foreach ($files as $file) {
+            unlink($file);
+        }
     }
 
     /**
@@ -833,8 +902,8 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
      */
     public function deleteDocumentAction()
     {
+        $filesystem = $this->container->get('shopware.filesystem.private');
         $documentId = $this->request->getParam('documentId');
-        $documentPath = rtrim($this->container->getParameter('shopware.app.documentsdir'), '/') . DIRECTORY_SEPARATOR;
         /** @var \Doctrine\DBAL\Connection $connection */
         $connection = $this->container->get('dbal_connection');
         $queryBuilder = $connection->createQueryBuilder();
@@ -853,14 +922,10 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
                 ->setParameter('documentId', $documentId)
                 ->execute();
 
-            $file = $documentPath . $documentHash . '.pdf';
-            if (!is_file($file)) {
-                $this->View()->assign('success', true);
-
-                return;
+            $file = sprintf('documents/%s.pdf', $documentHash);
+            if ($filesystem->has($file)) {
+                $filesystem->delete($file);
             }
-
-            unlink($file);
         } catch (\Exception $exception) {
             $this->View()->assign([
                 'success' => false,
@@ -876,10 +941,11 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
      */
     public function createMailAction()
     {
-        $orderId = $this->request->getParam('orderId');
+        $orderId = (int) $this->Request()->getParam('orderId');
+        $mailTemplateName = $this->Request()->getParam('mailTemplateName', 'sORDERDOCUMENTS');
 
         /** @var $mail Enlight_Components_Mail */
-        $mail = Shopware()->Modules()->Order()->createStatusMail($orderId, 0, 'sORDERDOCUMENTS');
+        $mail = Shopware()->Modules()->Order()->createStatusMail($orderId, 0, $mailTemplateName);
 
         $this->view->assign([
             'mail' => [
@@ -894,6 +960,55 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
                 'isHtml' => !empty($mail->getPlainBody()),
                 'orderId' => $orderId,
             ],
+        ]);
+    }
+
+    /**
+     * Retrieves all available mail templates
+     */
+    public function getMailTemplatesAction()
+    {
+        $limit = (int) $this->Request()->getParam('limit', 100);
+        $offset = (int) $this->Request()->getParam('start', 0);
+        $order = $this->Request()->getParam('sort', []);
+        $filter = $this->Request()->getParam('filter', []);
+
+        /** @var QueryBuilder $mailTemplatesQuery */
+        $mailTemplatesQuery = $this->getModelManager()->getRepository(Mail::class)->getMailsListQueryBuilder(
+            $filter,
+            $order,
+            $offset,
+            $limit
+        );
+
+        $mailTemplates = $mailTemplatesQuery->getQuery()->getResult(AbstractQuery::HYDRATE_ARRAY);
+
+        // Add a display name to the mail templates
+        $documentTypes = $this->getModelManager()->getRepository(DocumentType::class)->findAll();
+        $documentTypeNames = [];
+
+        /** @var DocumentType $documentType */
+        foreach ($documentTypes as $documentType) {
+            $documentTypeNames['document_' . $documentType->getKey()] = $documentType->getName();
+        }
+        foreach ($mailTemplates as &$mailTemplate) {
+            if ($mailTemplate['name'] === 'sORDERDOCUMENTS') {
+                $mailTemplate['displayName'] = $this->get('snippets')->getNamespace(
+                    'backend/order/main'
+                )->get(
+                    'default_mail_template',
+                    'Default template'
+                );
+            } elseif (isset($documentTypeNames[$mailTemplate['name']])) {
+                $mailTemplate['displayName'] = $documentTypeNames[$mailTemplate['name']];
+            } else {
+                $mailTemplate['displayName'] = $mailTemplate['name'];
+            }
+        }
+
+        $this->View()->assign([
+            'success' => true,
+            'data' => $mailTemplates,
         ]);
     }
 
@@ -927,9 +1042,10 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
      */
     public function openPdfAction()
     {
-        $name = basename($this->Request()->getParam('id')) . '.pdf';
-        $file = Shopware()->Container()->getParameter('shopware.app.documentsdir') . '/' . $name;
-        if (!file_exists($file)) {
+        $filesystem = $this->container->get('shopware.filesystem.private');
+        $file = sprintf('documents/%s.pdf', basename($this->Request()->getParam('id', null)));
+
+        if ($filesystem->has($file) === false) {
             $this->View()->assign([
                 'success' => false,
                 'data' => $this->Request()->getParams(),
@@ -953,11 +1069,16 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
         $response->setHeader('Content-disposition', 'attachment; filename=' . $orderId . '.pdf');
         $response->setHeader('Content-Type', 'application/pdf');
         $response->setHeader('Content-Transfer-Encoding', 'binary');
-        $response->setHeader('Content-Length', filesize($file));
+        $response->setHeader('Content-Length', $filesystem->getSize($file));
         $response->sendHeaders();
+        $response->sendResponse();
 
-        readfile($file);
-        exit;
+        $upstream = $filesystem->readStream($file);
+        $downstream = fopen('php://output', 'wb');
+
+        while (!feof($upstream)) {
+            fwrite($downstream, fread($upstream, 4096));
+        }
     }
 
     /**
@@ -1087,10 +1208,10 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
     }
 
     /**
-     * @param $filter
-     * @param $sort
-     * @param $offset
-     * @param $limit
+     * @param array[]  $filter
+     * @param array[]  $sort
+     * @param null|int $offset
+     * @param null|int $limit
      *
      * @return array
      */
@@ -1098,11 +1219,18 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
     {
         $sort = $this->resolveSortParameter($sort);
 
-        $searchResult = $this->getRepository()->search($offset, $limit, $filter, $sort);
+        if ($this->container->getParameter('shopware.es.backend.enabled')) {
+            $repository = $this->container->get('shopware_attribute.order_repository');
+            $criteria = $this->createCriteria();
+            $result = $repository->search($criteria);
 
-        $total = $searchResult['total'];
-
-        $ids = array_column($searchResult['orders'], 'id');
+            $total = $result->getCount();
+            $ids = array_column($result->getData(), 'id');
+        } else {
+            $searchResult = $this->getRepository()->search($offset, $limit, $filter, $sort);
+            $total = $searchResult['total'];
+            $ids = array_column($searchResult['orders'], 'id');
+        }
 
         $orders = $this->getRepository()->getList($ids);
         $documents = $this->getRepository()->getDocuments($ids);
@@ -1132,7 +1260,7 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
 
             $order['locale'] = $order['languageSubShop']['locale'];
 
-            //Deprecated: use payment instance
+            // Deprecated: use payment instance
             $order['debit'] = $order['customer']['debit'];
             $order['customerEmail'] = $order['customer']['email'];
             $order['billing']['salutationSnippet'] = $namespace->get($order['billing']['salutation']);
@@ -1201,24 +1329,24 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
         foreach ($sorts as $sort) {
             $direction = $sort['direction'] ?: 'ASC';
             switch (true) {
-                //custom sort field for customer email
+                // Custom sort field for customer email
                 case $sort['property'] === 'customerEmail':
                     $resolved[] = ['property' => 'customer.email', 'direction' => $direction];
                     break;
 
-                //custom sort field for customer name
+                // Custom sort field for customer name
                 case $sort['property'] === 'customerName':
                     $resolved[] = ['property' => 'billing.lastName', 'direction' => $direction];
                     $resolved[] = ['property' => 'billing.firstName', 'direction' => $direction];
                     $resolved[] = ['property' => 'billing.company', 'direction' => $direction];
                     break;
 
-                //contains no sql prefix? add orders as default prefix
+                // Contains no sql prefix? add orders as default prefix
                 case strpos($sort['property'], '.') === false:
                     $resolved[] = ['property' => 'orders.' . $sort['property'], 'direction' => $direction];
                     break;
 
-                //already prefixed with an alias?
+                // Already prefixed with an alias?
                 default:
                     $resolved[] = $sort;
             }
@@ -1266,11 +1394,11 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
     /**
      * Simple helper function which actually merges a given array of document-paths
      *
-     * @param $paths
+     * @param array $paths
      *
      * @return string The created document's url
      */
-    private function mergeDocuments($paths)
+    private function mergeDocuments(array $paths)
     {
         $pdf = new FPDI();
 
@@ -1287,34 +1415,40 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
         $hash = Random::getAlphanumericString(32);
 
         $pdf->Output($hash . '.pdf', 'D');
+
+        $this->Response()->setHeader('Content-Type', 'application/x-download');
     }
 
     /**
      * Internal helper function which checks if the batch process needs a document creation.
      *
-     * @param $documentType
-     * @param $documentMode
+     * @param int                          $documentTypeId
+     * @param int                          $documentMode
      * @param \Shopware\Models\Order\Order $order
      */
-    private function createOrderDocuments($documentType, $documentMode, $order)
+    private function createOrderDocuments($documentTypeId, $documentMode, $order)
     {
-        if (!empty($documentType)) {
+        if (!empty($documentTypeId)) {
+            $documentTypeId = (int) $documentTypeId;
+            $documentMode = (int) $documentMode;
+
+            /** @var \Shopware\Models\Order\Document\Document[] $documents */
             $documents = $order->getDocuments();
 
-            //create only not existing documents
-            if ($documentMode == 1) {
+            // Create only not existing documents
+            if ($documentMode === 1) {
                 $alreadyCreated = false;
                 foreach ($documents as $document) {
-                    if ($document->getTypeId() == $documentType) {
+                    if ($document->getTypeId() === $documentTypeId) {
                         $alreadyCreated = true;
                         break;
                     }
                 }
                 if ($alreadyCreated === false) {
-                    $this->createDocument($order->getId(), $documentType);
+                    $this->createDocument($order->getId(), $documentTypeId);
                 }
             } else {
-                $this->createDocument($order->getId(), $documentType);
+                $this->createDocument($order->getId(), $documentTypeId);
             }
         }
     }
@@ -1329,16 +1463,16 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
      * @param \Shopware\Models\Order\Status $statusBefore
      * @param \Shopware\Models\Order\Status $clearedBefore
      * @param bool                          $autoSend
-     * @param int|string                    $documentType
+     * @param int|null                      $documentTypeId
      * @param bool                          $addAttachments
      *
      * @return array
      */
-    private function checkOrderStatus($order, $statusBefore, $clearedBefore, $autoSend, $documentType, $addAttachments)
+    private function checkOrderStatus($order, $statusBefore, $clearedBefore, $autoSend, $documentTypeId, $addAttachments)
     {
         $orderStatusChanged = $order->getOrderStatus()->getId() !== $statusBefore->getId();
         $paymentStatusChanged = $order->getPaymentStatus()->getId() !== $clearedBefore->getId();
-        $documentMailSendable = $documentType && $addAttachments;
+        $documentMailSendable = $documentTypeId && $addAttachments;
         $mail = null;
 
         // Abort if autoSend isn't active and neither the order-, nor the payment-status changed
@@ -1354,13 +1488,13 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
             $mail = $this->getMailForOrder($order->getId(), $order->getPaymentStatus()->getId());
         } elseif ($documentMailSendable) {
             // Generate mail with document template
-            $mail = $this->getMailForOrder($order->getId(), null);
+            $mail = $this->getMailForOrder($order->getId(), null, $documentTypeId);
         }
 
         if (is_object($mail['mail'])) {
             if ($addAttachments) {
                 // Attach documents
-                $document = $this->getDocument($documentType, $order);
+                $document = $this->getDocument($documentTypeId, $order);
                 $mail['mail'] = $this->addAttachments($mail['mail'], $order->getId(), [$document]);
             }
             if ($autoSend) {
@@ -1368,6 +1502,7 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
                 $result = Shopware()->Modules()->Order()->sendStatusMail($mail['mail']);
                 $mail['data']['sent'] = is_object($result);
             }
+
             return $mail['data'];
         }
 
@@ -1375,15 +1510,18 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
     }
 
     /**
-     * @param int   $typeId
+     * @param int   $documentTypeId
      * @param Order $order
      *
      * @return array
      */
-    private function getDocument($typeId, Order $order)
+    private function getDocument($documentTypeId, Order $order)
     {
+        $documentTypeId = (int) $documentTypeId;
+
+        /** @var \Shopware\Models\Order\Document\Document $document */
         foreach ($order->getDocuments()->toArray() as $document) {
-            if ($document->getTypeId() == $typeId) {
+            if ($document->getTypeId() === $documentTypeId) {
                 return [
                     'hash' => $document->getHash(),
                     'type' => [
@@ -1396,16 +1534,16 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
             }
         }
 
-        return $this->getDocumentFromDatabase($order->getId(), $typeId);
+        return $this->getDocumentFromDatabase($order->getId(), $documentTypeId);
     }
 
     /**
      * @param int $orderId
-     * @param int $typeId
+     * @param int $documentTypeId
      *
      * @return array
      */
-    private function getDocumentFromDatabase($orderId, $typeId)
+    private function getDocumentFromDatabase($orderId, $documentTypeId)
     {
         $queryBuilder = $this->container->get('dbal_connection')->createQueryBuilder();
         $queryResult = $queryBuilder->select('doc.hash, template.id, template.name')
@@ -1413,8 +1551,8 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
             ->join('doc', 's_core_documents', 'template', 'doc.type = template.id')
             ->where('doc.orderID = :orderId')
             ->andWhere('doc.type = :type')
-            ->setParameter('orderId', $orderId)
-            ->setParameter('type', $typeId)
+            ->setParameter('orderId', $orderId, \PDO::PARAM_INT)
+            ->setParameter('type', $documentTypeId, \PDO::PARAM_INT)
             ->execute()
             ->fetch(PDO::FETCH_ASSOC);
 
@@ -1444,13 +1582,13 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
      */
     private function addAttachments(Enlight_Components_Mail $mail, $orderId, array $attachments = [])
     {
-        $documentDirectory = rtrim($this->get('service_container')->getParameter('shopware.app.documentsdir'), '/');
+        $filesystem = $this->container->get('shopware.filesystem.private');
 
         foreach ($attachments as $attachment) {
-            $filePath = $documentDirectory . '/' . $attachment['hash'] . '.pdf';
+            $filePath = sprintf('documents/%s.pdf', $attachment['hash']);
             $fileName = $this->getFileName($orderId, $attachment['type'][0]['id']);
 
-            if (!is_file($filePath)) {
+            if ($filesystem->has($filePath) === false) {
                 continue;
             }
 
@@ -1470,7 +1608,9 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
      */
     private function createAttachment($filePath, $fileName)
     {
-        $content = file_get_contents($filePath);
+        $filesystem = $this->container->get('shopware.filesystem.private');
+
+        $content = $filesystem->read($filePath);
         $zendAttachment = new Zend_Mime_Part($content);
         $zendAttachment->type = 'application/pdf';
         $zendAttachment->disposition = Zend_Mime::DISPOSITION_ATTACHMENT;
@@ -1545,8 +1685,8 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
      * The batch function fired from the batch window to create multiple documents for many orders.
      * The createDocumentAction fired from the detail page when the user clicks the "create Document button"
      *
-     * @param $orderId
-     * @param $documentType
+     * @param int $orderId
+     * @param int $documentType
      *
      * @return bool
      */
@@ -1603,14 +1743,14 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
      */
     private function getPositionAssociatedData($data)
     {
-        //checks if the status id for the position is passed and search for the assigned status model
+        // Checks if the status id for the position is passed and search for the assigned status model
         if ($data['statusId'] >= 0) {
             $data['status'] = Shopware()->Models()->find(DetailStatus::class, $data['statusId']);
         } else {
             unset($data['status']);
         }
 
-        //checks if the tax id for the position is passed and search for the assigned tax model
+        // Checks if the tax id for the position is passed and search for the assigned tax model
         if (!empty($data['taxId'])) {
             $tax = Shopware()->Models()->find(Tax::class, $data['taxId']);
             if ($tax instanceof \Shopware\Models\Tax\Tax) {
@@ -1625,7 +1765,7 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
         $articleDetails = Shopware()->Models()->getRepository(ArticleDetail::class)
             ->findOneBy(['number' => $data['articleNumber']]);
 
-        //Load ean, unit and pack unit (translate if needed)
+        // Load ean, unit and pack unit (translate if needed)
         if ($articleDetails) {
             $data['ean'] = $articleDetails->getEan() ?: $articleDetails->getArticle()->getMainDetail()->getEan();
             $unit = $articleDetails->getUnit() ?: $articleDetails->getArticle()->getMainDetail()->getUnit();
@@ -1693,13 +1833,13 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
     /**
      * Internal helper function which insert the order association data into the passed data array.
      *
-     * @param $data
+     * @param array $data
      *
      * @return array
      */
-    private function getAssociatedData($data)
+    private function getAssociatedData(array $data)
     {
-        //check if a customer id has passed and fill the customer element with the associated customer model
+        // Check if a customer id has passed and fill the customer element with the associated customer model
         if (!empty($data['customerId'])) {
             $data['customer'] = Shopware()->Models()->find(Customer::class, $data['customerId']);
         } else {
@@ -1707,56 +1847,53 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
             unset($data['customer']);
         }
 
-        //if a payment id passed, load the associated payment model
+        // If a payment id passed, load the associated payment model
         if (!empty($data['paymentId'])) {
             $data['payment'] = Shopware()->Models()->find(Payment::class, $data['paymentId']);
         } else {
             unset($data['payment']);
         }
 
-        //if a dispatch id is passed, load the associated dispatch model
+        // If a dispatch id is passed, load the associated dispatch model
         if (!empty($data['dispatchId'])) {
             $data['dispatch'] = Shopware()->Models()->find(Dispatch::class, $data['dispatchId']);
         } else {
             unset($data['dispatch']);
         }
 
-        //if a shop id is passed, load the associated shop model
+        // If a shop id is passed, load the associated shop model
         if (!empty($data['shopId'])) {
             $data['shop'] = Shopware()->Models()->find(Shop::class, $data['shopId']);
         } else {
             unset($data['shop']);
         }
 
-        //if a status id is passed, load the associated order status model
+        // If a status id is passed, load the associated order status model
         if (isset($data['status']) && $data['status'] !== null) {
             $data['orderStatus'] = Shopware()->Models()->find(Status::class, $data['status']);
         } else {
             unset($data['orderStatus']);
         }
 
-        //if a payment status id is passed, load the associated payment status model
+        // If a payment status id is passed, load the associated payment status model
         if (isset($data['cleared']) && $data['cleared'] !== null) {
             $data['paymentStatus'] = Shopware()->Models()->find(Status::class, $data['cleared']);
         } else {
             unset($data['paymentStatus']);
         }
 
-        //the documents will be created over the "createDocumentAction" so we have to unset the array element, otherwise the
-        //created documents models would be overwritten.
-        unset($data['documents']);
-
-        //For now the paymentInstances information is not editable, so it's just discarded at this point
-        unset($data['paymentInstances']);
+        // The documents will be created over the "createDocumentAction" so we have to unset the array element, otherwise the
+        // created documents models would be overwritten.
+        // For now the paymentInstances information is not editable, so it's just discarded at this point
+        unset($data['documents'], $data['paymentInstances']);
 
         $data['billing'] = $this->prepareAddressData($data['billing'][0]);
         $data['shipping'] = $this->prepareAddressData($data['shipping'][0]);
 
-        //unset calculated values
-        unset($data['invoiceAmountNet']);
-        unset($data['invoiceAmountEuro']);
+        // Unset calculated values
+        unset($data['invoiceAmountNet'], $data['invoiceAmountEuro']);
 
-        //at least we return the prepared associated data.
+        // At last we return the prepared associated data
         return $data;
     }
 
@@ -1765,19 +1902,22 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
      *
      * @param int      $orderId
      * @param int|null $statusId
+     * @param int|null $documentTypeId
+     *
+     * @throws \Doctrine\DBAL\DBALException
      *
      * @return array
      */
-    private function getMailForOrder($orderId, $statusId)
+    private function getMailForOrder($orderId, $statusId, $documentTypeId = null)
     {
-        // If there is no state change, we send a generic "here are some documents regarding your order"-mail
-        if ($statusId === null) {
-            /** @var $mail Enlight_Components_Mail */
-            $mail = Shopware()->Modules()->Order()->createStatusMail($orderId, 0, 'sORDERDOCUMENTS');
-        } else {
-            /** @var $mail Enlight_Components_Mail */
-            $mail = Shopware()->Modules()->Order()->createStatusMail($orderId, $statusId);
+        $templateName = null;
+
+        if ($documentTypeId !== null) {
+            $templateName = $this->getTemplateNameForDocumentTypeId($documentTypeId);
         }
+
+        /** @var $mail Enlight_Components_Mail */
+        $mail = Shopware()->Modules()->Order()->createStatusMail($orderId, (int) $statusId, $templateName);
 
         if ($mail instanceof Enlight_Components_Mail) {
             return [
@@ -1814,5 +1954,113 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
         $query->setParameter(':numbers', $numbers, Connection::PARAM_STR_ARRAY);
 
         return $query->execute()->fetchAll(PDO::FETCH_KEY_PAIR);
+    }
+
+    /**
+     * @param string $path
+     *
+     * @return string
+     */
+    private function downloadFileFromFilesystem($path)
+    {
+        $filesystem = $this->container->get('shopware.filesystem.private');
+        $tmpFile = tempnam(sys_get_temp_dir(), 'merge_document');
+
+        $downstream = fopen($tmpFile, 'wb');
+        stream_copy_to_stream($filesystem->readStream($path), $downstream);
+
+        return $tmpFile;
+    }
+
+    /**
+     * @return SearchCriteria
+     */
+    private function createCriteria()
+    {
+        $request = $this->Request();
+        $criteria = new SearchCriteria(Order::class);
+
+        $criteria->offset = $request->getParam('start', 0);
+        $criteria->limit = $request->getParam('limit', 30);
+        $criteria->ids = $request->getParam('ids', []);
+        $criteria->sortings = $request->getParam('sort', []);
+        $conditions = $request->getParam('filter', []);
+
+        $mapped = [];
+        foreach ($conditions as $condition) {
+            if ($condition['property'] === 'free') {
+                $criteria->term = $condition['value'];
+                continue;
+            }
+
+            if ($condition['property'] === 'billing.countryId') {
+                $condition['property'] = 'billingCountryId';
+            } elseif ($condition['property'] === 'shipping.countryId') {
+                $condition['property'] = 'shippingCountryId';
+            } else {
+                $name = explode('.', $condition['property']);
+                $name = array_pop($name);
+                $condition['property'] = $name;
+            }
+
+            if ($condition['property'] === 'to') {
+                $condition['value'] = (new DateTime($condition['value']))->format('Y-m-d');
+                $condition['property'] = 'orderTime';
+                $condition['expression'] = '<=';
+            }
+
+            if ($condition['property'] === 'from') {
+                $condition['value'] = (new DateTime($condition['value']))->format('Y-m-d');
+                $condition['property'] = 'orderTime';
+                $condition['expression'] = '>=';
+            }
+            $mapped[] = $condition;
+        }
+
+        foreach ($criteria->sortings as &$sorting) {
+            if ($sorting['property'] === 'customerEmail') {
+                $sorting['property'] = 'email.raw';
+            }
+            if ($sorting['property'] === 'customerName') {
+                $sorting['property'] = 'lastname.raw';
+            }
+            if ($sorting['property'] === 'number') {
+                $sorting['property'] = 'number.raw';
+            }
+        }
+
+        $criteria->conditions = $mapped;
+
+        return $criteria;
+    }
+
+    /**
+     * @param int|null $documentTypeId
+     *
+     * @throws \Doctrine\DBAL\DBALException
+     *
+     * @return string
+     */
+    private function getTemplateNameForDocumentTypeId($documentTypeId = null)
+    {
+        // Generic fallback template
+        $templateName = 'sORDERDOCUMENTS';
+
+        if ($documentTypeId === null) {
+            return $templateName;
+        }
+
+        $statement = $this->container->get('dbal_connection')
+            ->prepare('SELECT `name` FROM `s_core_config_mails` WHERE `name` = (SELECT CONCAT("document_", `key`) FROM `s_core_documents` WHERE id=:documentTypeId)');
+
+        $statement->bindValue('documentTypeId', (int) $documentTypeId, \PDO::PARAM_INT);
+        $statement->execute();
+        $result = $statement->fetch(\PDO::FETCH_ASSOC);
+
+        if (!empty($result) || !array_key_exists('name', $result)) {
+            $templateName = $result['name'];
+        }
+
+        return $templateName;
     }
 }

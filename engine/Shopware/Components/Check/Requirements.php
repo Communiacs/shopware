@@ -103,7 +103,7 @@ class Requirements
      */
     private function runChecks()
     {
-        $xmlObject = simplexml_load_file($this->sourceFile);
+        $xmlObject = simplexml_load_string(file_get_contents($this->sourceFile));
 
         if (!is_object($xmlObject->requirements)) {
             throw new \RuntimeException('Requirements XML file is not valid.');
@@ -202,11 +202,11 @@ class Requirements
      */
     private function checkPhp()
     {
-        if (strpos(phpversion(), '-')) {
-            return substr(phpversion(), 0, strpos(phpversion(), '-'));
+        if (strpos(PHP_VERSION, '-')) {
+            return substr(PHP_VERSION, 0, strpos(PHP_VERSION, '-'));
         }
 
-        return phpversion();
+        return PHP_VERSION;
     }
 
     private function checkMysqlStrictMode()
@@ -424,8 +424,10 @@ class Requirements
             case 'g':
                 $val *= 1024;
             /* @noinspection PhpMissingBreakStatementInspection */
+            // no break
             case 'm':
                 $val *= 1024;
+                // no break
             case 'k':
                 $val *= 1024;
         }
@@ -449,12 +451,16 @@ class Requirements
             /* @noinspection PhpMissingBreakStatementInspection */
             case 'TB':
                 $val *= 1024;
+                // no break
             case 'GB':
                 $val *= 1024;
+                // no break
             case 'MB':
                 $val *= 1024;
+                // no break
             case 'KB':
                 $val *= 1024;
+                // no break
             case 'B':
                 $val = (float) $val;
         }

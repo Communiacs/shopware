@@ -21,7 +21,6 @@
  * trademark license. Therefore any rights, title and interest in
  * our trademarks remain entirely with us.
  */
-
 use Doctrine\DBAL\Connection;
 use Shopware\Components\CSRFWhitelistAware;
 use Shopware\Models\Document\Document;
@@ -131,9 +130,10 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
     public function getPaymentsAction()
     {
         // Load shop repository
+        /** @var $repository \Shopware\Models\Payment\Repository */
         $repository = Shopware()->Models()->getRepository(\Shopware\Models\Payment\Payment::class);
 
-        $query = $repository->getPaymentsQuery(
+        $query = $repository->getActivePaymentsQuery(
             $filter = $this->Request()->getParam('filter', []),
             $order = $this->Request()->getParam('sort', []),
             $offset = $this->Request()->getParam('start'),
@@ -777,6 +777,8 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
         $total = $this->get('models')->getQueryCount($query);
         $data = $query->getArrayResult();
 
+        $data = $this->getSnippetsForLocales($data);
+
         $this->View()->assign(['success' => true, 'data' => $data, 'total' => $total]);
     }
 
@@ -1099,15 +1101,15 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
 
         $builder->select([
             'details.id',
-            'groups.name AS groupName',
-            'options.name AS optionName',
+            'config_groups.name AS groupName',
+            'config_options.name AS optionName',
         ]);
 
         $builder->from('s_articles_details', 'details');
 
         $builder->innerJoin('details', 's_article_configurator_option_relations', 'mapping', 'mapping.article_id = details.id');
-        $builder->innerJoin('mapping', 's_article_configurator_options', 'options', 'options.id = mapping.option_id');
-        $builder->innerJoin('options', 's_article_configurator_groups', 'groups', 'options.group_id = groups.id');
+        $builder->innerJoin('mapping', 's_article_configurator_options', 'config_options', 'config_options.id = mapping.option_id');
+        $builder->innerJoin('config_options', 's_article_configurator_groups', 'config_groups', 'config_options.group_id = config_groups.id');
 
         $builder->where('details.id IN (:detailsId)');
         $builder->setParameter('detailsId', $variantIds, Connection::PARAM_INT_ARRAY);
@@ -1176,5 +1178,29 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
         $value = array_unique(array_filter($value));
 
         return $value;
+    }
+
+    /**
+     * Replaces the locales with the snippets data
+     *
+     * @param array $data
+     *
+     * @return array $data
+     */
+    private function getSnippetsForLocales($data)
+    {
+        $snippets = $this->container->get('snippets');
+        foreach ($data as &$locale) {
+            if (!empty($locale['language'])) {
+                $locale['language'] = $snippets->getNamespace('backend/locale/language')->get($locale['locale'],
+                    $locale['language'], true);
+            }
+            if (!empty($locale['territory'])) {
+                $locale['territory'] = $snippets->getNamespace('backend/locale/territory')->get($locale['locale'],
+                    $locale['territory'], true);
+            }
+        }
+
+        return $data;
     }
 }
