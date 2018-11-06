@@ -360,10 +360,7 @@ class NumberFormatter
         }
 
         if (self::CURRENCY == $this->style) {
-            throw new NotImplementedException(sprintf(
-                '%s() method does not support the formatting of currencies (instance with CURRENCY style). %s',
-                __METHOD__, NotImplementedException::INTL_INSTALL_MESSAGE
-            ));
+            throw new NotImplementedException(sprintf('%s() method does not support the formatting of currencies (instance with CURRENCY style). %s', __METHOD__, NotImplementedException::INTL_INSTALL_MESSAGE));
         }
 
         // Only the default type is supported.
@@ -519,7 +516,7 @@ class NumberFormatter
         $groupSep = $this->getAttribute(self::GROUPING_USED) ? ',' : '';
 
         // Any string before the numeric value causes error in the parsing
-        if (preg_match("/^-?(?:\.\d++|([\d{$groupSep}]++)(?:\.\d++)?)/", $value, $matches)) {
+        if (preg_match("/^-?(?:\.\d++|([\d{$groupSep}]++)(?:\.\d*+)?)/", $value, $matches)) {
             $value = $matches[0];
             $position = \strlen($value);
             if ($error = $groupSep && isset($matches[1]) && !preg_match('/^\d{1,3}+(?:(?:,\d{3})++|\d*+)$/', $matches[1])) {

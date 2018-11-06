@@ -392,10 +392,6 @@ class sBasket
             $tax = $this->config->get('sDISCOUNTTAX');
         }
 
-        $taxAutoMode = $this->config->get('sTAXAUTOMODE');
-        if (!empty($taxAutoMode)) {
-            $tax = $this->getMaxTax();
-        }
         if (!$tax) {
             $tax = 19;
         }
@@ -455,6 +451,17 @@ class sBasket
                 )
             );
         } else {
+            $params = $this->eventManager->filter(
+                'Shopware_Modules_Basket_InsertDiscount_FilterParams',
+                $params,
+                [
+                    'subject' => $this,
+                    'getDiscounts' => $getDiscounts,
+                    'basketAmount' => $basketAmount,
+                    'basketDiscount' => $basketDiscount,
+                ]
+            );
+
             $this->db->insert('s_order_basket', $params);
         }
     }
@@ -1686,7 +1693,7 @@ SQL;
                 );
 
                 if (!$update || !$updatedPrice) {
-                    throw new Enlight_Exception('Basket Update ##01 Could not update quantity' . $sql);
+                    throw new Enlight_Exception(sprintf('Basket Update ##01 Could not update quantity %s', $sql));
                 }
             }
         }
@@ -1893,7 +1900,7 @@ SQL;
         $result = $this->db->query($sql, $params);
 
         if (!$result) {
-            throw new Enlight_Exception('BASKET-INSERT #02 SQL-Error' . $sql);
+            throw new Enlight_Exception(sprintf('BASKET-INSERT #02 SQL-Error%s', $sql));
         }
         $insertId = $this->db->lastInsertId();
 
@@ -2667,6 +2674,8 @@ SQL;
             $totalAmountNet += round($getArticles[$key]['amountnet'], 2);
 
             $getArticles[$key]['priceNumeric'] = $getArticles[$key]['price'];
+            $getArticles[$key]['amountNumeric'] = $getArticles[$key]['amount'];
+            $getArticles[$key]['amountnetNumeric'] = $getArticles[$key]['amountnet'];
             $getArticles[$key]['price'] = $this->moduleManager->Articles()
                 ->sFormatPrice($getArticles[$key]['price']);
             $getArticles[$key]['amount'] = $this->moduleManager->Articles()

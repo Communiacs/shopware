@@ -58,6 +58,7 @@ class PresetDataSynchronizer implements PresetDataSynchronizerInterface
      * @param ModelManager                $modelManager
      * @param \Enlight_Event_EventManager $eventManager
      * @param IteratorAggregate           $componentHandlers
+     * @param string                      $rootDir
      */
     public function __construct(ModelManager $modelManager, \Enlight_Event_EventManager $eventManager, IteratorAggregate $componentHandlers, $rootDir)
     {
@@ -82,7 +83,7 @@ class PresetDataSynchronizer implements PresetDataSynchronizerInterface
         $presetData = json_decode($preset->getPresetData(), true);
 
         if (!$presetData || !is_array($presetData) || !array_key_exists('elements', $presetData)) {
-            throw new PresetAssetImportException('The preset data of the ' . $preset->getName() . ' preset seems to be invalid.');
+            throw new PresetAssetImportException(sprintf('The preset data of the %s preset seems to be invalid.', $preset->getName()));
         }
 
         // continue if no sync data present or we just have an assets key which is empty

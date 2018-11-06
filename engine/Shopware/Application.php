@@ -41,9 +41,9 @@ class Shopware extends Enlight_Application
      *      'shopware.release.version_text'
      *      'shopware.release' (a Struct containing all the above parameters)
      */
-    const VERSION = '5.5.1';
+    const VERSION = '5.5.3';
     const VERSION_TEXT = '';
-    const REVISION = '201809181442';
+    const REVISION = '201810301443';
 
     /**
      * @var string
@@ -96,7 +96,7 @@ class Shopware extends Enlight_Application
 
         if (!$this->container->has($name)) {
             throw new Enlight_Exception(
-                'Method "' . get_class($this) . '::' . $name . '" not found failure',
+                sprintf('Method "%s::%s" not found failure', get_class($this), $name),
                 Enlight_Exception::METHOD_NOT_FOUND
             );
         }

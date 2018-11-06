@@ -70,12 +70,13 @@ class FormSynchronizer
 
         $translations = [];
 
-        foreach ($config['elements'] as $element) {
+        foreach ($config['elements'] as $key => $element) {
             $options = [
                 'scope' => $element['scope'],
                 'label' => $element['label']['en'],
                 'value' => $element['value'],
                 'required' => $element['isRequired'],
+                'position' => $key,
             ] + $element['options'];
 
             if (isset($element['label'])) {
@@ -301,8 +302,6 @@ class FormSynchronizer
      * @param Form   $form
      * @param string $translationArray
      * @param Locale $locale
-     *
-     * @return array
      */
     private function addFormTranslation(Form $form, $translationArray, Locale $locale)
     {

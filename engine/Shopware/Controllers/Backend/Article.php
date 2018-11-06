@@ -43,80 +43,80 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
      *
      * @var \Shopware\Models\Article\Repository
      */
-    protected $repository = null;
+    protected $repository;
 
     /**
      * Repository for the shop model
      *
      * @var Repository
      */
-    protected $shopRepository = null;
+    protected $shopRepository;
 
     /**
      * Repository for the customer model
      *
      * @var \Shopware\Models\Customer\Repository
      */
-    protected $customerRepository = null;
+    protected $customerRepository;
 
     /**
      * Repository for the category model
      *
      * @var \Shopware\Models\Category\Repository
      */
-    protected $categoryRepository = null;
+    protected $categoryRepository;
 
     /**
      * @var \Shopware\Components\Model\ModelRepository
      */
-    protected $articleDetailRepository = null;
+    protected $articleDetailRepository;
 
     /**
      * @var \Shopware\Components\Model\ModelRepository
      */
-    protected $customerGroupRepository = null;
+    protected $customerGroupRepository;
 
     /**
      * Entity Manager
      *
      * @var null
      */
-    protected $manager = null;
+    protected $manager;
 
     /**
      * @var \Shopware\Components\Model\ModelRepository
      */
-    protected $configuratorDependencyRepository = null;
+    protected $configuratorDependencyRepository;
 
     /**
      * @var \Shopware\Components\Model\ModelRepository
      */
-    protected $configuratorPriceVariationRepository = null;
+    protected $configuratorPriceVariationRepository;
 
     /**
      * @var \Shopware\Components\Model\ModelRepository
      */
-    protected $configuratorGroupRepository = null;
+    protected $configuratorGroupRepository;
 
     /**
      * @var \Shopware\Components\Model\ModelRepository
      */
-    protected $configuratorOptionRepository = null;
+    protected $configuratorOptionRepository;
 
     /**
      * @var Shopware_Components_Translation
      */
-    protected $translation = null;
+    protected $translation;
 
     /**
      * @var \Shopware\Components\Model\ModelRepository
      */
-    protected $configuratorSetRepository = null;
+    protected $configuratorSetRepository;
 
     /**
      * @var \Shopware\Components\Model\ModelRepository
      */
-    protected $propertyValueRepository = null;
+    protected $propertyValueRepository;
 
     public function initAcl()
     {
@@ -155,13 +155,28 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
     public function saveAction()
     {
         $data = $this->Request()->getParams();
+
         if ($this->Request()->has('id')) {
             /** @var Article $article */
             $article = $this->getRepository()->find((int) $this->Request()->getParam('id'));
+
             // Check whether the article has been modified in the meantime
-            $lastChanged = new \DateTime($data['changed']);
-            if ($article->getChanged()->getTimestamp() != $lastChanged->getTimestamp()) {
-                $namespace = Shopware()->Snippets()->getNamespace('backend/article/controller/main');
+            try {
+                $lastChanged = new \DateTime($data['changed']);
+            } catch (Exception $e) {
+                // If we have a invalid date caused by product imports
+                $lastChanged = $article->getChanged();
+            }
+
+            if ($lastChanged->getTimestamp() < 0 && $article->getChanged()->getTimestamp() < 0) {
+                $lastChanged = $article->getChanged();
+            }
+
+            $diff = abs($article->getChanged()->getTimestamp() - $lastChanged->getTimestamp());
+
+            // We have timestamp conversion issues on Windows Users
+            if ($diff > 1) {
+                $namespace = $this->get('snippets')->getNamespace('backend/article/controller/main');
 
                 $this->View()->assign([
                     'success' => false,
@@ -514,8 +529,6 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
     /**
      * The loadStoresAction function is an ExtJs event listener method of the article backend module.
      * The function is used to load all required stores for the article detail page in one request.
-     *
-     * @return array
      */
     public function loadStoresAction()
     {
@@ -1218,8 +1231,19 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
             // Merge the data with the original main detail data
             $data = array_merge($detailData, $variantData);
 
+            $existentDetailModel = $offset === 0 && $mergeType === 1;
+
+            $data = $this->container->get('events')->filter(
+                'Shopware_Controllers_Article_CreateConfiguratorVariants_FilterData',
+                $data,
+                [
+                    'subject' => $this,
+                    'existentDetailModel' => $existentDetailModel,
+                ]
+            );
+
             // Use only the main detail of the article as base object, if the merge type is set to "Override" and the current variant is the first generated variant.
-            if ($offset === 0 && $mergeType === 1) {
+            if ($existentDetailModel) {
                 $detail = $article->getMainDetail();
             } else {
                 $detail = new Detail();
@@ -4243,7 +4267,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
      *
      * @param \Symfony\Component\Validator\ConstraintViolationList $violations
      *
-     * @return string
+     * @return array
      */
     protected function getViolationFields($violations)
     {

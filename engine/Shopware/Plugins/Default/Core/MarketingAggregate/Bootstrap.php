@@ -317,6 +317,10 @@ class Shopware_Plugins_Core_MarketingAggregate_Bootstrap extends Shopware_Compon
      * Event listener function of the Shopware_Modules_Order_SaveOrder_ProcessDetails event.
      * This event is fired after a customer completed an order.
      * This function is used to add or increment the new also bought articles.
+     *
+     * @param Enlight_Event_EventArgs $arguments
+     *
+     * @return mixed
      */
     public function addNewAlsoBought(Enlight_Event_EventArgs $arguments)
     {
@@ -424,7 +428,7 @@ class Shopware_Plugins_Core_MarketingAggregate_Bootstrap extends Shopware_Compon
             self::AGGREGATE_STRATEGY_LIVE
         );
 
-        if (!($this->isTopSellerActivated()) || $strategy !== self::AGGREGATE_STRATEGY_CRON_JOB) {
+        if ($strategy !== self::AGGREGATE_STRATEGY_CRON_JOB) {
             return true;
         }
 

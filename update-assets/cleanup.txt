@@ -1419,7 +1419,9 @@ themes/Backend/ExtJs/backend/shipping/model/attribute.js
 themes/Backend/ExtJs/backend/site/model/attribute.js
 themes/Backend/ExtJs/backend/supplier/model/attribute.js
 themes/Backend/ExtJs/backend/systeminfo/model/encoder.js
+themes/Backend/ExtJs/backend/systeminfo/model/timezone.js
 themes/Backend/ExtJs/backend/systeminfo/store/encoder.js
+themes/Backend/ExtJs/backend/systeminfo/store/timezone.js
 themes/Backend/ExtJs/backend/systeminfo/view/systeminfo/encoder.js
 themes/Backend/ExtJs/backend/user_manager/model/attribute.js
 themes/Backend/ExtJs/backend/vote/controller/vote.js

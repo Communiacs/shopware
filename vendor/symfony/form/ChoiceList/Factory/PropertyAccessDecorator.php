@@ -24,18 +24,14 @@ use Symfony\Component\PropertyAccess\PropertyPath;
  *
  * Pass the decorated factory to the constructor:
  *
- * ```php
- * $decorator = new PropertyAccessDecorator($factory);
- * ```
+ *     $decorator = new PropertyAccessDecorator($factory);
  *
  * You can now pass property paths for generating choice values, labels, view
  * indices, HTML attributes and for determining the preferred choices and the
  * choice groups:
  *
- * ```php
- * // extract values from the $value property
- * $list = $createListFromChoices($objects, 'value');
- * ```
+ *     // extract values from the $value property
+ *     $list = $createListFromChoices($objects, 'value');
  *
  * @author Bernhard Schussek <bschussek@gmail.com>
  */
@@ -64,7 +60,7 @@ class PropertyAccessDecorator implements ChoiceListFactoryInterface
      * {@inheritdoc}
      *
      * @param iterable                          $choices The choices
-     * @param null|callable|string|PropertyPath $value   The callable or path for
+     * @param callable|string|PropertyPath|null $value   The callable or path for
      *                                                   generating the choice values
      *
      * @return ChoiceListInterface The choice list
@@ -97,7 +93,7 @@ class PropertyAccessDecorator implements ChoiceListFactoryInterface
      * {@inheritdoc}
      *
      * @param ChoiceLoaderInterface             $loader The choice loader
-     * @param null|callable|string|PropertyPath $value  The callable or path for
+     * @param callable|string|PropertyPath|null $value  The callable or path for
      *                                                  generating the choice values
      *
      * @return ChoiceListInterface The choice list
@@ -130,11 +126,11 @@ class PropertyAccessDecorator implements ChoiceListFactoryInterface
      * {@inheritdoc}
      *
      * @param ChoiceListInterface                     $list             The choice list
-     * @param null|array|callable|string|PropertyPath $preferredChoices The preferred choices
-     * @param null|callable|string|PropertyPath       $label            The callable or path generating the choice labels
-     * @param null|callable|string|PropertyPath       $index            The callable or path generating the view indices
-     * @param null|callable|string|PropertyPath       $groupBy          The callable or path generating the group names
-     * @param null|array|callable|string|PropertyPath $attr             The callable or path generating the HTML attributes
+     * @param array|callable|string|PropertyPath|null $preferredChoices The preferred choices
+     * @param callable|string|PropertyPath|null       $label            The callable or path generating the choice labels
+     * @param callable|string|PropertyPath|null       $index            The callable or path generating the view indices
+     * @param callable|string|PropertyPath|null       $groupBy          The callable or path generating the group names
+     * @param array|callable|string|PropertyPath|null $attr             The callable or path generating the HTML attributes
      *
      * @return ChoiceListView The choice list view
      */

@@ -392,12 +392,17 @@ class CrudService
     /**
      * @param string                $type
      * @param null|string|int|float $defaultValue
+     *
+     * @return null|string|int|float
      */
     private function parseDefaultValue($type, $defaultValue)
     {
         $types = $this->typeMapping->getTypes();
         $type = $types[$type];
 
+        if ($type['unified'] === TypeMapping::TYPE_BOOLEAN) {
+            return (bool) $defaultValue === true ? 1 : 0;
+        }
         if (!$type['allowDefaultValue'] || $defaultValue === null) {
             return self::NULL_STRING;
         }

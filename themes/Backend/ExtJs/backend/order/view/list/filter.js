@@ -218,8 +218,7 @@ Ext.define('Shopware.apps.Order.view.list.Filter', {
 
         return Ext.create('Ext.form.field.ComboBox', {
             name: 'orders.cleared',
-            pageSize: 7,
-            queryMode: 'remote',
+            queryMode: 'local',
             store: me.paymentStatusStore,
             valueField: 'id',
             displayField: 'description',
@@ -341,25 +340,27 @@ Ext.define('Shopware.apps.Order.view.list.Filter', {
 
     createDeliveryCountrySelection: function() {
         var selectionFactory = Ext.create('Shopware.attribute.SelectionFactory', {});
-        return Ext.create('Ext.form.field.ComboBox', {
+        return Ext.create('Shopware.form.field.PagingComboBox', {
             name: 'shipping.countryId',
             store: selectionFactory.createEntitySearchStore("Shopware\\Models\\Country\\Country"),
             valueField: 'id',
             queryMode: 'remote',
             displayField: 'name',
-            fieldLabel: this.snippets.shipping
+            fieldLabel: this.snippets.shipping,
+            pageSize: 7
         });
     },
 
     createBillingCountrySelection: function() {
         var selectionFactory = Ext.create('Shopware.attribute.SelectionFactory', {});
-        return Ext.create('Ext.form.field.ComboBox', {
+        return Ext.create('Shopware.form.field.PagingComboBox', {
             name: 'billing.countryId',
             store: selectionFactory.createEntitySearchStore("Shopware\\Models\\Country\\Country"),
             valueField: 'id',
             queryMode: 'remote',
             displayField: 'name',
-            fieldLabel: this.snippets.billing
+            fieldLabel: this.snippets.billing,
+            pageSize: 7
         });
     },
 

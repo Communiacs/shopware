@@ -67,8 +67,6 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
     /**
      * Event listener function of the listing store of the emotion backend module.
      * Returns an array of all defined emotions.
-     *
-     * @return array
      */
     public function listAction()
     {
@@ -204,7 +202,11 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
                     $entry['name'] === 'image' ||
                     $entry['name'] === 'fallback_picture'
                 ) {
-                    $value = $mediaService->getUrl($value);
+                    $scheme = parse_url($value, PHP_URL_SCHEME);
+
+                    if (!in_array($scheme, ['http', 'https'], true) && !is_int($value)) {
+                        $value = $mediaService->getUrl($value);
+                    }
                 }
 
                 if (in_array($entry['name'], ['selected_manufacturers', 'banner_slider'])) {
@@ -440,8 +442,6 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
 
     /**
      * Event listener function of the library store.
-     *
-     * @return array
      */
     public function libraryAction()
     {
@@ -818,12 +818,12 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
     /**
      * Helper function to get access on the static declared repository
      *
-     * @return null|Shopware\Models\Emotion\Repository
+     * @return Shopware\Models\Emotion\Repository
      */
     protected function getRepository()
     {
         if (self::$repository === null) {
-            self::$repository = Shopware()->Models()->getRepository('Shopware\Models\Emotion\Emotion');
+            self::$repository = Shopware()->Models()->getRepository(Emotion::class);
         }
 
         return self::$repository;
@@ -1545,7 +1545,7 @@ EOD;
     }
 
     /**
-     * @param Emotion
+     * @param Emotion $emotion
      */
     private function generateEmotionSeoUrls(Emotion $emotion)
     {

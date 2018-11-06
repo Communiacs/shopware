@@ -144,6 +144,7 @@ return array_replace_recursive([
         'number_of_replicas' => null,
         'number_of_shards' => null,
         'total_fields_limit' => null,
+        'max_result_window' => 10000,
         'wait_for_status' => 'green',
         'batchsize' => 500,
         'backend' => [
@@ -364,7 +365,14 @@ return array_replace_recursive([
                     'BI' => 'verdanaz.ttf',
                 ],
             ],
+            'format' => 'A4',
         ],
+    ],
+    'backward_compatibility' => [
+        /*
+         * @deprecated since 5.5, sorting will be default and this parameter will be removed with Shopware 5.6
+         */
+        'predictable_plugin_order' => false,
     ],
     'logger' => [
         'level' => $this->Environment() !== 'production' ? Logger::DEBUG : Logger::ERROR,

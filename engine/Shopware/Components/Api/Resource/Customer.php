@@ -78,7 +78,7 @@ class Customer extends Resource
         $id = $builder->getQuery()->getOneOrNullResult();
 
         if (!$id) {
-            throw new ApiException\NotFoundException("Customer by number {$number} not found");
+            throw new ApiException\NotFoundException(sprintf('Customer by number %s not found', $number));
         }
 
         return $id['id'];
@@ -147,7 +147,7 @@ class Customer extends Resource
         $customer = $builder->getQuery()->getOneOrNullResult($this->getResultMode());
 
         if (!$customer) {
-            throw new ApiException\NotFoundException("Customer by id $id not found");
+            throw new ApiException\NotFoundException(sprintf('Customer by id %d not found', $id));
         }
 
         return $customer;
@@ -201,12 +201,25 @@ class Customer extends Resource
         $customer = new CustomerModel();
         $customer->setAttribute(new CustomerAttribute());
 
+        // Normalize call between create and update to allow same parameters
+        if (isset($params['defaultBillingAddress'])) {
+            $params['billing'] = $params['defaultBillingAddress'];
+            unset($params['defaultBillingAddress']);
+        }
+
+        if (isset($params['defaultShippingAddress'])) {
+            $params['shipping'] = $params['defaultShippingAddress'];
+            unset($params['defaultShippingAddress']);
+        }
+
         $params = $this->prepareCustomerData($params, $customer);
         $params = $this->prepareAssociatedData($params, $customer);
         $customer->fromArray($params);
 
         $billing = $this->createAddress($params['billing']) ?: new AddressModel();
         $shipping = $this->createAddress($params['shipping']);
+
+        $this->validateShippingCountry($params);
 
         $registerService = $this->getContainer()->get('shopware_account.register_service');
         $context = $this->getContainer()->get('shopware_storefront.context_service')->getShopContext()->getShop();
@@ -258,7 +271,7 @@ class Customer extends Resource
         $customer = $this->getRepository()->find($id);
 
         if (!$customer) {
-            throw new ApiException\NotFoundException("Customer with id $id not found");
+            throw new ApiException\NotFoundException(sprintf('Customer by id %d not found', $id));
         }
 
         $this->setupContext($customer->getShop()->getId());
@@ -276,6 +289,10 @@ class Customer extends Resource
         $customerValidator->validate($customer);
         $addressValidator->validate($customer->getDefaultBillingAddress());
         $addressValidator->validate($customer->getDefaultShippingAddress());
+
+        if (!$customer->getDefaultShippingAddress()->getCountry()->getAllowShipping()) {
+            throw new ApiException\CustomValidationException(sprintf('Country by id %d is not available for shipping', $customer->getDefaultShippingAddress()->getCountry()->getId()));
+        }
 
         $addressService->update($customer->getDefaultBillingAddress());
         $addressService->update($customer->getDefaultShippingAddress());
@@ -316,11 +333,11 @@ class Customer extends Resource
             throw new ApiException\ParameterMissingException();
         }
 
-        /** @var $customer \Shopware\Models\Customer\Customer */
+        /** @var \Shopware\Models\Customer\Customer $customer */
         $customer = $this->getRepository()->find($id);
 
         if (!$customer) {
-            throw new ApiException\NotFoundException("Customer by id $id not found");
+            throw new ApiException\NotFoundException(sprintf('Customer by id %d not found', $id));
         }
 
         $this->getManager()->remove($customer);
@@ -357,7 +374,7 @@ class Customer extends Resource
         }
 
         if (array_key_exists('debit', $data) && !array_key_exists('paymentData', $data)) {
-            $debitPaymentMean = $this->getManager()->getRepository('Shopware\Models\Payment\Payment')->findOneBy(['name' => 'debit']);
+            $debitPaymentMean = $this->getManager()->getRepository(\Shopware\Models\Payment\Payment::class)->findOneBy(['name' => 'debit']);
 
             if ($debitPaymentMean) {
                 $data['paymentData'] = [
@@ -384,7 +401,7 @@ class Customer extends Resource
                 $paymentData = $this->getOneToManySubElement(
                     $paymentDataInstances,
                     $paymentDataData,
-                    '\Shopware\Models\Customer\PaymentData',
+                    \Shopware\Models\Customer\PaymentData::class,
                     ['id', 'paymentMeanId']
                 );
             } catch (ApiException\CustomValidationException $cve) {
@@ -394,10 +411,10 @@ class Customer extends Resource
             }
 
             if (isset($paymentDataData['paymentMeanId'])) {
-                $paymentMean = $this->getManager()->getRepository('Shopware\Models\Payment\Payment')->find($paymentDataData['paymentMeanId']);
+                $paymentMean = $this->getManager()->getRepository(\Shopware\Models\Payment\Payment::class)->find($paymentDataData['paymentMeanId']);
                 if ($paymentMean === null) {
                     throw new ApiException\CustomValidationException(
-                        sprintf('%s by %s %s not found', 'Shopware\Models\Payment\Payment', 'id', $paymentDataData['paymentMeanId'])
+                        sprintf('%s by %s %s not found', \Shopware\Models\Payment\Payment::class, 'id', $paymentDataData['paymentMeanId'])
                     );
                 }
                 $paymentData->setPaymentMean($paymentMean);
@@ -424,17 +441,25 @@ class Customer extends Resource
         return $this->getRepository()->createQueryBuilder('customer');
     }
 
-    private function prepareCustomerData($params, CustomerModel $customer)
+    /**
+     * @param array         $params
+     * @param CustomerModel $customer
+     *
+     * @throws ApiException\CustomValidationException
+     *
+     * @return array
+     */
+    private function prepareCustomerData(array $params, CustomerModel $customer)
     {
         if (array_key_exists('groupKey', $params)) {
-            $params['group'] = Shopware()->Models()->getRepository('Shopware\Models\Customer\Group')->findOneBy(['key' => $params['groupKey']]);
+            $params['group'] = Shopware()->Models()->getRepository(\Shopware\Models\Customer\Group::class)->findOneBy(['key' => $params['groupKey']]);
             if (!$params['group']) {
                 throw new ApiException\CustomValidationException(sprintf('CustomerGroup by key %s not found', $params['groupKey']));
             }
         }
 
         if (array_key_exists('shopId', $params)) {
-            $params['shop'] = Shopware()->Models()->find('Shopware\Models\Shop\Shop', $params['shopId']);
+            $params['shop'] = Shopware()->Models()->find(\Shopware\Models\Shop\Shop::class, $params['shopId']);
             if (!$params['shop']) {
                 throw new ApiException\CustomValidationException(sprintf('Shop by id %s not found', $params['shopId']));
             }
@@ -443,13 +468,13 @@ class Customer extends Resource
         if (array_key_exists('priceGroupId', $params)) {
             $priceGroupId = (int) $params['priceGroupId'];
             if ($priceGroupId > 0) {
-                $params['priceGroup'] = Shopware()->Models()->find('Shopware\Models\Customer\PriceGroup', $params['priceGroupId']);
+                $params['priceGroup'] = Shopware()->Models()->find(\Shopware\Models\Customer\PriceGroup::class, $params['priceGroupId']);
             } else {
                 $params['priceGroup'] = null;
             }
         }
 
-        //If a different payment method is selected, it must also be placed in the "paymentPreset" so that the risk management that does not reset.
+        // If a different payment method is selected, it must also be placed in the "paymentPreset" so that the risk management that does not reset.
         if ($customer->getId() && $customer->getPaymentId() !== $params['paymentId']) {
             $params['paymentPreset'] = $params['paymentId'];
         }
@@ -507,7 +532,7 @@ class Customer extends Resource
     }
 
     /**
-     * Resolves id's to models
+     * Resolves ids to models
      *
      * @param array $data
      * @param bool  $filter
@@ -555,5 +580,39 @@ class Customer extends Resource
         $customer->getDefaultShippingAddress()->fromArray($shippingData);
 
         return $params;
+    }
+
+    /**
+     * @param array $params
+     *
+     * @throws ApiException\CustomValidationException
+     */
+    private function validateShippingCountry(array $params)
+    {
+        if (!empty($params['shipping']) && $this->isCountryAvailableForShipping($params['shipping']['country'])) {
+            return;
+        }
+
+        if (empty($params['shipping']) && $this->isCountryAvailableForShipping($params['billing']['country'])) {
+            return;
+        }
+
+        $id = !empty($params['shipping']['country']) ? $params['shipping']['country'] : $params['billing']['country'];
+
+        throw new ApiException\CustomValidationException(sprintf('Country by id %d is not available for shipping', $id));
+    }
+
+    /**
+     * @param int $id
+     *
+     * @return bool
+     */
+    private function isCountryAvailableForShipping($id)
+    {
+        if ($id instanceof Country) {
+            $id = $id->getId();
+        }
+
+        return (bool) $this->getContainer()->get('dbal_connection')->fetchColumn('SELECT allow_shipping FROM s_core_countries WHERE id = ?', [$id]);
     }
 }
