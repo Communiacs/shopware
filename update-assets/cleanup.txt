@@ -62,6 +62,9 @@ _sql/migrations/1418-add-shop-id-and-type-to-bi-config.php
 _sql/migrations/1419-add-shop-id-and-type-to-bi-config.php
 _sql/migrations/1434-update-esd-helptext.php
 _sql/migrations/1436-add-bi-last-update-date-column.php
+_sql/migrations/1441-add-notification-attributes.php
+_sql/migrations/1444-add-notification-attributes.php
+_sql/migrations/1446-add-notification-attributes.php
 _sql/migrations/146-payment-method-refactor.php
 _sql/migrations/147-add-sepa-database-items.php
 _sql/migrations/1500-remove-esd-strategies.php
@@ -301,6 +304,7 @@ _sql/migrations/951-implement-growl-message-configuration.php
 _sql/migrations/954-site-active-status.php
 _sql/migrations/955-add-http-cache-events-for-site.php
 _sql/migrations/955-remove-blog-indexpage-configuration.php
+_sql/migrations/955-userfriendly-mail-options.php
 _sql/migrations/965-update-impressum-position.php
 _sql/migrations/966-document-type-mail-templates.php
 _sql/migrations/966-implement-document-type-key.php
@@ -964,6 +968,7 @@ engine/Shopware/Components/ClientDetection
 engine/Shopware/Components/Compatibility/LegacyListingSubscriber.php
 engine/Shopware/Components/Compatibility/LegacySearchSubscriber.php
 engine/Shopware/Components/Console/Command
+engine/Shopware/Components/Console/Shell.php
 engine/Shopware/Components/Convert
 engine/Shopware/Components/CustomerStream/CustomerInterestsGateway.php
 engine/Shopware/Components/CustomerStream/CustomerOrder.php

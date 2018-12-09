@@ -26,7 +26,7 @@ use Shopware\Components\DependencyInjection\Container;
 /**
  * Shopware Application
  *
- * @category  Shopware
+ * @category Shopware
  *
  * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
@@ -41,9 +41,9 @@ class Shopware extends Enlight_Application
      *      'shopware.release.version_text'
      *      'shopware.release' (a Struct containing all the above parameters)
      */
-    const VERSION = '5.5.3';
+    const VERSION = '5.5.4';
     const VERSION_TEXT = '';
-    const REVISION = '201810301443';
+    const REVISION = '201812030839';
 
     /**
      * @var string

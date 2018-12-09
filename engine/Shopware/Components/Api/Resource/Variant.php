@@ -44,7 +44,7 @@ use Shopware\Models\Tax\Tax;
 /**
  * Variant API Resource
  *
- * @category  Shopware
+ * @category Shopware
  *
  * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
@@ -124,7 +124,7 @@ class Variant extends Resource implements BatchInterface
     {
         $this->checkPrivilege('read');
 
-        /** @var \Doctrine\DBAL\Query\QueryBuilder */
+        /** @var \Shopware\Components\Model\QueryBuilder $builder */
         $builder = $this->getRepository()->createQueryBuilder('detail');
 
         $builder->addSelect(['prices', 'attribute', 'customerGroup'])
@@ -216,7 +216,7 @@ class Variant extends Resource implements BatchInterface
             throw new ApiException\ParameterMissingException();
         }
 
-        /** @var $articleDetail \Shopware\Models\Article\Detail */
+        /** @var \Shopware\Models\Article\Detail $articleDetail */
         $articleDetail = $this->getRepository()->find($id);
 
         if (!$articleDetail) {
@@ -266,7 +266,7 @@ class Variant extends Resource implements BatchInterface
             throw new ApiException\ParameterMissingException();
         }
 
-        /** @var $variant Detail */
+        /** @var Detail $variant */
         $variant = $this->getRepository()->find($id);
 
         if (!$variant) {
@@ -332,7 +332,7 @@ class Variant extends Resource implements BatchInterface
      * Required for the article resource if the article data is already updated
      * in the entity but not in the database.
      *
-     * @param $id
+     * @param int          $id
      * @param array        $data
      * @param ArticleModel $article
      *
@@ -577,7 +577,7 @@ class Variant extends Resource implements BatchInterface
     {
         if (empty($data['images'])) {
             if ($variant->getImages()->count() > 0) {
-                /** @var $image Image */
+                /** @var Image $image */
                 foreach ($variant->getImages() as $image) {
                     $mapping = $this->getVariantMappingOfImage($image, $variant);
 
@@ -934,7 +934,7 @@ class Variant extends Resource implements BatchInterface
      */
     private function getAvailableMediaImage($availableImages, $mediaId)
     {
-        /** @var $image Image */
+        /** @var Image $image */
         foreach ($availableImages as $image) {
             if ($image->getMedia()->getId() == $mediaId) {
                 return $image;
@@ -999,9 +999,13 @@ class Variant extends Resource implements BatchInterface
      */
     private function getAvailableGroup($availableGroups, array $groupData)
     {
-        /** @var $availableGroup Option */
+        //Convert string to lower case to avoid problems with case insensitivity in database
+        //vs case sensitivity in PHP
+        $groupName = mb_strtolower($groupData['name']);
+
+        /** @var Option $availableGroup */
         foreach ($availableGroups as $availableGroup) {
-            if (($availableGroup->getName() == $groupData['name'] && $groupData['name'] !== null)
+            if ((mb_strtolower($availableGroup->getName()) == $groupName && $groupData['name'] !== null)
                 || ($availableGroup->getId() == $groupData['id']) && $groupData['id'] !== null) {
                 return $availableGroup;
             }
@@ -1017,13 +1021,17 @@ class Variant extends Resource implements BatchInterface
      * @param Collection|array $availableOptions
      * @param array            $optionData
      *
-     * @return bool
+     * @return bool|Option
      */
     private function getAvailableOption($availableOptions, array $optionData)
     {
-        /** @var $availableOption Option */
+        //Convert string to lower case to avoid problems with case insensitivity in database
+        //vs case sensitivity in PHP
+        $optionName = mb_strtolower($optionData['name']);
+
+        /** @var Option $availableOption */
         foreach ($availableOptions as $availableOption) {
-            if (($availableOption->getName() == $optionData['name'] && $optionData['name'] !== null)
+            if ((mb_strtolower($availableOption->getName()) == $optionName && $optionData['name'] !== null)
                 || ($availableOption->getId() == $optionData['id'] && $optionData['id'] !== null)) {
                 return $availableOption;
             }
