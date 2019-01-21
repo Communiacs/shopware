@@ -22,7 +22,7 @@
  * our trademarks remain entirely with us.
  */
 
-namespace   Shopware\Models\Dispatch;
+namespace Shopware\Models\Dispatch;
 
 use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
@@ -56,6 +56,7 @@ class ShippingCost extends ModelEntity
      * @ORM\JoinColumn(name="dispatchID", referencedColumnName="id")
      */
     protected $dispatch;
+
     /**
      * Autoincrement ID
      *
@@ -86,7 +87,7 @@ class ShippingCost extends ModelEntity
     private $value;
 
     /**
-     * Multiplicator for this entry
+     * Multiplicand for this entry
      *
      * @var float
      *
@@ -198,8 +199,6 @@ class ShippingCost extends ModelEntity
 
     /**
      * @param \Shopware\Models\Dispatch\Dispatch|array|null $dispatch
-     *
-     * @return \Shopware\Components\Model\ModelEntity
      */
     public function setDispatch($dispatch)
     {

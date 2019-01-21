@@ -42,7 +42,7 @@ class XmlPluginInfoReader
     /**
      * @param \DOMDocument $xml
      *
-     * @return array
+     * @return array|void
      */
     private function parseInfo(\DOMDocument $xml)
     {
@@ -122,7 +122,7 @@ class XmlPluginInfoReader
      * @param \DOMNode $node
      * @param string   $name
      *
-     * @return null|\DOMElement
+     * @return \DOMElement|null
      */
     private function getFirstChild(\DOMNode $node, $name)
     {
@@ -139,7 +139,7 @@ class XmlPluginInfoReader
      * @param \DOMNode $node
      * @param mixed    $name
      *
-     * @return \DOMElement[]
+     * @return string[]
      */
     private function getChildrenValues(\DOMNode $node, $name)
     {
@@ -156,7 +156,7 @@ class XmlPluginInfoReader
     /**
      * @param array $requiredPlugins
      *
-     * @return array
+     * @return array<array>
      */
     private function parseRequiredPlugins($requiredPlugins)
     {

@@ -63,8 +63,10 @@ _sql/migrations/1419-add-shop-id-and-type-to-bi-config.php
 _sql/migrations/1434-update-esd-helptext.php
 _sql/migrations/1436-add-bi-last-update-date-column.php
 _sql/migrations/1441-add-notification-attributes.php
+_sql/migrations/1441-add-shop-attributes-table.php
 _sql/migrations/1444-add-notification-attributes.php
 _sql/migrations/1446-add-notification-attributes.php
+_sql/migrations/1450-add-missing-eu-countries.php
 _sql/migrations/146-payment-method-refactor.php
 _sql/migrations/147-add-sepa-database-items.php
 _sql/migrations/1500-remove-esd-strategies.php
@@ -319,7 +321,12 @@ build/scripts
 cache
 check
 check_files.php
+dev-ops/bamboo.shopware.com/actions/.copy_mysql-config.sh
+dev-ops/bamboo.shopware.com/actions/.phpstan.sh
 dev-ops/bamboo.shopware.com/templates
+dev-ops/docker/containers/app/Dockerfile
+dev-ops/docker/containers/elasticsearch/Dockerfile
+dev-ops/docker/containers/mysql/Dockerfile
 dev-ops/docker/containers/mysql/createuser.sh
 dev-ops/docker/containers/php7
 dev-ops/docker/containers/scriptcreator.sh
@@ -1249,6 +1256,7 @@ tests/Functional/Bundle/CustomerSearchBundle
 tests/Functional/Bundle/CustomerSearchBundleDBAL/DependencyInjection
 tests/Functional/Components/Emotion/Preset/PresetServiceTest.php
 tests/Functional/Components/NumberRangeManagerTest.php
+tests/Functional/Components/Plugin/NamespaceTest.php
 tests/Functional/Components/Theme/PathResolverTest.php
 tests/Functional/Controllers/Backend/ImportExport.php
 tests/Functional/Controllers/Frontend/AccountTest.php
@@ -1334,6 +1342,7 @@ themes/Backend/ExtJs/backend/article/view/detail/sidebar
 themes/Backend/ExtJs/backend/article/view/image/upload.js
 themes/Backend/ExtJs/backend/banner/model/attribute.js
 themes/Backend/ExtJs/backend/base/application/Shopware.window.BatchRequests.js
+themes/Backend/ExtJs/backend/base/component/Shopware.data.ClassCache.js
 themes/Backend/ExtJs/backend/base/component/Shopware.notification.ExpiredLicence.js
 themes/Backend/ExtJs/backend/benchmark/store/business.js
 themes/Backend/ExtJs/backend/benchmark/template/local/branch_select.tpl

@@ -82,7 +82,7 @@ class DatabaseHandler
      * Loads all snippets from all files in $snippetsDir
      * (including subfolders) and writes them to the database.
      *
-     * @param null|string $snippetsDir
+     * @param string|null $snippetsDir
      * @param bool        $force
      * @param string      $namespacePrefix allows to prefix the snippet namespace
      */
@@ -117,6 +117,7 @@ class DatabaseHandler
             $filePath = $file->getRelativePathname();
             if (strpos($filePath, '.ini') == strlen($filePath) - 4) {
                 $namespace = substr($filePath, 0, -4);
+                $namespace = str_replace('\\', '/', $namespace);
             } else {
                 continue;
             }
@@ -246,6 +247,7 @@ class DatabaseHandler
             $filePath = $file->getRelativePathname();
             if (strpos($filePath, '.ini') == strlen($filePath) - 4) {
                 $namespace = substr($filePath, 0, -4);
+                $namespace = str_replace('\\', '/', $namespace);
             } else {
                 continue;
             }

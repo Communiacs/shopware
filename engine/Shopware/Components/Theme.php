@@ -139,7 +139,7 @@ class Theme
      * from the backend template module
      * to get the template hierarchy
      *
-     * @return null|string
+     * @return string|null
      */
     public function getExtend()
     {
@@ -289,7 +289,7 @@ class Theme
     }
 
     /**
-     * @param bool $discardedLessThemes
+     * @param array $discardedLessThemes
      */
     public function setDiscardedLessThemes($discardedLessThemes)
     {

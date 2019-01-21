@@ -21,6 +21,7 @@
  * trademark license. Therefore any rights, title and interest in
  * our trademarks remain entirely with us.
  */
+
 use League\Flysystem\Adapter\Local;
 use Shopware\Bundle\AccountBundle\Form\Account\EmailUpdateFormType;
 use Shopware\Bundle\AccountBundle\Form\Account\PasswordUpdateFormType;
@@ -179,7 +180,7 @@ class Shopware_Controllers_Frontend_Account extends Enlight_Controller_Action
                                             ->findOneBy(['customerId' => Shopware()->Session()->sUserId]);
         if (!empty($partnerModel)) {
             $this->View()->assign('partnerId', $partnerModel->getId());
-            Shopware()->Session()->assign('partnerId', $partnerModel->getId());
+            Shopware()->Session()->offsetSet('partnerId', $partnerModel->getId());
         }
     }
 
@@ -498,7 +499,7 @@ class Shopware_Controllers_Frontend_Account extends Enlight_Controller_Action
 
         $userID = Shopware()->Modules()->Admin()->sGetUserByMail($email);
         if (empty($userID)) {
-            return;
+            return [];
         }
 
         $hash = \Shopware\Components\Random::getAlphanumericString(32);

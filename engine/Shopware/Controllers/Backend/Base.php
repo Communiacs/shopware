@@ -21,6 +21,7 @@
  * trademark license. Therefore any rights, title and interest in
  * our trademarks remain entirely with us.
  */
+
 use Doctrine\DBAL\Connection;
 use Shopware\Components\CSRFWhitelistAware;
 use Shopware\Components\StateTranslatorService;
@@ -466,8 +467,8 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
         $builder->groupBy('articles.id');
 
         // Don't search for normal articles
-        $displayArticles = (bool) $this->Request()->getParam('articles', true);
-        if (!$displayArticles) {
+        $displayProducts = (bool) $this->Request()->getParam('articles', true);
+        if (!$displayProducts) {
             $builder->andWhere('articles.configuratorSetId IS NOT NULL');
         }
 
@@ -1100,9 +1101,9 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
         $tmpVariant = [];
 
         // Checks if an additional text is available
-        foreach ($data as $variantData) {
+        foreach ($data as $key => $variantData) {
             if (!empty($variantData['additionalText'])) {
-                $variantData['name'] = $variantData['name'] . ' ' . $variantData['additionalText'];
+                $data[$key]['name'] = $variantData['name'] . ' ' . $variantData['additionalText'];
             } else {
                 $variantIds[$variantData['id']] = $variantData['id'];
             }

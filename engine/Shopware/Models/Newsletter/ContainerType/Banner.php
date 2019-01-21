@@ -22,7 +22,7 @@
  * our trademarks remain entirely with us.
  */
 
-namespace   Shopware\Models\Newsletter\ContainerType;
+namespace Shopware\Models\Newsletter\ContainerType;
 
 use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
@@ -39,12 +39,13 @@ class Banner extends ModelEntity
      * OWNING SIDE
      * Owning side of relation between container type 'article' and parent container
      *
+     * @var \Shopware\Models\Newsletter\Container
+     *
      * @ORM\OneToOne(targetEntity="Shopware\Models\Newsletter\Container", inversedBy="banner")
      * @ORM\JoinColumn(name="parentID", referencedColumnName="id")
-     *
-     * @var \Shopware\Models\Newsletter\Container
      */
     protected $container;
+
     /**
      * Autoincrement ID
      *

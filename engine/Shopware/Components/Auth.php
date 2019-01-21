@@ -39,12 +39,12 @@ class Shopware_Components_Auth extends Enlight_Components_Auth
      *
      * @var \Zend_Auth_Adapter_Interface
      */
-    protected $_baseAdapter = null; // Current active adapter
+    protected $_baseAdapter; // Current active adapter
 
     /**
      * Get all adapters or certain one
      *
-     * @param null|string $index
+     * @param string|null $index
      *
      * @return array|Zend_Auth_Adapter_Interface
      */
@@ -126,7 +126,7 @@ class Shopware_Components_Auth extends Enlight_Components_Auth
     /**
      * Do a authentication approve with a defined adapter
      *
-     * @param null|Zend_Auth_Adapter_Interface $adapter
+     * @param Zend_Auth_Adapter_Interface|null $adapter
      *
      * @return Zend_Auth_Result
      */
@@ -152,7 +152,7 @@ class Shopware_Components_Auth extends Enlight_Components_Auth
     /**
      * Refresh authentication - for example expire date -
      *
-     * @param null|Zend_Auth_Adapter_Interface $adapter
+     * @param Zend_Auth_Adapter_Interface|null $adapter
      *
      * @return mixed
      */
@@ -183,7 +183,10 @@ class Shopware_Components_Auth extends Enlight_Components_Auth
             self::$_instance = new self();
         }
 
-        return self::$_instance;
+        /** @var \Shopware_Components_Auth $return */
+        $return = self::$_instance;
+
+        return $return;
     }
 
     /**

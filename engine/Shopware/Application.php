@@ -21,6 +21,7 @@
  * trademark license. Therefore any rights, title and interest in
  * our trademarks remain entirely with us.
  */
+
 use Shopware\Components\DependencyInjection\Container;
 
 /**
@@ -41,9 +42,9 @@ class Shopware extends Enlight_Application
      *      'shopware.release.version_text'
      *      'shopware.release' (a Struct containing all the above parameters)
      */
-    const VERSION = '5.5.4';
+    const VERSION = '5.5.5';
     const VERSION_TEXT = '';
-    const REVISION = '201812030839';
+    const REVISION = '201901180958';
 
     /**
      * @var string
@@ -147,7 +148,7 @@ class Shopware extends Enlight_Application
     }
 
     /**
-     * Returns document path: <projectroot>/
+     * Returns document path: <project root>/
      *
      * @param string $path
      *
@@ -159,7 +160,7 @@ class Shopware extends Enlight_Application
     }
 
     /**
-     * Returns the application path: <projectroot>/engine/Shopware/
+     * Returns the application path: <project root>/engine/Shopware/
      *
      * @param string $path
      *

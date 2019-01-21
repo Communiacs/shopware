@@ -35,16 +35,17 @@ class Repository extends ModelRepository
      * Returns an Banner Statistic Model.Either a new one or an existing one. If no date given
      * the current date will be used.
      *
-     * @param int       $bannerId
-     * @param \DateTime $date
+     * @param int                     $bannerId
+     * @param \DateTimeInterface|null $date
      *
      * @return Banner
      */
-    public function getOrCreateBannerStatsModel($bannerId, \DateTime $date = null)
+    public function getOrCreateBannerStatsModel($bannerId, \DateTimeInterface $date = null)
     {
         if ($date === null) {
             $date = new \DateTime();
         }
+        /** @var Banner $bannerStatistics */
         $bannerStatistics = $this->findOneBy(['bannerId' => $bannerId, 'displayDate' => $date]);
 
         // If no Entry for this day exists - create a new one
@@ -63,8 +64,8 @@ class Repository extends ModelRepository
      *
      * @param int                     $articleId
      * @param int                     $shopId
-     * @param null|\DateTimeInterface $date
-     * @param null|string             $deviceType
+     * @param \DateTimeInterface|null $date
+     * @param string|null             $deviceType
      *
      * @return \Doctrine\ORM\Query
      */
@@ -85,7 +86,7 @@ class Repository extends ModelRepository
      * @param int                $articleId
      * @param int                $shopId
      * @param \DateTimeInterface $date
-     * @param null|string        $deviceType
+     * @param string|null        $deviceType
      *
      * @return \Doctrine\ORM\QueryBuilder
      */
@@ -93,7 +94,7 @@ class Repository extends ModelRepository
     {
         $builder = $this->getEntityManager()->createQueryBuilder();
         $builder->select('articleImpression')
-                ->from('Shopware\Models\Tracking\ArticleImpression', 'articleImpression')
+                ->from(\Shopware\Models\Tracking\ArticleImpression::class, 'articleImpression')
                 ->where('articleImpression.articleId = :articleId')
                 ->andWhere('articleImpression.shopId = :shopId')
                 ->andWhere('articleImpression.date = :fromDate')

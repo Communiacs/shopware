@@ -22,7 +22,7 @@
  * our trademarks remain entirely with us.
  */
 
-namespace   Shopware\Models\Customer;
+namespace Shopware\Models\Customer;
 
 use Shopware\Components\Model\ModelRepository;
 
@@ -32,7 +32,7 @@ use Shopware\Components\Model\ModelRepository;
 class PaymentDataRepository extends ModelRepository
 {
     /**
-     * @param null|int $userId
+     * @param int|null $userId
      * @param string   $paymentName
      *
      * @return \Doctrine\ORM\QueryBuilder

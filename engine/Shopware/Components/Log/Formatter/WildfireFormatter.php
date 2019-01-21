@@ -155,7 +155,7 @@ class WildfireFormatter extends BaseWildfireFormatter
     /**
      * Encodes a trace by encoding all "args" with encodeObject()
      *
-     * @param null|array $trace
+     * @param array|null $trace
      *
      * @return array The encoded trace
      */
@@ -204,7 +204,7 @@ class WildfireFormatter extends BaseWildfireFormatter
      * @param int   $objectDepth
      * @param int   $arrayDepth
      *
-     * @return array The encoded object
+     * @return array|string The encoded object
      */
     protected function encodeObject($object, $objectDepth = 1, $arrayDepth = 1)
     {

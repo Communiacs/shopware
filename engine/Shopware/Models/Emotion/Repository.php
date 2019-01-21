@@ -22,7 +22,7 @@
  * our trademarks remain entirely with us.
  */
 
-namespace   Shopware\Models\Emotion;
+namespace Shopware\Models\Emotion;
 
 use Doctrine\DBAL\Connection;
 use Shopware\Components\Model\ModelRepository;
@@ -52,7 +52,7 @@ class Repository extends ModelRepository
             ->from(\Shopware\Models\Emotion\Emotion::class, 'emotions')
             ->leftJoin('emotions.categories', 'categories');
 
-        //filter the displayed columns with the passed filter string
+        // Filter the displayed columns with the passed filter string
         if (!empty($filter)) {
             $builder->where('categories.name LIKE ?2')
                 ->orWhere('emotions.name LIKE ?2')
@@ -67,9 +67,9 @@ class Repository extends ModelRepository
     }
 
     /**
-     * @param null|array $filter
-     * @param null|array $filterBy
-     * @param null|int   $categoryId
+     * @param array|null $filter
+     * @param array|null $filterBy
+     * @param int|null   $categoryId
      *
      * @return \Doctrine\DBAL\Query\QueryBuilder
      */

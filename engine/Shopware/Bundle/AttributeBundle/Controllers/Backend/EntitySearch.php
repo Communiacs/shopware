@@ -21,6 +21,7 @@
  * trademark license. Therefore any rights, title and interest in
  * our trademarks remain entirely with us.
  */
+
 use Enlight_Controller_Request_Request as Request;
 use Shopware\Bundle\AttributeBundle\Repository\RegistryInterface;
 use Shopware\Bundle\AttributeBundle\Repository\SearchCriteria;
@@ -65,7 +66,7 @@ class Shopware_Controllers_Backend_EntitySearch extends Shopware_Controllers_Bac
         $criteria->limit = $request->getParam('limit', 30);
         $criteria->ids = $request->getParam('ids', []);
         $criteria->term = $request->getParam('query');
-        $criteria->sortings = $request->getParam('sorts', []);
+        $criteria->sortings = $request->getParam('sorts', $this->Request()->getParam('sort', []));
         $criteria->conditions = $request->getParam('filters', []);
 
         $filters = $request->getParam('filter', []);

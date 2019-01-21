@@ -25,6 +25,7 @@
 namespace Shopware\Bundle\ESIndexingBundle\Product;
 
 use Doctrine\DBAL\Connection;
+use Shopware\Bundle\AttributeBundle\Service\CrudService;
 use Shopware\Bundle\ESIndexingBundle\IdentifierSelector;
 use Shopware\Bundle\ESIndexingBundle\Struct\Product;
 use Shopware\Bundle\SearchBundleDBAL\VariantHelperInterface;
@@ -112,6 +113,16 @@ class ProductProvider implements ProductProviderInterface
      */
     private $configurationLoader;
 
+    /**
+     * @var CrudService
+     */
+    private $crudService;
+
+    /**
+     * @var array
+     */
+    private $attributeConfigList;
+
     public function __construct(
         ListProductGatewayInterface $productGateway,
         CheapestPriceServiceInterface $cheapestPriceService,
@@ -125,7 +136,8 @@ class ProductProvider implements ProductProviderInterface
         ConfiguratorServiceInterface $configuratorService,
         VariantHelperInterface $variantHelper,
         ProductConfigurationLoader $configurationLoader,
-        ProductListingVariationLoader $visibilityLoader
+        ProductListingVariationLoader $visibilityLoader,
+        CrudService $crudService
     ) {
         $this->productGateway = $productGateway;
         $this->cheapestPriceService = $cheapestPriceService;
@@ -140,6 +152,7 @@ class ProductProvider implements ProductProviderInterface
         $this->variantHelper = $variantHelper;
         $this->configurationLoader = $configurationLoader;
         $this->listingVariationLoader = $visibilityLoader;
+        $this->crudService = $crudService;
     }
 
     /**
@@ -170,14 +183,16 @@ class ProductProvider implements ProductProviderInterface
         if ($variantFacet) {
             $variantConfiguration = $this->configuratorService->getProductsConfigurations($products, $context);
 
-            $articleIds = array_map(
+            $productIds = array_map(
                 function (ListProduct $product) {
                     return $product->getId();
-                }, $products);
+                },
+                $products
+            );
 
-            $configurations = $this->configurationLoader->getConfigurations($articleIds, $context);
+            $configurations = $this->configurationLoader->getConfigurations($productIds, $context);
 
-            $combinations = $this->configurationLoader->getCombinations($articleIds);
+            $combinations = $this->configurationLoader->getCombinations($productIds);
 
             $listingPrices = $this->listingVariationLoader->getListingPrices($shop, $products, $variantConfiguration, $variantFacet);
 
@@ -252,6 +267,9 @@ class ProductProvider implements ProductProviderInterface
             $product->setFormattedReleaseDate(
                 $this->formatDate($product->getReleaseDate())
             );
+            $product->addAttributes(
+                $this->parseAttributes($product->getAttributes())
+            );
 
             $product->setCreatedAt(null);
             $product->setUpdatedAt(null);
@@ -273,11 +291,11 @@ class ProductProvider implements ProductProviderInterface
     }
 
     /**
-     * @param \DateTime|null $date
+     * @param \DateTimeInterface|null $date
      *
-     * @return null|string
+     * @return string|null
      */
-    private function formatDate(\DateTime $date = null)
+    private function formatDate(\DateTimeInterface $date = null)
     {
         return !$date ? null : $date->format('Y-m-d');
     }
@@ -294,7 +312,7 @@ class ProductProvider implements ProductProviderInterface
         }, $products);
 
         $query = $this->connection->createQueryBuilder();
-        $query->select(['mapping.articleID', 'categories.id', 'categories.path'])
+        $query->select(['mapping.articleID AS productId', 'categories.id', 'categories.path'])
             ->from('s_articles_categories', 'mapping')
             ->innerJoin('mapping', 's_categories', 'categories', 'categories.id = mapping.categoryID')
             ->where('mapping.articleID IN (:ids)')
@@ -304,15 +322,15 @@ class ProductProvider implements ProductProviderInterface
 
         $result = [];
         foreach ($data as $row) {
-            $articleId = (int) $row['articleID'];
+            $productId = (int) $row['productId'];
             $categories = [];
-            if (isset($result[$articleId])) {
-                $categories = $result[$articleId];
+            if (isset($result[$productId])) {
+                $categories = $result[$productId];
             }
             $temp = explode('|', $row['path']);
             $temp[] = $row['id'];
 
-            $result[$articleId] = array_merge($categories, $temp);
+            $result[$productId] = array_merge($categories, $temp);
         }
 
         return array_map(function ($row) {
@@ -510,7 +528,7 @@ class ProductProvider implements ProductProviderInterface
      * @param int     $id
      * @param Group[] $groups
      *
-     * @return null|Group
+     * @return Group|null
      */
     private function getFullConfigurationGroup($id, $groups)
     {
@@ -521,5 +539,36 @@ class ProductProvider implements ProductProviderInterface
         }
 
         return null;
+    }
+
+    /**
+     * @param array $attributes
+     *
+     * @return array
+     */
+    private function parseAttributes(array $attributes)
+    {
+        if (!isset($attributes['core'])) {
+            return $attributes;
+        }
+
+        if ($this->attributeConfigList === null) {
+            $this->attributeConfigList = $this->crudService->getList('s_articles_attributes');
+        }
+
+        foreach ($this->attributeConfigList as $attributeConfig) {
+            $columnName = $attributeConfig->getColumnName();
+            if ($attributes['core']->exists($columnName)) {
+                $value = $attributes['core']->get($columnName);
+
+                if ($attributeConfig->getColumnType() === 'boolean') {
+                    $value = $value === '1' ? true : false;
+                }
+
+                $attributes['core']->set($columnName, $value);
+            }
+        }
+
+        return $attributes;
     }
 }

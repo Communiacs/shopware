@@ -187,7 +187,9 @@ class QueryBuilder extends BaseQueryBuilder
                 continue;
             }
 
-            $parameterKey = str_replace(['.'], ['_'], $exprKey) . uniqid();
+            // The return value of uniqid, even w/o parameters, may contain dots in some environments
+            // so we make sure to strip those as well
+            $parameterKey = str_replace(['.'], ['_'], $exprKey . uniqid());
             if (isset($this->alias) && strpos($exprKey, '.') === false) {
                 $exprKey = $this->alias . '.' . $exprKey;
             }
@@ -251,7 +253,7 @@ class QueryBuilder extends BaseQueryBuilder
      */
     public function addOrderBy($orderBy, $order = null)
     {
-        /** @var \Doctrine\ORM\Query\Expr\Select $select */
+        /** @var array<string, mixed> $select */
         $select = $this->getDQLPart('select');
         if (is_array($orderBy)) {
             foreach ($orderBy as $order) {
