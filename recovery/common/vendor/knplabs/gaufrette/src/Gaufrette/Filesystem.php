@@ -5,25 +5,23 @@ namespace Gaufrette;
 use Gaufrette\Adapter\ListKeysAware;
 
 /**
- * A filesystem is used to store and retrieve files
+ * A filesystem is used to store and retrieve files.
  *
  * @author Antoine Hérault <antoine.herault@gmail.com>
  * @author Leszek Prabucki <leszek.prabucki@gmail.com>
  */
-class Filesystem
+class Filesystem implements FilesystemInterface
 {
     protected $adapter;
-    
+
     /**
-     * Contains File objects created with $this->createFile() method
-     * 
-     * @var array 
+     * Contains File objects created with $this->createFile() method.
+     *
+     * @var array
      */
     protected $fileRegister = array();
 
     /**
-     * Constructor
-     *
      * @param Adapter $adapter A configured Adapter instance
      */
     public function __construct(Adapter $adapter)
@@ -32,7 +30,7 @@ class Filesystem
     }
 
     /**
-     * Returns the adapter
+     * Returns the adapter.
      *
      * @return Adapter
      */
@@ -42,41 +40,34 @@ class Filesystem
     }
 
     /**
-     * Indicates whether the file matching the specified key exists
-     *
-     * @param string $key
-     *
-     * @return boolean TRUE if the file exists, FALSE otherwise
+     * {@inheritdoc}
      */
     public function has($key)
     {
+        self::assertValidKey($key);
+
         return $this->adapter->exists($key);
     }
 
     /**
-     * Renames a file
-     *
-     * @param string $sourceKey
-     * @param string $targetKey
-     *
-     * @return boolean                  TRUE if the rename was successful
-     * @throws Exception\FileNotFound   when sourceKey does not exist
-     * @throws Exception\UnexpectedFile when targetKey exists
-     * @throws \RuntimeException        when cannot rename
+     * {@inheritdoc}
      */
     public function rename($sourceKey, $targetKey)
     {
+        self::assertValidKey($sourceKey);
+        self::assertValidKey($targetKey);
+
         $this->assertHasFile($sourceKey);
 
         if ($this->has($targetKey)) {
             throw new Exception\UnexpectedFile($targetKey);
         }
 
-        if (! $this->adapter->rename($sourceKey, $targetKey)) {
+        if (!$this->adapter->rename($sourceKey, $targetKey)) {
             throw new \RuntimeException(sprintf('Could not rename the "%s" key to "%s".', $sourceKey, $targetKey));
         }
-        
-        if($this->isFileInRegister($sourceKey)) {
+
+        if ($this->isFileInRegister($sourceKey)) {
             $this->fileRegister[$targetKey] = $this->fileRegister[$sourceKey];
             unset($this->fileRegister[$sourceKey]);
         }
@@ -85,16 +76,12 @@ class Filesystem
     }
 
     /**
-     * Returns the file matching the specified key
-     *
-     * @param string  $key    Key of the file
-     * @param boolean $create Whether to create the file if it does not exist
-     *
-     * @throws Gaufrette\Exception\FileNotFound
-     * @return File
+     * {@inheritdoc}
      */
     public function get($key, $create = false)
     {
+        self::assertValidKey($key);
+
         if (!$create) {
             $this->assertHasFile($key);
         }
@@ -103,18 +90,12 @@ class Filesystem
     }
 
     /**
-     * Writes the given content into the file
-     *
-     * @param string  $key                 Key of the file
-     * @param string  $content             Content to write in the file
-     * @param boolean $overwrite           Whether to overwrite the file if exists
-     * @throws Exception\FileAlreadyExists When file already exists and overwrite is false
-     * @throws \RuntimeException           When for any reason content could not be written
-     *
-     * @return integer The number of bytes that were written into the file
+     * {@inheritdoc}
      */
     public function write($key, $content, $overwrite = false)
     {
+        self::assertValidKey($key);
+
         if (!$overwrite && $this->has($key)) {
             throw new Exception\FileAlreadyExists($key);
         }
@@ -129,16 +110,12 @@ class Filesystem
     }
 
     /**
-     * Reads the content from the file
-     *
-     * @param  string                 $key Key of the file
-     * @throws Exception\FileNotFound when file does not exist
-     * @throws \RuntimeException      when cannot read file
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function read($key)
     {
+        self::assertValidKey($key);
+
         $this->assertHasFile($key);
 
         $content = $this->adapter->read($key);
@@ -151,21 +128,17 @@ class Filesystem
     }
 
     /**
-     * Deletes the file matching the specified key
-     *
-     * @param string $key
-     * @throws \RuntimeException when cannot read file
-     *
-     * @return boolean
+     * {@inheritdoc}
      */
     public function delete($key)
     {
+        self::assertValidKey($key);
+
         $this->assertHasFile($key);
 
         if ($this->adapter->delete($key)) {
-            if($this->isFileInRegister($key)) {
-                unset($this->fileRegister[$key]);
-            }
+            $this->removeFromRegister($key);
+
             return true;
         }
 
@@ -173,9 +146,7 @@ class Filesystem
     }
 
     /**
-     * Returns an array of all keys
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function keys()
     {
@@ -183,14 +154,7 @@ class Filesystem
     }
 
     /**
-     * Lists keys beginning with given prefix
-     * (no wildcard / regex matching)
-     *
-     * if adapter implements ListKeysAware interface, adapter's implementation will be used,
-     * in not, ALL keys will be requested and iterated through.
-     *
-     * @param  string $prefix
-     * @return array
+     * {@inheritdoc}
      */
     public function listKeys($prefix = '')
     {
@@ -213,33 +177,29 @@ class Filesystem
 
         return array(
             'keys' => $keys,
-            'dirs' => $dirs
+            'dirs' => $dirs,
         );
     }
 
     /**
-     * Returns the last modified time of the specified file
-     *
-     * @param string $key
-     *
-     * @return integer An UNIX like timestamp
+     * {@inheritdoc}
      */
     public function mtime($key)
     {
+        self::assertValidKey($key);
+
         $this->assertHasFile($key);
 
         return $this->adapter->mtime($key);
     }
 
     /**
-     * Returns the checksum of the specified file's content
-     *
-     * @param string $key
-     *
-     * @return string A MD5 hash
+     * {@inheritdoc}
      */
     public function checksum($key)
     {
+        self::assertValidKey($key);
+
         $this->assertHasFile($key);
 
         if ($this->adapter instanceof Adapter\ChecksumCalculator) {
@@ -250,14 +210,12 @@ class Filesystem
     }
 
     /**
-     * Returns the size of the specified file's content
-     *
-     * @param string $key
-     *
-     * @return integer File size in Bytes
+     * {@inheritdoc}
      */
     public function size($key)
     {
+        self::assertValidKey($key);
+
         $this->assertHasFile($key);
 
         if ($this->adapter instanceof Adapter\SizeCalculator) {
@@ -268,10 +226,12 @@ class Filesystem
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function createStream($key)
     {
+        self::assertValidKey($key);
+
         if ($this->adapter instanceof Adapter\StreamFactory) {
             return $this->adapter->createStream($key);
         }
@@ -280,11 +240,13 @@ class Filesystem
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function createFile($key)
     {
-        if(false === $this->isFileInRegister($key)) {
+        self::assertValidKey($key);
+
+        if (false === $this->isFileInRegister($key)) {
             if ($this->adapter instanceof Adapter\FileFactory) {
                 $this->fileRegister[$key] = $this->adapter->createFile($key, $this);
             } else {
@@ -296,14 +258,12 @@ class Filesystem
     }
 
     /**
-     * Get the mime type of the provided key
-     *
-     * @param string $key
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function mimeType($key)
     {
+        self::assertValidKey($key);
+
         $this->assertHasFile($key);
 
         if ($this->adapter instanceof Adapter\MimeTypeProvider) {
@@ -317,31 +277,71 @@ class Filesystem
     }
 
     /**
-     * Checks if matching file by given key exists in the filesystem
+     * Checks if matching file by given key exists in the filesystem.
      *
      * Key must be non empty string, otherwise it will throw Exception\FileNotFound
      * {@see http://php.net/manual/en/function.empty.php}
      *
      * @param string $key
      *
-     * @throws Exception\FileNotFound   when sourceKey does not exist
+     * @throws Exception\FileNotFound when sourceKey does not exist
      */
     private function assertHasFile($key)
     {
-        if (! empty($key) && ! $this->has($key)) {
+        if (!$this->has($key)) {
             throw new Exception\FileNotFound($key);
         }
     }
-    
+
     /**
-     * Checks if matching File object by given key exists in the fileRegister
-     * 
+     * Checks if matching File object by given key exists in the fileRegister.
+     *
      * @param string $key
-     * 
+     *
      * @return bool
      */
     private function isFileInRegister($key)
     {
         return array_key_exists($key, $this->fileRegister);
+    }
+
+    /**
+     * Clear files register.
+     */
+    public function clearFileRegister()
+    {
+        $this->fileRegister = array();
+    }
+
+    /**
+     * Removes File object from register.
+     *
+     * @param string $key
+     */
+    public function removeFromRegister($key)
+    {
+        if ($this->isFileInRegister($key)) {
+            unset($this->fileRegister[$key]);
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function isDirectory($key)
+    {
+        return $this->adapter->isDirectory($key);
+    }
+
+    /**
+     * @param string $key
+     *
+     * @throws \InvalidArgumentException Given $key should not be empty
+     */
+    private static function assertValidKey($key)
+    {
+        if (empty($key)) {
+            throw new \InvalidArgumentException('Object path is empty.');
+        }
     }
 }

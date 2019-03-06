@@ -3,7 +3,7 @@
 namespace Gaufrette;
 
 /**
- * Stream wrapper class for the Gaufrette filesystems
+ * Stream wrapper class for the Gaufrette filesystems.
  *
  * @author Antoine Hérault <antoine.herault@gmail.com>
  * @author Leszek Prabucki <leszek.prabucki@gmail.com>
@@ -15,7 +15,7 @@ class StreamWrapper
     private $stream;
 
     /**
-     * Defines the filesystem map
+     * Defines the filesystem map.
      *
      * @param FilesystemMap $map
      */
@@ -25,7 +25,7 @@ class StreamWrapper
     }
 
     /**
-     * Returns the filesystem map
+     * Returns the filesystem map.
      *
      * @return FilesystemMap $map
      */
@@ -39,7 +39,7 @@ class StreamWrapper
     }
 
     /**
-     * Registers the stream wrapper to handle the specified scheme
+     * Registers the stream wrapper to handle the specified scheme.
      *
      * @param string $scheme Default is gaufrette
      */
@@ -47,7 +47,7 @@ class StreamWrapper
     {
         static::streamWrapperUnregister($scheme);
 
-        if (! static::streamWrapperRegister($scheme, __CLASS__)) {
+        if (!static::streamWrapperRegister($scheme, __CLASS__)) {
             throw new \RuntimeException(sprintf(
                 'Could not register stream wrapper class %s for scheme %s.',
                 __CLASS__,
@@ -77,6 +77,8 @@ class StreamWrapper
     /**
      * @param string $scheme    - protocol scheme
      * @param string $className
+     *
+     * @return bool
      */
     protected static function streamWrapperRegister($scheme, $className)
     {
@@ -91,7 +93,8 @@ class StreamWrapper
     }
 
     /**
-     * @param  int   $bytes
+     * @param int $bytes
+     *
      * @return mixed
      */
     public function stream_read($bytes)
@@ -104,7 +107,8 @@ class StreamWrapper
     }
 
     /**
-     * @param  string $data
+     * @param string $data
+     *
      * @return int
      */
     public function stream_write($data)
@@ -124,7 +128,7 @@ class StreamWrapper
     }
 
     /**
-     * @return boolean
+     * @return bool
      */
     public function stream_flush()
     {
@@ -136,9 +140,10 @@ class StreamWrapper
     }
 
     /**
-     * @param  int     $offset
-     * @param  int     $whence - one of values [SEEK_SET, SEEK_CUR, SEEK_END]
-     * @return boolean
+     * @param int $offset
+     * @param int $whence - one of values [SEEK_SET, SEEK_CUR, SEEK_END]
+     *
+     * @return bool
      */
     public function stream_seek($offset, $whence = SEEK_SET)
     {
@@ -162,7 +167,7 @@ class StreamWrapper
     }
 
     /**
-     * @return boolean
+     * @return bool
      */
     public function stream_eof()
     {
@@ -186,9 +191,11 @@ class StreamWrapper
     }
 
     /**
-     * @param  string $path
-     * @param  int    $flags
+     * @param string $path
+     * @param int    $flags
+     *
      * @return mixed
+     *
      * @todo handle $flags parameter
      */
     public function url_stat($path, $flags)
@@ -198,14 +205,14 @@ class StreamWrapper
         try {
             $stream->open($this->createStreamMode('r+'));
         } catch (\RuntimeException $e) {
-            return false;
         }
 
         return $stream->stat();
     }
 
     /**
-     * @param  string $path
+     * @param string $path
+     *
      * @return mixed
      */
     public function unlink($path)
@@ -237,24 +244,24 @@ class StreamWrapper
     {
         $parts = array_merge(
             array(
-                'scheme'    => null,
-                'host'      => null,
-                'path'      => null,
-                'query'     => null,
-                'fragment'  => null,
+                'scheme' => null,
+                'host' => null,
+                'path' => null,
+                'query' => null,
+                'fragment' => null,
             ),
             parse_url($path) ?: array()
         );
 
         $domain = $parts['host'];
-        $key    = substr($parts['path'], 1);
+        $key = substr($parts['path'], 1);
 
         if (null !== $parts['query']) {
-            $key.= '?' . $parts['query'];
+            $key .= '?'.$parts['query'];
         }
 
         if (null !== $parts['fragment']) {
-            $key.= '#' . $parts['fragment'];
+            $key .= '#'.$parts['fragment'];
         }
 
         if (empty($domain) || empty($key)) {

@@ -6,7 +6,7 @@ use Gaufrette\Stream;
 use Gaufrette\StreamMode;
 
 /**
- * Local stream
+ * Local stream.
  *
  * @author Antoine Hérault <antoine.herault@gmail.com>
  */
@@ -15,25 +15,26 @@ class Local implements Stream
     private $path;
     private $mode;
     private $fileHandle;
+    private $mkdirMode;
 
     /**
-     * Constructor
-     *
      * @param string $path
+     * @param int    $mkdirMode
      */
-    public function __construct($path)
+    public function __construct($path, $mkdirMode = 0755)
     {
         $this->path = $path;
+        $this->mkdirMode = $mkdirMode;
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function open(StreamMode $mode)
     {
-        $baseDirPath = dirname($this->path);
+        $baseDirPath = \Gaufrette\Util\Path::dirname($this->path);
         if ($mode->allowsWrite() && !is_dir($baseDirPath)) {
-            @mkdir($baseDirPath, 0755, true);
+            @mkdir($baseDirPath, $this->mkdirMode, true);
         }
         try {
             $fileHandle = @fopen($this->path, $mode->getMode());
@@ -52,11 +53,11 @@ class Local implements Stream
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function read($count)
     {
-        if (! $this->fileHandle) {
+        if (!$this->fileHandle) {
             return false;
         }
 
@@ -68,11 +69,11 @@ class Local implements Stream
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function write($data)
     {
-        if (! $this->fileHandle) {
+        if (!$this->fileHandle) {
             return false;
         }
 
@@ -84,11 +85,11 @@ class Local implements Stream
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function close()
     {
-        if (! $this->fileHandle) {
+        if (!$this->fileHandle) {
             return false;
         }
 
@@ -103,7 +104,7 @@ class Local implements Stream
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function flush()
     {
@@ -115,7 +116,7 @@ class Local implements Stream
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function seek($offset, $whence = SEEK_SET)
     {
@@ -127,7 +128,7 @@ class Local implements Stream
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function tell()
     {
@@ -139,7 +140,7 @@ class Local implements Stream
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function eof()
     {
@@ -151,19 +152,21 @@ class Local implements Stream
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function stat()
     {
         if ($this->fileHandle) {
             return fstat($this->fileHandle);
+        } elseif (!is_resource($this->fileHandle) && is_dir($this->path)) {
+            return stat($this->path);
         }
 
         return false;
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function cast($castAs)
     {
@@ -175,7 +178,7 @@ class Local implements Stream
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function unlink()
     {

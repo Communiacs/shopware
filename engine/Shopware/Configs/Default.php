@@ -148,6 +148,7 @@ return array_replace_recursive([
         'total_fields_limit' => null,
         'max_result_window' => 10000,
         'wait_for_status' => 'green',
+        'dynamic_mapping_enabled' => true,
         'batchsize' => 500,
         'backend' => [
             'write_backlog' => false,
@@ -264,6 +265,8 @@ return array_replace_recursive([
     ],
     'sitemap' => [
         'batchsize' => 10000,
+        'excluded_urls' => [],
+        'custom_urls' => [],
     ],
     'phpsettings' => [
         'error_reporting' => E_ALL & ~E_USER_DEPRECATED,

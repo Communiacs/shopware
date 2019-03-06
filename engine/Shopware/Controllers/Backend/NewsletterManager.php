@@ -82,15 +82,6 @@ class Shopware_Controllers_Backend_NewsletterManager extends Shopware_Controller
         }
 
         $model = new \Shopware\Models\Newsletter\Address();
-        if ($model === null) {
-            $this->View()->assign([
-                'success' => false,
-                'message' => $this->translateMessage('error_msg/cannot_create_address', 'Could not create address'),
-            ]);
-
-            return;
-        }
-
         $model->setGroupId($groupId);
         $model->setEmail($email);
         $model->setIsCustomer(false);
@@ -128,27 +119,27 @@ class Shopware_Controllers_Backend_NewsletterManager extends Shopware_Controller
 
         // Get Newsletter-Groups, empty newsletter groups and customer groups
         $sql = 'SELECT SQL_CALC_FOUND_ROWS * FROM
-        (SELECT groups.id as internalId, COUNT(groupID) as number, groups.name, NULL as groupkey, FALSE as isCustomerGroup
+        (SELECT campaignGroup.id as internalId, COUNT(groupID) as number, campaignGroup.name, NULL as groupkey, FALSE as isCustomerGroup
             FROM s_campaigns_mailaddresses as addresses
-            JOIN s_campaigns_groups AS groups ON groupID = groups.id
+            JOIN s_campaigns_groups AS campaignGroup ON groupID = campaignGroup.id
             WHERE customer=0
             GROUP BY groupID
         UNION
-            SELECT groups.id as internalId, 0 as number, groups.name, NULL as groupkey, FALSE as isCustomerGroup
-            FROM s_campaigns_groups groups
+            SELECT campaignGroup.id as internalId, 0 as number, campaignGroup.name, NULL as groupkey, FALSE as isCustomerGroup
+            FROM s_campaigns_groups campaignGroup
             WHERE NOT EXISTS
             (
                 SELECT groupID
                 FROM s_campaigns_mailaddresses addresses
-                WHERE addresses.groupID = groups.id
+                WHERE addresses.groupID = campaignGroup.id
             )
         UNION
-            SELECT groups.id as internalId, COUNT(customergroup) as number, groups.description, groups.groupkey as groupkey, TRUE as isCustomerGroup
+            SELECT campaignGroup.id as internalId, COUNT(customergroup) as number, campaignGroup.description, campaignGroup.groupkey as groupkey, TRUE as isCustomerGroup
             FROM s_campaigns_mailaddresses as addresses
             LEFT JOIN s_user as users ON users.email = addresses.email
-            JOIN s_core_customergroups AS groups ON users.customergroup = groups.groupkey
+            JOIN s_core_customergroups AS campaignGroup ON users.customergroup = campaignGroup.groupkey
             WHERE customer=1
-            GROUP BY groups.groupkey) as t
+            GROUP BY campaignGroup.groupkey) as t
             ORDER BY :field :direction LIMIT :limit OFFSET :offset';
 
         /** @var \Doctrine\DBAL\Connection $db */
@@ -361,7 +352,7 @@ class Shopware_Controllers_Backend_NewsletterManager extends Shopware_Controller
     public function createNewsletterAction()
     {
         $data = $this->Request()->getParams();
-        if ($data === null) {
+        if (empty($data)) {
             $this->View()->assign([
                 'success' => false,
                 'message' => $this->translateMessage('error_msg/no_data_passed', 'No data passed'),
@@ -407,7 +398,7 @@ class Shopware_Controllers_Backend_NewsletterManager extends Shopware_Controller
         }
 
         $data = $this->Request()->getParams();
-        if ($data === null) {
+        if (empty($data)) {
             $this->View()->assign([
                 'success' => false,
                 'message' => $this->translateMessage('error_msg/no_data_passed', 'No data passed'),
@@ -694,7 +685,7 @@ class Shopware_Controllers_Backend_NewsletterManager extends Shopware_Controller
         $active = $this->Request()->getParam('status');
         $id = (int) $this->Request()->getParam('id');
 
-        if ($id === null) {
+        if ($id === 0) {
             $this->View()->assign([
                 'success' => false,
                 'message' => $this->translateMessage('error_msg/no_id_passed', 'No ID passed'),

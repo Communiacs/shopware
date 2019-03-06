@@ -26,6 +26,13 @@ namespace Shopware\Components\Plugin;
 
 use Symfony\Component\Config\Util\XmlUtils;
 
+/**
+ * @deprecated This class will be removed in 5.6
+ *
+ * Use new class Shopware\Components\Plugin\XmlReader\XmlConfigReader (see Shopware 5.6)
+ *
+ * https://github.com/shopware/shopware/blob/5.6/engine/Shopware/Components/Plugin/XmlReader/XmlConfigReader.php
+ */
 class XmlConfigDefinitionReader
 {
     /**
@@ -67,18 +74,21 @@ class XmlConfigDefinitionReader
             $form['description'][$lang] = $description->nodeValue;
         }
 
-        if (false === $elemements = $xpath->query('//elements/element')) {
+        /** @var \DOMNodeList|false $elements */
+        $elements = $xpath->query('//elements/element');
+
+        if ($elements === false) {
             return;
         }
 
-        $elements = [];
+        $parsedElements = [];
 
         /* @var \DOMElement $entry */
-        foreach ($elemements as $elemement) {
-            $elements[] = $this->parseElement($elemement);
+        foreach ($elements as $element) {
+            $parsedElements[] = $this->parseElement($element);
         }
 
-        $form['elements'] = $elements;
+        $form['elements'] = $parsedElements;
 
         return $form;
     }

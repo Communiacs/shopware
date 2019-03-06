@@ -2,18 +2,21 @@
 
 namespace Gaufrette\Adapter;
 
-use \AmazonS3 as AmazonClient;
+use AmazonS3 as AmazonClient;
 use Gaufrette\Adapter;
 
+@trigger_error('The '.__NAMESPACE__.'\AclAwareAmazonS3 adapter is deprecated since version 0.4 and will be removed in 1.0. Use the AwsS3 adapter instead.', E_USER_DEPRECATED);
+
 /**
- * Makes the AmazonS3 adapter ACL aware. Uses the AWS SDK for PHP v1.x
+ * Makes the AmazonS3 adapter ACL aware. Uses the AWS SDK for PHP v1.x.
  *
  * See the AwsS3 adapter for using the AWS SDK for PHP v2.x. There is
  * no distinction in the AwsS3 adapter between an ACL aware adapter
  * and regular adapter.
  *
- * @package Gaufrette
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
+ *
+ * @deprecated The AclAwareAmazonS3 adapter is deprecated since version 0.4 and will be removed in 1.0. Use the AwsS3 adapter instead.
  */
 class AclAwareAmazonS3 implements Adapter,
                                   MetadataSupporter
@@ -69,7 +72,7 @@ class AclAwareAmazonS3 implements Adapter,
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function read($key)
     {
@@ -77,7 +80,7 @@ class AclAwareAmazonS3 implements Adapter,
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function rename($key, $new)
     {
@@ -95,7 +98,7 @@ class AclAwareAmazonS3 implements Adapter,
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function write($key, $content)
     {
@@ -113,7 +116,7 @@ class AclAwareAmazonS3 implements Adapter,
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function exists($key)
     {
@@ -121,7 +124,7 @@ class AclAwareAmazonS3 implements Adapter,
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function mtime($key)
     {
@@ -129,7 +132,7 @@ class AclAwareAmazonS3 implements Adapter,
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function keys()
     {
@@ -137,7 +140,7 @@ class AclAwareAmazonS3 implements Adapter,
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function delete($key)
     {
@@ -145,7 +148,7 @@ class AclAwareAmazonS3 implements Adapter,
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function setMetadata($key, $metadata)
     {
@@ -155,7 +158,7 @@ class AclAwareAmazonS3 implements Adapter,
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function getMetadata($key)
     {
@@ -167,7 +170,7 @@ class AclAwareAmazonS3 implements Adapter,
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function isDirectory($key)
     {

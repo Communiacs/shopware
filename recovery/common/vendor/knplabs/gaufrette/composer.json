@@ -1,9 +1,8 @@
 {
     "name":         "knplabs/gaufrette",
     "type":         "library",
-    "description":  "PHP5 library that provides a filesystem abstraction layer",
+    "description":  "PHP library that provides a filesystem abstraction layer",
     "keywords":     ["file", "filesystem", "media", "abstraction"],
-    "minimum-stability": "dev",
     "homepage":     "http://knplabs.com",
     "license":      "MIT",
     "authors": [
@@ -16,56 +15,55 @@
             "homepage": "http://github.com/knplabs/Gaufrette/contributors"
         }
     ],
-    "repositories": [
-        {
-            "type": "pear",
-            "url": "http://pear.php.net"
-        }
-    ],
     "require": {
-        "php": ">=5.3.2"
+        "php": ">=5.6"
+    },
+    "conflict": {
+        "microsoft/windowsazure": "<0.4.3"
     },
     "require-dev": {
-        "aws/aws-sdk-php": "~2",
+        "aws/aws-sdk-php": "^2.4.12||~3",
         "amazonwebservices/aws-sdk-for-php": "1.5.*",
-        "rackspace/php-opencloud"  : "1.9.*",
-        "google/apiclient": "~1.1",
-        "phpspec/phpspec": "2.0.*",
-        "phpseclib/phpseclib": "dev-master",
+        "rackspace/php-opencloud"  : "^1.9.2",
+        "google/apiclient": "~1.1.3",
+        "phpspec/phpspec": "~2.4",
+        "phpseclib/phpseclib": "^2.0",
         "doctrine/dbal": ">=2.3",
         "dropbox-php/dropbox-php": "*",
-        "herzult/php-ssh": "*",
-        "phpunit/phpunit": "3.7.*",
-        "microsoft/windowsazure": "dev-master",
-        "mikey179/vfsStream": "~1.2.0"
+        "phpunit/phpunit": "^5.6.8",
+        "mikey179/vfsStream": "~1.2.0",
+        "league/flysystem": "~1.0",
+        "mongodb/mongodb": "^1.1",
+        "microsoft/azure-storage-blob": "^1.0",
+        "akeneo/phpspec-skip-example-extension": "~1.2"
     },
     "suggest": {
         "knplabs/knp-gaufrette-bundle": "to use with Symfony2",
-        "dropbox-php/dropbox-php": "to use the Dropbox adapter",
-        "rackspace/php-opencloud"  : "to use Opencloud adapter",
+        "gaufrette/azure-blob-storage-adapter": "to use AzureBlobStorage adapter",
+        "gaufrette/flysystem-adapter": "to use Flysystem adapter",
+        "gaufrette/doctrine-dbal-adapter": "to use DBAL adapter",
+        "gaufrette/phpseclib-sftp-adapter": "to use PhpseclibSftp adapter",
+        "gaufrette/ftp-adapter": "to use Ftp adapter",
+        "gaufrette/aws-s3-adapter": "to use AwsS3 adapter (supports SDK v2 and v3)",
+        "gaufrette/in-memory-adapter": "to use InMemory adapter",
+        "gaufrette/local-adapter": "to use Local adapter",
+        "gaufrette/opencloud-adapter": "to use Opencloud adapter",
+        "gaufrette/zip-adapter": "to use Zip adapter",
+        "gaufrette/gridfs-adapter": "to use GridFS adapter",
         "google/apiclient": "to use GoogleCloudStorage adapter",
-        "herzult/php-ssh": "to use SFtp adapter",
-        "phpseclib/phpseclib": "to use PhpseclibSftp adapter",
-        "aws/aws-sdk-php": "to use the Amazon S3 adapter",
-        "amazonwebservices/aws-sdk-for-php": "to use the legacy Amazon S3 adapters",
-        "doctrine/dbal": "to use the Doctrine DBAL adapter",
-        "microsoft/windowsazure": "to use Microsoft Azure Blob Storage adapter",
-        "ext-zip": "to use the Zip adapter",
-        "ext-apc": "to use the APC adapter",
         "ext-curl": "*",
         "ext-mbstring": "*",
-        "ext-mongo": "*",
         "ext-fileinfo": "This extension is used to automatically detect the content-type of a file in the AwsS3, OpenCloud, AzureBlogStorage and GoogleCloudStorage adapters"
     },
     "autoload": {
         "psr-0": { "Gaufrette": "src/" }
     },
+    "autoload-dev": {
+        "psr-0": { "Gaufrette\\Functional": "tests/" }
+    },
     "extra": {
         "branch-alias": {
-            "dev-master": "0.2.x-dev"
+            "dev-master": "0.7.x-dev"
         }
-    },
-    "config": {
-        "bin-dir": "bin"
     }
 }

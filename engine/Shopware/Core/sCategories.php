@@ -316,16 +316,17 @@ class sCategories
      *
      * @param int $parentId Id of the root category, defaults to the current shop category
      * @param int $depth    Depth to use, defaults to null (unlimited depth)
+     * @param int $shopId   Needed for shop limitation
      *
      * @return array Category tree for the provided args
      */
-    public function sGetWholeCategoryTree($parentId = null, $depth = null)
+    public function sGetWholeCategoryTree($parentId = null, $depth = null, $shopId = null)
     {
         if ($parentId === null) {
             $parentId = $this->baseId;
         }
 
-        $result = $this->repository->getActiveChildrenTree($parentId, $this->customerGroupId, $depth);
+        $result = $this->repository->getActiveChildrenTree($parentId, $this->customerGroupId, $depth, $shopId);
         $result = $this->mapCategoryTree($result);
 
         return $result;
@@ -360,7 +361,6 @@ class sCategories
      */
     public function getProductBoxLayout($categoryId)
     {
-        /** @var \Shopware\Models\Category\Category $category */
         $category = $this->repository->find($categoryId);
 
         if (!$category) {
@@ -493,13 +493,16 @@ class sCategories
     {
         $query = $this->connection->createQueryBuilder();
         $query->select(['category.id', 'category.parent']);
+        $shopId = $this->contextService->getShopContext()->getShop()->getId();
 
         $query->from('s_categories', 'category')
             ->where('(category.parent IN( :parentId ) OR category.id IN ( :parentId ))')
             ->andWhere('category.active = 1')
+            ->andWhere('category.shops IS NULL OR category.shops LIKE :shopId')
             ->orderBy('category.position', 'ASC')
             ->addOrderBy('category.id')
-            ->setParameter(':parentId', $ids, \Doctrine\DBAL\Connection::PARAM_INT_ARRAY);
+            ->setParameter(':parentId', $ids, \Doctrine\DBAL\Connection::PARAM_INT_ARRAY)
+            ->setParameter(':shopId', '%|' . $shopId . '|%');
 
         /** @var PDOStatement $statement */
         $statement = $query->execute();

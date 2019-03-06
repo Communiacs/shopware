@@ -230,9 +230,9 @@ class Shopware_Controllers_Backend_Category extends Shopware_Controllers_Backend
     /**
      * helper method used in the getPathByQueryAction to return the path information
      *
-     * @param null   $query
-     * @param string $separator
-     * @param bool   $parents
+     * @param int|string|null $query
+     * @param string          $separator
+     * @param bool            $parents
      *
      * @return array
      */
@@ -429,7 +429,7 @@ class Shopware_Controllers_Backend_Category extends Shopware_Controllers_Backend
         $itemId = (int) $this->Request()->getParam('id');
         $parentId = (int) $this->Request()->getParam('parentId', 1);
 
-        /** @var Category $item */
+        /** @var Category|null $item */
         $item = $this->getRepository()->find($itemId);
         if ($item === null) {
             $this->View()->assign([
@@ -440,7 +440,7 @@ class Shopware_Controllers_Backend_Category extends Shopware_Controllers_Backend
             return;
         }
 
-        /** @var Category $parent */
+        /** @var Category|null $parent */
         $parent = $this->getRepository()->find($parentId);
         if ($parent === null) {
             $this->View()->assign([
@@ -550,6 +550,7 @@ class Shopware_Controllers_Backend_Category extends Shopware_Controllers_Backend
 
         $params['changed'] = new \DateTime();
         $categoryModel->fromArray($params);
+        $categoryModel->setShops($this->Request()->getParam('shops'));
         Shopware()->Models()->flush();
 
         $categoryId = $categoryModel->getId();
@@ -867,20 +868,6 @@ class Shopware_Controllers_Backend_Category extends Shopware_Controllers_Backend
         }
 
         return $data;
-    }
-
-    /**
-     * Helper Method to get access to the media repository.
-     *
-     * @return \Shopware\Models\Media\Repository
-     */
-    private function getMediaRepository()
-    {
-        if ($this->mediaRepository === null) {
-            $this->mediaRepository = Shopware()->Models()->getRepository(\Shopware\Models\Media\Media::class);
-        }
-
-        return $this->mediaRepository;
     }
 
     /**

@@ -328,6 +328,9 @@ dev-ops/docker/containers/app/Dockerfile
 dev-ops/docker/containers/elasticsearch/Dockerfile
 dev-ops/docker/containers/mysql/Dockerfile
 dev-ops/docker/containers/mysql/createuser.sh
+dev-ops/docker/containers/mysql/grant.sql
+dev-ops/docker/containers/mysql/performance-schema.cnf
+dev-ops/docker/containers/mysql/remote-access.cnf
 dev-ops/docker/containers/php7
 dev-ops/docker/containers/scriptcreator.sh
 dev-ops/docker/templates/php-dockerfile.tpl
@@ -1423,6 +1426,7 @@ themes/Backend/ExtJs/backend/order/view/batch/mail.js
 themes/Backend/ExtJs/backend/order/view/list/statistic.js
 themes/Backend/ExtJs/backend/payment/model/attribute.js
 themes/Backend/ExtJs/backend/performance/store/listing_sorting.js
+themes/Backend/ExtJs/backend/performance/view/tabs/settings/panel.js
 themes/Backend/ExtJs/backend/product_feed/model/attribute.js
 themes/Backend/ExtJs/backend/product_stream/store/defined_products.js
 themes/Backend/ExtJs/backend/product_stream/view/condition_list/field/price.js
@@ -1479,6 +1483,7 @@ themes/Frontend/Bare/widgets/emotion/slide_articles.tpl
 themes/Frontend/Responsive/.bowerrc
 themes/Frontend/Responsive/bower.json
 themes/Frontend/Responsive/frontend/_public/src/css/ext-all.css
+themes/Frontend/Responsive/frontend/_public/src/fonts/shopware.eot
 themes/Frontend/Responsive/frontend/_public/src/js/jquery.address-selector.js
 themes/Frontend/Responsive/frontend/_public/src/js/jquery.checkout-store-comment.js
 themes/Frontend/Responsive/frontend/_public/src/js/jquery.collapse-text.js

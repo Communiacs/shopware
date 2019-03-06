@@ -3,11 +3,12 @@
 namespace Gaufrette\Adapter;
 
 use Gaufrette\Adapter;
-use \MongoGridFS as MongoGridFs;
-use \MongoDate;
+use MongoDB\BSON\Regex;
+use MongoDB\GridFS\Bucket;
+use MongoDB\GridFS\Exception\FileNotFoundException;
 
 /**
- * Adapter for the GridFS filesystem on MongoDB database
+ * Adapter for the GridFS filesystem on MongoDB database.
  *
  * @author Tomi Saarinen <tomi.saarinen@rohea.com>
  * @author Antoine Hérault <antoine.herault@gmail.com>
@@ -18,47 +19,56 @@ class GridFS implements Adapter,
                         MetadataSupporter,
                         ListKeysAware
 {
-    private $metadata = array();
-    protected $gridFS = null;
+    /** @var array */
+    private $metadata = [];
+
+    /** @var Bucket */
+    private $bucket;
 
     /**
-     * Constructor
-     *
-     * @param \MongoGridFS $gridFS
+     * @param Bucket $bucket
      */
-    public function __construct(MongoGridFs $gridFS)
+    public function __construct(Bucket $bucket)
     {
-        $this->gridFS = $gridFS;
+        $this->bucket = $bucket;
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function read($key)
     {
-        $file = $this->find($key);
+        try {
+            $stream = $this->bucket->openDownloadStreamByName($key);
+        } catch (FileNotFoundException $e) {
+            return false;
+        }
 
-        return ($file) ? $file->getBytes() : false;
+        try {
+            return stream_get_contents($stream);
+        } finally {
+            fclose($stream);
+        }
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function write($key, $content)
     {
-        if ($this->exists($key)) {
-            $this->delete($key);
+        $stream = $this->bucket->openUploadStream($key, ['metadata' => $this->getMetadata($key)]);
+
+        try {
+            return fwrite($stream, $content);
+        } finally {
+            fclose($stream);
         }
 
-        $metadata = array_replace_recursive(array('date' => new MongoDate()), $this->getMetadata($key), array('filename' => $key));
-        $id   = $this->gridFS->storeBytes($content, $metadata);
-        $file = $this->gridFS->findOne(array('_id' => $id));
-
-        return $file->getSize();
+        return false;
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function isDirectory($key)
     {
@@ -66,71 +76,85 @@ class GridFS implements Adapter,
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function rename($sourceKey, $targetKey)
     {
-        $bytes = $this->write($targetKey, $this->read($sourceKey));
-        $this->delete($sourceKey);
+        $metadata = $this->getMetadata($sourceKey);
+        $writable = $this->bucket->openUploadStream($targetKey, ['metadata' => $metadata]);
 
-        return (boolean) $bytes;
+        try {
+            $this->bucket->downloadToStreamByName($sourceKey, $writable);
+            $this->setMetadata($targetKey, $metadata);
+            $this->delete($sourceKey);
+        } catch (FileNotFoundException $e) {
+            return false;
+        } finally {
+            fclose($writable);
+        }
+
+        return true;
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function exists($key)
     {
-        return (boolean) $this->find($key);
+        return (boolean) $this->bucket->findOne(['filename' => $key]);
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function keys()
     {
-        $keys   = array();
-        $cursor = $this->gridFS->find(array(), array('filename'));
+        $keys = [];
+        $cursor = $this->bucket->find([], ['projection' => ['filename' => 1]]);
 
         foreach ($cursor as $file) {
-            $keys[] = $file->getFilename();
+            $keys[] = $file['filename'];
         }
 
         return $keys;
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function mtime($key)
     {
-        $file = $this->find($key, array('date'));
+        $file = $this->bucket->findOne(['filename' => $key], ['projection' => ['uploadDate' => 1]]);
 
-        return ($file) ? $file->file['date']->sec : false;
+        return $file ? (int) $file['uploadDate']->toDateTime()->format('U') : false;
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function checksum($key)
     {
-        $file = $this->find($key, array('md5'));
+        $file = $this->bucket->findOne(['filename' => $key], ['projection' => ['md5' => 1]]);
 
-        return ($file) ? $file->file['md5'] : false;
+        return $file ? $file['md5'] : false;
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function delete($key)
     {
-        $file = $this->find($key, array('_id'));
+        if (null === $file = $this->bucket->findOne(['filename' => $key], ['projection' => ['_id' => 1]])) {
+            return false;
+        }
 
-        return $file && $this->gridFS->delete($file->file['_id']);
+        $this->bucket->delete($file['_id']);
+
+        return true;
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function setMetadata($key, $metadata)
     {
@@ -138,43 +162,45 @@ class GridFS implements Adapter,
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function getMetadata($key)
     {
-        return isset($this->metadata[$key]) ? $this->metadata[$key] : array();
-    }
-
-    private function find($key, array $fields = array())
-    {
-        return $this->gridFS->findOne($key, $fields);
+        if (isset($this->metadata[$key])) {
+            return $this->metadata[$key];
+        } else {
+            $meta = $this->bucket->findOne(['filename' => $key], ['projection' => ['metadata' => 1,'_id' => 0]]);
+            if ($meta === null) {
+                return array();
+            }
+            $this->metadata[$key] = iterator_to_array($meta['metadata']);
+            return $this->metadata[$key];
+        }
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function listKeys($prefix = '')
     {
         $prefix = trim($prefix);
 
-        if ('' == $prefix) {
-            return array(
-                'dirs' => array(),
-                'keys' => $this->keys()
-            );
+        if ($prefix === '') {
+            return [
+                'dirs' => [],
+                'keys' => $this->keys(),
+            ];
         }
 
-        $result = array(
-            'dirs' => array(),
-            'keys' => array()
-        );
+        $regex = new Regex(sprintf('^%s', $prefix), '');
+        $files = $this->bucket->find(['filename' => $regex], ['projection' => ['filename' => 1]]);
+        $result = [
+            'dirs' => [],
+            'keys' => [],
+        ];
 
-        $gridFiles = $this->gridFS->find(array(
-            'filename' => new \MongoRegex(sprintf('/^%s/', $prefix))
-        ));
-
-        foreach ($gridFiles as $file) {
-            $result['keys'][] = $file->getFilename();
+        foreach ($files as $file) {
+            $result['keys'][] = $file['filename'];
         }
 
         return $result;

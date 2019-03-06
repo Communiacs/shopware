@@ -3,16 +3,16 @@
 namespace Gaufrette\Adapter\AzureBlobStorage;
 
 /**
- * Interface to define Blob proxy factories
+ * Interface to define Blob proxy factories.
  *
  * @author Luciano Mammino <lmammino@oryzone.com>
  */
 interface BlobProxyFactoryInterface
 {
     /**
-     * Creates a new instance of the Blob proxy
+     * Creates a new instance of the Blob proxy.
      *
-     * @return \WindowsAzure\Blob\Internal\IBlob
+     * @return \MicrosoftAzure\Storage\Blob\Internal\IBlob
      */
     public function create();
 }

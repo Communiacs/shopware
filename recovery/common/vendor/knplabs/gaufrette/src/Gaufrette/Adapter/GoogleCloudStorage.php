@@ -3,11 +3,11 @@
 namespace Gaufrette\Adapter;
 
 use Gaufrette\Adapter;
+use GuzzleHttp;
 
 /**
- * Google Cloud Storage adapter using the Google APIs Client Library for PHP
+ * Google Cloud Storage adapter using the Google APIs Client Library for PHP.
  *
- * @package Gaufrette
  * @author  Patrik Karisch <patrik@karisch.guru>
  */
 class GoogleCloudStorage implements Adapter,
@@ -94,15 +94,24 @@ class GoogleCloudStorage implements Adapter,
             return false;
         }
 
-        $request = new \Google_Http_Request($object->getMediaLink());
-        $this->service->getClient()->getAuth()->sign($request);
+        if (class_exists('Google_Http_Request')) {
+            $request = new \Google_Http_Request($object->getMediaLink());
+            $this->service->getClient()->getAuth()->sign($request);
+            $response = $this->service->getClient()->getIo()->executeRequest($request);
+            if ($response[2] == 200) {
+                $this->setMetadata($key, $object->getMetadata());
 
-        $response = $this->service->getClient()->getIo()->executeRequest($request);
+                return $response[0];
+            }
+        } else {
+            $httpClient = new GuzzleHttp\Client();
+            $httpClient = $this->service->getClient()->authorize($httpClient);
+            $response = $httpClient->request('GET', $object->getMediaLink());
+            if ($response->getStatusCode() == 200) {
+                $this->setMetadata($key, $object->getMetadata());
 
-        if ($response[2] == 200) {
-            $this->setMetadata($key, $object->getMetadata());
-
-            return $response[0];
+                return $response->getBody();
+            }
         }
 
         return false;
@@ -119,16 +128,15 @@ class GoogleCloudStorage implements Adapter,
         $metadata = $this->getMetadata($key);
         $options = array(
             'uploadType' => 'multipart',
-            'data' => $content
+            'data' => $content,
         );
 
-        /**
+        /*
          * If the ContentType was not already set in the metadata, then we autodetect
          * it to prevent everything being served up as application/octet-stream.
          */
         if (!isset($metadata['ContentType']) && $this->detectContentType) {
-            $finfo = new \finfo(FILEINFO_MIME_TYPE);
-            $options['mimeType'] = $finfo->buffer($content);
+            $options['mimeType'] = $this->guessContentType($content);
             unset($metadata['ContentType']);
         } elseif (isset($metadata['ContentType'])) {
             $options['mimeType'] = $metadata['ContentType'];
@@ -137,6 +145,27 @@ class GoogleCloudStorage implements Adapter,
 
         $object = new \Google_Service_Storage_StorageObject();
         $object->name = $path;
+
+        if (isset($metadata['ContentDisposition'])) {
+            $object->setContentDisposition($metadata['ContentDisposition']);
+            unset($metadata['ContentDisposition']);
+        }
+
+        if (isset($metadata['CacheControl'])) {
+            $object->setCacheControl($metadata['CacheControl']);
+            unset($metadata['CacheControl']);
+        }
+
+        if (isset($metadata['ContentLanguage'])) {
+            $object->setContentLanguage($metadata['ContentLanguage']);
+            unset($metadata['ContentLanguage']);
+        }
+
+        if (isset($metadata['ContentEncoding'])) {
+            $object->setContentEncoding($metadata['ContentEncoding']);
+            unset($metadata['ContentEncoding']);
+        }
+
         $object->setMetadata($metadata);
 
         try {
@@ -144,8 +173,8 @@ class GoogleCloudStorage implements Adapter,
 
             if ($this->options['acl'] == 'public') {
                 $acl = new \Google_Service_Storage_ObjectAccessControl();
-                $acl->setEntity("allUsers");
-                $acl->setRole("READER");
+                $acl->setEntity('allUsers');
+                $acl->setRole('READER');
 
                 $this->service->objectAccessControls->insert($this->bucket, $path, $acl);
             }
@@ -240,7 +269,7 @@ class GoogleCloudStorage implements Adapter,
      */
     public function isDirectory($key)
     {
-        if ($this->exists($key . '/')) {
+        if ($this->exists($key.'/')) {
             return true;
         }
 
@@ -255,7 +284,7 @@ class GoogleCloudStorage implements Adapter,
         $this->ensureBucketExists();
 
         $options = array();
-        if ((string)$prefix != '') {
+        if ((string) $prefix != '') {
             $options['prefix'] = $this->computePath($prefix);
         } elseif (!empty($this->options['directory'])) {
             $options['prefix'] = $this->options['directory'];
@@ -350,5 +379,21 @@ class GoogleCloudStorage implements Adapter,
         } catch (\Google_Service_Exception $e) {
             return false;
         }
+    }
+
+    /**
+     * @param string $content
+     *
+     * @return string
+     */
+    private function guessContentType($content)
+    {
+        $fileInfo = new \finfo(FILEINFO_MIME_TYPE);
+
+        if (is_resource($content)) {
+            return $fileInfo->file(stream_get_meta_data($content)['uri']);
+        }
+
+        return $fileInfo->buffer($content);
     }
 }
