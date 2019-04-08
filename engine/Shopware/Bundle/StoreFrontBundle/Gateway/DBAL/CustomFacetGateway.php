@@ -49,11 +49,6 @@ class CustomFacetGateway implements CustomFacetGatewayInterface
      */
     private $hydrator;
 
-    /**
-     * @param Connection            $connection
-     * @param FieldHelper           $fieldHelper
-     * @param CustomListingHydrator $hydrator
-     */
     public function __construct(
         Connection $connection,
         FieldHelper $fieldHelper,
@@ -104,8 +99,6 @@ class CustomFacetGateway implements CustomFacetGatewayInterface
     }
 
     /**
-     * @param ShopContextInterface $context
-     *
      * @return CustomFacet[] indexed by id
      */
     public function getAllCategoryFacets(ShopContextInterface $context)
@@ -138,8 +131,6 @@ class CustomFacetGateway implements CustomFacetGatewayInterface
     /**
      * Returns the base query to select the custom facet data.
      *
-     * @param ShopContextInterface $context
-     *
      * @return QueryBuilder
      */
     private function createQuery(ShopContextInterface $context)
@@ -154,8 +145,6 @@ class CustomFacetGateway implements CustomFacetGatewayInterface
     }
 
     /**
-     * @param array $data
-     *
      * @return CustomFacet[]
      */
     private function hydrate(array $data)
@@ -231,8 +220,6 @@ class CustomFacetGateway implements CustomFacetGatewayInterface
     }
 
     /**
-     * @param array $data
-     *
      * @return array
      */
     private function fetchAssignedStreams(array $data)

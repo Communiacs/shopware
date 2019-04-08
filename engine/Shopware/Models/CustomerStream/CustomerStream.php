@@ -26,18 +26,19 @@ namespace Shopware\Models\CustomerStream;
 
 use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
+use Shopware\Models\Attribute\CustomerStream as CustomerStreamAttribute;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Table(name="s_customer_streams")
- * @ORM\Entity
+ * @ORM\Entity()
  */
 class CustomerStream extends ModelEntity
 {
     /**
      * INVERSE SIDE
      *
-     * @var \Shopware\Models\Attribute\CustomerStream
+     * @var CustomerStreamAttribute
      *
      * @ORM\OneToOne(targetEntity="Shopware\Models\Attribute\CustomerStream", mappedBy="customerStream", orphanRemoval=true, cascade={"persist"})
      */
@@ -47,7 +48,7 @@ class CustomerStream extends ModelEntity
      * @var int
      *
      * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
+     * @ORM\Id()
      * @ORM\GeneratedValue(strategy="IDENTITY")
      */
     private $id;
@@ -55,7 +56,7 @@ class CustomerStream extends ModelEntity
     /**
      * @var string
      *
-     * @Assert\NotBlank
+     * @Assert\NotBlank()
      *
      * @ORM\Column(name="name", type="string", nullable=false)
      */
@@ -85,7 +86,7 @@ class CustomerStream extends ModelEntity
     /**
      * @var \DateTimeInterface
      *
-     * @Assert\DateTime
+     * @Assert\DateTime()
      *
      * @ORM\Column(name="freeze_up", type="datetime", nullable=true)
      */
@@ -180,5 +181,23 @@ class CustomerStream extends ModelEntity
     public function setStatic($static)
     {
         $this->static = $static;
+    }
+
+    /**
+     * @return CustomerStreamAttribute
+     */
+    public function getAttribute()
+    {
+        return $this->attribute;
+    }
+
+    /**
+     * @param CustomerStreamAttribute|array|null $attribute
+     *
+     * @return CustomerStream
+     */
+    public function setAttribute($attribute)
+    {
+        return $this->setOneToOne($attribute, CustomerStreamAttribute::class, 'attribute', 'customerStream');
     }
 }

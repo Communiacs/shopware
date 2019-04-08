@@ -58,9 +58,6 @@ class LegacyDocumentIdConverter
      */
     private $isMigrationNecessary;
 
-    /**
-     * @param Connection $connection
-     */
     public function __construct(Connection $connection)
     {
         $this->connection = $connection;
@@ -143,6 +140,10 @@ class LegacyDocumentIdConverter
         }
 
         if (empty($result)) {
+            return false;
+        }
+
+        if (stripos($result, 'mariadb') !== false) {
             return false;
         }
 

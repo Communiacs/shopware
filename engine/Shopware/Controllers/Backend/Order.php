@@ -1402,8 +1402,6 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
     /**
      * Prepare address data - loads countryModel from a given countryId
      *
-     * @param array $data
-     *
      * @return array
      */
     protected function prepareAddressData(array $data)
@@ -1495,8 +1493,6 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
      * Helper function to select a single order.
      *
      * @param int $id
-     *
-     * @return mixed
      */
     private function getOrder($id)
     {
@@ -1508,8 +1504,6 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
 
     /**
      * Simple helper function which actually merges a given array of document-paths
-     *
-     * @param array $paths
      *
      * @return string The created document's url
      */
@@ -1625,8 +1619,7 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
     }
 
     /**
-     * @param int   $documentTypeId
-     * @param Order $order
+     * @param int $documentTypeId
      *
      * @return array
      */
@@ -1689,9 +1682,7 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
     /**
      * Adds the requested attachments to the given $mail object
      *
-     * @param Enlight_Components_Mail $mail
-     * @param int|string              $orderId
-     * @param array                   $attachments
+     * @param int|string $orderId
      *
      * @return Enlight_Components_Mail
      */
@@ -1950,8 +1941,6 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
 
     /**
      * Internal helper function which insert the order association data into the passed data array.
-     *
-     * @param array $data
      *
      * @return array
      */

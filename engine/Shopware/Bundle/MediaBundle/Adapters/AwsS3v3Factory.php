@@ -31,8 +31,6 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 class AwsS3v3Factory implements AdapterFactoryInterface
 {
     /**
-     * @param array $config
-     *
      * @return AwsS3Adapter
      */
     public function create(array $config)
@@ -53,8 +51,6 @@ class AwsS3v3Factory implements AdapterFactoryInterface
     }
 
     /**
-     * @param array $definition
-     *
      * @return array
      */
     private function resolveS3Options(array $definition)
@@ -62,7 +58,7 @@ class AwsS3v3Factory implements AdapterFactoryInterface
         $options = new OptionsResolver();
 
         $options->setRequired(['credentials', 'bucket', 'region']);
-        $options->setDefined(['version', 'root', 'type', 'mediaUrl', 'url', 'endpoint']);
+        $options->setDefined(['version', 'root', 'type', 'mediaUrl', 'url', 'endpoint', 'use_path_style_endpoint']);
 
         $options->setAllowedTypes('credentials', 'array');
         $options->setAllowedTypes('region', 'string');
@@ -80,8 +76,6 @@ class AwsS3v3Factory implements AdapterFactoryInterface
     }
 
     /**
-     * @param array $credentials
-     *
      * @return array
      */
     private function resolveCredentialsOptions(array $credentials)

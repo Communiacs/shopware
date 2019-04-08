@@ -61,8 +61,6 @@ interface RelatedProductsGatewayInterface
      *
      * Example result: array('SW101', 'SW102')
      *
-     * @param Struct\BaseProduct $product
-     *
      * @return array Array of order numbers
      */
     public function get(Struct\BaseProduct $product);

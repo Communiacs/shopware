@@ -66,12 +66,6 @@ class CategoryGateway implements Gateway\CategoryGatewayInterface
      */
     private $mediaService;
 
-    /**
-     * @param Connection                $connection
-     * @param FieldHelper               $fieldHelper
-     * @param Hydrator\CategoryHydrator $categoryHydrator
-     * @param MediaServiceInterface     $mediaService
-     */
     public function __construct(
         Connection $connection,
         FieldHelper $fieldHelper,
@@ -240,9 +234,6 @@ class CategoryGateway implements Gateway\CategoryGatewayInterface
 
     /**
      * Resolves translated data for media and streamId
-     *
-     * @param array                       $category
-     * @param Struct\ShopContextInterface $context
      *
      * @return array
      */

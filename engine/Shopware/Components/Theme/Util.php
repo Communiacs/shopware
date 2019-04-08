@@ -56,9 +56,6 @@ class Util
 
     /**
      * Class constructor which injects all dependencies.
-     *
-     * @param ModelManager $entityManager
-     * @param PathResolver $pathResolver
      */
     public function __construct(ModelManager $entityManager, PathResolver $pathResolver)
     {
@@ -69,8 +66,6 @@ class Util
     /**
      * Returns the preview image of the passed shopware template.
      * The image will be encoded as base 64 image.
-     *
-     * @param Shop\Template $template
      *
      * @return string|null
      */
@@ -84,8 +79,6 @@ class Util
      * of the passed shopware template.
      * The function resolves the theme directory over the
      * getDirectory function of the PathResolver
-     *
-     * @param Shop\Template $template
      *
      * @throws \Exception
      *
@@ -115,8 +108,6 @@ class Util
     /**
      * Resolves the passed directory to a theme class.
      * Returns a new instance of the \Shopware\Theme
-     *
-     * @param \DirectoryIterator $directory
      *
      * @throws \Exception
      *
@@ -151,8 +142,6 @@ class Util
 
     /**
      * Returns the snippet namespace for the passed theme.
-     *
-     * @param Shop\Template $template
      *
      * @return string
      */

@@ -203,8 +203,6 @@ class CategoriesProvider implements BenchmarkProviderInterface
     /**
      * Builds an actual category tree.
      *
-     * @param array $categories
-     *
      * @return array
      */
     private function buildTree(array $categories)

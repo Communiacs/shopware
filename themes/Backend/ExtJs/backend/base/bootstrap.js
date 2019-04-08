@@ -167,7 +167,6 @@
 {include file='backend/base/store/corner_position.js'}
 {include file='backend/base/store/cookie_mode.js'}
 
-
 {* Include shopware related components *}
 {include file='backend/base/component/Shopware.button.HoverButton.js'}
 {include file='backend/base/component/Shopware.MediaManager.MediaSelection.js'}

@@ -39,8 +39,6 @@ interface InvalidationDateInterface
     /**
      * Returns the next point in time at which the given resource is unlocked.
      *
-     * @param Request $request
-     *
      * @return DateTime|null
      */
     public function getInvalidationDate(Request $request);

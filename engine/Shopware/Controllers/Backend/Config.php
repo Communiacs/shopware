@@ -188,13 +188,21 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
             }
 
             $store = $values['options']['store'];
+
             // Replace the store, which may contain multiple translations, with
             // a store with translated messages:
-            $values['options']['store'] = $this->translateStore($language, $store, $storeFallbackLocales);
+            if ($values['options']['translateUsingSnippets']) {
+                $values['options']['store'] = $this->translateStoreUsingSnippets($store, $values['options']['namespace']);
+            } else {
+                $values['options']['store'] = $this->translateStore($language, $store, $storeFallbackLocales);
+            }
+
             if (!isset($values['options']['queryMode'])) {
                 $values['options']['queryMode'] = 'remote';
             }
         }
+
+        unset($values);
 
         $this->View()->assign([
             'success' => true,
@@ -912,7 +920,6 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
 
     /**
      * @param string|int $localeId
-     * @param array      $values
      *
      * @return array
      */
@@ -954,10 +961,7 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
      *          );
      *
      * @param string $language        the preferred locale (e.g., the user's locale)
-     * @param mixed  $store
      * @param array  $fallbackLocales a list of locales (e.g., ['en_GB', 'en'])
-     *
-     * @return mixed
      */
     private function translateStore($language, $store, array $fallbackLocales)
     {
@@ -992,9 +996,28 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
     }
 
     /**
-     * @param array $value
-     * @param array $tryLocales
+     * @param string $namespace
      *
+     * @return array
+     */
+    private function translateStoreUsingSnippets(array $store, $namespace)
+    {
+        $namespace = $this->container->get('snippets')->getNamespace($namespace);
+        foreach ($store as &$row) {
+            $text = $row[1];
+            if (is_array($text)) {
+                $text = current($text);
+            }
+
+            $row[1] = $namespace->get($text, $text);
+        }
+
+        unset($row);
+
+        return $store;
+    }
+
+    /**
      * @return string|null
      */
     private function getTranslation(array $value, array $tryLocales)
@@ -1186,10 +1209,6 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
         return true;
     }
 
-    /**
-     * @param array                    $data
-     * @param \Shopware\Models\Tax\Tax $model
-     */
     private function saveTaxRules(array $data, \Shopware\Models\Tax\Tax $model)
     {
         if (isset($data['rules'])) {
@@ -1282,9 +1301,6 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
 
     /**
      * @param array $elementData
-     * @param mixed $value
-     *
-     * @return mixed
      */
     private function prepareValue($elementData, $value)
     {
@@ -1298,10 +1314,6 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
         return $value;
     }
 
-    /**
-     * @param array $elementData
-     * @param Shop  $defaultShop
-     */
     private function saveElement(array $elementData, Shop $defaultShop)
     {
         $shopRepository = $this->getRepository('shop');

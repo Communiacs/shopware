@@ -82,16 +82,6 @@ class LegacyStructConverter
      */
     private $categoryService;
 
-    /**
-     * @param \Shopware_Components_Config $config
-     * @param ContextServiceInterface     $contextService
-     * @param \Enlight_Event_EventManager $eventManager
-     * @param MediaServiceInterface       $mediaService
-     * @param Connection                  $connection
-     * @param ModelManager                $modelManager
-     * @param CategoryServiceInterface    $categoryService
-     * @param ContainerInterface          $container
-     */
     public function __construct(
         \Shopware_Components_Config $config,
         ContextServiceInterface $contextService,
@@ -123,8 +113,6 @@ class LegacyStructConverter
     }
 
     /**
-     * @param StoreFrontBundle\Struct\Country $country
-     *
      * @return array
      */
     public function convertCountryStruct(StoreFrontBundle\Struct\Country $country)
@@ -166,8 +154,6 @@ class LegacyStructConverter
     }
 
     /**
-     * @param StoreFrontBundle\Struct\Country\State $state
-     *
      * @return array
      */
     public function convertStateStruct(StoreFrontBundle\Struct\Country\State $state)
@@ -182,8 +168,6 @@ class LegacyStructConverter
 
     /**
      * Converts a configurator group struct which used for default or selection configurators.
-     *
-     * @param StoreFrontBundle\Struct\Configurator\Group $group
      *
      * @return array
      */
@@ -205,8 +189,6 @@ class LegacyStructConverter
     }
 
     /**
-     * @param StoreFrontBundle\Struct\Category $category
-     *
      * @throws \Exception
      *
      * @return array
@@ -296,8 +278,6 @@ class LegacyStructConverter
     /**
      * Converts the passed ListProduct struct to a shopware 3-4 array structure.
      *
-     * @param ListProduct $product
-     *
      * @return array
      */
     public function convertListProductStruct(ListProduct $product)
@@ -348,8 +328,6 @@ class LegacyStructConverter
     }
 
     /**
-     * @param Price $price
-     *
      * @return array
      */
     public function convertProductPriceStruct(Price $price)
@@ -400,8 +378,6 @@ class LegacyStructConverter
     /**
      * Converts the passed ProductStream struct to an array structure.
      *
-     * @param StoreFrontBundle\Struct\ProductStream $productStream
-     *
      * @return array
      */
     public function convertRelatedProductStreamStruct(StoreFrontBundle\Struct\ProductStream $productStream)
@@ -424,8 +400,6 @@ class LegacyStructConverter
     }
 
     /**
-     * @param StoreFrontBundle\Struct\Product $product
-     *
      * @return array
      */
     public function convertProductStruct(StoreFrontBundle\Struct\Product $product)
@@ -549,8 +523,6 @@ class LegacyStructConverter
     }
 
     /**
-     * @param StoreFrontBundle\Struct\Product\VoteAverage $average
-     *
      * @return array
      */
     public function convertVoteAverageStruct(StoreFrontBundle\Struct\Product\VoteAverage $average)
@@ -568,8 +540,6 @@ class LegacyStructConverter
     }
 
     /**
-     * @param StoreFrontBundle\Struct\Product\Vote $vote
-     *
      * @return array
      */
     public function convertVoteStruct(StoreFrontBundle\Struct\Product\Vote $vote)
@@ -603,8 +573,6 @@ class LegacyStructConverter
     }
 
     /**
-     * @param Price $price
-     *
      * @return array
      */
     public function convertPriceStruct(Price $price)
@@ -677,8 +645,6 @@ class LegacyStructConverter
     }
 
     /**
-     * @param StoreFrontBundle\Struct\Product\Unit $unit
-     *
      * @return array
      */
     public function convertUnitStruct(StoreFrontBundle\Struct\Product\Unit $unit)
@@ -704,8 +670,6 @@ class LegacyStructConverter
     }
 
     /**
-     * @param StoreFrontBundle\Struct\Product\Manufacturer $manufacturer
-     *
      * @return string
      */
     public function getSupplierListingLink(StoreFrontBundle\Struct\Product\Manufacturer $manufacturer)
@@ -742,8 +706,6 @@ class LegacyStructConverter
      *         ],
      *     ],
      * ];
-     *
-     * @param StoreFrontBundle\Struct\Property\Set $set
      *
      * @return array
      */
@@ -789,8 +751,6 @@ class LegacyStructConverter
     }
 
     /**
-     * @param StoreFrontBundle\Struct\Property\Group $group
-     *
      * @return array
      */
     public function convertPropertyGroupStruct(StoreFrontBundle\Struct\Property\Group $group)
@@ -813,8 +773,6 @@ class LegacyStructConverter
     }
 
     /**
-     * @param StoreFrontBundle\Struct\Property\Option $option
-     *
      * @return array
      */
     public function convertPropertyOptionStruct(StoreFrontBundle\Struct\Property\Option $option)
@@ -831,8 +789,6 @@ class LegacyStructConverter
     }
 
     /**
-     * @param StoreFrontBundle\Struct\Product\Manufacturer $manufacturer
-     *
      * @return array
      */
     public function convertManufacturerStruct(StoreFrontBundle\Struct\Product\Manufacturer $manufacturer)
@@ -855,9 +811,6 @@ class LegacyStructConverter
     }
 
     /**
-     * @param ListProduct                              $product
-     * @param StoreFrontBundle\Struct\Configurator\Set $set
-     *
      * @return array
      */
     public function convertConfiguratorStruct(
@@ -901,9 +854,6 @@ class LegacyStructConverter
     }
 
     /**
-     * @param ListProduct                              $product
-     * @param StoreFrontBundle\Struct\Configurator\Set $set
-     *
      * @return array
      */
     public function convertConfiguratorPrice(
@@ -935,9 +885,6 @@ class LegacyStructConverter
 
     /**
      * Creates the settings array for the passed configurator set
-     *
-     * @param StoreFrontBundle\Struct\Configurator\Set $set
-     * @param ListProduct                              $product
      *
      * @return array
      */
@@ -972,9 +919,6 @@ class LegacyStructConverter
     /**
      * Converts a configurator option struct which used for default or selection configurators.
      *
-     * @param StoreFrontBundle\Struct\Configurator\Group  $group
-     * @param StoreFrontBundle\Struct\Configurator\Option $option
-     *
      * @return array
      */
     public function convertConfiguratorOptionStruct(
@@ -1002,8 +946,6 @@ class LegacyStructConverter
     }
 
     /**
-     * @param StoreFrontBundle\Struct\Blog\Blog $blog
-     *
      * @return array
      */
     public function convertBlogStruct(StoreFrontBundle\Struct\Blog\Blog $blog)
@@ -1035,8 +977,6 @@ class LegacyStructConverter
 
     /**
      * Converts a payment struct
-     *
-     * @param StoreFrontBundle\Struct\Payment $payment
      *
      * @return array
      */
@@ -1089,8 +1029,6 @@ class LegacyStructConverter
     }
 
     /**
-     * @param StoreFrontBundle\Struct\Category $category
-     *
      * @return string
      */
     private function getCategoryLink(StoreFrontBundle\Struct\Category $category)
@@ -1153,8 +1091,6 @@ class LegacyStructConverter
     }
 
     /**
-     * @param null $moneyfloat
-     *
      * @return float
      */
     private function sRound($moneyfloat = null)
@@ -1173,8 +1109,6 @@ class LegacyStructConverter
     /**
      * Internal function which converts only the data of a list product.
      * Associated data won't converted.
-     *
-     * @param ListProduct $product
      *
      * @return array
      */
@@ -1272,8 +1206,6 @@ class LegacyStructConverter
     }
 
     /**
-     * @param mixed $date
-     *
      * @return string
      */
     private function dateToString($date)
@@ -1286,8 +1218,6 @@ class LegacyStructConverter
     }
 
     /**
-     * @param StoreFrontBundle\Struct\Category|null $category
-     *
      * @return string
      */
     private function getProductBoxLayout(StoreFrontBundle\Struct\Category $category = null)
@@ -1306,8 +1236,6 @@ class LegacyStructConverter
     }
 
     /**
-     * @param StoreFrontBundle\Struct\Category $category
-     *
      * @return array
      */
     private function getCategoryCanonicalParams(StoreFrontBundle\Struct\Category $category)

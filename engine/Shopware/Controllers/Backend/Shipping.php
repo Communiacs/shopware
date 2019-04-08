@@ -543,8 +543,6 @@ class Shopware_Controllers_Backend_Shipping extends Shopware_Controllers_Backend
     /**
      * Extends the database data with additional data for easier usage
      *
-     * @param array $shippingCosts
-     *
      * @return array
      */
     private function convertShippingCostsDates(array $shippingCosts)

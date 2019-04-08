@@ -241,8 +241,6 @@ class CloneCategoryTreeCommand extends ShopwareCommand
     /**
      * Creates a human readable category path
      *
-     * @param Category $category
-     *
      * @return string
      */
     private function getCategoryPath(Category $category)

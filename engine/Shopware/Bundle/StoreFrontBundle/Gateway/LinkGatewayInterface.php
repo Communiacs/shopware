@@ -51,9 +51,6 @@ interface LinkGatewayInterface
      * - Link base data
      * - Core attribute of the link
      *
-     * @param Struct\BaseProduct          $product
-     * @param Struct\ShopContextInterface $context
-     *
      * @return Struct\Product\Link[]
      */
     public function get(Struct\BaseProduct $product, Struct\ShopContextInterface $context);

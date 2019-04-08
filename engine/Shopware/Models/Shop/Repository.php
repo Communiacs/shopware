@@ -175,11 +175,6 @@ class Repository extends ModelRepository
     /**
      * Returns the \Doctrine\ORM\Query to select all categories for example for the backend tree
      *
-     * @param array $filterBy
-     * @param array $orderBy
-     * @param null  $limit
-     * @param null  $offset
-     *
      * @return Query
      */
     public function getListQuery(array $filterBy, array $orderBy, $limit = null, $offset = null)
@@ -192,11 +187,6 @@ class Repository extends ModelRepository
     /**
      * Helper method to create the query builder for the "getListQuery" function.
      * This function can be hooked to modify the query builder of the query object.
-     *
-     * @param array $filterBy
-     * @param array $orderBy
-     * @param null  $limit
-     * @param null  $offset
      *
      * @return QueryBuilder
      */
@@ -373,8 +363,6 @@ class Repository extends ModelRepository
     }
 
     /**
-     * @param \Enlight_Controller_Request_Request $request
-     *
      * @return array|null
      */
     public function getActiveShopByRequestAsArray(\Enlight_Controller_Request_Request $request)
@@ -447,8 +435,6 @@ class Repository extends ModelRepository
     }
 
     /**
-     * @param Shop $shop
-     *
      * @return DetachedShop
      */
     protected function fixActive(Shop $shop)

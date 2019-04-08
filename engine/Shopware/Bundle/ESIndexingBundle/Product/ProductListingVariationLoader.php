@@ -78,10 +78,7 @@ class ProductListingVariationLoader
     }
 
     /**
-     * @param Shop              $shop
-     * @param ListProduct[]     $products
-     * @param array             $configurations
-     * @param VariantFacet|null $variantFacet
+     * @param ListProduct[] $products
      *
      * @return array
      */
@@ -146,9 +143,7 @@ class ProductListingVariationLoader
     }
 
     /**
-     * @param ListProduct[]     $products
-     * @param array             $configurations
-     * @param VariantFacet|null $variantFacet
+     * @param ListProduct[] $products
      *
      * @return array
      */
@@ -186,9 +181,6 @@ class ProductListingVariationLoader
     /**
      * Builds the visibility for the variant listings
      *
-     * @param Product      $product
-     * @param VariantFacet $facet
-     *
      * @return array
      */
     public function getVisibility(Product $product, VariantFacet $facet)
@@ -204,8 +196,6 @@ class ProductListingVariationLoader
 
     /**
      * Combines all array elements with all array elements
-     *
-     * @param array $array
      *
      * @return array
      */
@@ -285,7 +275,6 @@ class ProductListingVariationLoader
      *
      * @param Group[] $groups
      * @param int[]   $onlyFirst
-     * @param array   $availability
      *
      * @return array
      */
@@ -492,6 +481,7 @@ class ProductListingVariationLoader
         $query->innerJoin('availableVariant', 's_article_configurator_option_relations', 'relations', 'relations.article_id = availableVariant.id');
         $query->innerJoin('relations', 's_article_configurator_options', 'options', 'relations.option_id = options.id');
         $query->andWhere('availableVariant.active = 1');
+        $query->andWhere('availableVariant.id IN (:variants)');
 
         $availability = $query->execute()->fetchAll(\PDO::FETCH_GROUP);
 
@@ -545,11 +535,6 @@ class ProductListingVariationLoader
     }
 
     /**
-     * @param array             $configuration
-     * @param array             $prices
-     * @param array             $combinations
-     * @param VariantFacet|null $variantFacet
-     *
      * @return array
      */
     private function getCombinationPrices(array $configuration, array $prices, array $combinations, VariantFacet $variantFacet = null)
@@ -607,11 +592,6 @@ class ProductListingVariationLoader
     }
 
     /**
-     * @param array             $configuration
-     * @param array             $availabilities
-     * @param array             $combinations
-     * @param VariantFacet|null $variantFacet
-     *
      * @return array
      */
     private function getCombinationAvailability(array $configuration, array $availabilities, array $combinations, VariantFacet $variantFacet = null)
@@ -660,8 +640,6 @@ class ProductListingVariationLoader
     }
 
     /**
-     * @param Shop $shop
-     *
      * @return array
      */
     private function getPriceContexts(Shop $shop)

@@ -305,8 +305,8 @@ class Shopware_Controllers_Frontend_Account extends Enlight_Controller_Action
 
             if (!empty($checkData['checkPayment']['sErrorMessages']) || empty($checkData['sProcessed'])) {
                 if (empty($sourceIsCheckoutConfirm)) {
-                    $this->View()->sErrorFlag = $checkData['checkPayment']['sErrorFlag'];
-                    $this->View()->sErrorMessages = $checkData['checkPayment']['sErrorMessages'];
+                    $this->View()->assign('sErrorFlag', $checkData['checkPayment']['sErrorFlag']);
+                    $this->View()->assign('sErrorMessages', $checkData['checkPayment']['sErrorMessages']);
                 }
 
                 return $this->forward('payment');
@@ -450,16 +450,21 @@ class Shopware_Controllers_Frontend_Account extends Enlight_Controller_Action
         $response->setHeader('Content-Length', $meta['size']);
         $response->setHeader('Content-Transfer-Encoding', 'binary');
         $response->sendHeaders();
-        $response->sendResponse();
 
         $upstream = $filesystem->readStream($filePath);
         $downstream = fopen('php://output', 'wb');
 
-        ob_end_clean();
+        if ($this->isNotInUnitTestMode()) {
+            ob_end_clean();
+        }
 
         while (!feof($upstream)) {
             fwrite($downstream, fread($upstream, 4096));
             flush();
+        }
+
+        if ($this->isNotInUnitTestMode()) {
+            exit;
         }
     }
 
@@ -745,8 +750,6 @@ class Shopware_Controllers_Frontend_Account extends Enlight_Controller_Action
     }
 
     /**
-     * @param array $orderData
-     *
      * @return array
      */
     private function applyTrackingUrl(array $orderData)
@@ -864,5 +867,13 @@ class Shopware_Controllers_Frontend_Account extends Enlight_Controller_Action
     {
         return $this->container->get('session')->offsetGet('sOneTimeAccount')
             || $this->View()->getAssign('sUserData')['additional']['user']['accountmode'] == 1;
+    }
+
+    /**
+     * @return bool
+     */
+    private function isNotInUnitTestMode()
+    {
+        return !$this->container->hasParameter('shopware.session.unitTestEnabled') || !$this->container->getParameter('shopware.session.unitTestEnabled');
     }
 }

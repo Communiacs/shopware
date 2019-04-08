@@ -26,17 +26,18 @@ namespace Shopware\Models\ProductStream;
 
 use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
+use Shopware\Models\Attribute\ProductStream as ProductStreamAttribute;
 
 /**
  * @ORM\Table(name="s_product_streams")
- * @ORM\Entity
+ * @ORM\Entity()
  */
 class ProductStream extends ModelEntity
 {
     /**
      * INVERSE SIDE
      *
-     * @var \Shopware\Models\Attribute\ProductStream
+     * @var ProductStreamAttribute
      *
      * @ORM\OneToOne(targetEntity="Shopware\Models\Attribute\ProductStream", mappedBy="productStream", orphanRemoval=true, cascade={"persist"})
      */
@@ -46,7 +47,7 @@ class ProductStream extends ModelEntity
      * @var int
      *
      * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
+     * @ORM\Id()
      * @ORM\GeneratedValue(strategy="IDENTITY")
      */
     private $id;
@@ -169,8 +170,6 @@ class ProductStream extends ModelEntity
 
     /**
      * @deprecated since version 5.3, to be removed in 6.0 - Use \Shopware\Models\ProductStream\ProductStream::$sortingId instead
-     *
-     * @return mixed
      */
     public function getSorting()
     {
@@ -188,7 +187,7 @@ class ProductStream extends ModelEntity
     }
 
     /**
-     * @return \Shopware\Models\Attribute\ProductStream
+     * @return ProductStreamAttribute
      */
     public function getAttribute()
     {
@@ -196,13 +195,13 @@ class ProductStream extends ModelEntity
     }
 
     /**
-     * @param \Shopware\Models\Attribute\ProductStream|array|null $attribute
+     * @param ProductStreamAttribute|array|null $attribute
      *
-     * @return \Shopware\Models\Attribute\ProductStream
+     * @return ProductStream
      */
     public function setAttribute($attribute)
     {
-        return $this->setOneToOne($attribute, '\Shopware\Models\Attribute\ProductStream', 'attribute', 'productStream');
+        return $this->setOneToOne($attribute, ProductStreamAttribute::class, 'attribute', 'productStream');
     }
 
     /**

@@ -27,17 +27,18 @@ namespace Shopware\Models\Property;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
+use Shopware\Models\Attribute\PropertyOption as PropertyOptionAttribute;
 
 /**
  * Shopware Article Model
  *
- * @ORM\Entity
+ * @ORM\Entity()
  * @ORM\Table(name="s_filter_options")
  */
 class Option extends ModelEntity
 {
     /**
-     * @var \Doctrine\Common\Collections\ArrayCollection<Value>
+     * @var ArrayCollection<Value>
      *
      * @ORM\OneToMany(targetEntity="Value", mappedBy="option", cascade={"remove"}))
      */
@@ -46,7 +47,7 @@ class Option extends ModelEntity
     /**
      * INVERSE SIDE
      *
-     * @var \Shopware\Models\Attribute\PropertyOption
+     * @var PropertyOptionAttribute
      *
      * @ORM\OneToOne(targetEntity="Shopware\Models\Attribute\PropertyOption", mappedBy="propertyOption", orphanRemoval=true, cascade={"persist"})
      */
@@ -55,7 +56,7 @@ class Option extends ModelEntity
     /**
      * @var int
      *
-     * @ORM\Id
+     * @ORM\Id()
      * @ORM\Column(name="id", type="integer", nullable=false)
      * @ORM\GeneratedValue(strategy="IDENTITY")
      */
@@ -78,18 +79,18 @@ class Option extends ModelEntity
     /**
      * ManyToMany to Group (Inverse Side)
      *
-     * @var \Doctrine\Common\Collections\ArrayCollection<Group>
+     * @var ArrayCollection<Group>
      *
      * @ORM\ManyToMany(targetEntity="Group")
      * @ORM\JoinTable(name="s_filter_relations",
-     *      joinColumns={@ORM\JoinColumn(name="optionID", referencedColumnName="id")},
-     *      inverseJoinColumns={@ORM\JoinColumn(name="groupID", referencedColumnName="id")}
-     *      )
+     *     joinColumns={@ORM\JoinColumn(name="optionID", referencedColumnName="id")},
+     *     inverseJoinColumns={@ORM\JoinColumn(name="groupID", referencedColumnName="id")}
+     * )
      */
     private $groups;
 
     /**
-     * @var \Doctrine\Common\Collections\ArrayCollection<Relation>
+     * @var ArrayCollection<Relation>
      *
      * @ORM\OneToMany(targetEntity="Relation", mappedBy="option")
      */
@@ -164,7 +165,7 @@ class Option extends ModelEntity
     }
 
     /**
-     * @return \Doctrine\Common\Collections\ArrayCollection<Value>
+     * @return ArrayCollection<Value>
      */
     public function getValues()
     {
@@ -172,7 +173,7 @@ class Option extends ModelEntity
     }
 
     /**
-     * @return \Doctrine\Common\Collections\ArrayCollection<\Shopware\Models\Property\Group>
+     * @return ArrayCollection<\Shopware\Models\Property\Group>
      */
     public function getGroups()
     {
@@ -180,7 +181,7 @@ class Option extends ModelEntity
     }
 
     /**
-     * @return \Doctrine\Common\Collections\ArrayCollection<Relation>
+     * @return ArrayCollection<Relation>
      */
     public function getRelations()
     {
@@ -188,7 +189,7 @@ class Option extends ModelEntity
     }
 
     /**
-     * @return \Shopware\Models\Attribute\PropertyOption
+     * @return PropertyOptionAttribute
      */
     public function getAttribute()
     {
@@ -196,12 +197,12 @@ class Option extends ModelEntity
     }
 
     /**
-     * @param \Shopware\Models\Attribute\PropertyOption|array|null $attribute
+     * @param PropertyOptionAttribute|array|null $attribute
      *
-     * @return \Shopware\Models\Attribute\PropertyOption
+     * @return Option
      */
     public function setAttribute($attribute)
     {
-        return $this->setOneToOne($attribute, '\Shopware\Models\Attribute\PropertyOption', 'attribute', 'propertyOption');
+        return $this->setOneToOne($attribute, PropertyOptionAttribute::class, 'attribute', 'propertyOption');
     }
 }

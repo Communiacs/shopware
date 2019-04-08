@@ -26,6 +26,7 @@ namespace Shopware\Models\Banner;
 
 use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
+use Shopware\Models\Attribute\Banner as BannerAttribute;
 
 /**
  * Banner Model
@@ -52,14 +53,14 @@ use Shopware\Components\Model\ModelEntity;
  *
  * @ORM\Table(name="s_emarketing_banners")
  * @ORM\Entity(repositoryClass="Repository")
- * @ORM\HasLifecycleCallbacks
+ * @ORM\HasLifecycleCallbacks()
  */
 class Banner extends ModelEntity
 {
     /**
      * INVERSE SIDE
      *
-     * @var \Shopware\Models\Attribute\Banner
+     * @var BannerAttribute
      *
      * @ORM\OneToOne(targetEntity="Shopware\Models\Attribute\Banner", mappedBy="banner", cascade={"persist"})
      */
@@ -71,7 +72,7 @@ class Banner extends ModelEntity
      * @var int
      *
      * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
+     * @ORM\Id()
      * @ORM\GeneratedValue(strategy="IDENTITY")
      */
     private $id;
@@ -393,7 +394,7 @@ class Banner extends ModelEntity
     }
 
     /**
-     * @return \Shopware\Models\Attribute\Banner
+     * @return BannerAttribute
      */
     public function getAttribute()
     {
@@ -401,12 +402,12 @@ class Banner extends ModelEntity
     }
 
     /**
-     * @param \Shopware\Models\Attribute\Banner|array|null $attribute
+     * @param BannerAttribute|array|null $attribute
      *
-     * @return \Shopware\Models\Attribute\Banner
+     * @return Banner
      */
     public function setAttribute($attribute)
     {
-        return $this->setOneToOne($attribute, \Shopware\Models\Attribute\Banner::class, 'attribute', 'banner');
+        return $this->setOneToOne($attribute, BannerAttribute::class, 'attribute', 'banner');
     }
 }

@@ -37,8 +37,6 @@ class ShopwareEnvironmentProcessor
     /**
      * Adds request, shop and session info
      *
-     * @param array $record
-     *
      * @return array
      */
     public function __invoke(array $record)
@@ -89,8 +87,6 @@ class ShopwareEnvironmentProcessor
      * Filters sensitive data from GET and POST
      *
      * @param array $data
-     *
-     * @return mixed
      */
     private function filterRequestUserData($data)
     {

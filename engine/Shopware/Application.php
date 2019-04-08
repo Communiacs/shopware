@@ -42,9 +42,9 @@ class Shopware extends Enlight_Application
      *      'shopware.release.version_text'
      *      'shopware.release' (a Struct containing all the above parameters)
      */
-    const VERSION = '5.5.7';
+    const VERSION = '5.5.8';
     const VERSION_TEXT = '';
-    const REVISION = '201902250948';
+    const REVISION = '201904021344';
 
     /**
      * @var string
@@ -61,9 +61,6 @@ class Shopware extends Enlight_Application
      */
     protected $container;
 
-    /**
-     * @param Container $container
-     */
     public function __construct(Container $container)
     {
         // Initialize global Shopware function
@@ -83,8 +80,6 @@ class Shopware extends Enlight_Application
      * @param array  $value
      *
      * @throws Enlight_Exception
-     *
-     * @return mixed
      *
      * @deprecated 4.2
      */
@@ -343,8 +338,6 @@ class Shopware extends Enlight_Application
      * otherwise the function throws an exception.
      *
      * @deprecated since 5.2, to be removed in 6.0
-     *
-     * @param Enlight_Event_EventManager $manager
      */
     public function setEventManager(Enlight_Event_EventManager $manager)
     {

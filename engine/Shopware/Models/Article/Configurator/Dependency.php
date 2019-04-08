@@ -28,7 +28,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
 
 /**
- * @ORM\Entity
+ * @ORM\Entity()
  * @ORM\Table(name="s_article_configurator_dependencies")
  */
 class Dependency extends ModelEntity
@@ -37,7 +37,7 @@ class Dependency extends ModelEntity
      * @var int
      *
      * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
+     * @ORM\Id()
      * @ORM\GeneratedValue(strategy="IDENTITY")
      */
     private $id;
@@ -47,21 +47,21 @@ class Dependency extends ModelEntity
      *
      * @ORM\Column(name="configurator_set_id", type="integer", nullable=true)
      */
-    private $configuratorSetId = null;
+    private $configuratorSetId;
 
     /**
      * @var int
      *
      * @ORM\Column(name="parent_id", type="integer", nullable=true)
      */
-    private $parentId = null;
+    private $parentId;
 
     /**
      * @var int
      *
      * @ORM\Column(name="child_id", type="integer", nullable=true)
      */
-    private $childId = null;
+    private $childId;
 
     /**
      * @var \Shopware\Models\Article\Configurator\Option

@@ -1035,9 +1035,6 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
     /**
      * Add the table alias to the passed filter and sort parameters.
      *
-     * @param array $properties
-     * @param array $fields
-     *
      * @return array
      */
     private function prepareParam(array $properties, array $fields)
@@ -1058,9 +1055,6 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
 
     /**
      * Prepares the sort params for the variant search
-     *
-     * @param array $properties
-     * @param array $fields
      *
      * @return array
      */
@@ -1092,8 +1086,6 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
      * Adds the additional text for variants
      *
      * @param array $data
-     *
-     * @return mixed
      */
     private function addAdditionalTextForVariant($data)
     {
@@ -1148,9 +1140,6 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
 
     /**
      * Helper function to generate the additional text dynamically
-     *
-     * @param array $data
-     * @param array $variantsWithoutAdditionalText
      *
      * @return array
      */

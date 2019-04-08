@@ -1310,6 +1310,7 @@ tests/Unit/Components/BasketSignature/BasketTest.php
 tests/Unit/Components/Config
 tests/Unit/Components/Emotion
 tests/Unit/Components/Event/ManagerTest.php
+tests/Unit/Components/Model/ModelManagerTest.php
 themes/Backend/ExtJs/backend/_resources/images/activate
 themes/Backend/ExtJs/backend/_resources/images/customer_stream/ekw_usage.png
 themes/Backend/ExtJs/backend/_resources/images/customer_stream/quick_view.png
@@ -1347,6 +1348,8 @@ themes/Backend/ExtJs/backend/banner/model/attribute.js
 themes/Backend/ExtJs/backend/base/application/Shopware.window.BatchRequests.js
 themes/Backend/ExtJs/backend/base/component/Shopware.data.ClassCache.js
 themes/Backend/ExtJs/backend/base/component/Shopware.notification.ExpiredLicence.js
+themes/Backend/ExtJs/backend/base/store/deactivate_no_customer_account_modes.js
+themes/Backend/ExtJs/backend/base/store/shipping_calculations_display_modes.js
 themes/Backend/ExtJs/backend/benchmark/store/business.js
 themes/Backend/ExtJs/backend/benchmark/template/local/branch_select.tpl
 themes/Backend/ExtJs/backend/benchmark/template/local/fonts

@@ -50,9 +50,6 @@ interface ConfiguratorGatewayInterface
      * - Option position
      * - Option name
      *
-     * @param Struct\BaseProduct          $product
-     * @param Struct\ShopContextInterface $context
-     *
      * @return Struct\Configurator\Set
      */
     public function get(Struct\BaseProduct $product, Struct\ShopContextInterface $context);
@@ -90,8 +87,6 @@ interface ConfiguratorGatewayInterface
      *     'white' => array(),
      *     'red'   => array()
      * )
-     *
-     * @param Struct\BaseProduct $product
      *
      * @return array Indexed by the option id
      */

@@ -617,8 +617,6 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
     /**
      * Model event listener function which fired when the user select an emotion row
      * in the backend listing and clicks the remove button or the action column.
-     *
-     * @return mixed
      */
     public function deleteAction()
     {
@@ -955,7 +953,6 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
      * Failure case:
      *  array('success' => false, 'error' => An error message)
      *
-     *
      * @param int|null $id
      *
      * @return array
@@ -991,7 +988,6 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
      *
      * Failure case:
      *  array('success' => false, 'error' => An error message)
-     *
      *
      * @param int|null $id
      *
@@ -1135,8 +1131,6 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
      * Method for saving a single emotion model.
      * Processes the provided data and creates necessary associations.
      *
-     * @param array $data
-     *
      * @return Emotion|null
      */
     private function saveEmotion(array $data)
@@ -1258,9 +1252,6 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
     /**
      * Helper method for creating associated emotion elements.
      *
-     * @param Emotion $emotion
-     * @param array   $emotionElements
-     *
      * @return array
      */
     private function createElements(Emotion $emotion, array $emotionElements)
@@ -1290,9 +1281,6 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
     /**
      * Helper method for creating associated element viewports.
      *
-     * @param Emotion $emotion
-     * @param array   $elementViewports
-     *
      * @return array
      */
     private function createElementViewports(Emotion $emotion, array $elementViewports)
@@ -1306,10 +1294,6 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
 
     /**
      * Helper method for creating associated element data.
-     *
-     * @param Emotion $emotion
-     * @param array   $element
-     * @param array   $elementData
      *
      * @return array
      */
@@ -1337,7 +1321,6 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
     /**
      * Method for processing the different value types of the data fields.
      *
-     * @param Field        $field
      * @param array|string $value
      *
      * @return string
@@ -1438,8 +1421,6 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
 
     /**
      * Deletes all corresponding translations for the given emotions.
-     *
-     * @param array $emotions
      */
     private function deleteTranslations(array $emotions)
     {
@@ -1496,10 +1477,6 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
         return $mediaFields->toArray();
     }
 
-    /**
-     * @param Emotion $emotion
-     * @param Emotion $clonedEmotion
-     */
     private function copyElementTranslations(Emotion $emotion, Emotion $clonedEmotion)
     {
         $oldObjectKeys = [];
@@ -1534,8 +1511,6 @@ EOD;
     /**
      * creates a unique identifier string based on the grid position
      *
-     * @param Element $el
-     *
      * @return string
      */
     private function getElementIdentifier(Element $el)
@@ -1543,9 +1518,6 @@ EOD;
         return $el->getStartCol() . $el->getStartRow() . $el->getEndCol() . $el->getEndRow();
     }
 
-    /**
-     * @param Emotion $emotion
-     */
     private function generateEmotionSeoUrls(Emotion $emotion)
     {
         /** @var Shopware_Components_SeoIndex $seoIndexer */

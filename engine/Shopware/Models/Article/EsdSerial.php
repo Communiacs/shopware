@@ -28,7 +28,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
 
 /**
- * @ORM\Entity
+ * @ORM\Entity()
  * @ORM\Table(name="s_articles_esd_serials")
  */
 class EsdSerial extends ModelEntity
@@ -36,7 +36,7 @@ class EsdSerial extends ModelEntity
     /**
      * OWNING SIDE
      *
-     * @var \Shopware\Models\Article\Esd
+     * @var Esd
      *
      * @ORM\ManyToOne(targetEntity="Shopware\Models\Article\Esd", inversedBy="serials")
      * @ORM\JoinColumn(name="esdID", referencedColumnName="id")
@@ -56,7 +56,7 @@ class EsdSerial extends ModelEntity
      * @var int
      *
      * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
+     * @ORM\Id()
      * @ORM\GeneratedValue(strategy="IDENTITY")
      */
     private $id;
@@ -77,11 +77,9 @@ class EsdSerial extends ModelEntity
     }
 
     /**
-     * @param \Shopware\Models\Article\Esd $esd
-     *
-     * @return \Shopware\Models\Article\EsdSerial
+     * @return EsdSerial
      */
-    public function setEsd(\Shopware\Models\Article\Esd $esd)
+    public function setEsd(Esd $esd)
     {
         $this->esd = $esd;
 
@@ -89,7 +87,7 @@ class EsdSerial extends ModelEntity
     }
 
     /**
-     * @return \Shopware\Models\Article\Esd
+     * @return Esd
      */
     public function getEsd()
     {

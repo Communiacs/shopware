@@ -26,10 +26,11 @@ namespace Shopware\Models\Article;
 
 use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
+use Shopware\Models\Attribute\ArticleDownload as ProductDownloadAttribute;
 
 /**
  * @ORM\Table(name="s_articles_downloads")
- * @ORM\Entity
+ * @ORM\Entity()
  */
 class Download extends ModelEntity
 {
@@ -46,7 +47,7 @@ class Download extends ModelEntity
     /**
      * INVERSE SIDE
      *
-     * @var \Shopware\Models\Attribute\ArticleDownload
+     * @var ProductDownloadAttribute
      *
      * @ORM\OneToOne(targetEntity="Shopware\Models\Attribute\ArticleDownload", mappedBy="articleDownload", cascade={"persist"})
      */
@@ -56,7 +57,7 @@ class Download extends ModelEntity
      * @var int
      *
      * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
+     * @ORM\Id()
      * @ORM\GeneratedValue(strategy="IDENTITY")
      */
     private $id;
@@ -196,7 +197,7 @@ class Download extends ModelEntity
     }
 
     /**
-     * @return \Shopware\Models\Attribute\ArticleDownload
+     * @return ProductDownloadAttribute
      */
     public function getAttribute()
     {
@@ -204,12 +205,12 @@ class Download extends ModelEntity
     }
 
     /**
-     * @param \Shopware\Models\Attribute\ArticleDownload|array|null $attribute
+     * @param ProductDownloadAttribute|array|null $attribute
      *
-     * @return \Shopware\Models\Attribute\ArticleDownload
+     * @return Download
      */
     public function setAttribute($attribute)
     {
-        return $this->setOneToOne($attribute, \Shopware\Models\Attribute\ArticleDownload::class, 'attribute', 'articleDownload');
+        return $this->setOneToOne($attribute, ProductDownloadAttribute::class, 'attribute', 'articleDownload');
     }
 }

@@ -689,7 +689,6 @@ class Shopware_Controllers_Backend_MediaManager extends Shopware_Controllers_Bac
      * This method resolves the given request data and returns
      * an array with album data
      *
-     * @param array $data
      * @param Album $album
      *
      * @throws Exception
@@ -772,7 +771,6 @@ class Shopware_Controllers_Backend_MediaManager extends Shopware_Controllers_Bac
     /**
      * Helper method to prefix properties
      *
-     * @param array  $properties
      * @param string $prefix
      *
      * @return array
@@ -805,7 +803,6 @@ class Shopware_Controllers_Backend_MediaManager extends Shopware_Controllers_Bac
     /**
      * Filters the loaded tree node with the passed filter value.
      *
-     * @param array  $albums
      * @param string $search
      *
      * @return array
@@ -830,8 +827,6 @@ class Shopware_Controllers_Backend_MediaManager extends Shopware_Controllers_Bac
 
     /**
      * Returns all thumbnails paths according to the given media object
-     *
-     * @param array $media
      *
      * @return array
      */
@@ -908,8 +903,6 @@ class Shopware_Controllers_Backend_MediaManager extends Shopware_Controllers_Bac
     /**
      * Internal helper function to handle batch processing to remove the albums.
      *
-     * @param array $params
-     *
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      * @throws \Doctrine\ORM\ORMInvalidArgumentException
@@ -963,15 +956,11 @@ class Shopware_Controllers_Backend_MediaManager extends Shopware_Controllers_Bac
      * Internal helper function to set the passed params to the media model and save the media.
      * Created to handle the batch processing.
      *
-     * @param array $params
-     *
      * @throws Exception
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      * @throws \Doctrine\ORM\ORMInvalidArgumentException
      * @throws \Doctrine\ORM\TransactionRequiredException
-     *
-     * @return mixed
      */
     private function saveMedia(array $params)
     {
@@ -1042,8 +1031,6 @@ class Shopware_Controllers_Backend_MediaManager extends Shopware_Controllers_Bac
     }
 
     /**
-     * @param Media $media
-     *
      * @throws Exception
      */
     private function createThumbnailsForMovedMedia(Media $media)

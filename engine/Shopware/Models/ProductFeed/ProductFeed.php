@@ -26,6 +26,7 @@ namespace Shopware\Models\ProductFeed;
 
 use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
+use Shopware\Models\Attribute\ProductFeed as ProductFeedAttribute;
 
 /**
  * Shopware product feed model represents a single feed.
@@ -49,7 +50,7 @@ class ProductFeed extends ModelEntity
     /**
      * INVERSE SIDE
      *
-     * @var \Shopware\Models\Attribute\ProductFeed
+     * @var ProductFeedAttribute
      *
      * @ORM\OneToOne(targetEntity="Shopware\Models\Attribute\ProductFeed", mappedBy="productFeed", orphanRemoval=true, cascade={"persist"})
      */
@@ -59,7 +60,7 @@ class ProductFeed extends ModelEntity
      * @var int
      *
      * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
+     * @ORM\Id()
      * @ORM\GeneratedValue(strategy="IDENTITY")
      */
     private $id;
@@ -279,8 +280,8 @@ class ProductFeed extends ModelEntity
      *
      * @ORM\ManyToMany(targetEntity="Shopware\Models\Article\Supplier")
      * @ORM\JoinTable(name="s_export_suppliers",
-     *      joinColumns={@ORM\JoinColumn(name="feedID", referencedColumnName="id")},
-     *      inverseJoinColumns={@ORM\JoinColumn(name="supplierID", referencedColumnName="id")}
+     *     joinColumns={@ORM\JoinColumn(name="feedID", referencedColumnName="id")},
+     *     inverseJoinColumns={@ORM\JoinColumn(name="supplierID", referencedColumnName="id")}
      * )
      */
     private $suppliers;
@@ -290,8 +291,8 @@ class ProductFeed extends ModelEntity
      *
      * @ORM\ManyToMany(targetEntity="\Shopware\Models\Article\Article")
      * @ORM\JoinTable(name="s_export_articles",
-     *      joinColumns={@ORM\JoinColumn(name="feedID", referencedColumnName="id")},
-     *      inverseJoinColumns={@ORM\JoinColumn(name="articleID", referencedColumnName="id")}
+     *     joinColumns={@ORM\JoinColumn(name="feedID", referencedColumnName="id")},
+     *     inverseJoinColumns={@ORM\JoinColumn(name="articleID", referencedColumnName="id")}
      * )
      */
     private $articles;
@@ -301,9 +302,9 @@ class ProductFeed extends ModelEntity
      *
      * @ORM\ManyToMany(targetEntity="Shopware\Models\Category\Category")
      * @ORM\JoinTable(name="s_export_categories",
-     *      joinColumns={@ORM\JoinColumn(name="feedID", referencedColumnName="id")},
-     *      inverseJoinColumns={@ORM\JoinColumn(name="categoryID", referencedColumnName="id")}
-     *      )
+     *     joinColumns={@ORM\JoinColumn(name="feedID", referencedColumnName="id")},
+     *     inverseJoinColumns={@ORM\JoinColumn(name="categoryID", referencedColumnName="id")}
+     * )
      */
     private $categories;
 
@@ -1075,7 +1076,7 @@ class ProductFeed extends ModelEntity
     }
 
     /**
-     * @return \Shopware\Models\Attribute\ProductFeed
+     * @return ProductFeedAttribute
      */
     public function getAttribute()
     {
@@ -1083,13 +1084,13 @@ class ProductFeed extends ModelEntity
     }
 
     /**
-     * @param \Shopware\Models\Attribute\ProductFeed|array|null $attribute
+     * @param ProductFeedAttribute|array|null $attribute
      *
-     * @return \Shopware\Models\Attribute\ProductFeed
+     * @return ProductFeed
      */
     public function setAttribute($attribute)
     {
-        return $this->setOneToOne($attribute, '\Shopware\Models\Attribute\ProductFeed', 'attribute', 'productFeed');
+        return $this->setOneToOne($attribute, ProductFeedAttribute::class, 'attribute', 'productFeed');
     }
 
     /**

@@ -26,6 +26,7 @@ namespace Shopware\Models\Article;
 
 use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\LazyFetchModelEntity;
+use Shopware\Models\Attribute\ArticleNotification as ProductNotificationAttribute;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
@@ -34,9 +35,9 @@ use Symfony\Component\Validator\Constraints as Assert;
  * This is the model for s_articles_notification table.
  * The model contains a single row of s_articles_notification.
  *
- * @ORM\Entity
+ * @ORM\Entity()
  * @ORM\Table(name="s_articles_notification")
- * @ORM\HasLifecycleCallbacks
+ * @ORM\HasLifecycleCallbacks()
  */
 class Notification extends LazyFetchModelEntity
 {
@@ -63,9 +64,9 @@ class Notification extends LazyFetchModelEntity
     /**
      * INVERSE SIDE
      *
-     * @var \Shopware\Models\Attribute\ArticleNotification
+     * @var ProductNotificationAttribute
      *
-     * @Assert\Valid
+     * @Assert\Valid()
      *
      * @ORM\OneToOne(targetEntity="Shopware\Models\Attribute\ArticleNotification", mappedBy="articleNotification", cascade={"persist"})
      */
@@ -75,7 +76,7 @@ class Notification extends LazyFetchModelEntity
      * @var int
      *
      * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
+     * @ORM\Id()
      * @ORM\GeneratedValue(strategy="IDENTITY")
      */
     private $id;
@@ -131,8 +132,6 @@ class Notification extends LazyFetchModelEntity
     }
 
     /**
-     * @param \DateTimeInterface $date
-     *
      * @return Notification
      */
     public function setDate(\DateTimeInterface $date)
@@ -227,7 +226,7 @@ class Notification extends LazyFetchModelEntity
     }
 
     /**
-     * @return \Shopware\Models\Attribute\ArticleNotification
+     * @return ProductNotificationAttribute
      */
     public function getAttribute()
     {
@@ -235,13 +234,13 @@ class Notification extends LazyFetchModelEntity
     }
 
     /**
-     * @param array|\Shopware\Models\Attribute\ArticleNotification|array|null $attribute
+     * @param array|ProductNotificationAttribute|array|null $attribute
      *
      * @return Notification
      */
     public function setAttribute($attribute)
     {
-        return $this->setOneToOne($attribute, \Shopware\Models\Attribute\ArticleNotification::class, 'attribute', 'articleNotification');
+        return $this->setOneToOne($attribute, ProductNotificationAttribute::class, 'attribute', 'articleNotification');
     }
 
     /**

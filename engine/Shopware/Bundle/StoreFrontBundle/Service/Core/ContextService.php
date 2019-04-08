@@ -32,8 +32,8 @@ use Shopware\Bundle\StoreFrontBundle\Gateway\PriceGroupDiscountGatewayInterface;
 use Shopware\Bundle\StoreFrontBundle\Gateway\ShopGatewayInterface;
 use Shopware\Bundle\StoreFrontBundle\Gateway\TaxGatewayInterface;
 use Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface;
-use Shopware\Bundle\StoreFrontBundle\Struct\ProductContextInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContext;
+use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 use Shopware\Models;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -52,7 +52,7 @@ class ContextService implements ContextServiceInterface
     private $container;
 
     /**
-     * @var ProductContextInterface
+     * @var ShopContextInterface
      */
     private $context = null;
 
@@ -86,15 +86,6 @@ class ContextService implements ContextServiceInterface
      */
     private $countryGateway;
 
-    /**
-     * @param ContainerInterface                 $container
-     * @param CustomerGroupGatewayInterface      $customerGroupGateway
-     * @param TaxGatewayInterface                $taxGateway
-     * @param CountryGatewayInterface            $countryGateway
-     * @param PriceGroupDiscountGatewayInterface $priceGroupDiscountGateway
-     * @param ShopGatewayInterface               $shopGateway
-     * @param CurrencyGatewayInterface           $currencyGateway
-     */
     public function __construct(
         ContainerInterface $container,
         CustomerGroupGatewayInterface $customerGroupGateway,
@@ -329,7 +320,7 @@ class ContextService implements ContextServiceInterface
      * @param int|null    $stateId
      * @param int[]       $streamIds
      *
-     * @return ShopContext
+     * @return ShopContextInterface
      */
     private function create(
         $baseUrl,
