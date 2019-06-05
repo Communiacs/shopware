@@ -212,6 +212,8 @@ namespace Aws;
  * @method \Aws\MultiRegionClient createMultiRegionMachineLearning(array $args = [])
  * @method \Aws\Macie\MacieClient createMacie(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionMacie(array $args = [])
+ * @method \Aws\ManagedBlockchain\ManagedBlockchainClient createManagedBlockchain(array $args = [])
+ * @method \Aws\MultiRegionClient createMultiRegionManagedBlockchain(array $args = [])
  * @method \Aws\MarketplaceCommerceAnalytics\MarketplaceCommerceAnalyticsClient createMarketplaceCommerceAnalytics(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionMarketplaceCommerceAnalytics(array $args = [])
  * @method \Aws\MarketplaceEntitlementService\MarketplaceEntitlementServiceClient createMarketplaceEntitlementService(array $args = [])
@@ -322,6 +324,8 @@ namespace Aws;
  * @method \Aws\MultiRegionClient createMultiRegionSupport(array $args = [])
  * @method \Aws\Swf\SwfClient createSwf(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionSwf(array $args = [])
+ * @method \Aws\Textract\TextractClient createTextract(array $args = [])
+ * @method \Aws\MultiRegionClient createMultiRegionTextract(array $args = [])
  * @method \Aws\TranscribeService\TranscribeServiceClient createTranscribeService(array $args = [])
  * @method \Aws\MultiRegionClient createMultiRegionTranscribeService(array $args = [])
  * @method \Aws\Transfer\TransferClient createTransfer(array $args = [])
@@ -347,7 +351,7 @@ namespace Aws;
  */
 class Sdk
 {
-    const VERSION = '3.87.22';
+    const VERSION = '3.93.2';
 
     /** @var array Arguments for creating clients */
     private $args;
@@ -416,6 +420,19 @@ class Sdk
         $klass = class_exists($klass) ? $klass : 'Aws\\MultiRegionClient';
 
         return new $klass($this->mergeArgs($namespace, $service, $args));
+    }
+
+    /**
+     * Clone existing SDK instance with ability to pass an associative array
+     * of extra client settings.
+     *
+     * @param array $args
+     *
+     * @return self
+     */
+    public function copy(array $args = [])
+    {
+        return new self($args + $this->args);
     }
 
     private function mergeArgs($namespace, array $manifest, array $args = [])

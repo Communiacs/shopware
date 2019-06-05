@@ -627,6 +627,30 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
                 } else {
                     $data['mapping'] = null;
                 }
+                $connection = $this->container->get('dbal_connection');
+
+                $sql = 'SELECT pages.id as id, pages.grouping as grouping FROM s_cms_static as pages INNER JOIN s_cms_static_groups ON pages.grouping LIKE CONCAT(\'%\', s_cms_static_groups.key, \'%\') WHERE s_cms_static_groups.Id = :id';
+                $statement = $connection->prepare($sql);
+                $statement->execute(['id' => $data['id']]);
+                $sites = $statement->fetchAll();
+
+                $sql = 'SELECT `key` FROM s_cms_static_groups WHERE id = :id';
+                $statement = $connection->prepare($sql);
+                $statement->execute(['id' => $data['id']]);
+                $group = $statement->fetchColumn();
+
+                foreach ($sites as $site) {
+                    $groups = array_filter(explode('|', $site['grouping']));
+
+                    $key = array_search($group, $groups);
+                    $groups[$key] = $data['key'];
+
+                    $site['grouping'] = implode('|', $groups);
+
+                    $sql = 'UPDATE s_cms_static SET grouping = :grouping WHERE id = :id';
+                    $statement = $connection->prepare($sql);
+                    $statement->execute(['grouping' => $site['grouping'], 'id' => $site['id']]);
+                }
                 break;
             case 'document':
                 if ($data['id']) {
@@ -1330,7 +1354,7 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
 
         $values = [];
         foreach ($elementData['values'] as $valueData) {
-            /* @var Shop $shop */
+            /** @var Shop $shop */
             $shop = $shopRepository->find($valueData['shopId']);
 
             //  Scope not match
@@ -1339,7 +1363,7 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
             }
 
             // Do not save empty checkbox / boolean select values the fallback should be used
-            if (($elementData['type'] == 'checkbox' || $elementData['type'] == 'boolean') && $valueData['value'] === '') {
+            if (($elementData['type'] === 'checkbox' || $elementData['type'] === 'boolean') && $valueData['value'] === '') {
                 continue;
             }
 

@@ -191,7 +191,7 @@ class Shopware_Controllers_Backend_Category extends Shopware_Controllers_Backend
             }
         } else {
             $query = $this->Request()->getParam('query');
-            $parents = (bool) $this->Request()->getParam('parents', false);
+            $parents = (bool) $this->Request()->getParam('parents', true);
             $result = $this->getPathByQuery($query, $separator, $parents);
         }
 
@@ -519,6 +519,7 @@ class Shopware_Controllers_Backend_Category extends Shopware_Controllers_Backend
 
             // Find parent for newly created category
             $params['parentId'] = is_numeric($params['parentId']) ? (int) $params['parentId'] : 1;
+            /** @var Category $parentCategory */
             $parentCategory = $this->getRepository()->find($params['parentId']);
             $categoryModel->setParent($parentCategory);
 

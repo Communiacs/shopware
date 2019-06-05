@@ -1,5 +1,5 @@
 {
-    "Version": "2.1.44.91",
+    "Version": "2.1.49.82",
     "Names": {
         "AC": "Oileán na Deascabhála",
         "AD": "Andóra",
@@ -146,7 +146,7 @@
         "MF": "Saint-Martin",
         "MG": "Madagascar",
         "MH": "Oileáin Marshall",
-        "MK": "an Mhacadóin",
+        "MK": "an Mhacadóin Thuaidh",
         "ML": "Mailí",
         "MM": "Maenmar (Burma)",
         "MN": "an Mhongóil",
@@ -248,6 +248,8 @@
         "VU": "Vanuatú",
         "WF": "Vailís agus Futúna",
         "WS": "Samó",
+        "XA": "XA",
+        "XB": "XB",
         "XK": "an Chosaiv",
         "YE": "Éimin",
         "YT": "Mayotte",

@@ -35,11 +35,6 @@ use Shopware\Components\Model\ModelManager;
 use Shopware\Models\Emotion\Emotion;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class LegacyStructConverter
 {
     /**
@@ -189,8 +184,6 @@ class LegacyStructConverter
     }
 
     /**
-     * @throws \Exception
-     *
      * @return array
      */
     public function convertCategoryStruct(StoreFrontBundle\Struct\Category $category)
@@ -355,7 +348,7 @@ class LegacyStructConverter
             ];
         }
 
-        //reset unit data
+        // Reset unit data
         $data['minpurchase'] = null;
         $data['maxpurchase'] = $this->config->get('maxPurchase');
         $data['purchasesteps'] = 1;
@@ -439,7 +432,7 @@ class LegacyStructConverter
             }
         }
 
-        //convert all product images and set cover image
+        // Convert all product images and set cover image
         foreach ($product->getMedia() as $media) {
             $data['images'][] = $this->convertMediaStruct($media);
         }
@@ -452,7 +445,7 @@ class LegacyStructConverter
             $data['image'] = array_shift($data['images']);
         }
 
-        //convert product voting
+        // Convert product voting
         foreach ($product->getVotes() as $vote) {
             $data['sVoteComments'][] = $this->convertVoteStruct($vote);
         }
@@ -633,8 +626,7 @@ class LegacyStructConverter
         $attributes = $media->getAttributes();
         if ($attributes && isset($attributes['image'])) {
             $data['attribute'] = $attributes['image']->toArray();
-            unset($data['attribute']['id']);
-            unset($data['attribute']['imageID']);
+            unset($data['attribute']['id'], $data['attribute']['imageID']);
         } else {
             $data['attribute'] = [];
         }
@@ -898,15 +890,15 @@ class LegacyStructConverter
             'type' => $set->getType(),
         ];
 
-        //switch the template for the different configurator types.
+        // Switch the template for the different configurator types.
         if ($set->getType() == 1) {
-            //Selection configurator
+            // Selection configurator
             $settings['template'] = 'article_config_step.tpl';
         } elseif ($set->getType() == 2) {
-            //Table configurator
+            // Table configurator
             $settings['template'] = 'article_config_picture.tpl';
         } else {
-            //Other configurator types
+            // Other configurator types
             $settings['template'] = 'article_config_upprice.tpl';
         }
 
@@ -1012,11 +1004,40 @@ class LegacyStructConverter
     }
 
     /**
+     * @return array
+     */
+    public function convertShopPageStruct(StoreFrontBundle\Struct\ShopPage $shopPage)
+    {
+        $data = $shopPage->jsonSerialize();
+
+        $data += [
+            'attributes' => $shopPage->getAttributes(),
+        ];
+
+        if ($shopPage->hasAttribute('core')) {
+            $data['attribute'] = $shopPage->getAttribute('core')->jsonSerialize();
+        }
+
+        $data['children'] = $this->convertShopPageStructList($shopPage->getChildren());
+        $data['parentID'] = $shopPage->getParentId();
+
+        return $data;
+    }
+
+    /**
+     * @param StoreFrontBundle\Struct\ShopPage[] $shopPages
+     *
+     * @return array
+     */
+    public function convertShopPageStructList(array $shopPages)
+    {
+        return array_map([$this, 'convertShopPageStruct'], $shopPages);
+    }
+
+    /**
      * Returns the count of children categories of the provided category
      *
      * @param int $id
-     *
-     * @throws \Exception
      *
      * @return int
      */
@@ -1062,13 +1083,13 @@ class LegacyStructConverter
      *
      * @param float $price
      *
-     * @return float price
+     * @return string
      */
     private function sFormatPrice($price)
     {
-        $price = str_replace(',', '.', $price);
+        $price = str_replace(',', '.', (string) $price);
         $price = $this->sRound($price);
-        $price = str_replace('.', ',', $price); // Replaces points with commas
+        $price = str_replace('.', ',', (string) $price); // Replaces points with commas
         $commaPos = strpos($price, ',');
         if ($commaPos) {
             $part = substr($price, $commaPos + 1, strlen($price) - $commaPos);
@@ -1091,19 +1112,21 @@ class LegacyStructConverter
     }
 
     /**
+     * @param string|null $amount
+     *
      * @return float
      */
-    private function sRound($moneyfloat = null)
+    private function sRound($amount = null)
     {
-        $money_str = explode('.', $moneyfloat);
-        if (empty($money_str[1])) {
-            $money_str[1] = 0;
+        $amountStr = explode('.', $amount);
+        if (empty($amountStr[1])) {
+            $amountStr[1] = 0;
         }
-        $money_str[1] = substr($money_str[1], 0, 3); // convert to rounded (to the nearest thousandth) string
+        $amountStr[1] = substr($amountStr[1], 0, 3); // Rounded to the nearest thousandth as a string
 
-        $money_str = $money_str[0] . '.' . $money_str[1];
+        $amountStr = $amountStr[0] . '.' . $amountStr[1];
 
-        return round($money_str, 2);
+        return round((float) $amountStr, 2);
     }
 
     /**
@@ -1152,15 +1175,15 @@ class LegacyStructConverter
             'filtergroupID' => null,
             'priceStartingFrom' => null,
             'pseudopricePercent' => null,
-            //flag inside mini product
+            // Flag inside mini product
             'sVariantArticle' => null,
             'sConfigurator' => $product->hasConfigurator(),
-            //only used for full products
+            // Only used for full products
             'metaTitle' => $product->getMetaTitle(),
             'shippingfree' => $product->isShippingFree(),
             'suppliernumber' => $product->getManufacturerNumber(),
             'notification' => $product->allowsNotification(),
-            'ean' => $product->getEan(),
+            'ean' => trim($product->getEan()),
             'keywords' => $product->getKeywords(),
             'sReleasedate' => $this->dateToString($product->getReleaseDate()),
             'template' => $product->getTemplate(),
@@ -1206,6 +1229,8 @@ class LegacyStructConverter
     }
 
     /**
+     * @param \DateTimeInterface|string $date
+     *
      * @return string
      */
     private function dateToString($date)

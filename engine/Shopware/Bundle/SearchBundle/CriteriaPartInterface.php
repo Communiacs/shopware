@@ -24,10 +24,12 @@
 
 namespace Shopware\Bundle\SearchBundle;
 
+use Shopware\Components\ReflectionAwareInterface;
+
 /**
  * Interface CriteriaPartInterface
  */
-interface CriteriaPartInterface
+interface CriteriaPartInterface extends ReflectionAwareInterface
 {
     /**
      * Defines the unique name for the facet for re identification.

@@ -24,6 +24,7 @@
 
 use Shopware\Components\Random;
 use Shopware\Models\Blog\Blog;
+use Shopware\Models\Shop\Shop;
 
 /**
  * Shopware Frontend Controller for the Blog
@@ -152,7 +153,10 @@ class Shopware_Controllers_Frontend_Blog extends Enlight_Controller_Action
         $category = $this->getCategoryRepository()->findOneBy(['id' => $categoryId, 'active' => true]);
         $isChild = ($shopCategory && $category) ? $category->isChildOf($shopCategory) : false;
         if (!$isChild) {
-            return $this->redirect(['controller' => 'index'], ['code' => 301]);
+            throw new Enlight_Controller_Exception(
+                'Blog category missing, non-existent or invalid for the current shop',
+                404
+            );
         }
 
         // PerPage
@@ -235,8 +239,9 @@ class Shopware_Controllers_Frontend_Blog extends Enlight_Controller_Action
 
         $categoryContent = Shopware()->Modules()->Categories()->sGetCategoryContent($categoryId);
 
-        if (empty($categoryContent)) {
-            throw new Enlight_Controller_Exception(sprintf('Blog category by id "%d" is invalid', $categoryId), Enlight_Controller_Exception::PROPERTY_NOT_FOUND);
+        // Make sure the category exists and is a blog category
+        if (empty($categoryContent) || !$categoryContent['blog']) {
+            throw new Enlight_Controller_Exception(sprintf('Blog category by id "%d" is invalid', $categoryId), 404);
         }
 
         if (!empty($categoryContent['external'])) {
@@ -295,7 +300,7 @@ class Shopware_Controllers_Frontend_Blog extends Enlight_Controller_Action
         if (empty($blogArticleData) || empty($blogArticleData['active'])) {
             throw new Enlight_Controller_Exception(
                 sprintf('Blog article with id %d not found or inactive', $blogArticleId),
-                Enlight_Controller_Exception::PROPERTY_NOT_FOUND
+                404
             );
         }
 
@@ -568,6 +573,8 @@ class Shopware_Controllers_Frontend_Blog extends Enlight_Controller_Action
         $blogCommentModel = new \Shopware\Models\Blog\Comment();
         /** @var \Shopware\Models\Blog\Blog $blog */
         $blog = $this->getRepository()->find($blogArticleId);
+        /** @var Shop $shop */
+        $shop = $this->getModelManager()->getReference(\Shopware\Models\Shop\Shop::class, $this->get('shop')->getId());
 
         $blogCommentModel->setBlog($blog);
         $blogCommentModel->setCreationDate(new \DateTime());
@@ -578,7 +585,7 @@ class Shopware_Controllers_Frontend_Blog extends Enlight_Controller_Action
         $blogCommentModel->setHeadline($commentData['headline']);
         $blogCommentModel->setComment($commentData['comment']);
         $blogCommentModel->setPoints($commentData['points']);
-        $blogCommentModel->setShop($this->getModelManager()->getReference(\Shopware\Models\Shop\Shop::class, $this->get('shop')->getId()));
+        $blogCommentModel->setShop($shop);
 
         Shopware()->Models()->persist($blogCommentModel);
         Shopware()->Models()->flush();
