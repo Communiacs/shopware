@@ -42,9 +42,9 @@ class Shopware extends Enlight_Application
      *      'shopware.release.version_text'
      *      'shopware.release' (a Struct containing all the above parameters)
      */
-    const VERSION = '5.5.9';
+    const VERSION = '5.5.10';
     const VERSION_TEXT = '';
-    const REVISION = '201905281515';
+    const REVISION = '201906060858';
 
     /**
      * @var string
