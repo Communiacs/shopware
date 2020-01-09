@@ -24,11 +24,13 @@
 
 use Doctrine\DBAL\Connection;
 use Shopware\Bundle\AccountBundle\Service\AddressServiceInterface;
-use Shopware\Bundle\AttributeBundle\Service\CrudService;
+use Shopware\Bundle\AccountBundle\Service\OptInLoginService;
+use Shopware\Bundle\AccountBundle\Service\OptInLoginServiceInterface;
+use Shopware\Bundle\AttributeBundle\Service\CrudServiceInterface;
 use Shopware\Bundle\StoreFrontBundle;
 use Shopware\Components\Captcha\CaptchaValidator;
-use Shopware\Components\Cart\BasketHelperInterface;
-use Shopware\Components\Cart\Struct\DiscountContext;
+use Shopware\Components\Cart\CartPersistServiceInterface;
+use Shopware\Components\Cart\ConditionalLineItemServiceInterface;
 use Shopware\Components\NumberRangeIncrementerInterface;
 use Shopware\Components\Random;
 use Shopware\Components\Validator\EmailValidatorInterface;
@@ -39,7 +41,7 @@ use Shopware\Models\Customer\Customer;
  * Shopware Class that handles several
  * functions around customer / order related things
  */
-class sAdmin
+class sAdmin implements \Enlight_Hook
 {
     /**
      * Check if current active shop has own registration
@@ -150,12 +152,12 @@ class sAdmin
     private $numberRangeIncrementer;
 
     /**
-     * @var Shopware\Bundle\AttributeBundle\Service\DataLoader
+     * @var Shopware\Bundle\AttributeBundle\Service\DataLoaderInterface
      */
     private $attributeLoader;
 
     /**
-     * @var Shopware\Bundle\AttributeBundle\Service\DataPersister
+     * @var Shopware\Bundle\AttributeBundle\Service\DataPersisterInterface
      */
     private $attributePersister;
 
@@ -170,9 +172,14 @@ class sAdmin
     private $connection;
 
     /**
-     * @var BasketHelperInterface
+     * @var OptInLoginServiceInterface
      */
-    private $basketHelper;
+    private $optInLoginService;
+
+    /**
+     * @var ConditionalLineItemServiceInterface
+     */
+    private $conditionalLineItemService;
 
     /**
      * @var array
@@ -197,7 +204,8 @@ class sAdmin
         AddressServiceInterface $addressService = null,
         NumberRangeIncrementerInterface $numberRangeIncrementer = null,
         Shopware_Components_Translation $translationComponent = null,
-        Connection $connection = null
+        Connection $connection = null,
+        OptInLoginServiceInterface $optInLoginService = null
     ) {
         $this->db = $db ?: Shopware()->Db();
         $this->eventManager = $eventManager ?: Shopware()->Events();
@@ -221,7 +229,8 @@ class sAdmin
         $this->numberRangeIncrementer = $numberRangeIncrementer ?: Shopware()->Container()->get('shopware.number_range_incrementer');
         $this->translationComponent = $translationComponent ?: Shopware()->Container()->get('translation');
         $this->connection = $connection ?: Shopware()->Container()->get('dbal_connection');
-        $this->basketHelper = Shopware()->Container()->get('shopware.cart.basket_helper');
+        $this->optInLoginService = $optInLoginService ?: Shopware()->Container()->get(OptInLoginService::class);
+        $this->conditionalLineItemService = Shopware()->Container()->get(ConditionalLineItemServiceInterface::class);
     }
 
     /**
@@ -402,7 +411,7 @@ class sAdmin
             ORDER BY position, name
         ';
 
-        $getPaymentMeans = $this->db->fetchAll(
+        $paymentMeans = $this->db->fetchAll(
             $sql,
             [
                 $subShopID,
@@ -410,29 +419,28 @@ class sAdmin
             ]
         );
 
-        if ($getPaymentMeans === false) {
-            $getPaymentMeans = $this->db->fetchAll(
+        if ($paymentMeans === false) {
+            $paymentMeans = $this->db->fetchAll(
                 'SELECT id, active, esdactive, mobile_inactive FROM s_core_paymentmeans ORDER BY position, name'
             );
         }
 
-        foreach ($getPaymentMeans as $payKey => $payValue) {
+        foreach ($paymentMeans as $payKey => $payValue) {
             // Hide payment means which are not active
             if (empty($payValue['active']) && $payValue['id'] != $user['additional']['user']['paymentpreset']) {
-                unset($getPaymentMeans[$payKey]);
+                unset($paymentMeans[$payKey]);
                 continue;
             }
 
-            // If esd order, hide payment mean, which
-            // are not accessible for esd
+            // If this is an esd order, hide payment means which are not accessible for esd
             if (empty($payValue['esdactive']) && $sEsd) {
-                unset($getPaymentMeans[$payKey]);
+                unset($paymentMeans[$payKey]);
                 continue;
             }
 
             // Handle blocking for smartphones
             if (!empty($payValue['mobile_inactive']) && $isMobile) {
-                unset($getPaymentMeans[$payKey]);
+                unset($paymentMeans[$payKey]);
                 continue;
             }
 
@@ -440,29 +448,29 @@ class sAdmin
             if ($this->sManageRisks($payValue['id'], null, $user)
                 && $payValue['id'] != $user['additional']['user']['paymentpreset']
             ) {
-                unset($getPaymentMeans[$payKey]);
+                unset($paymentMeans[$payKey]);
                 continue;
             }
         }
 
         // If no payment is left use always the fallback payment no matter if it has any restrictions too
-        if (!count($getPaymentMeans)) {
-            $getPaymentMeans[] = ['id' => $this->config->offsetGet('paymentdefault')];
+        if (!count($paymentMeans)) {
+            $paymentMeans[] = ['id' => $this->config->offsetGet('paymentdefault')];
         }
 
-        $getPaymentMeans = Shopware()->Container()->get('shopware_storefront.payment_gateway')->getList(array_column($getPaymentMeans, 'id'), $this->contextService->getShopContext());
+        $paymentMeans = Shopware()->Container()->get('shopware_storefront.payment_gateway')->getList(array_column($paymentMeans, 'id'), $this->contextService->getShopContext());
 
-        $getPaymentMeans = array_map(function ($payment) {
+        $paymentMeans = array_map(static function ($payment) {
             return Shopware()->Container()->get('legacy_struct_converter')->convertPaymentStruct($payment);
-        }, $getPaymentMeans);
+        }, $paymentMeans);
 
-        $getPaymentMeans = $this->eventManager->filter(
+        $paymentMeans = $this->eventManager->filter(
             'Shopware_Modules_Admin_GetPaymentMeans_DataFilter',
-            $getPaymentMeans,
+            $paymentMeans,
             ['subject' => $this]
         );
 
-        return $getPaymentMeans;
+        return $paymentMeans;
     }
 
     /**
@@ -472,8 +480,7 @@ class sAdmin
      *
      * @throws Enlight_Exception If no payment classes were loaded
      *
-     * @return ShopwarePlugin\PaymentMethods\Components\BasePaymentMethod
-     *                                                                    The payment mean handling class instance
+     * @return ShopwarePlugin\PaymentMethods\Components\BasePaymentMethod The payment mean handling class instance
      */
     public function sInitiatePaymentClass($paymentData)
     {
@@ -674,11 +681,40 @@ class sAdmin
 
     public function logout()
     {
-        $this->moduleManager->Basket()->sDeleteBasket();
+        if ($this->config->get('migrateCartAfterLogin')) {
+            Shopware()->Container()->get(CartPersistServiceInterface::class)->prepare();
+        }
 
-        Shopware()->Session()->unsetAll();
-        $this->regenerateSessionId();
+        if ($this->config->get('clearBasketAfterLogout')) {
+            $this->moduleManager->Basket()->sDeleteBasket();
+        }
+
+        $this->session->unsetAll();
+        $this->regenerateSessionId(true);
+
+        if ($this->config->get('migrateCartAfterLogin')) {
+            Shopware()->Container()->get(CartPersistServiceInterface::class)->persist();
+        }
+
+        $shop = Shopware()->Shop();
+
+        $this->sSYSTEM->sUSERGROUP = $shop->getCustomerGroup()->getKey();
+        $this->sSYSTEM->sUSERGROUPDATA = $shop->getCustomerGroup()->toArray();
+        $this->sSYSTEM->sCurrency = $shop->getCurrency()->toArray();
+
         $this->contextService->initializeContext();
+
+        if (!$this->config->get('clearBasketAfterLogout')) {
+            $this->moduleManager->Basket()->sRefreshBasket();
+
+            $countries = $this->sGetCountryList();
+            $country = reset($countries);
+
+            $this->moduleManager->Admin()->sGetPremiumShippingcosts($country);
+
+            $amount = $this->moduleManager->Basket()->sGetAmount();
+            $this->session->offsetSet('sBasketAmount', empty($amount) ? 0 : array_shift($amount));
+        }
 
         $this->eventManager->notify('Shopware_Modules_Admin_Logout_Successful');
     }
@@ -739,7 +775,7 @@ class sAdmin
             $this->session->offsetUnset('sUserId');
         }
 
-        if (count($sErrorMessages)) {
+        if ($sErrorMessages) {
             list($sErrorMessages, $sErrorFlag) = $this->eventManager->filter(
                 'Shopware_Modules_Admin_Login_FilterResult',
                 [$sErrorMessages, $sErrorFlag],
@@ -927,6 +963,10 @@ class sAdmin
             return $translationData;
         }
 
+        if (!isset($translationData[$country['id']])) {
+            return $country;
+        }
+
         // Pass (possible) translation to country
         if ($translationData[$country['id']]['countryname']) {
             $country['countryname'] = $translationData[$country['id']]['countryname'];
@@ -1052,61 +1092,19 @@ class sAdmin
      */
     public function sGetCountryList()
     {
-        $countryList = $this->db->fetchAll(
-            'SELECT * FROM s_core_countries ORDER BY position, countryname ASC'
-        );
+        $context = Shopware()->Container()->get('shopware_storefront.context_service')->getShopContext();
+        $service = Shopware()->Container()->get('shopware_storefront.location_service');
 
-        $countryTranslations = $this->sGetCountryTranslation();
-        $stateTranslations = $this->sGetCountryStateTranslation();
+        $countryList = $service->getCountries($context);
+        $countryList = Shopware()->Container()->get('legacy_struct_converter')->convertCountryStructList($countryList);
 
-        foreach ($countryList as $key => $country) {
-            if (isset($countryTranslations[$country['id']]['active'])) {
-                if (!$countryTranslations[$country['id']]['active']) {
-                    unset($countryList[$key]);
-                    continue;
-                }
-            } else {
-                // Use main config when nothing is set for subshop or if current is main shop (isocode 1)
-                if (!$country['active']) {
-                    unset($countryList[$key]);
-                    continue;
-                }
-            }
+        $countryList = array_map(function ($country) {
+            $request = $this->front->Request();
+            $countryId = (int) $country['id'];
+            $country['flag'] = ((int) $request->getPost('country') === $countryId || (int) $request->getPost('countryID') === $countryId);
 
-            $countryList[$key]['states'] = [];
-            if (!empty($country['display_state_in_registration'])) {
-                // Get country states
-                $states = $this->db->fetchAssoc('
-                    SELECT * FROM s_core_countries_states
-                    WHERE countryID = ? AND active = 1
-                    ORDER BY position, name ASC
-                ', [$country['id']]);
-
-                foreach ($states as $stateId => $state) {
-                    if (isset($stateTranslations[$stateId])) {
-                        $states[$stateId] = array_merge($state, $stateTranslations[$stateId]);
-                    }
-                }
-                $countryList[$key]['states'] = $states;
-            }
-
-            if (!empty($countryTranslations[$country['id']]['countryname'])) {
-                $countryList[$key]['countryname'] = $countryTranslations[$country['id']]['countryname'];
-            }
-
-            if (!empty($countryTranslations[$country['id']]['notice'])) {
-                $countryList[$key]['notice'] = $countryTranslations[$country['id']]['notice'];
-            }
-
-            if (isset($countryTranslations[$country['id']]['allow_shipping'])) {
-                $countryList[$key]['allow_shipping'] = $countryTranslations[$country['id']]['allow_shipping'];
-            }
-
-            $countryList[$key]['flag'] =
-                ($this->front->Request()->getPost('country') == $countryList[$key]['id']
-                    || $this->front->Request()->getPost('countryID') == $countryList[$key]['id']
-                );
-        }
+            return $country;
+        }, $countryList);
 
         $countryList = $this->eventManager->filter(
             'Shopware_Modules_Admin_GetCountries_FilterResult',
@@ -1328,8 +1326,8 @@ class sAdmin
             ORDER BY ordertime DESC
             LIMIT $limitStart, $limitEnd
         ";
-        /** @var array $getOrders */
-        $getOrders = $this->db->fetchAll(
+        /** @var array $orders */
+        $orders = $this->db->fetchAll(
             $sql,
             [
                 $this->session->offsetGet('sUserId'),
@@ -1338,21 +1336,21 @@ class sAdmin
         );
         $foundOrdersCount = (int) Shopware()->Db()->fetchOne('SELECT FOUND_ROWS()');
 
-        foreach ($getOrders as $orderKey => $orderValue) {
-            $getOrders[$orderKey]['invoice_amount'] = $this->moduleManager->Articles()
+        foreach ($orders as $orderKey => $orderValue) {
+            $orders[$orderKey]['invoice_amount'] = $this->moduleManager->Articles()
                 ->sFormatPrice($orderValue['invoice_amount']);
-            $getOrders[$orderKey]['invoice_amount_net'] = $this->moduleManager->Articles()
+            $orders[$orderKey]['invoice_amount_net'] = $this->moduleManager->Articles()
                 ->sFormatPrice($orderValue['invoice_amount_net']);
-            $getOrders[$orderKey]['invoice_shipping'] = $this->moduleManager->Articles()
+            $orders[$orderKey]['invoice_shipping'] = $this->moduleManager->Articles()
                 ->sFormatPrice($orderValue['invoice_shipping']);
 
-            $getOrders = $this->processOpenOrderDetails($orderValue, $getOrders, $orderKey);
-            $getOrders[$orderKey]['dispatch'] = $this->sGetPremiumDispatch($orderValue['dispatchID']);
+            $orders = $this->processOpenOrderDetails($orderValue, $orders, $orderKey);
+            $orders[$orderKey]['dispatch'] = $this->sGetPremiumDispatch($orderValue['dispatchID']);
         }
 
-        $getOrders = $this->eventManager->filter(
+        $orders = $this->eventManager->filter(
             'Shopware_Modules_Admin_GetOpenOrderData_FilterResult',
-            $getOrders,
+            $orders,
             [
                 'subject' => $this,
                 'id' => $this->session->offsetGet('sUserId'),
@@ -1360,16 +1358,16 @@ class sAdmin
             ]
         );
 
-        $orderData['orderData'] = $getOrders;
+        $orderData = [];
+        $orderData['orderData'] = $orders;
+        $numberOfPages = 0;
 
         if ($limitEnd != 0) {
             // Make Array with page structure to render in template
             $numberOfPages = ceil($foundOrdersCount / $limitEnd);
-        } else {
-            $numberOfPages = 0;
         }
-        $orderData['numberOfPages'] = $numberOfPages;
 
+        $orderData['numberOfPages'] = $numberOfPages;
         $orderData['pages'] = $this->getPagerStructure($destinationPage, $numberOfPages);
 
         return $orderData;
@@ -1891,47 +1889,18 @@ class sAdmin
      * @param array $order Order data
      * @param mixed $value Value to compare against
      *
-     * @return bool Rule validation result
+     * @return bool|void Rule validation result
      */
     public function sRiskATTRIS($user, $order, $value)
     {
         if (!empty($order['content'])) {
             $value = explode('|', $value);
-            if (!empty($value[0]) && isset($value[1])) {
-                $number = (int) str_ireplace('attr', '', $value[0]);
 
-                $sqlProductOrderNumber = $this->connection->createQueryBuilder()
-                   ->select(['s_articles_attributes.id'])
-                   ->from('s_order_basket, s_articles_attributes, s_articles_details')
-                   ->where('s_order_basket.sessionID = :sessionID')
-                   ->andWhere('s_order_basket.modus = 0')
-                   ->andWhere('s_order_basket.ordernumber = s_articles_details.ordernumber')
-                   ->andWhere('s_articles_details.id = s_articles_attributes.articledetailsID')
-                   ->andWhere('s_articles_attributes.attr' . $number . ' = :attrValue')
-                   ->setParameters([
-                       'attrValue' => $value[1],
-                       'sessionID' => $this->session->offsetGet('sessionId'),
-                   ])
-                   ->execute()->fetch(\PDO::FETCH_ASSOC);
-
-                $sqlProductId = $this->connection->createQueryBuilder()
-                  ->select(['s_articles_attributes.id'])
-                  ->from('s_order_basket, s_articles_attributes, s_articles_details')
-                  ->where('s_order_basket.sessionID = :sessionID')
-                  ->andWhere('s_order_basket.modus = 0')
-                  ->andWhere('s_order_basket.articleID = s_articles_details.articleID AND s_articles_details.kind = 1')
-                  ->andWhere('s_articles_details.id = s_articles_attributes.articledetailsID')
-                  ->andWhere('s_articles_attributes.attr' . $number . ' = :attrValue')
-                  ->setParameters([
-                      'attrValue' => $value[1],
-                      'sessionID' => $this->session->offsetGet('sessionId'),
-                  ])
-                  ->execute()->fetch(\PDO::FETCH_ASSOC);
-
-                return (bool) $sqlProductOrderNumber || (bool) $sqlProductId;
+            if (!isset($value[0], $value[1])) {
+                return;
             }
 
-            return false;
+            return $this->hasProductAttributeMatch($value[0], $value[1], '=');
         }
     }
 
@@ -1942,48 +1911,71 @@ class sAdmin
      * @param array $order Order data
      * @param mixed $value Value to compare against
      *
-     * @return bool Rule validation result
+     * @return bool|void Rule validation result
      */
     public function sRiskATTRISNOT($user, $order, $value)
     {
         if (!empty($order['content'])) {
             $value = explode('|', $value);
-            if (!empty($value[0]) && isset($value[1])) {
-                $number = (int) str_ireplace('attr', '', $value[0]);
 
-                $sqlProductOrderNumber = $this->connection->createQueryBuilder()
-                   ->select(['s_articles_attributes.id'])
-                   ->from('s_order_basket, s_articles_attributes, s_articles_details')
-                   ->where('s_order_basket.sessionID = :sessionID')
-                   ->andWhere('s_order_basket.modus = 0')
-                   ->andWhere('s_order_basket.ordernumber = s_articles_details.ordernumber')
-                   ->andWhere('s_articles_details.id = s_articles_attributes.articledetailsID')
-                   ->andWhere('s_articles_attributes.attr' . $number . ' != :attrValue')
-                   ->setParameters([
-                       'attrValue' => $value[1],
-                       'sessionID' => $this->session->offsetGet('sessionId'),
-                   ])
-                   ->execute()->fetch(\PDO::FETCH_ASSOC);
-
-                $sqlProductId = $this->connection->createQueryBuilder()
-                  ->select(['s_articles_attributes.id'])
-                  ->from('s_order_basket, s_articles_attributes, s_articles_details')
-                  ->where('s_order_basket.sessionID = :sessionID')
-                  ->andWhere('s_order_basket.modus = 0')
-                  ->andWhere('s_order_basket.articleID = s_articles_details.articleID AND s_articles_details.kind = 1')
-                  ->andWhere('s_articles_details.id = s_articles_attributes.articledetailsID')
-                  ->andWhere('s_articles_attributes.attr' . $number . ' != :attrValue')
-                  ->setParameters([
-                      'attrValue' => $value[1],
-                      'sessionID' => $this->session->offsetGet('sessionId'),
-                  ])
-                  ->execute()->fetch(\PDO::FETCH_ASSOC);
-
-                return (bool) $sqlProductOrderNumber || (bool) $sqlProductId;
+            if (!isset($value[0], $value[1])) {
+                return;
             }
 
-            return false;
+            return $this->hasProductAttributeMatch($value[0], $value[1], '!=');
         }
+    }
+
+    /**
+     * @param bool|array $user
+     *
+     * @return bool|void
+     */
+    public function sRiskCUSTOMERATTRIS($user, array $order, string $value)
+    {
+        if (!isset($user['additional']['user'])) {
+            return;
+        }
+
+        $values = explode('|', $value);
+        if (!isset($values[0], $values[1])) {
+            return;
+        }
+
+        $attribute = $values[0];
+        $value = $values[1];
+
+        if (!isset($user['additional']['user'][$attribute])) {
+            return;
+        }
+
+        return $user['additional']['user'][$attribute] === $value;
+    }
+
+    /**
+     * @param bool|array $user
+     *
+     * @return bool|void
+     */
+    public function sRiskCUSTOMERATTRISNOT($user, array $order, string $value)
+    {
+        if (!isset($user['additional']['user'])) {
+            return;
+        }
+
+        $values = explode('|', $value);
+        if (!isset($values[0], $values[1])) {
+            return;
+        }
+
+        $attribute = $values[0];
+        $value = $values[1];
+
+        if (!isset($user['additional']['user'][$attribute])) {
+            return;
+        }
+
+        return $user['additional']['user'][$attribute] !== $value;
     }
 
     /**
@@ -2174,8 +2166,7 @@ class sAdmin
     {
         // Compare street and zipcode.
         // Return true if any of them doesn't match.
-        return
-            (
+        return (
                 strtolower(
                     trim($user['shippingaddress']['street'])
                 ) != strtolower(
@@ -2214,8 +2205,7 @@ class sAdmin
     {
         $value = strtolower($value);
 
-        return
-            preg_match("/$value/", strtolower($user['shippingaddress']['lastname']))
+        return preg_match("/$value/", strtolower($user['shippingaddress']['lastname']))
             || preg_match("/$value/", strtolower($user['billingaddress']['lastname']));
     }
 
@@ -2853,7 +2843,7 @@ class sAdmin
                 );
 
                 foreach ($translationData as $key => $attribute) {
-                    $key = str_replace(CrudService::EXT_JS_PREFIX, '', $key);
+                    $key = str_replace(CrudServiceInterface::EXT_JS_PREFIX, '', $key);
                     $dispatch['attribute'][$key] = $attribute;
                 }
             }
@@ -2935,7 +2925,7 @@ class sAdmin
             LEFT JOIN s_user_addresses as ub
                 ON ub.user_id = u.id
                 AND ub.id = :billingAddressId
-              
+
             LEFT JOIN s_user_addresses as us
                 ON us.user_id = u.id
                 AND us.id = :shippingAddressId
@@ -3019,6 +3009,7 @@ class sAdmin
         $discount_basket_ordernumber = $this->config->get('sDISCOUNTNUMBER', 'DISCOUNT');
         $discount_ordernumber = $this->config->get('sSHIPPINGDISCOUNTNUMBER', 'SHIPPINGDISCOUNT');
         $percent_ordernumber = $this->config->get('sPAYMENTSURCHARGENUMBER', 'PAYMENTSURCHARGE');
+        $dispatch_surcharge_ordernumber = $this->config->get('shippingSurchargeNumber');
 
         $this->db->delete('s_order_basket', [
             'sessionID = ?' => $this->session->offsetGet('sessionId'),
@@ -3028,6 +3019,7 @@ class sAdmin
                 $discount_ordernumber,
                 $percent_ordernumber,
                 $discount_basket_ordernumber,
+                $dispatch_surcharge_ordernumber,
             ],
         ]);
 
@@ -3044,13 +3036,17 @@ class sAdmin
             return false;
         }
 
-        $amount = (float) $this->db->fetchOne('
-                SELECT SUM((CAST(price AS DECIMAL(10,2))*quantity)/currencyFactor) AS amount
-                FROM s_order_basket
-                WHERE sessionID = ?
-                GROUP BY sessionID
-            ',
+        $amount = (float) $this->db->fetchOne(
+            'SELECT SUM((CAST(price AS DECIMAL(10,2))*quantity)/currencyFactor) AS amount
+             FROM s_order_basket
+             WHERE sessionID = ?
+             GROUP BY sessionID',
             [$this->session->offsetGet('sessionId')]
+        );
+
+        $this->handleDispatchSurcharge(
+            $basket,
+            $discount_tax
         );
 
         $this->handleBasketDiscount(
@@ -3061,7 +3057,6 @@ class sAdmin
 
         $this->handleDispatchDiscount(
             $basket,
-            $currencyFactor,
             $discount_tax
         );
 
@@ -3117,13 +3112,13 @@ class sAdmin
         } else {
             return false;
         }
-        $result = $this->db->fetchRow('
-            SELECT `value` , `factor`
-            FROM `s_premium_shippingcosts`
-            WHERE `from` <= ?
-            AND `dispatchID` = ?
-            ORDER BY `from` DESC
-            LIMIT 1',
+        $result = $this->db->fetchRow(
+            'SELECT `value` , `factor`
+             FROM `s_premium_shippingcosts`
+             WHERE `from` <= ?
+             AND `dispatchID` = ?
+             ORDER BY `from` DESC
+             LIMIT 1',
             [$from, $dispatch['id']]
         );
         if ($result === false) {
@@ -3221,9 +3216,10 @@ class sAdmin
             $newHash = $this->passwordEncoder->reencodePassword($plaintext, $hash, $encoderName);
         }
 
+        $userId = (int) $getUser['id'];
+
         if (!empty($newHash) && $newHash !== $hash) {
             $hash = $newHash;
-            $userId = (int) $getUser['id'];
             $this->db->update(
                 's_user',
                 [
@@ -3234,11 +3230,78 @@ class sAdmin
             );
         }
 
+        // Update note userID
+        $uniqueId = $this->front->Request()->getCookie('sUniqueID');
+        if (!empty($uniqueId)) {
+            $this->connection->executeQuery(
+                'UPDATE s_order_notes SET userID = :userId, sUniqueID = NULL WHERE sUniqueID = :uniqueId AND userID = 0',
+                [
+                    'userId' => $userId,
+                    'uniqueId' => $uniqueId,
+                ]
+            );
+
+            //destroy cookie
+            $this->front->Response()->setCookie('sUniqueID');
+        }
+
         $this->session->offsetSet('sUserMail', $email);
         $this->session->offsetSet('sUserPassword', $hash);
-        $this->session->offsetSet('sUserId', $getUser['id']);
+        $this->session->offsetSet('sUserId', $userId);
+        $this->session->offsetSet('sNotesQuantity', $this->moduleManager->Basket()->sCountNotes());
 
-        $this->sCheckUser();
+        if (!$this->sCheckUser()) {
+            return;
+        }
+
+        if ($this->config->get('migrateCartAfterLogin')) {
+            Shopware()->Container()->get('shopware.components.cart.cart_migration')->migrate();
+        }
+    }
+
+    private function hasProductAttributeMatch(string $attribute, string $value, string $operator): bool
+    {
+        $crudService = Shopware()->Container()->get('shopware_attribute.crud_service');
+        $columnData = $crudService->get('s_articles_attributes', $attribute);
+
+        if ($columnData === null && is_numeric($attribute)) {
+            $columnData = $crudService->get('s_articles_attributes', 'attr' . $attribute);
+            $attribute = 'attr' . $attribute;
+        }
+
+        if ($columnData !== null && !empty($attribute)) {
+            $sqlProductOrderNumber = $this->connection->createQueryBuilder()
+                ->select(['s_articles_attributes.id'])
+                ->from('s_order_basket, s_articles_attributes, s_articles_details')
+                ->where('s_order_basket.sessionID = :sessionID')
+                ->andWhere('s_order_basket.modus = 0')
+                ->andWhere('s_order_basket.ordernumber = s_articles_details.ordernumber')
+                ->andWhere('s_articles_details.id = s_articles_attributes.articledetailsID')
+                ->andWhere('s_articles_attributes.' . $attribute . ' ' . $operator . ' :attrValue')
+                ->setParameters([
+                    'attrValue' => $value,
+                    'sessionID' => $this->session->offsetGet('sessionId'),
+                ])
+                ->execute()->fetch(\PDO::FETCH_ASSOC);
+
+            $sqlProductId = $this->connection->createQueryBuilder()
+                ->select(['s_articles_attributes.id'])
+                ->from('s_order_basket, s_articles_attributes, s_articles_details')
+                ->where('s_order_basket.sessionID = :sessionID')
+                ->andWhere('s_order_basket.modus = 0')
+                ->andWhere('s_order_basket.articleID = s_articles_details.articleID AND s_articles_details.kind = 1')
+                ->andWhere('s_articles_details.id = s_articles_attributes.articledetailsID')
+                ->andWhere('s_articles_attributes.' . $attribute . ' ' . $operator . ' :attrValue')
+                ->setParameters([
+                    'attrValue' => $value,
+                    'sessionID' => $this->session->offsetGet('sessionId'),
+                ])
+                ->execute()->fetch(\PDO::FETCH_ASSOC);
+
+            return (bool) $sqlProductOrderNumber || (bool) $sqlProductId;
+        }
+
+        return false;
     }
 
     /**
@@ -3276,7 +3339,7 @@ class sAdmin
      * Regenerates session id and updates references in the db
      * Used internally by sAdmin::sLogin
      */
-    private function regenerateSessionId()
+    private function regenerateSessionId(bool $ignoreUserTable = false): void
     {
         $oldSessionId = session_id();
 
@@ -3310,9 +3373,12 @@ class sAdmin
 
         $sessions = [
             's_order_basket' => 'sessionID',
-            's_user' => 'sessionID',
             's_order_comparisons' => 'sessionID',
         ];
+
+        if (!$ignoreUserTable) {
+            $sessions['s_user'] = 'sessionID';
+        }
 
         foreach ($sessions as $tableName => $column) {
             $this->db->update(
@@ -3487,14 +3553,18 @@ SQL;
         }
 
         // Check if account is disabled or not verified yet
-        $sql = 'SELECT id, doubleOptinRegister, doubleOptinEmailSentDate, doubleOptinConfirmDate, email, firstname, lastname, salutation
+        $sql = 'SELECT id, doubleOptinRegister, doubleOptinEmailSentDate, doubleOptinConfirmDate, email, firstname, lastname, salutation, register_opt_in_id
                 FROM s_user
                 WHERE email=? AND active=0 ' . $addScopeSql;
         $getUser = $this->db->fetchRow($sql, [$email]);
 
         // If the verification process is active, the customer has an email sent date, but no confirm date
         if ($getUser['doubleOptinRegister'] && $getUser['doubleOptinEmailSentDate'] !== null && $getUser['doubleOptinConfirmDate'] === null) {
-            $hash = \Shopware\Components\Random::getAlphanumericString(32);
+            $hash = $this->optInLoginService->refreshOptInHashForUser(
+                (int) $getUser['id'],
+                (int) $getUser['register_opt_in_id'],
+                \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $getUser['doubleOptinEmailSentDate'])
+            );
 
             $userInfo = [
                 'mail' => $getUser['email'],
@@ -3503,7 +3573,6 @@ SQL;
                 'salutation' => $getUser['salutation'],
             ];
 
-            $this->refreshOptinHash($getUser, $hash);
             $this->resendConfirmationMail($userInfo, $hash);
 
             $sErrorMessages[] = $this->snippetManager->getNamespace('frontend/account/internalMessages')
@@ -3563,63 +3632,6 @@ SQL;
     /**
      * @param string $hash
      */
-    private function refreshOptinHash(array $user, $hash)
-    {
-        // Get old optin information
-        $sql = 'SELECT `id`, `data`
-                FROM `s_core_optin`
-                WHERE datum = ?
-                AND type = "swRegister"';
-        $result = $this->db->fetchAll($sql, [$user['doubleOptinEmailSentDate']]);
-
-        $customerId = null;
-
-        // Most times iterates only once
-        foreach ($result as $row) {
-            $data = unserialize($row['data']);
-            $optInId = $row['id'];
-            $customerId = $data['customerId'];
-            if ($customerId === $user['id']) {
-                break;
-            }
-        }
-
-        $dateString = (new DateTime())->format('Y-m-d H:i:s');
-
-        // Refreshes doubleOptinEmailSentDate + hash to generate a new activation key
-        $this->db->beginTransaction();
-        if (!empty($optInId)) {
-            $sql = 'UPDATE `s_core_optin`
-                    SET `datum` = ?, `hash` = ?
-                    WHERE type = "swRegister"
-                    AND id = ?';
-            $params = [$dateString, $hash, $optInId];
-        } else {
-            $customerId = $user['id'];
-            $storedData = [
-                'customerId' => $customerId,
-                'register' => null,
-            ];
-
-            $sql = 'INSERT INTO `s_core_optin`
-                    (`type`, `datum`, `hash`, `data`)
-                    VALUES
-                    (?, ?, ?, ?)';
-            $params = ['swRegister', $dateString, $hash, serialize($storedData)];
-        }
-        $this->db->executeQuery($sql, $params);
-
-        $sql = 'UPDATE `s_user`
-                SET doubleOptinEmailSentDate = ?
-                WHERE id = ?';
-
-        $this->db->executeQuery($sql, [$dateString, $customerId]);
-        $this->db->commit();
-    }
-
-    /**
-     * @param string $hash
-     */
     private function resendConfirmationMail(array $userInfo, $hash)
     {
         $link = Shopware()->Container()->get('router')->assemble([
@@ -3651,28 +3663,26 @@ SQL;
     /**
      * Helper method for sAdmin::sGetOpenOrderData()
      *
-     * @param array  $orderValue
-     * @param array  $getOrders
      * @param string $orderKey
      *
      * @return array
      */
-    private function processOpenOrderDetails($orderValue, $getOrders, $orderKey)
+    private function processOpenOrderDetails(array $orderValue, array $orders, $orderKey)
     {
-        /** @var array $getOrderDetails */
-        $getOrderDetails = $this->db->fetchAll(
+        /** @var array $orderDetails */
+        $orderDetails = $this->db->fetchAll(
             'SELECT * FROM s_order_details WHERE orderID = ? ORDER BY id ASC',
             [$orderValue['id']]
         );
 
-        if (!count($getOrderDetails)) {
-            unset($getOrders[$orderKey]);
+        if (!count($orderDetails)) {
+            unset($orders[$orderKey]);
 
-            return $getOrders;
+            return $orders;
         }
 
         $context = $this->contextService->getShopContext();
-        $orderProductOrderNumbers = array_column($getOrderDetails, 'articleordernumber');
+        $orderProductOrderNumbers = array_column($orderDetails, 'articleordernumber');
         $listProducts = Shopware()->Container()->get('shopware_storefront.list_product_service')
             ->getList($orderProductOrderNumbers, $context);
         $listProducts = Shopware()->Container()->get('legacy_struct_converter')
@@ -3682,14 +3692,14 @@ SQL;
             $listProduct = array_merge($listProduct, $listProduct['prices'][0]);
         }
 
-        foreach ($getOrderDetails as $orderDetailsKey => $orderDetailsValue) {
-            $getOrderDetails[$orderDetailsKey]['amountNumeric'] = round($orderDetailsValue['price'] * $orderDetailsValue['quantity'], 2);
-            $getOrderDetails[$orderDetailsKey]['priceNumeric'] = $orderDetailsValue['price'];
-            $getOrderDetails[$orderDetailsKey]['amount'] = $this->moduleManager->Articles()
-                ->sFormatPrice($getOrderDetails[$orderDetailsKey]['amountNumeric']);
-            $getOrderDetails[$orderDetailsKey]['price'] = $this->moduleManager->Articles()
+        foreach ($orderDetails as $orderDetailsKey => $orderDetailsValue) {
+            $orderDetails[$orderDetailsKey]['amountNumeric'] = round($orderDetailsValue['price'] * $orderDetailsValue['quantity'], 2);
+            $orderDetails[$orderDetailsKey]['priceNumeric'] = $orderDetailsValue['price'];
+            $orderDetails[$orderDetailsKey]['amount'] = $this->moduleManager->Articles()
+                ->sFormatPrice($orderDetails[$orderDetailsKey]['amountNumeric']);
+            $orderDetails[$orderDetailsKey]['price'] = $this->moduleManager->Articles()
                 ->sFormatPrice($orderDetailsValue['price']);
-            $getOrderDetails[$orderDetailsKey]['active'] = 0;
+            $orderDetails[$orderDetailsKey]['active'] = 0;
 
             $tmpProduct = null;
             if (!empty($listProducts[$orderDetailsValue['articleordernumber']])) {
@@ -3698,37 +3708,37 @@ SQL;
 
             if (!empty($tmpProduct) && is_array($tmpProduct)) {
                 // Set product in activate state
-                $getOrderDetails[$orderDetailsKey]['active'] = 1;
-                $getOrderDetails[$orderDetailsKey]['article'] = $tmpProduct;
+                $orderDetails[$orderDetailsKey]['active'] = 1;
+                $orderDetails[$orderDetailsKey]['article'] = $tmpProduct;
                 if (!empty($tmpProduct['purchaseunit'])) {
-                    $getOrderDetails[$orderDetailsKey]['purchaseunit'] = $tmpProduct['purchaseunit'];
+                    $orderDetails[$orderDetailsKey]['purchaseunit'] = $tmpProduct['purchaseunit'];
                 }
 
                 if (!empty($tmpProduct['referenceunit'])) {
-                    $getOrderDetails[$orderDetailsKey]['referenceunit'] = $tmpProduct['referenceunit'];
+                    $orderDetails[$orderDetailsKey]['referenceunit'] = $tmpProduct['referenceunit'];
                 }
 
                 if (!empty($tmpProduct['referenceprice'])) {
-                    $getOrderDetails[$orderDetailsKey]['referenceprice'] = $tmpProduct['referenceprice'];
+                    $orderDetails[$orderDetailsKey]['referenceprice'] = $tmpProduct['referenceprice'];
                 }
 
                 if (!empty($tmpProduct['sUnit']) && is_array($tmpProduct['sUnit'])) {
-                    $getOrderDetails[$orderDetailsKey]['sUnit'] = $tmpProduct['sUnit'];
+                    $orderDetails[$orderDetailsKey]['sUnit'] = $tmpProduct['sUnit'];
                 }
 
                 if (!empty($tmpProduct['price'])) {
-                    $getOrderDetails[$orderDetailsKey]['currentPrice'] = $tmpProduct['price'];
+                    $orderDetails[$orderDetailsKey]['currentPrice'] = $tmpProduct['price'];
                 }
 
                 if (!empty($tmpProduct['pseudoprice'])) {
-                    $getOrderDetails[$orderDetailsKey]['currentPseudoprice'] = $tmpProduct['pseudoprice'];
+                    $orderDetails[$orderDetailsKey]['currentPseudoprice'] = $tmpProduct['pseudoprice'];
                 }
 
-                $getOrderDetails[$orderDetailsKey]['currentHas_pseudoprice'] = $tmpProduct['has_pseudoprice'];
+                $orderDetails[$orderDetailsKey]['currentHas_pseudoprice'] = $tmpProduct['has_pseudoprice'];
             }
 
             // Check for serial
-            if ($getOrderDetails[$orderDetailsKey]['esdarticle']) {
+            if ($orderDetails[$orderDetailsKey]['esdarticle']) {
                 $numbers = [];
                 $getSerial = $this->db->fetchAll(
                     'SELECT serialnumber
@@ -3746,16 +3756,16 @@ SQL;
                 foreach ($getSerial as $serial) {
                     $numbers[] = $serial['serialnumber'];
                 }
-                $getOrderDetails[$orderDetailsKey]['serial'] = implode(',', $numbers);
-                $getOrderDetails[$orderDetailsKey]['esdLink'] = $this->config->get('sBASEFILE')
+                $orderDetails[$orderDetailsKey]['serial'] = implode(',', $numbers);
+                $orderDetails[$orderDetailsKey]['esdLink'] = $this->config->get('sBASEFILE')
                     . '?sViewport=account&sAction=download&esdID='
                     . $orderDetailsValue['id'];
             }
         }
-        $getOrders[$orderKey]['activeBuyButton'] = 1;
-        $getOrders[$orderKey]['details'] = $getOrderDetails;
+        $orders[$orderKey]['activeBuyButton'] = 1;
+        $orders[$orderKey]['details'] = $orderDetails;
 
-        return $getOrders;
+        return $orders;
     }
 
     /**
@@ -3857,15 +3867,15 @@ SQL;
      * Helper function for sAdmin::sGetUserData()
      * Gets user billing data
      *
-     * @param int   $userId
-     * @param array $userData
-     *
-     * @return array
+     * @throws Exception
      */
-    private function getUserBillingData($userId, $userData)
+    private function getUserBillingData(int $userId, array $userData): array
     {
         $entityManager = Shopware()->Container()->get('models');
         $customer = $entityManager->find(Customer::class, $userId);
+        if (!$customer) {
+            throw new Exception(sprintf('Customer with id %s not found', $userId));
+        }
         $billing = $this->convertToLegacyAddressArray($customer->getDefaultBillingAddress());
         $billing['attributes'] = $this->attributeLoader->load('s_user_addresses_attributes', $billing['id']);
         $userData['billingaddress'] = $billing;
@@ -3876,13 +3886,8 @@ SQL;
     /**
      * Helper method for sAdmin::sNewsletterSubscription
      * Subscribes the provided email address to the newsletter group
-     *
-     * @param string $email
-     * @param int    $groupID
-     *
-     * @return array|int
      */
-    private function subscribeNewsletter($email, $groupID)
+    private function subscribeNewsletter(string $email, int $groupID): array
     {
         $result = $this->db->fetchAll(
             'SELECT * FROM s_campaigns_mailaddresses WHERE email = ?',
@@ -4009,15 +4014,7 @@ SQL;
         return $surcharge;
     }
 
-    /**
-     * Helper method for sAdmin::sGetPremiumShippingcosts()
-     * Calculates basket discount
-     *
-     * @param float $amount
-     * @param float $currencyFactor
-     * @param float $discount_tax
-     */
-    private function handleBasketDiscount($amount, $currencyFactor, $discount_tax)
+    private function handleBasketDiscount(float $amount, float $currencyFactor, float $discount_tax): void
     {
         $discount_basket_ordernumber = $this->config->get('sDISCOUNTNUMBER', 'DISCOUNT');
         $discount_basket_name = $this->snippetManager
@@ -4037,58 +4034,18 @@ SQL;
             $percent = $basket_discount;
             $basket_discount = round($basket_discount / 100 * ($amount * $currencyFactor), 2);
 
-            if (empty($this->sSYSTEM->sUSERGROUPDATA['tax']) && !empty($this->sSYSTEM->sUSERGROUPDATA['id'])) {
-                $basket_discount_net = $basket_discount;
-            } else {
-                $basket_discount_net = round($basket_discount / (100 + $discount_tax) * 100, 2);
-            }
-            $tax_rate = $discount_tax;
-            $basket_discount_net = $basket_discount_net * -1;
-            $basket_discount = $basket_discount * -1;
-
-            if ($this->config->get('proportionalTaxCalculation') && !$this->session->get('taxFree')) {
-                $this->basketHelper->addProportionalDiscount(
-                    new DiscountContext(
-                        $this->session->get('sessionId'),
-                        BasketHelperInterface::DISCOUNT_ABSOLUTE,
-                        $basket_discount,
-                        '- ' . $percent . ' % ' . $discount_basket_name,
-                        $discount_basket_ordernumber,
-                        3,
-                        $this->sSYSTEM->sCurrency['factor'],
-                        !$this->sSYSTEM->sUSERGROUPDATA['tax'] && $this->sSYSTEM->sUSERGROUPDATA['id']
-                    )
-                );
-            } else {
-                $this->db->insert(
-                    's_order_basket',
-                    [
-                        'sessionID' => $this->session->offsetGet('sessionId'),
-                        'articlename' => '- ' . $percent . ' % ' . $discount_basket_name,
-                        'articleID' => 0,
-                        'ordernumber' => $discount_basket_ordernumber,
-                        'quantity' => 1,
-                        'price' => $basket_discount,
-                        'netprice' => $basket_discount_net,
-                        'tax_rate' => $tax_rate,
-                        'datum' => new Zend_Date(),
-                        'modus' => 3,
-                        'currencyFactor' => $currencyFactor,
-                    ]
-                );
-            }
+            $lineItemName = '- ' . $percent . ' % ' . $discount_basket_name;
+            $this->conditionalLineItemService->addConditionalLineItem(
+                $lineItemName,
+                $discount_basket_ordernumber,
+                $basket_discount * -1,
+                $discount_tax,
+                3
+            );
         }
     }
 
-    /**
-     * Helper method for sAdmin::sGetPremiumShippingcosts()
-     * Calculates dispatch discount
-     *
-     * @param array $basket
-     * @param float $currencyFactor
-     * @param float $discountTax
-     */
-    private function handleDispatchDiscount($basket, $currencyFactor, $discountTax)
+    private function handleDispatchDiscount(array $basket, float $discountTax): void
     {
         $discount_ordernumber = $this->config->get('sSHIPPINGDISCOUNTNUMBER', 'SHIPPINGDISCOUNT');
         $discount_name = $this->snippetManager
@@ -4098,46 +4055,39 @@ SQL;
         $discount = $this->sGetPremiumDispatchSurcharge($basket, 3);
 
         if (!empty($discount)) {
+            $currencyFactor = empty($this->sSYSTEM->sCurrency['factor']) ? 1 : $this->sSYSTEM->sCurrency['factor'];
             $discount *= -$currencyFactor;
 
-            if (empty($this->sSYSTEM->sUSERGROUPDATA['tax']) && !empty($this->sSYSTEM->sUSERGROUPDATA['id'])) {
-                $discount_net = $discount;
-            } else {
-                $discount_net = round($discount / (100 + $discountTax) * 100, 2);
-            }
-            $tax_rate = $discountTax;
+            $this->conditionalLineItemService->addConditionalLineItem(
+                $discount_name,
+                $discount_ordernumber,
+                $discount,
+                $discountTax,
+                4
+            );
+        }
+    }
 
-            if (!$this->session->get('taxFree') && $this->config->get('proportionalTaxCalculation')) {
-                $this->basketHelper->addProportionalDiscount(
-                    new DiscountContext(
-                        $this->session->get('sessionId'),
-                        BasketHelperInterface::DISCOUNT_ABSOLUTE,
-                        $discount,
-                        $discount_name,
-                        $discount_ordernumber,
-                        4,
-                        $this->sSYSTEM->sCurrency['factor'],
-                        !$this->sSYSTEM->sUSERGROUPDATA['tax'] && $this->sSYSTEM->sUSERGROUPDATA['id']
-                    )
-                );
-            } else {
-                $this->db->insert(
-                    's_order_basket',
-                    [
-                        'sessionID' => $this->session->offsetGet('sessionId'),
-                        'articlename' => $discount_name,
-                        'articleID' => 0,
-                        'ordernumber' => $discount_ordernumber,
-                        'quantity' => 1,
-                        'price' => $discount,
-                        'netprice' => $discount_net,
-                        'tax_rate' => $tax_rate,
-                        'datum' => new Zend_Date(),
-                        'modus' => 4,
-                        'currencyFactor' => $currencyFactor,
-                    ]
-                );
-            }
+    private function handleDispatchSurcharge(array $basket, float $discountTax): void
+    {
+        $discount_ordernumber = $this->config->get('shippingSurchargeNumber');
+        $discount_name = $this->snippetManager
+            ->getNamespace('backend/static/discounts_surcharges')
+            ->get('shipping_surcharge_name', 'Dispatch surcharge');
+
+        $discount = $this->sGetPremiumDispatchSurcharge($basket, 4);
+
+        if (!empty($discount)) {
+            $currencyFactor = empty($this->sSYSTEM->sCurrency['factor']) ? 1 : $this->sSYSTEM->sCurrency['factor'];
+            $discount *= $currencyFactor;
+
+            $this->conditionalLineItemService->addConditionalLineItem(
+                $discount_name,
+                $discount_ordernumber,
+                $discount,
+                $discountTax,
+                4
+            );
         }
     }
 
@@ -4171,13 +4121,6 @@ SQL;
         if (!empty($payment['surcharge']) && (empty($dispatch) || $dispatch['surcharge_calculation'] == 3)) {
             $surcharge = round($payment['surcharge'], 2);
             $payment['surcharge'] = 0;
-            if (empty($this->sSYSTEM->sUSERGROUPDATA['tax']) && !empty($this->sSYSTEM->sUSERGROUPDATA['id'])) {
-                $surcharge_net = $surcharge;
-            } else {
-                $surcharge_net = round($surcharge / (100 + $discount_tax) * 100, 2);
-            }
-
-            $tax_rate = $discount_tax;
 
             if ($surcharge > 0) {
                 $surcharge_name = $this->snippetManager
@@ -4189,37 +4132,13 @@ SQL;
                     ->get('payment_surcharge_dev');
             }
 
-            if ($this->config->get('proportionalTaxCalculation') && !$this->session->get('taxFree')) {
-                $this->basketHelper->addProportionalDiscount(
-                    new DiscountContext(
-                        $this->session->get('sessionId'),
-                        BasketHelperInterface::DISCOUNT_ABSOLUTE,
-                        $surcharge,
-                        $surcharge_name,
-                        $surcharge_ordernumber,
-                        4,
-                        $this->sSYSTEM->sCurrency['factor'],
-                        !$this->sSYSTEM->sUSERGROUPDATA['tax'] && $this->sSYSTEM->sUSERGROUPDATA['id']
-                    )
-                );
-            } else {
-                $this->db->insert(
-                    's_order_basket',
-                    [
-                        'sessionID' => $this->session->offsetGet('sessionId'),
-                        'articlename' => $surcharge_name,
-                        'articleID' => 0,
-                        'ordernumber' => $surcharge_ordernumber,
-                        'quantity' => 1,
-                        'price' => $surcharge,
-                        'netprice' => $surcharge_net,
-                        'tax_rate' => $tax_rate,
-                        'datum' => new Zend_Date(),
-                        'modus' => 4,
-                        'currencyFactor' => $currencyFactor,
-                    ]
-                );
-            }
+            $this->conditionalLineItemService->addConditionalLineItem(
+                $surcharge_name,
+                $surcharge_ordernumber,
+                $surcharge,
+                $discount_tax,
+                4
+            );
         }
 
         // Percentage surcharge
@@ -4243,45 +4162,13 @@ SQL;
                     ->get('payment_surcharge_dev');
             }
 
-            if (empty($this->sSYSTEM->sUSERGROUPDATA['tax']) && !empty($this->sSYSTEM->sUSERGROUPDATA['id'])) {
-                $percent_net = $percent;
-            } else {
-                $percent_net = round($percent / (100 + $discount_tax) * 100, 2);
-            }
-
-            $tax_rate = $discount_tax;
-
-            if ($this->config->get('proportionalTaxCalculation') && !$this->session->get('taxFree')) {
-                $this->basketHelper->addProportionalDiscount(
-                    new DiscountContext(
-                        $this->session->get('sessionId'),
-                        BasketHelperInterface::DISCOUNT_PERCENT,
-                        $payment['debit_percent'],
-                        $percent_name,
-                        $percent_ordernumber,
-                        4,
-                        $this->sSYSTEM->sCurrency['factor'],
-                        !$this->sSYSTEM->sUSERGROUPDATA['tax'] && $this->sSYSTEM->sUSERGROUPDATA['id']
-                    )
-                );
-            } else {
-                $this->db->insert(
-                    's_order_basket',
-                    [
-                        'sessionID' => $this->session->offsetGet('sessionId'),
-                        'articlename' => $percent_name,
-                        'articleID' => 0,
-                        'ordernumber' => $percent_ordernumber,
-                        'quantity' => 1,
-                        'price' => $percent,
-                        'netprice' => $percent_net,
-                        'tax_rate' => $tax_rate,
-                        'datum' => new Zend_Date(),
-                        'modus' => 4,
-                        'currencyFactor' => $currencyFactor,
-                    ]
-                );
-            }
+            $this->conditionalLineItemService->addConditionalLineItem(
+                $percent_name,
+                $percent_ordernumber,
+                $percent,
+                $discount_tax,
+                4
+            );
         }
 
         return $payment;
@@ -4301,9 +4188,9 @@ SQL;
             return false;
         }
 
-        $checkOrder = $this->db->fetchRow('
-            SELECT id FROM s_order
-            WHERE cleared = ? AND userID = ?',
+        $checkOrder = $this->db->fetchRow(
+            'SELECT id FROM s_order
+             WHERE cleared = ? AND userID = ?',
             [
                 $cleared,
                 $this->session->offsetGet('sUserId'),
@@ -4340,9 +4227,9 @@ SQL;
         }
         $dbal = Shopware()->Container()->get('dbal_connection');
 
-        return (int) $dbal->fetchColumn('
-            SELECT default_billing_address_id 
-            FROM s_user WHERE id = :id
+        return (int) $dbal->fetchColumn(
+            'SELECT default_billing_address_id
+             FROM s_user WHERE id = :id
             ',
             ['id' => $this->session->offsetGet('sUserId')]
         );
@@ -4361,9 +4248,9 @@ SQL;
         }
         $dbal = Shopware()->Container()->get('dbal_connection');
 
-        return (int) $dbal->fetchColumn('
-            SELECT default_shipping_address_id 
-            FROM s_user WHERE id = :id
+        return (int) $dbal->fetchColumn(
+            'SELECT default_shipping_address_id
+             FROM s_user WHERE id = :id
             ',
             ['id' => $this->session->offsetGet('sUserId')]
         );
@@ -4376,8 +4263,8 @@ SQL;
      */
     private function shouldVerifyCaptcha($config)
     {
-        return $config->get('newsletterCaptcha') !== 'nocaptcha' &&
-            !($config->get('noCaptchaAfterLogin') && Shopware()->Modules()->Admin()->sCheckUser());
+        return $config->get('newsletterCaptcha') !== 'nocaptcha'
+            && !($config->get('noCaptchaAfterLogin') && Shopware()->Modules()->Admin()->sCheckUser());
     }
 
     /**

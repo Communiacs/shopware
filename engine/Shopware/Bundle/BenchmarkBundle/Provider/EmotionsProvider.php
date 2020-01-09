@@ -31,6 +31,8 @@ use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
 class EmotionsProvider implements BenchmarkProviderInterface
 {
+    private const NAME = 'emotions';
+
     /**
      * @var Connection
      */
@@ -53,7 +55,7 @@ class EmotionsProvider implements BenchmarkProviderInterface
 
     public function getName()
     {
-        return 'emotions';
+        return self::NAME;
     }
 
     /**
@@ -149,7 +151,9 @@ class EmotionsProvider implements BenchmarkProviderInterface
             ->execute()
             ->fetchColumn();
 
-        $devicesUsed = array_filter(explode(',', $devicesUsed), 'strlen');
+        $devicesUsed = array_filter(explode(',', $devicesUsed), static function ($element) {
+            return $element !== '';
+        });
 
         $deviceCounts = [0, 0, 0, 0, 0];
         foreach ($devicesUsed as $device) {

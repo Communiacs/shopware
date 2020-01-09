@@ -26,11 +26,6 @@ namespace Shopware\Components\DependencyInjection\Bridge;
 
 use Shopware\Components\DependencyInjection\Container;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class Currency
 {
     /**
@@ -39,8 +34,8 @@ class Currency
     public function factory(Container $container, \Zend_Locale $locale)
     {
         $currency = 'EUR';
-        if ($container->has('Shop')) {
-            $currency = $container->get('Shop')->getCurrency()->getCurrency();
+        if ($container->has('shop')) {
+            $currency = $container->get('shop')->getCurrency()->getCurrency();
         }
 
         return new \Zend_Currency($currency, $locale);

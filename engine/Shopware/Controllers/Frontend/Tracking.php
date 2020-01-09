@@ -24,13 +24,10 @@
 
 use Shopware\Models\Banner\Banner;
 
-/**
- * Shopware Backend Tracking
- */
 class Shopware_Controllers_Frontend_Tracking extends Enlight_Controller_Action
 {
     /**
-     * Needed for unit tests
+     * @deprecated in 5.6, will be removed in 5.7
      *
      * @var mixed
      * @scope private

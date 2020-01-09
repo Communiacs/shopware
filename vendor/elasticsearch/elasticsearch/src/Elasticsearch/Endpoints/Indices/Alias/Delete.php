@@ -1,27 +1,32 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Elasticsearch\Endpoints\Indices\Alias;
 
-use Elasticsearch\Common\Exceptions;
 use Elasticsearch\Endpoints\AbstractEndpoint;
+use Elasticsearch\Common\Exceptions;
 
 /**
  * Class Delete
  *
  * @category Elasticsearch
  * @package Elasticsearch\Endpoints\Indices\Alias
- * @author   Zachary Tong <zachary.tong@elasticsearch.com>
+ * @author   Zachary Tong <zach@elastic.co>
  * @license  http://www.apache.org/licenses/LICENSE-2.0 Apache2
- * @link     http://elasticsearch.org
+ * @link     http://elastic.co
  */
 class Delete extends AbstractEndpoint
 {
-    // A comma-separated list of aliases to delete (supports wildcards); use `_all` to delete all aliases for the
-    // specified indices.
+    /**
+     * A comma-separated list of aliases to delete (supports wildcards); use `_all` to delete all aliases for the specified indices.
+     *
+     * @var string
+     */
     private $name;
 
     /**
-     * @param $name
+     * @param string $name
      *
      * @return $this
      */
@@ -40,7 +45,7 @@ class Delete extends AbstractEndpoint
      * @throws \Elasticsearch\Common\Exceptions\RuntimeException
      * @return string
      */
-    protected function getURI()
+    public function getURI()
     {
         if (isset($this->index) !== true) {
             throw new Exceptions\RuntimeException(
@@ -54,7 +59,7 @@ class Delete extends AbstractEndpoint
         }
         $index = $this->index;
         $name = $this->name;
-        $uri = "/$index/_alias/$name";
+        $uri   = "/$index/_alias/$name";
 
         if (isset($index) === true && isset($name) === true) {
             $uri = "/$index/_alias/$name";
@@ -66,18 +71,18 @@ class Delete extends AbstractEndpoint
     /**
      * @return string[]
      */
-    protected function getParamWhitelist()
+    public function getParamWhitelist()
     {
-        return [
+        return array(
             'timeout',
             'master_timeout',
-        ];
+        );
     }
 
     /**
      * @return string
      */
-    protected function getMethod()
+    public function getMethod()
     {
         return 'DELETE';
     }

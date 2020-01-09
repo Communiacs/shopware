@@ -42,11 +42,18 @@ Ext.define('Shopware.apps.UserManager.view.main.Window', {
     alias: 'widget.usermanager-main-window',
     border: false,
     autoShow: true,
-    layout: 'border',
+    layout: 'fit',
     height: '90%',
-    width: 1200,
+    width: '85%',
     stateful: true,
     stateId: 'user-manager-main-window',
+    snippets:{
+        navigation: {
+            userList: '{s name=navigation/navigation_usermanager}{/s}',
+            roleList: '{s name=navigation/navigation_rolemanager}{/s}',
+            rulesTree: '{s name=navigation/navigation_rights_assignment}{/s}'
+        }
+    },
 
 
     /**
@@ -57,32 +64,21 @@ Ext.define('Shopware.apps.UserManager.view.main.Window', {
     initComponent: function() {
         var me = this;
 
-        /* {if {acl_is_allowed privilege=read}} */
-        me.appContent = Ext.create('Ext.container.Container', {
-            unstyled: true,
-            region: 'center',
-            border: false,
-            layout: 'border',
-            autoScroll: true,
-            listeners: {
-                afterrender: function(con) {
-                    con.getEl().setStyle('overflow', 'hidden');
-
-                    window.setTimeout(function() {
-                        con.getEl().setStyle('overflow', 'auto');
-                    }, 10);
-                }
-            },
+        me.items = [{
+            xtype: 'tabpanel',
             items: [{
                 xtype: 'usermanager-user-list',
-                userStore: me.userStore
+                title: me.snippets.navigation.userList,
+                store: me.userStore
+            }, {
+                xtype: 'usermanager-roles-list',
+                title: me.snippets.navigation.roleList,
+                store: me.roleStore
+            }, {
+                xtype: 'user-manager-rules-tree',
+                title: me.snippets.navigation.rulesTree,
             }]
-        });
-        /* {/if} */
-        me.items = [{
-            xtype: 'usermanager-main-navigation',
-            region: 'west'
-        }, me.appContent];
+        }];
 
         me.callParent(arguments);
     }

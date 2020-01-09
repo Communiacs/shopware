@@ -1,29 +1,29 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Elasticsearch\Endpoints;
 
+use Elasticsearch\Common\Exceptions\InvalidArgumentException;
 use Elasticsearch\Serializers\SerializerInterface;
-use Elasticsearch\Transport;
 
 /**
  * Class Bulk
  *
  * @category Elasticsearch
  * @package  Elasticsearch\Endpoints
- * @author   Zachary Tong <zachary.tong@elasticsearch.com>
+ * @author   Zachary Tong <zach@elastic.co>
  * @license  http://www.apache.org/licenses/LICENSE-2.0 Apache2
- * @link     http://elasticsearch.org
+ * @link     http://elastic.co
  */
 class Bulk extends AbstractEndpoint implements BulkEndpointInterface
 {
     /**
-     * @param Transport $transport
      * @param SerializerInterface $serializer
      */
-    public function __construct(Transport $transport, SerializerInterface $serializer)
+    public function __construct(SerializerInterface $serializer)
     {
         $this->serializer = $serializer;
-        parent::__construct($transport);
     }
 
     /**
@@ -41,8 +41,13 @@ class Bulk extends AbstractEndpoint implements BulkEndpointInterface
             foreach ($body as $item) {
                 $this->body .= $this->serializer->serialize($item) . "\n";
             }
-        } else {
+        } elseif (is_string($body)) {
             $this->body = $body;
+            if (substr($body, -1) != "\n") {
+                $this->body .= "\n";
+            }
+        } else {
+            throw new InvalidArgumentException("Bulk body must be an array, traversable object or string");
         }
 
         return $this;
@@ -51,7 +56,7 @@ class Bulk extends AbstractEndpoint implements BulkEndpointInterface
     /**
      * @return string
      */
-    protected function getURI()
+    public function getURI()
     {
         return $this->getOptionalURI('_bulk');
     }
@@ -59,21 +64,29 @@ class Bulk extends AbstractEndpoint implements BulkEndpointInterface
     /**
      * @return string[]
      */
-    protected function getParamWhitelist()
+    public function getParamWhitelist()
     {
-        return [
+        return array(
             'consistency',
             'refresh',
             'replication',
             'type',
             'fields',
-        ];
+            'pipeline',
+            '_source',
+            '_source_include',
+            '_source_includes',
+            '_source_exclude',
+            '_source_excludes',
+            'pipeline',
+            'seq_no_primary_term'
+        );
     }
 
     /**
      * @return string
      */
-    protected function getMethod()
+    public function getMethod()
     {
         return 'POST';
     }

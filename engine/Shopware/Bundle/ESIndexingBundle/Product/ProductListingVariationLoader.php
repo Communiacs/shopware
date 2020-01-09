@@ -35,6 +35,7 @@ use Shopware\Bundle\StoreFrontBundle\Struct\Configurator\Option;
 use Shopware\Bundle\StoreFrontBundle\Struct\ListProduct;
 use Shopware\Bundle\StoreFrontBundle\Struct\Shop;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
+use Shopware_Components_Config;
 
 class ProductListingVariationLoader
 {
@@ -59,7 +60,7 @@ class ProductListingVariationLoader
     private $listingPriceHelper;
 
     /**
-     * @var \Shopware_Components_Config
+     * @var Shopware_Components_Config
      */
     private $config;
 
@@ -68,7 +69,7 @@ class ProductListingVariationLoader
         IdentifierSelector $identifierSelector,
         ContextServiceInterface $contextService,
         ListingPriceHelper $listingPriceHelper,
-        \Shopware_Components_Config $config
+        Shopware_Components_Config $config
     ) {
         $this->connection = $connection;
         $this->identifierSelector = $identifierSelector;
@@ -103,11 +104,13 @@ class ProductListingVariationLoader
                 }
 
                 $configuration = $configurations[$product->getNumber()];
-                $groups = array_map(function (Group $group) {
-                    return $group->getId();
-                }, $configuration);
+                $groups = $this->getFilteredGroups($configuration, $variantFacet);
 
-                $combinations = $this->arrayCombinations($groups);
+                if (empty($groups)) {
+                    continue;
+                }
+
+                $combinations = self::arrayCombinations($groups);
 
                 $combinationPrices[$key][$product->getNumber()] = $this->getCombinationPrices(
                     $configuration,
@@ -161,11 +164,13 @@ class ProductListingVariationLoader
             }
 
             $configuration = $configurations[$product->getNumber()];
-            $groups = array_map(function (Group $group) {
-                return $group->getId();
-            }, $configuration);
+            $groups = $this->getFilteredGroups($configuration, $variantFacet);
 
-            $combinations = $this->arrayCombinations($groups);
+            if (empty($groups)) {
+                continue;
+            }
+
+            $combinations = self::arrayCombinations($groups);
 
             $combinationAvailability[$product->getNumber()] = $this->getCombinationAvailability(
                 $configuration,
@@ -199,13 +204,13 @@ class ProductListingVariationLoader
      *
      * @return array
      */
-    private function arrayCombinations(array $array)
+    public static function arrayCombinations(array $array)
     {
         $results = [[]];
 
         foreach ($array as $element) {
             foreach ($results as $combination) {
-                array_push($results, array_merge([$element], $combination));
+                $results[] = array_merge([$element], $combination);
             }
         }
 
@@ -218,7 +223,7 @@ class ProductListingVariationLoader
             return in_array($group->getId(), $facet->getExpandGroupIds(), true);
         });
 
-        $c = $this->arrayCombinations(array_keys($consider));
+        $c = self::arrayCombinations(array_keys($consider));
 
         // Flip keys for later intersection
         $keys = array_flip(array_keys($consider));
@@ -496,7 +501,10 @@ class ProductListingVariationLoader
                 $availabilityResult[$currentAvailability['variant_id']]['groups'][] = (int) $currentAvailability['group_id'];
             }
             $productAvailability = array_values($availabilityResult);
+
+            unset($currentAvailability);
         }
+        unset($productAvailability);
 
         foreach ($availability as &$productAvailability) {
             foreach ($productAvailability as &$currentAvailability) {
@@ -504,6 +512,7 @@ class ProductListingVariationLoader
                 sort($currentAvailability['groups']);
             }
         }
+        unset($productAvailability, $currentAvailability);
 
         return $availability;
     }
@@ -678,5 +687,16 @@ class ProductListingVariationLoader
         }
 
         return $contexts;
+    }
+
+    private function getFilteredGroups(array $configuration, VariantFacet $variantFacet): array
+    {
+        return array_filter(array_map(static function (Group $group) use ($variantFacet) {
+            if (!in_array($group->getId(), $variantFacet->getGroupIds(), true)) {
+                return null;
+            }
+
+            return $group->getId();
+        }, $configuration));
     }
 }

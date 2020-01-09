@@ -29,10 +29,6 @@ use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Class to generate shopware themes.
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
 class Generator
 {
@@ -301,7 +297,8 @@ EOD;
             'w+'
         );
 
-        $source = $this->eventManager->filter('Theme_Generator_Theme_Source_Generated',
+        $source = $this->eventManager->filter(
+            'Theme_Generator_Theme_Source_Generated',
             $source,
             ['data' => $data, 'parent' => $parent]
         );

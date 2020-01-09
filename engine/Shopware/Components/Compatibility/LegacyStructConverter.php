@@ -125,12 +125,23 @@ class LegacyStructConverter
             'iso3' => $country->getIso3(),
             'display_state_in_registration' => $country->displayStateSelection(),
             'force_state_in_registration' => $country->requiresStateSelection(),
+            'areaID' => $country->getAreaId(),
+            'allow_shipping' => $country->allowShipping(),
             'states' => [],
             'attributes' => $country->getAttributes(),
         ]);
 
         if ($country->displayStateSelection()) {
             $data['states'] = $this->convertStateStructList($country->getStates());
+            $data['states'] = array_map(function ($state) use ($country) {
+                $state['countryID'] = $country->getId();
+
+                return $state;
+            }, $data['states']);
+        }
+
+        if ($country->hasAttribute('core')) {
+            $data['attribute'] = $country->getAttribute('core');
         }
 
         return $this->eventManager->filter('Legacy_Struct_Converter_Convert_Country', $data, [
@@ -156,6 +167,10 @@ class LegacyStructConverter
         $data = json_decode(json_encode($state), true);
         $data += ['shortcode' => $state->getCode(), 'attributes' => $state->getAttributes()];
 
+        if ($state->hasAttribute('core')) {
+            $data['attribute'] = $state->getAttribute('core');
+        }
+
         return $this->eventManager->filter('Legacy_Struct_Converter_Convert_State', $data, [
             'state' => $state,
         ]);
@@ -177,6 +192,10 @@ class LegacyStructConverter
             'user_selected' => $group->isSelected(),
             'attributes' => $group->getAttributes(),
         ];
+
+        if ($group->hasAttribute('core')) {
+            $data['attribute'] = $group->getAttribute('core');
+        }
 
         return $this->eventManager->filter('Legacy_Struct_Converter_Convert_Configurator_Group', $data, [
             'configurator_group' => $group,
@@ -387,6 +406,10 @@ class LegacyStructConverter
             'attributes' => $productStream->getAttributes(),
         ];
 
+        if ($productStream->hasAttribute('core')) {
+            $data['attribute'] = $productStream->getAttribute('core');
+        }
+
         return $this->eventManager->filter('Legacy_Struct_Converter_Convert_Related_Product_Stream', $data, [
             'product_stream' => $productStream,
         ]);
@@ -527,6 +550,10 @@ class LegacyStructConverter
             'attributes' => $average->getAttributes(),
         ];
 
+        if ($average->hasAttribute('core')) {
+            $data['attribute'] = $average->getAttribute('core');
+        }
+
         return $this->eventManager->filter('Legacy_Struct_Converter_Convert_Vote_Average', $data, [
             'average' => $average,
         ]);
@@ -548,7 +575,12 @@ class LegacyStructConverter
             'answer' => $vote->getAnswer(),
             'datum' => '0000-00-00 00:00:00',
             'answer_date' => '0000-00-00 00:00:00',
+            'attributes' => $vote->getAttributes(),
         ];
+
+        if ($vote->hasAttribute('core')) {
+            $data['attribute'] = $vote->getAttribute('core');
+        }
 
         if ($vote->getCreatedAt() instanceof \DateTime) {
             $data['datum'] = $vote->getCreatedAt()->format('Y-m-d H:i:s');
@@ -557,8 +589,6 @@ class LegacyStructConverter
         if ($vote->getAnsweredAt() instanceof \DateTime) {
             $data['answer_date'] = $vote->getAnsweredAt()->format('Y-m-d H:i:s');
         }
-
-        $data['attributes'] = $vote->getAttributes();
 
         return $this->eventManager->filter('Legacy_Struct_Converter_Convert_Vote', $data, [
             'vote' => $vote,
@@ -623,6 +653,10 @@ class LegacyStructConverter
             'attributes' => $media->getAttributes(),
         ];
 
+        if ($media->hasAttribute('core')) {
+            $data['attribute'] = $media->getAttribute('core');
+        }
+
         $attributes = $media->getAttributes();
         if ($attributes && isset($attributes['image'])) {
             $data['attribute'] = $attributes['image']->toArray();
@@ -655,6 +689,10 @@ class LegacyStructConverter
             ],
             'unit_attributes' => $unit->getAttributes(),
         ];
+
+        if ($unit->hasAttribute('core')) {
+            $data['unit_attribute'] = $unit->getAttribute('core');
+        }
 
         return $this->eventManager->filter('Legacy_Struct_Converter_Convert_Unit', $data, [
             'unit' => $unit,
@@ -735,6 +773,10 @@ class LegacyStructConverter
                 'media' => $mediaValues,
                 'attributes' => $group->getAttributes(),
             ];
+
+            if ($group->hasAttribute('core')) {
+                $result[$groupId]['attribute'] = $group->getAttribute('core');
+            }
         }
 
         return $this->eventManager->filter('Legacy_Struct_Converter_Convert_Property_Set', $result, [
@@ -754,6 +796,10 @@ class LegacyStructConverter
             'options' => [],
             'attributes' => $group->getAttributes(),
         ];
+
+        if ($group->hasAttribute('core')) {
+            $data['attribute'] = $group->getAttribute('core');
+        }
 
         foreach ($group->getOptions() as $option) {
             $data['options'][] = $this->convertPropertyOptionStruct($option);
@@ -775,6 +821,10 @@ class LegacyStructConverter
             'attributes' => $option->getAttributes(),
         ];
 
+        if ($option->hasAttribute('core')) {
+            $data['attribute'] = $option->getAttribute('core');
+        }
+
         return $this->eventManager->filter('Legacy_Struct_Converter_Convert_Property_Option', $data, [
             'property_option' => $option,
         ]);
@@ -794,8 +844,13 @@ class LegacyStructConverter
             'metaKeywords' => $manufacturer->getMetaKeywords(),
             'link' => $manufacturer->getLink(),
             'image' => $manufacturer->getCoverFile(),
+            'media' => $manufacturer->getCoverMedia() ? $this->convertMediaStruct($manufacturer->getCoverMedia()) : null,
             'attributes' => $manufacturer->getAttributes(),
         ];
+
+        if ($manufacturer->hasAttribute('core')) {
+            $data['attribute'] = $manufacturer->getAttribute('core');
+        }
 
         return $this->eventManager->filter('Legacy_Struct_Converter_Convert_Manufacturer', $data, [
             'manufacturer' => $manufacturer,
@@ -888,7 +943,12 @@ class LegacyStructConverter
             'instock' => $product->isCloseouts(),
             'articleID' => $product->getId(),
             'type' => $set->getType(),
+            'attributes' => $set->getAttributes(),
         ];
+
+        if ($set->hasAttribute('core')) {
+            $data['attribute'] = $set->getAttribute('core');
+        }
 
         // Switch the template for the different configurator types.
         if ($set->getType() == 1) {
@@ -931,6 +991,10 @@ class LegacyStructConverter
             $data['media'] = $this->convertMediaStruct($option->getMedia());
         }
 
+        if ($option->hasAttribute('core')) {
+            $data['attribute'] = $option->getAttribute('core');
+        }
+
         return $this->eventManager->filter('Legacy_Struct_Converter_Convert_Configurator_Option', $data, [
             'configurator_group' => $group,
             'configurator_options' => $option,
@@ -958,7 +1022,12 @@ class LegacyStructConverter
             'metaTitle' => $blog->getMetaTitle(),
             'views' => $blog->getViews(),
             'mediaList' => array_map([$this, 'convertMediaStruct'], $blog->getMedias()),
+            'attributes' => $blog->getAttributes(),
         ];
+
+        if ($blog->hasAttribute('core')) {
+            $data['attribute'] = $blog->getAttribute('core');
+        }
 
         $data['media'] = reset($data['mediaList']);
 
@@ -997,6 +1066,10 @@ class LegacyStructConverter
             'mobile_inactive' => $payment->getMobileInactive(),
             'attributes' => $payment->getAttributes(),
         ];
+
+        if ($payment->hasAttribute('core')) {
+            $data['attribute'] = $payment->getAttribute('core');
+        }
 
         return $this->eventManager->filter('Legacy_Struct_Converter_Convert_Payment', $data, [
             'payment' => $payment,
@@ -1204,6 +1277,7 @@ class LegacyStructConverter
                 'supplierImg' => $product->getManufacturer()->getCoverFile(),
                 'supplierID' => $product->getManufacturer()->getId(),
                 'supplierDescription' => $product->getManufacturer()->getDescription(),
+                'supplierMedia' => $product->getManufacturer()->getCoverMedia() ? $this->convertMediaStruct($product->getManufacturer()->getCoverMedia()) : null,
             ];
 
             $data = array_merge($data, $manufacturer);

@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Elasticsearch\Endpoints;
 
+use Elasticsearch\Common\Exceptions\InvalidArgumentException;
 use Elasticsearch\Common\Exceptions;
 
 /**
@@ -9,9 +12,9 @@ use Elasticsearch\Common\Exceptions;
  *
  * @category Elasticsearch
  * @package  Elasticsearch\Endpoints
- * @author   Zachary Tong <zachary.tong@elasticsearch.com>
+ * @author   Zachary Tong <zach@elastic.co>
  * @license  http://www.apache.org/licenses/LICENSE-2.0 Apache2
- * @link     http://elasticsearch.org
+ * @link     http://elastic.co
  */
 class Search extends AbstractEndpoint
 {
@@ -35,11 +38,11 @@ class Search extends AbstractEndpoint
     /**
      * @return string
      */
-    protected function getURI()
+    public function getURI()
     {
         $index = $this->index;
         $type = $this->type;
-        $uri = "/_search";
+        $uri   = "/_search";
 
         if (isset($index) === true && isset($type) === true) {
             $uri = "/$index/$type/_search";
@@ -55,17 +58,14 @@ class Search extends AbstractEndpoint
     /**
      * @return string[]
      */
-    protected function getParamWhitelist()
+    public function getParamWhitelist()
     {
-        return [
+        return array(
             'analyzer',
             'analyze_wildcard',
             'default_operator',
             'df',
             'explain',
-            'fields',
-            'fielddata_fields',
-            'filter_path',
             'from',
             'ignore_unavailable',
             'allow_no_indices',
@@ -81,28 +81,39 @@ class Search extends AbstractEndpoint
             'scroll',
             'search_type',
             'size',
+            'slice',
             'sort',
             'source',
             '_source',
-            '_source_exclude',
             '_source_include',
-            'terminate_after',
+            '_source_includes',
+            '_source_exclude',
+            '_source_excludes',
             'stats',
             'suggest_field',
             'suggest_mode',
             'suggest_size',
             'suggest_text',
             'timeout',
-            'track_scores',
             'version',
-            'request_cache',
-        ];
+            'fielddata_fields',
+            'docvalue_fields',
+            'filter_path',
+            'terminate_after',
+            'stored_fields',
+            'batched_reduce_size',
+            'typed_keys',
+            'pre_filter_shard_size',
+            'rest_total_hits_as_int',
+            'seq_no_primary_term',
+            'track_total_hits'
+        );
     }
 
     /**
      * @return string
      */
-    protected function getMethod()
+    public function getMethod()
     {
         return 'GET';
     }

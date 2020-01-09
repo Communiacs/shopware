@@ -1,5 +1,5 @@
 {
-    "Version": "2.1.49.82",
+    "Version": "36",
     "Names": {
         "aa": "Afar",
         "ab": "Abchazisch",
@@ -356,7 +356,6 @@
         "ms": "Maleis",
         "mt": "Maltees",
         "mua": "Mundang",
-        "mul": "Meerdere talen",
         "mus": "Creek",
         "mwl": "Mirandees",
         "mwr": "Marwari",
@@ -372,7 +371,6 @@
         "nb": "Noors - Bokmål",
         "nd": "Noord-Ndebele",
         "nds": "Nedersaksisch",
-        "nds_NL": "Nederduits",
         "ne": "Nepalees",
         "new": "Newari",
         "ng": "Ndonga",
@@ -440,7 +438,6 @@
         "ro": "Roemeens",
         "rof": "Rombo",
         "rom": "Romani",
-        "root": "Root",
         "rtm": "Rotumaans",
         "ru": "Russisch",
         "rue": "Roetheens",
@@ -554,7 +551,6 @@
         "uga": "Oegaritisch",
         "uk": "Oekraïens",
         "umb": "Umbundu",
-        "und": "onbekende taal",
         "ur": "Urdu",
         "uz": "Oezbeeks",
         "vai": "Vai",
@@ -597,7 +593,9 @@
         "zh": "Chinees",
         "zu": "Zoeloe",
         "zun": "Zuni",
-        "zxx": "geen linguïstische inhoud",
         "zza": "Zaza"
+    },
+    "LocalizedNames": {
+        "nds_NL": "Nederduits"
     }
 }

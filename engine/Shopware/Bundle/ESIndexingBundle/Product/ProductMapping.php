@@ -24,12 +24,13 @@
 
 namespace Shopware\Bundle\ESIndexingBundle\Product;
 
-use Elasticsearch\Client;
-use Shopware\Bundle\AttributeBundle\Service\CrudService;
+use Shopware\Bundle\AttributeBundle\Service\CrudServiceInterface;
 use Shopware\Bundle\ESIndexingBundle\FieldMappingInterface;
 use Shopware\Bundle\ESIndexingBundle\IdentifierSelector;
 use Shopware\Bundle\ESIndexingBundle\MappingInterface;
 use Shopware\Bundle\ESIndexingBundle\TextMappingInterface;
+use Shopware\Bundle\SearchBundle\Facet\VariantFacet;
+use Shopware\Bundle\SearchBundleDBAL\VariantHelperInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\Shop;
 
 class ProductMapping implements MappingInterface
@@ -40,6 +41,11 @@ class ProductMapping implements MappingInterface
      * @var bool
      */
     protected $isDebug;
+
+    /**
+     * @var VariantHelperInterface
+     */
+    protected $variantHelper;
 
     /**
      * @var IdentifierSelector
@@ -57,37 +63,29 @@ class ProductMapping implements MappingInterface
     private $textMapping;
 
     /**
-     * @var CrudService
+     * @var CrudServiceInterface
      */
     private $crudService;
-
-    /**
-     * @var Client
-     */
-    private $client;
 
     /**
      * @var bool
      */
     private $isDynamic;
 
-    /**
-     * @param bool $isDynamic
-     */
     public function __construct(
         IdentifierSelector $identifierSelector,
         FieldMappingInterface $fieldMapping,
         TextMappingInterface $textMapping,
-        CrudService $crudService,
-        Client $client,
-        $isDynamic = true,
-        $isDebug = false
+        CrudServiceInterface $crudService,
+        VariantHelperInterface $variantHelper,
+        bool $isDynamic = true,
+        bool $isDebug = false
     ) {
         $this->identifierSelector = $identifierSelector;
         $this->fieldMapping = $fieldMapping;
         $this->textMapping = $textMapping;
         $this->crudService = $crudService;
-        $this->client = $client;
+        $this->variantHelper = $variantHelper;
         $this->isDynamic = $isDynamic;
         $this->isDebug = $isDebug;
     }
@@ -105,7 +103,9 @@ class ProductMapping implements MappingInterface
      */
     public function get(Shop $shop)
     {
-        $mapping = [
+        $variantFacet = $this->variantHelper->getVariantFacet();
+
+        $productMapping = [
             'dynamic' => $this->isDynamic,
             '_source' => [
                 'includes' => ['id', 'mainVariantId', 'variantId', 'number'],
@@ -117,8 +117,8 @@ class ProductMapping implements MappingInterface
                 'variantId' => ['type' => 'long'],
 
                 // Number fields
-                'number' => array_merge($this->textMapping->getTextField(), ['analyzer' => 'standard']),
-                'ean' => $this->textMapping->getNotAnalyzedField(),
+                'number' => array_merge($this->textMapping->getTextField(), ['analyzer' => 'standard', 'fields' => ['raw' => $this->textMapping->getKeywordField()]]),
+                'ean' => $this->textMapping->getKeywordField(),
                 'manufacturerNumber' => $this->fieldMapping->getLanguageField($shop),
 
                 // Language fields
@@ -177,20 +177,61 @@ class ProductMapping implements MappingInterface
                 'configuration' => $this->getVariantOptionsMapping($shop),
 
                 'voteAverage' => $this->getVoteAverageMapping(),
+                'manualSorting' => $this->getManualMapping(),
             ],
         ];
 
-        if ($this->isDebug) {
-            unset($mapping['_source']);
+        if ($variantFacet) {
+            $productMapping['properties']['filterConfiguration'] = $this->getVariantOptionsMapping($shop);
+            $productMapping['properties']['listingVariationPrices'] = $this->getVariantPricesMapping($variantFacet, $shop);
+            $productMapping['properties']['availability'] = $this->getVariantConfigurationMapping($variantFacet, 'boolean');
+            $productMapping['properties']['visibility'] = $this->getVariantConfigurationMapping($variantFacet, 'boolean');
         }
 
-        return $mapping;
+        if ($this->isDebug) {
+            unset($productMapping['_source']);
+        }
+
+        return $productMapping;
     }
 
-    /**
-     * @return array
-     */
-    private function getPropertyMapping(Shop $shop)
+    private function getVariantPricesMapping(VariantFacet $facet, Shop $shop): array
+    {
+        $customerGroups = $this->identifierSelector->getCustomerGroupKeys();
+
+        if (!$shop->isMain()) {
+            $currencies = $this->identifierSelector->getShopCurrencyIds($shop->getParentId());
+        } else {
+            $currencies = $this->identifierSelector->getShopCurrencyIds($shop->getId());
+        }
+
+        $result = [];
+
+        foreach ($customerGroups as $customerGroup) {
+            foreach ($currencies as $currency) {
+                $result['properties'][$customerGroup . '_' . $currency] = $this->getVariantConfigurationMapping($facet, 'double');
+            }
+        }
+
+        return $result;
+    }
+
+    private function getVariantConfigurationMapping(VariantFacet $facet, string $type): array
+    {
+        $properties = [];
+
+        foreach (ProductListingVariationLoader::arrayCombinations($facet->getGroupIds()) as $combination) {
+            sort($combination, SORT_NUMERIC);
+
+            $properties['g' . implode('-', $combination)] = ['type' => $type];
+        }
+
+        return [
+            'properties' => $properties,
+        ];
+    }
+
+    private function getPropertyMapping(Shop $shop): array
     {
         return [
             'type' => 'object',
@@ -202,10 +243,7 @@ class ProductMapping implements MappingInterface
         ];
     }
 
-    /**
-     * @return array
-     */
-    private function getUnitMapping()
+    private function getUnitMapping(): array
     {
         return [
             'properties' => [
@@ -222,10 +260,7 @@ class ProductMapping implements MappingInterface
         ];
     }
 
-    /**
-     * @return array
-     */
-    private function getManufacturerMapping(Shop $shop)
+    private function getManufacturerMapping(Shop $shop): array
     {
         return [
             'properties' => [
@@ -241,10 +276,7 @@ class ProductMapping implements MappingInterface
         ];
     }
 
-    /**
-     * @return array
-     */
-    private function getPriceGroupMapping()
+    private function getPriceGroupMapping(): array
     {
         return [
             'properties' => [
@@ -254,10 +286,7 @@ class ProductMapping implements MappingInterface
         ];
     }
 
-    /**
-     * @return array
-     */
-    private function getEsdMapping()
+    private function getEsdMapping(): array
     {
         return [
             'properties' => [
@@ -275,10 +304,7 @@ class ProductMapping implements MappingInterface
         ];
     }
 
-    /**
-     * @return array
-     */
-    private function getTaxMapping()
+    private function getTaxMapping(): array
     {
         return [
             'properties' => [
@@ -289,10 +315,7 @@ class ProductMapping implements MappingInterface
         ];
     }
 
-    /**
-     * @return array
-     */
-    private function getCalculatedPricesMapping(Shop $shop)
+    private function getCalculatedPricesMapping(Shop $shop): array
     {
         $prices = [];
         $customerGroups = $this->identifierSelector->getCustomerGroupKeys();
@@ -311,10 +334,7 @@ class ProductMapping implements MappingInterface
         return ['properties' => $prices];
     }
 
-    /**
-     * @return array
-     */
-    private function getPriceMapping()
+    private function getPriceMapping(): array
     {
         return [
             'properties' => [
@@ -325,10 +345,7 @@ class ProductMapping implements MappingInterface
         ];
     }
 
-    /**
-     * @return array
-     */
-    private function getAttributeMapping()
+    private function getAttributeMapping(): array
     {
         $attributes = $this->crudService->getList('s_articles_attributes');
 
@@ -344,13 +361,13 @@ class ProductMapping implements MappingInterface
             switch ($type['type']) {
                 case 'keyword':
                     $type = $this->textMapping->getKeywordField();
-                    $type['fields']['raw'] = $this->getAttributeRawField();
+                    $type['fields']['raw'] = $this->textMapping->getKeywordField();
                     break;
 
                 case 'string':
                 case 'text':
                     $type = $this->textMapping->getTextField();
-                    $type['fields']['raw'] = $this->getAttributeRawField();
+                    $type['fields']['raw'] = $this->textMapping->getKeywordField();
                     break;
             }
 
@@ -366,24 +383,7 @@ class ProductMapping implements MappingInterface
         ];
     }
 
-    private function getAttributeRawField()
-    {
-        $rawField = $this->textMapping->getNotAnalyzedField();
-        try {
-            $info = $this->client->info([]);
-            if (version_compare($info['version']['number'], '6', '>=')) {
-                $rawField = $this->textMapping->getKeywordField();
-            }
-        } catch (\Exception $e) {
-        }
-
-        return $rawField;
-    }
-
-    /**
-     * @return array
-     */
-    private function getVariantOptionsMapping(Shop $shop)
+    private function getVariantOptionsMapping(Shop $shop): array
     {
         return [
             'properties' => [
@@ -401,10 +401,18 @@ class ProductMapping implements MappingInterface
         ];
     }
 
-    /**
-     * @return array
-     */
-    private function getVoteAverageMapping()
+    private function getManualMapping(): array
+    {
+        return [
+            'type' => 'nested',
+            'properties' => [
+                'category_id' => ['type' => 'long'],
+                'position' => ['type' => 'long'],
+            ],
+        ];
+    }
+
+    private function getVoteAverageMapping(): array
     {
         return [
             'properties' => [

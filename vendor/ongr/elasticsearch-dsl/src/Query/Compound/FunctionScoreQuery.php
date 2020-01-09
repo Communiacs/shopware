@@ -44,27 +44,6 @@ class FunctionScoreQuery implements BuilderInterface
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public function getType()
-    {
-        return 'function_score';
-    }
-
-    /**
-     * Modifier to apply filter to the function score function.
-     *
-     * @param array            $function
-     * @param BuilderInterface $query
-     */
-    private function applyFilter(array &$function, BuilderInterface $query = null)
-    {
-        if ($query) {
-            $function['filter'] = $query->toArray();
-        }
-    }
-
-    /**
      * Creates field_value_factor function.
      *
      * @param string           $field
@@ -92,6 +71,19 @@ class FunctionScoreQuery implements BuilderInterface
     }
 
     /**
+     * Modifier to apply filter to the function score function.
+     *
+     * @param array            $function
+     * @param BuilderInterface $query
+     */
+    private function applyFilter(array &$function, BuilderInterface $query = null)
+    {
+        if ($query) {
+            $function['filter'] = $query->toArray();
+        }
+    }
+
+    /**
      * Add decay function to function score. Weight and query are optional.
      *
      * @param string           $type
@@ -99,6 +91,7 @@ class FunctionScoreQuery implements BuilderInterface
      * @param array            $function
      * @param array            $options
      * @param BuilderInterface $query
+     * @param int              $weight
      *
      * @return $this
      */
@@ -107,14 +100,18 @@ class FunctionScoreQuery implements BuilderInterface
         $field,
         array $function,
         array $options = [],
-        BuilderInterface $query = null
+        BuilderInterface $query = null,
+        $weight = null
     ) {
-        $function = [
-            $type => array_merge(
-                [$field => $function],
-                $options
-            ),
-        ];
+        $function = array_filter(
+            [
+                $type => array_merge(
+                    [$field => $function],
+                    $options
+                ),
+                'weight' => $weight,
+            ]
+        );
 
         $this->applyFilter($function, $query);
 
@@ -168,7 +165,7 @@ class FunctionScoreQuery implements BuilderInterface
     /**
      * Adds script score function.
      *
-     * @param string           $script
+     * @param string           $inline
      * @param array            $params
      * @param array            $options
      * @param BuilderInterface $query
@@ -176,23 +173,28 @@ class FunctionScoreQuery implements BuilderInterface
      * @return $this
      */
     public function addScriptScoreFunction(
-        $script,
+        $inline,
         array $params = [],
         array $options = [],
         BuilderInterface $query = null
     ) {
         $function = [
-            'script_score' => array_merge(
-                [
-                    'script' => $script,
-                    'params' => $params,
-                ],
-                $options
-            ),
+            'script_score' => [
+                'script' =>
+                    array_filter(
+                        array_merge(
+                            [
+                                'lang' => 'painless',
+                                'inline' => $inline,
+                                'params' => $params
+                            ],
+                            $options
+                        )
+                    )
+            ],
         ];
 
         $this->applyFilter($function, $query);
-
         $this->functions[] = $function;
 
         return $this;
@@ -225,5 +227,13 @@ class FunctionScoreQuery implements BuilderInterface
         $output = $this->processArray($query);
 
         return [$this->getType() => $output];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getType()
+    {
+        return 'function_score';
     }
 }

@@ -22,17 +22,11 @@
  * our trademarks remain entirely with us.
  */
 
+use Shopware\Bundle\MailBundle\Service\LogEntryBuilder;
 use Shopware\Components\BasketSignature\BasketPersister;
 use Shopware\Components\BasketSignature\BasketSignatureGeneratorInterface;
 use Shopware\Components\Random;
 
-/**
- * Shopware Payment Controller
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 abstract class Shopware_Controllers_Frontend_Payment extends Enlight_Controller_Action
 {
     /**
@@ -222,6 +216,8 @@ abstract class Shopware_Controllers_Frontend_Payment extends Enlight_Controller_
     }
 
     /**
+     * Used by payment plugins
+     *
      * @return string
      */
     protected function persistBasket()
@@ -246,6 +242,8 @@ abstract class Shopware_Controllers_Frontend_Payment extends Enlight_Controller_
     }
 
     /**
+     * Used by payment plugins
+     *
      * Loads the persisted basket identified by the given signature.
      * Persisted basket will be removed from storage after loading.
      * Converted ArrayObject for shopware session is already created and stored in session for following checkout processes.
@@ -273,6 +271,8 @@ abstract class Shopware_Controllers_Frontend_Payment extends Enlight_Controller_
     }
 
     /**
+     * Used by payment plugins
+     *
      * @param string $signature
      *
      * @throws RuntimeException if signature does not match with provided basket
@@ -295,6 +295,8 @@ abstract class Shopware_Controllers_Frontend_Payment extends Enlight_Controller_
     }
 
     /**
+     * Used by payment plugins
+     *
      * @param string $paymentName
      * @param string $orderNumber
      * @param string $transactionNumber
@@ -317,6 +319,7 @@ EOD;
             $mail->addTo($this->get('config')->get('mail'));
             $mail->setSubject('An invalid basket signature occured');
             $mail->setBodyHtml($content);
+            $mail->setAssociation(LogEntryBuilder::ORDER_NUMBER_ASSOCIATION, $orderNumber);
             $mail->send();
         } catch (Exception $e) {
         }

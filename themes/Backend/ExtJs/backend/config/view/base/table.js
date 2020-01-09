@@ -61,13 +61,19 @@ Ext.define('Shopware.apps.Config.view.base.Table', {
     },
 
     getPagingToolbar: function() {
-        var me = this;
-        return {
-            xtype: 'pagingtoolbar',
-            displayInfo: true,
-            store: me.store,
-            dock: 'bottom'
-        };
+        return Ext.create('Ext.toolbar.Paging', {
+            store: this.store,
+            dock:'bottom',
+            displayInfo:true
+        });
+    },
+
+    onPageSizeChange: function(combo, records) {
+        var record = records[0],
+            me = this;
+
+        me.store.pageSize = record.get('value');
+        me.store.loadPage(1);
     },
 
     getToolbar: function() {

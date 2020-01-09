@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Elasticsearch\Endpoints;
 
 use Elasticsearch\Common\Exceptions;
@@ -9,16 +11,16 @@ use Elasticsearch\Common\Exceptions;
  *
  * @category Elasticsearch
  * @package  Elasticsearch\Endpoints
- * @author   Zachary Tong <zachary.tong@elasticsearch.com>
+ * @author   Zachary Tong <zach@elastic.co>
  * @license  http://www.apache.org/licenses/LICENSE-2.0 Apache2
- * @link     http://elasticsearch.org
+ * @link     http://elastic.co
  */
 class Get extends AbstractEndpoint
 {
-    /** @var bool */
+    /** @var bool  */
     private $returnOnlySource = false;
 
-    /** @var bool */
+    /** @var bool  */
     private $checkOnlyExistance = false;
 
     /**
@@ -45,7 +47,7 @@ class Get extends AbstractEndpoint
      * @throws \Elasticsearch\Common\Exceptions\RuntimeException
      * @return string
      */
-    protected function getURI()
+    public function getURI()
     {
         if (isset($this->id) !== true) {
             throw new Exceptions\RuntimeException(
@@ -65,7 +67,7 @@ class Get extends AbstractEndpoint
         $id = $this->id;
         $index = $this->index;
         $type = $this->type;
-        $uri = "/$index/$type/$id";
+        $uri   = "/$index/$type/$id";
 
         if (isset($index) === true && isset($type) === true && isset($id) === true) {
             $uri = "/$index/$type/$id";
@@ -81,9 +83,9 @@ class Get extends AbstractEndpoint
     /**
      * @return string[]
      */
-    protected function getParamWhitelist()
+    public function getParamWhitelist()
     {
-        return [
+        return array(
             'fields',
             'parent',
             'preference',
@@ -91,17 +93,21 @@ class Get extends AbstractEndpoint
             'refresh',
             'routing',
             '_source',
-            '_source_exclude',
             '_source_include',
+            '_source_includes',
+            '_source_exclude',
+            '_source_excludes',
             'version',
             'version_type',
-        ];
+            'stored_fields',
+            'include_type_name'
+        );
     }
 
     /**
      * @return string
      */
-    protected function getMethod()
+    public function getMethod()
     {
         if ($this->checkOnlyExistance === true) {
             return 'HEAD';

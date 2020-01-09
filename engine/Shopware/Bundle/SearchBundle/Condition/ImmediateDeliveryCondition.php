@@ -26,19 +26,16 @@ namespace Shopware\Bundle\SearchBundle\Condition;
 
 use Shopware\Bundle\SearchBundle\ConditionInterface;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class ImmediateDeliveryCondition implements ConditionInterface, \JsonSerializable
 {
+    private const NAME = 'immediate_delivery';
+
     /**
      * {@inheritdoc}
      */
     public function getName()
     {
-        return 'immediate_delivery';
+        return self::NAME;
     }
 
     /**

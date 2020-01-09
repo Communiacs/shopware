@@ -1,3 +1,4 @@
+{if !$sUserLoggedIn}
 <form class="table--shipping-costs{if !$calculateShippingCosts} is--hidden{/if}{if {config name=showShippingCostsOffCanvas} == 1} context--shipping-costs{/if}" method="POST" action="{url action='calculateShippingCosts' sTargetAction=$sTargetAction}">
     {* Delivery country *}
     {block name='frontend_checkout_shipping_costs_country'}
@@ -10,9 +11,11 @@
                 <div class="select-field">
                     <select id="basket_country_list" name="sCountry" data-auto-submit="true">
                         {foreach $sCountryList as $country}
-                            <option value="{$country.id}"{if $country.id eq $sCountry.id} selected="selected"{/if}>
-                                {$country.countryname}
-                            </option>
+                            {if $country.allow_shipping}
+                                <option value="{$country.id}"{if $country.id eq $sCountry.id} selected="selected"{/if}>
+                                    {$country.countryname}
+                                </option>
+                            {/if}
                         {/foreach}
                     </select>
                 </div>
@@ -101,3 +104,4 @@
         {/if}
     {/block}
 </form>
+{/if}

@@ -29,11 +29,12 @@ use Shopware\Components\Cart\BasketHelperInterface;
 use Shopware\Components\Cart\Struct\CartItemStruct;
 use Shopware\Components\Cart\Struct\DiscountContext;
 use Shopware\Components\Random;
+use Symfony\Component\HttpFoundation\Cookie;
 
 /**
  * Shopware Class that handles cart operations
  */
-class sBasket
+class sBasket implements \Enlight_Hook
 {
     /**
      * Pointer to sSystem object
@@ -314,7 +315,9 @@ class sBasket
         $voucher = $this->sGetVoucher();
         if ($voucher) {
             $this->sDeleteArticle('voucher');
-            $this->sAddVoucher($voucher['code']);
+            if (is_array($this->sAddVoucher($voucher['code']))) {
+                $this->session->offsetSet('sBasketVoucherRemovedInCart', true);
+            }
         }
     }
 
@@ -584,7 +587,9 @@ class sBasket
 
         if ($premium['configurator_set_id'] > 0) {
             $premium = $this->moduleManager->Articles()->sGetTranslation(
-                $premium, $premium['variantID'], 'variant'
+                $premium,
+                $premium['variantID'],
+                'variant'
             );
 
             $product = new StoreFrontBundle\Struct\ListProduct(
@@ -674,7 +679,7 @@ SQL;
             return false;
         }
 
-        $voucherCode = strtolower(stripslashes($voucherCode));
+        $voucherCode = strtolower(trim(stripslashes($voucherCode)));
 
         // Load the voucher details
         $voucherDetails = $this->db->fetchRow(
@@ -1424,8 +1429,19 @@ SQL;
         $uniqueId = $this->front->Request()->getCookie('sUniqueID');
 
         if (!empty($cookieData) && empty($uniqueId)) {
+            $basePath = Shopware()->Shop()->getBasePath();
+            if ($basePath === null || $basePath === '') {
+                $basePath = '/';
+            }
             $uniqueId = Random::getAlphanumericString(32);
-            $this->front->Response()->setCookie('sUniqueID', $uniqueId, time() + (86400 * 360), '/');
+            $this->front->Response()->headers->setCookie(
+                new Cookie(
+                    'sUniqueID',
+                    $uniqueId,
+                    time() + (86400 * 360),
+                    $basePath
+                )
+            );
         }
 
         // Check if this product is already noted
@@ -1668,7 +1684,7 @@ SQL;
 
                 $sql = '
             UPDATE s_order_basket
-            SET quantity = ?, price = ?, netprice = ?, currencyFactor = ?, tax_rate = ?
+            SET quantity = ?, price = ?, netprice = ?, currencyFactor = ?, tax_rate = ?, articlename = IFNULL(?, articlename)
             WHERE id = ? AND sessionID = ? AND modus = 0
             ';
                 $sql = $this->eventManager->filter(
@@ -1681,6 +1697,7 @@ SQL;
                         'price' => $grossPrice,
                         'netprice' => $netPrice,
                         'currencyFactor' => $this->sSYSTEM->sCurrency['factor'],
+                        'articlename' => $additionalInfo['name'],
                     ]
                 );
 
@@ -1696,6 +1713,7 @@ SQL;
                         $netPrice,
                         $this->sSYSTEM->sCurrency['factor'],
                         $taxRate,
+                        $additionalInfo['name'] ?? null,
                         $id,
                         $this->session->get('sessionId'),
                     ],
@@ -1965,6 +1983,7 @@ SQL;
 
     /**
      * @deprecated with 5.5, will be removed with 5.7. Use sDeleteBasket instead
+     *
      * Clear basket for current user
      */
     public function clearBasket()
@@ -2178,12 +2197,12 @@ SQL;
     {
         $builder = Shopware()->Models()->getConnection()->createQueryBuilder();
 
-        $builder->select('id', 'quantity')
+        $builder->select('basket.id', 'basket.quantity')
             ->from('s_order_basket', 'basket')
-            ->where('articleID = :articleId')
-            ->andWhere('sessionID = :sessionId')
-            ->andWhere('ordernumber = :ordernumber')
-            ->andWhere('modus != 1')
+            ->where('basket.articleID = :articleId')
+            ->andWhere('basket.sessionID = :sessionId')
+            ->andWhere('basket.ordernumber = :ordernumber')
+            ->andWhere('basket.modus != 1')
             ->setParameter('articleId', $productId)
             ->setParameter('sessionId', $sessionId)
             ->setParameter('ordernumber', $orderNumber);
@@ -2391,8 +2410,8 @@ SQL;
     private function calculateVoucherValues(array $voucherDetails)
     {
         $taxRate = 0;
-        if ($voucherDetails['taxconfig'] === 'none' ||
-            (!$this->sSYSTEM->sUSERGROUPDATA['tax'] && $this->sSYSTEM->sUSERGROUPDATA['id'])
+        if ($voucherDetails['taxconfig'] === 'none'
+            || (!$this->sSYSTEM->sUSERGROUPDATA['tax'] && $this->sSYSTEM->sUSERGROUPDATA['id'])
         ) {
             // if net customer group - calculate without tax
             $tax = $voucherDetails['value'] * -1;
@@ -2643,9 +2662,9 @@ SQL;
                 || (!$this->sSYSTEM->sUSERGROUPDATA['tax'] && $this->sSYSTEM->sUSERGROUPDATA['id'])
             ) {
                 if (empty($getProducts[$key]['modus'])) {
-                    $priceWithTax = round($netprice, 2) / 100 * (100 + $tax);
+                    $getProducts[$key]['amountWithTax'] = Shopware()->Container()->get('shopware.cart.net_rounding')
+                        ->round($netprice, $tax, $quantity);
 
-                    $getProducts[$key]['amountWithTax'] = $quantity * $priceWithTax;
                     // If basket comprised any discount, calculate brutto-value for the discount
                     if ($this->sSYSTEM->sUSERGROUPDATA['basketdiscount'] && $this->sCheckForDiscount()) {
                         $discount += ($getProducts[$key]['amountWithTax'] / 100 * $this->sSYSTEM->sUSERGROUPDATA['basketdiscount']);
@@ -2820,27 +2839,52 @@ SQL;
         }
 
         $sql = <<<SQL
-SELECT  s_order_basket.id, s_articles_details.minpurchase, s_articles_details.purchasesteps,
-        s_articles_details.maxpurchase, s_articles_details.purchaseunit,
-        pricegroupID, pricegroupActive, s_order_basket.ordernumber, s_order_basket.articleID,
-        GROUP_CONCAT(avoid.customergroupID SEPARATOR '|') as blocked_customer_groups
+SELECT s_order_basket.id,
+       s_articles_details.minpurchase,
+       s_articles_details.purchasesteps,
+       s_articles_details.maxpurchase,
+       s_articles_details.purchaseunit,
+       pricegroupID,
+       pricegroupActive,
+       s_order_basket.ordernumber,
+       s_order_basket.articleID,
+       GROUP_CONCAT(avoid.customergroupID SEPARATOR '|') as blocked_customer_groups,
+       IFNULL(catRo.id, 0) as hasCategory,
+       s_articles_details.ordernumber
 FROM s_articles, s_order_basket, s_articles_details
 LEFT JOIN s_articles_avoid_customergroups avoid 
-  ON avoid.articleID = s_articles_details.articleID    
+  ON avoid.articleID = s_articles_details.articleID
+LEFT JOIN s_articles_categories_ro catRo ON(catRo.articleID = s_articles_details.articleID AND catRo.categoryID = :mainCategoryId)
 WHERE s_order_basket.articleID = s_articles.id
 AND s_order_basket.ordernumber = s_articles_details.ordernumber
-AND s_order_basket.id IN (?)
-AND s_order_basket.sessionID = ?
+AND s_order_basket.id IN (:ids)
+AND s_order_basket.sessionID = :sessionId
 GROUP BY s_articles.id, s_order_basket.id
 SQL;
 
         $stmt = $this->connection->executeQuery(
             $sql,
-            [$ids, $this->session->get('sessionId')],
-            [Connection::PARAM_INT_ARRAY, \PDO::PARAM_STR]
+            [
+                'ids' => $ids,
+                'sessionId' => $this->session->get('sessionId'),
+                'mainCategoryId' => $this->contextService->getContext()->getShop()->getCategory()->getId(),
+            ],
+            [
+                'ids' => Connection::PARAM_INT_ARRAY,
+                'sessionId' => \PDO::PARAM_STR,
+                'mainCategoryId' => \PDO::PARAM_INT,
+            ]
         );
 
         $additionalInformation = $stmt->fetchAll(\PDO::FETCH_GROUP | \PDO::FETCH_UNIQUE);
+        $products = Shopware()->Container()->get('shopware_storefront.list_product_gateway')->getList(
+            array_column($additionalInformation, 'ordernumber'),
+            $this->contextService->getShopContext()
+        );
+        $this->additionalTextService->buildAdditionalTextLists(
+            $products,
+            $this->contextService->getShopContext()
+        );
 
         foreach ($cartItems as $cartItem) {
             $additionalInfo = [];
@@ -2883,6 +2927,16 @@ SQL;
                 $additionalInfo['purchaseunit'] = 1;
             }
 
+            if (isset($products[$additionalInfo['ordernumber']])) {
+                $additionalInfo['product'] = $products[$additionalInfo['ordernumber']];
+
+                $additionalInfo['name'] = $additionalInfo['product']->getName();
+
+                if ($additionalInfo['product']->getAdditional()) {
+                    $additionalInfo['name'] .= ' ' . $additionalInfo['product']->getAdditional();
+                }
+            }
+
             $cartItem->setQuantity($quantity);
             $cartItem->setAdditionalInfo($additionalInfo);
         }
@@ -2919,6 +2973,14 @@ SQL;
             ->setParameter('pricegroup', $this->sSYSTEM->sUSERGROUP)
             ->setParameter('defaultPriceGroup', $defaultPriceGroup);
 
+        $this->eventManager->notify(
+            'Shopware_Modules_Basket_getPricesForItemUpdates_QueryBuilder',
+            [
+                'subject' => $this,
+                'queryBuilder' => $queryBuilder,
+            ]
+        );
+
         $itemPrices = $queryBuilder->execute()->fetchAll(\PDO::FETCH_GROUP | \PDO::FETCH_ASSOC);
         $customerPriceGroup = $this->sSYSTEM->sUSERGROUP;
 
@@ -2928,6 +2990,16 @@ SQL;
             $prices = $itemPrices[$cartItem->getId()];
             $additionalInfo = $cartItem->getAdditionalInfo();
             $priceResult = [];
+
+            $prices = $this->eventManager->filter(
+                'Shopware_Modules_Basket_getPricesForItemUpdates_FilterCartItemPrices',
+                $prices,
+                [
+                    'subject' => $this,
+                    'quantity' => $quantity,
+                    'additionalInfo' => $additionalInfo,
+                ]
+            );
 
             if ($prices === null) {
                 continue;
@@ -3019,8 +3091,8 @@ SQL;
                 false
             );
             $grossPrice = $this->moduleManager->Articles()->sRound($grossPrice);
-            if (($this->config->get('sARTICLESOUTPUTNETTO') && !$this->sSYSTEM->sUSERGROUPDATA['tax']) ||
-                (!$this->sSYSTEM->sUSERGROUPDATA['tax'] && $this->sSYSTEM->sUSERGROUPDATA['id'])
+            if (($this->config->get('sARTICLESOUTPUTNETTO') && !$this->sSYSTEM->sUSERGROUPDATA['tax'])
+                || (!$this->sSYSTEM->sUSERGROUPDATA['tax'] && $this->sSYSTEM->sUSERGROUPDATA['id'])
             ) {
                 $netPrice = $this->moduleManager->Articles()->sRound(
                     $this->moduleManager->Articles()->sGetPricegroupDiscount(

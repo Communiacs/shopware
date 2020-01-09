@@ -26,11 +26,6 @@ namespace Shopware\Plugin\Debug\Components;
 
 use Shopware\Components\Logger;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class EventCollector implements CollectorInterface
 {
     /**
@@ -42,6 +37,7 @@ class EventCollector implements CollectorInterface
      * @var \Enlight_Event_EventManager
      */
     protected $eventManager;
+
     /**
      * @var Utils
      */

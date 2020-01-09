@@ -40,10 +40,6 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
  * Global Manager which is responsible for initializing the adapter classes.
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
 class ModelManager extends EntityManager
 {
@@ -63,8 +59,8 @@ class ModelManager extends EntityManager
         Connection $conn,
         Configuration $config,
         QueryOperatorValidator $operatorValidator,
-        EventManager $eventManager = null)
-    {
+        EventManager $eventManager = null
+    ) {
         $this->operatorValidator = $operatorValidator;
         parent::__construct($conn, $config, $eventManager);
     }
@@ -82,8 +78,8 @@ class ModelManager extends EntityManager
         Connection $conn,
         Configuration $config,
         EventManager $eventManager = null,
-        QueryOperatorValidator $operatorValidator = null)
-    {
+        QueryOperatorValidator $operatorValidator = null
+    ) {
         if (!$config->getMetadataDriverImpl()) {
             throw ORMException::missingMappingDriverImpl();
         }

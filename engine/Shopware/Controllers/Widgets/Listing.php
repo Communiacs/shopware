@@ -28,9 +28,6 @@ use Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\Search\CustomFacet;
 use Shopware\Components\Compatibility\LegacyStructConverter;
 
-/**
- * Shopware Listing Widgets
- */
 class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
 {
     /**
@@ -38,7 +35,7 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
      */
     public function preDispatch()
     {
-        $this->Response()->setHeader('x-robots', 'noindex');
+        $this->Response()->setHeader('x-robots-tag', 'noindex');
     }
 
     /**
@@ -94,9 +91,9 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
             $body = json_encode($result, JSON_PRETTY_PRINT | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
         }
 
-        $this->Response()->setHeader('Content-type', 'application/json', true);
-        $this->Response()->setHttpResponseCode($responseCode);
-        $this->Response()->setBody($body);
+        $this->Response()->headers->set('content-type', 'application/json', true);
+        $this->Response()->setStatusCode($responseCode);
+        $this->Response()->setContent($body);
     }
 
     /**
@@ -135,12 +132,6 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
 
         $convertedProducts = $this->container->get('legacy_struct_converter')->convertListProductStructList($products);
 
-        /*
-         * @Deprecated
-         * The assignment of all request parameters to the view below is deprecated
-         * and about to be removed in 5.6
-         */
-        $this->View()->assign($this->Request()->getParams());
         $this->View()->assign(['sArticles' => $convertedProducts, 'articles' => $convertedProducts]);
     }
 
@@ -169,12 +160,7 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
 
         $convertedProducts = $this->container->get('legacy_struct_converter')
             ->convertListProductStructList($products->getProducts());
-        /*
-         * @Deprecated
-         * The assignment of all request parameters to the view below is deprecated
-         * and about to be removed in 5.6
-         */
-        $this->View()->assign($this->Request()->getParams());
+
         $this->View()->assign(['sArticles' => $convertedProducts, 'articles' => $convertedProducts]);
     }
 
@@ -327,8 +313,8 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
         }
 
         $this->Front()->Plugins()->ViewRenderer()->setNoRender();
-        $this->Response()->setBody(json_encode($body));
-        $this->Response()->setHeader('Content-type', 'application/json', true);
+        $this->Response()->setContent(json_encode($body));
+        $this->Response()->headers->set('content-type', 'application/json', true);
     }
 
     /**
@@ -475,6 +461,11 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
 
         $products = $this->convertProductsResult($result, $categoryId);
 
+        /*
+         * @deprecated
+         * The assignment of all request parameters to the view below is deprecated
+         * and about to be removed in 5.7
+         */
         $this->View()->assign($this->Request()->getParams());
 
         $this->loadThemeConfig();
@@ -539,6 +530,16 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
             return $products;
         }
 
+        $useShortDescription = $this->get('config')->get('useShortDescriptionInListing');
+        if ($useShortDescription) {
+            foreach ($products as &$product) {
+                if (strlen($product['description']) > 5) {
+                    $product['description_long'] = $product['description'];
+                }
+            }
+            unset($product);
+        }
+
         return $this->get('shopware_storefront.listing_link_rewrite_service')->rewriteLinks(
             $result->getCriteria(),
             $products,
@@ -552,7 +553,7 @@ class Shopware_Controllers_Widgets_Listing extends Enlight_Controller_Action
         $inheritance = $this->container->get('theme_inheritance');
 
         /** @var \Shopware\Models\Shop\Shop $shop */
-        $shop = $this->container->get('Shop');
+        $shop = $this->container->get('shop');
 
         $config = $inheritance->buildConfig($shop->getTemplate(), $shop, false);
 

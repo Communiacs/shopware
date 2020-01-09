@@ -92,7 +92,7 @@ class Shopware_Controllers_Backend_UpdateWizard extends Shopware_Controllers_Bac
      */
     private function getLocale()
     {
-        return $this->container->get('Auth')->getIdentity()->locale->getLocale();
+        return $this->container->get('auth')->getIdentity()->locale->getLocale();
     }
 
     /**
@@ -108,11 +108,18 @@ class Shopware_Controllers_Backend_UpdateWizard extends Shopware_Controllers_Bac
      */
     private function getAccessToken()
     {
-        if (!$this->get('BackendSession')->offsetExists('store_token')) {
+        if (!$this->get('backendsession')->offsetExists('store_token')) {
             return null;
         }
 
-        return unserialize($this->get('BackendSession')->offsetGet('store_token'));
+        $allowedClassList = [
+            AccessTokenStruct::class,
+        ];
+
+        return unserialize(
+            $this->get('backendsession')->offsetGet('store_token'),
+            ['allowed_classes' => $allowedClassList]
+        );
     }
 
     private function handleException(Exception $e)

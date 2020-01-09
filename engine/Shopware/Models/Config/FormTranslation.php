@@ -61,14 +61,14 @@ class FormTranslation extends ModelEntity
     private $id;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="label", type="string", nullable=true)
      */
     private $label;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="description", type="string", nullable=true)
      */
@@ -89,8 +89,6 @@ class FormTranslation extends ModelEntity
     private $localeId;
 
     /**
-     * Get id
-     *
      * @return int
      */
     public function getId()
@@ -111,7 +109,7 @@ class FormTranslation extends ModelEntity
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getLabel()
     {
@@ -119,8 +117,6 @@ class FormTranslation extends ModelEntity
     }
 
     /**
-     * Set description
-     *
      * @param string $description
      *
      * @return FormTranslation
@@ -133,9 +129,7 @@ class FormTranslation extends ModelEntity
     }
 
     /**
-     * Get description
-     *
-     * @return string
+     * @return string|null
      */
     public function getDescription()
     {

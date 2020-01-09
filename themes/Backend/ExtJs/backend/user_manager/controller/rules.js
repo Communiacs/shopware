@@ -78,7 +78,7 @@ Ext.define('Shopware.apps.UserManager.controller.Rules', {
             successMessage:'{s name=message/privilege/save_success_title}Privilege has been saved{/s}'
         },
         roleSave: {
-            successMessage:'{s name=message/role/save_success_title}Role rules have been saved{/s}'
+            successMessage:'{s name=message/role/save_success_title}Role privileges have been saved{/s}'
         },
 
         growlMessage: '{s name=growlMessage}User Management{/s}'
@@ -97,7 +97,6 @@ Ext.define('Shopware.apps.UserManager.controller.Rules', {
             'user-manager-rules-tree': {
                 deleteResource: me.onDeleteResource,
                 deletePrivilege: me.onDeletePrivilege,
-                searchResource: me.onSearchResource,
                 addResource: me.onAddResource,
                 addPrivilege: me.onAddPrivilege,
                 saveRolePrivileges: me.onSaveRolePrivileges,
@@ -116,10 +115,10 @@ Ext.define('Shopware.apps.UserManager.controller.Rules', {
     /**
      * Event will be fired when the user want to create a new privilege.
      *
-     * @param [Ext.window.Window] - The add window
-     * @param [Ext.form.Panel] - The form panel
-     * @param [Ext.data.Model] - The new record
-     * @param [Ext.data.Store] - The rules store
+     * @param { Ext.window.Window } window - The add window
+     * @param { Ext.form.Panel } form - The form panel
+     * @param { Ext.data.Model } record - The new record
+     * @param { Ext.data.Store } store - The rules store
      */
     onSavePrivilege: function(window, form, record, store) {
         var me = this,
@@ -143,7 +142,8 @@ Ext.define('Shopware.apps.UserManager.controller.Rules', {
               }
           }
         });
-        if(found == true) {
+
+        if(found === true) {
             return;
         }
 
@@ -169,10 +169,10 @@ Ext.define('Shopware.apps.UserManager.controller.Rules', {
     /**
      * Event will be fired when the user want to create a new resource.
      *
-     * @param [Ext.window.Window] - The add window
-     * @param [Ext.form.Panel] - The form panel
-     * @param [Ext.data.Model] - The new record
-     * @param [Ext.data.Store] - The rules store
+     * @param { Ext.window.Window } window - The add window
+     * @param { Ext.form.Panel } form - The form panel
+     * @param { Ext.data.Model } record - The new record
+     * @param { Ext.data.Store } store - The rules store
      */
     onSaveResource: function(window, form, record, store) {
         var me = this,
@@ -212,9 +212,9 @@ Ext.define('Shopware.apps.UserManager.controller.Rules', {
      * Event will be fired when the user change the tree checkboxes and
      * clicks the "Assign the selected privileges to the role" button
      *
-     * @param [Ext.data.Store] store - The component store.
-     * @param [int|null] roleId - The combo box value
-     * @param [array] checkedNodes - All checked tree nodes
+     * @param { Ext.data.Store } store - The component store.
+     * @param { int|null } roleId - The combo box value
+     * @param { array } checkedNodes - All checked tree nodes
      */
     onSaveRolePrivileges: function(store, roleId, checkedNodes) {
         var me = this;
@@ -235,6 +235,7 @@ Ext.define('Shopware.apps.UserManager.controller.Rules', {
                         var rule = Ext.create('Shopware.apps.UserManager.model.Rules');
                         rule.set('roleId', roleId);
                         rule.set('resourceId', item.get('resourceId'));
+
                         if (item.get('type') === 'resource') {
                             rule.set('privilegeId', null);
                         } else {
@@ -242,6 +243,7 @@ Ext.define('Shopware.apps.UserManager.controller.Rules', {
                         }
                         privilegeStore.add(rule);
                     });
+
                     role['getPrivilegeStore'] = privilegeStore;
 
                     role.save({
@@ -251,7 +253,7 @@ Ext.define('Shopware.apps.UserManager.controller.Rules', {
                                     rawData = record.getProxy().getReader().rawData;
 
                             if (operation.success === true) {
-                                Shopware.Notification.createGrowlMessage(me.snippets.successTitle, me.snippets.roleSave.successMessage, me.snippets.growlMessage);
+                                Shopware.Notification.createGrowlMessage(me.snippets.successTitle, Ext.String.format(me.snippets.roleSave.successMessage, rawData.data.name), me.snippets.growlMessage);
                             } else {
                                 Shopware.Notification.createGrowlMessage(me.snippets.errorTitle, me.snippets.errorMessage + ' ' + rawData.message, me.snippets.growlMessage);
                             }
@@ -267,8 +269,8 @@ Ext.define('Shopware.apps.UserManager.controller.Rules', {
      * Event will be fired when the user select a role in the combo box
      * which is placed on top of the rules tree
      *
-     * @param [Ext.data.Store] - The component store.
-     * @param [int|null] - The combo box value
+     * @param { Ext.data.Store } store The component store.
+     * @param { int|null } value The combo box value
      */
     onRoleSelect: function(store, value) {
         var me = this;
@@ -289,8 +291,8 @@ Ext.define('Shopware.apps.UserManager.controller.Rules', {
      * the delete action column of the rules tree component of
      * a record with the property type "resource"
      *
-     * @param [Ext.data.Model] record
-     * @param [Ext.data.Store] store
+     * @param { Ext.data.Model } resource
+     * @param { Ext.data.Store } store
      */
     onDeleteResource: function(resource, store) {
         var me = this,
@@ -333,8 +335,8 @@ Ext.define('Shopware.apps.UserManager.controller.Rules', {
      * the delete action column of the rules tree component of
      * a record with the property type "privilege"
      *
-     * @param [Ext.data.Model] record
-     * @param [Ext.data.Store] store
+     * @param { Ext.data.Model } privilege
+     * @param { Ext.data.Store } store
      */
     onDeletePrivilege: function(privilege, store) {
         var me = this,
@@ -371,38 +373,10 @@ Ext.define('Shopware.apps.UserManager.controller.Rules', {
     },
 
     /**
-     * Event will be fired when the user insert a value into the search text field which
-     * is displayed on top of the rules tree.
-     * @param [Ext.data.Store] store - The component store.
-     * @param [Ext.String] value - The search value which inserted in the search text field.
-     * @return boolean
-     */
-    onSearchResource: function(store, value) {
-        var me = this,
-            searchString = Ext.String.trim(value);
-
-        //scroll the store to first page
-        store.currentPage = 1;
-
-        //If the search-value is empty, reset the filter
-        if ( searchString.length === 0 ) {
-            store.getProxy().extraParams = {
-                role: store.getProxy().extraParams.role
-            };
-        } else {
-            store.getProxy().extraParams = {
-                search: searchString,
-                role: store.getProxy().extraParams.role
-            };
-        }
-        store.load();
-        return true;
-    },
-
-    /**
      * Event will be fired when the user clicks on the "add resource button"
      *
-     * @param [Ext.data.Store] - The component store.
+     * @param { Ext.data.Store } store - The component store.
+     * @param { int } resourceId
      */
     onAddPrivilege: function(store, resourceId) {
         var record = Ext.create('Shopware.apps.UserManager.model.Privilege', {
@@ -419,7 +393,7 @@ Ext.define('Shopware.apps.UserManager.controller.Rules', {
     /**
      * Event will be fired when the user clicks on the "add privilege button"
      *
-     * @param [Ext.data.Store] - The component store.
+     * @param { Ext.data.Store } store - The component store.
      */
     onAddResource: function(store) {
         var record = Ext.create('Shopware.apps.UserManager.model.Resource');
@@ -429,7 +403,5 @@ Ext.define('Shopware.apps.UserManager.controller.Rules', {
             ruleStore: store
         }).show();
     }
-
-
 });
 //{/block}

@@ -59,33 +59,26 @@ Ext.define('Shopware.apps.Supplier.view.main.List', {
         // Define the columns and renders
         me.columns = me.getGridColumns();
 
-        // Adding a paging toolbar to the grid
-        me.dockedItems = [{
-            dock: 'bottom',
-            xtype: 'pagingtoolbar',
-            displayInfo: true,
-            store: this.supplierStore
-        }];
+        me.bbar = me.getPagingbar();
 
-        me.dockedItems = Ext.clone(me.dockedItems);
         me.callParent(arguments);
     },
+
     /**
      * Return the selection model for this grid.
      *
      * @return Ext.selection.CheckboxModel
      */
-    getSelModel : function()
-    {
+    getSelModel : function() {
         return Ext.create('Ext.selection.CheckboxModel');
     },
+
     /**
      * Return an array of objects (grid columns)
      *
      * @return array of grid columns
      */
-    getGridColumns : function()
-    {
+    getGridColumns : function() {
         var me = this;
         return [
             {
@@ -125,8 +118,7 @@ Ext.define('Shopware.apps.Supplier.view.main.List', {
      *
      * @return Array of buttons
      */
-    getActionColumn : function()
-    {
+    getActionColumn : function() {
         return [
             /*{if {acl_is_allowed privilege=delete}}*/
             {
@@ -144,6 +136,69 @@ Ext.define('Shopware.apps.Supplier.view.main.List', {
             /*{/if}*/
         ];
     },
+
+    getPagingbar: function () {
+        var me = this,
+            manufacturerSnippet = '{s name=paging_term}manufacturer{/s}';
+
+        var pageSize = Ext.create('Ext.form.field.ComboBox', {
+            labelWidth: 120,
+            cls: Ext.baseCSSPrefix + 'page-size',
+            queryMode: 'local',
+            width: 180,
+            editable: false,
+            listeners: {
+                scope: me,
+                select: me.onPageSizeChange
+            },
+            store: Ext.create('Ext.data.Store', {
+                fields: [ 'value', 'name' ],
+                data: [
+                    { value: '25', name: '25 ' + manufacturerSnippet },
+                    { value: '50', name: '50 ' + manufacturerSnippet },
+                    { value: '75', name: '75 ' + manufacturerSnippet },
+                    { value: '100', name: '100 ' + manufacturerSnippet },
+                    { value: '125', name: '125 ' + manufacturerSnippet },
+                    { value: '150', name: '150 ' + manufacturerSnippet }
+                ]
+            }),
+            displayField: 'name',
+            valueField: 'value',
+            value: '25'
+        });
+
+        var pagingBar = Ext.create('Ext.toolbar.Paging', {
+            dock: 'bottom',
+            displayInfo: true,
+            store: me.store
+        });
+
+        pagingBar.insert(pagingBar.items.length, [
+            { xtype: 'tbspacer', width: 6 },
+            pageSize
+        ]);
+
+        return pagingBar;
+    },
+
+    /**
+     * Event listener method which fires when the user selects
+     * a entry in the "number of orders"-combo box.
+     *
+     * @event select
+     * @param { object } combo - Ext.form.field.ComboBox
+     * @param { array } records - Array of selected entries
+     * @return void
+     */
+    onPageSizeChange: function (combo, records) {
+        var record = records[0],
+            me = this;
+
+        me.store.pageSize = record.get('value');
+
+        me.store.loadPage(1);
+    },
+
     /**
      * Formats the email column
      *

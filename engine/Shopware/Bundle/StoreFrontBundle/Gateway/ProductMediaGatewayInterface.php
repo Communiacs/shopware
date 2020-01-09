@@ -26,11 +26,6 @@ namespace Shopware\Bundle\StoreFrontBundle\Gateway;
 
 use Shopware\Bundle\StoreFrontBundle\Struct;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 interface ProductMediaGatewayInterface
 {
     /**
@@ -97,7 +92,6 @@ interface ProductMediaGatewayInterface
      * Required conditions for the selection:
      * - Selects only product media which has no configurator configuration
      * - Sorted ascending by the image main flag and image position
-     *
      *
      * @return Struct\Media[]
      */

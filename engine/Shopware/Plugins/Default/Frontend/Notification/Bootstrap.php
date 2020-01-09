@@ -223,7 +223,7 @@ class Shopware_Plugins_Frontend_Notification_Bootstrap extends Shopware_Componen
             $json_data = [];
             if (!empty($getConfirmation['hash'])) {
                 $notificationConfirmed = true;
-                $json_data = unserialize($getConfirmation['data']);
+                $json_data = unserialize($getConfirmation['data'], ['allowed_classes' => false]);
                 $db->query('DELETE FROM s_core_optin WHERE hash=?', [$action->Request()->sNotificationConfirmation]);
             }
             if ($notificationConfirmed) {
@@ -339,15 +339,15 @@ class Shopware_Plugins_Frontend_Notification_Bootstrap extends Shopware_Componen
             $product = $queryBuilder->execute()->fetch(\PDO::FETCH_ASSOC);
 
             if (
-                empty($product) ||   // No product associated with the specified order number (empty result set)
-                empty($product['articleID']) || // or empty articleID
-                empty($product['notification']) || // or notification disabled on product
-                empty($product['active']) // or product is not active
+                empty($product)   // No product associated with the specified order number (empty result set)
+                || empty($product['articleID']) // or empty articleID
+                || empty($product['notification']) // or notification disabled on product
+                || empty($product['active']) // or product is not active
             ) {
                 continue;
             }
 
-            /** @var Shopware\Bundle\AttributeBundle\Service\DataLoader $attributeLoader */
+            /** @var Shopware\Bundle\AttributeBundle\Service\DataLoaderInterface $attributeLoader */
             $attributeLoader = $this->get('shopware_attribute.data_loader');
             $notify['attribute'] = $attributeLoader->load('s_articles_notification_attributes', $notify['id']);
 
@@ -359,7 +359,7 @@ class Shopware_Plugins_Frontend_Notification_Bootstrap extends Shopware_Componen
                 continue;
             }
 
-            $shop->registerResources();
+            $this->get('shopware.components.shop_registration_service')->registerShop($shop);
 
             $shopContext = Context::createFromShop($shop, $this->get('config'));
             $this->get('router')->setContext($shopContext);

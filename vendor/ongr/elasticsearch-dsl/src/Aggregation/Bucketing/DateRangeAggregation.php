@@ -51,7 +51,8 @@ class DateRangeAggregation extends AbstractAggregation
         foreach ($ranges as $range) {
             $from = isset($range['from']) ? $range['from'] : null;
             $to = isset($range['to']) ? $range['to'] : null;
-            $this->addRange($from, $to);
+            $key = isset($range['key']) ? $range['key'] : null;
+            $this->addRange($from, $to, $key);
         }
     }
 
@@ -74,17 +75,21 @@ class DateRangeAggregation extends AbstractAggregation
      * @param string|null $from
      * @param string|null $to
      *
-     * @return RangeAggregation
+     * @return $this
      *
      * @throws \LogicException
      */
-    public function addRange($from = null, $to = null)
+    public function addRange($from = null, $to = null, $key = null)
     {
         $range = array_filter(
             [
                 'from' => $from,
                 'to' => $to,
-            ]
+                'key' => $key,
+            ],
+            function ($v) {
+                return !is_null($v);
+            }
         );
 
         if (empty($range)) {

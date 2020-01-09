@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Shopware 5
  * Copyright (c) shopware AG
@@ -25,8 +26,8 @@
 namespace Shopware\Bundle\SearchBundleES;
 
 use Elasticsearch\Client;
-use ONGR\ElasticsearchDSL\Search;
 use ONGR\ElasticsearchDSL\Sort\FieldSort;
+use Shopware\Bundle\ESIndexingBundle\EsSearch;
 use Shopware\Bundle\ESIndexingBundle\IndexFactoryInterface;
 use Shopware\Bundle\ESIndexingBundle\Product\ProductMapping;
 use Shopware\Bundle\SearchBundle\Criteria;
@@ -56,16 +57,23 @@ class ProductNumberSearch implements ProductNumberSearchInterface
     private $indexFactory;
 
     /**
+     * @var string
+     */
+    private $esVersion;
+
+    /**
      * @param HandlerInterface[] $handlers
      */
     public function __construct(
         Client $client,
         IndexFactoryInterface $indexFactory,
-        $handlers
+        $handlers,
+        string $esVersion
     ) {
         $this->client = $client;
         $this->handlers = $handlers;
         $this->indexFactory = $indexFactory;
+        $this->esVersion = $esVersion;
     }
 
     /**
@@ -76,11 +84,25 @@ class ProductNumberSearch implements ProductNumberSearchInterface
         $search = $this->buildSearch($criteria, $context);
         $index = $this->indexFactory->createShopIndex($context->getShop(), ProductMapping::TYPE);
 
-        $data = $this->client->search([
+        $arguments = [
             'index' => $index->getName(),
             'type' => ProductMapping::TYPE,
             'body' => $search->toArray(),
-        ]);
+        ];
+
+        if (version_compare($this->esVersion, '7', '>=')) {
+            $arguments = array_merge(
+                $arguments,
+                [
+                    'rest_total_hits_as_int' => true,
+                    'track_total_hits' => true,
+                ]
+            );
+        }
+
+        $data = $this->client->search(
+            $arguments
+        );
 
         $products = $this->createProducts($data);
 
@@ -111,14 +133,9 @@ class ProductNumberSearch implements ProductNumberSearchInterface
         );
     }
 
-    /**
-     * @throws \Exception
-     *
-     * @return Search
-     */
-    private function buildSearch(Criteria $criteria, ShopContextInterface $context)
+    private function buildSearch(Criteria $criteria, ShopContextInterface $context): EsSearch
     {
-        $search = new Search();
+        $search = new EsSearch();
 
         $this->addConditions($criteria, $context, $search);
         $this->addCriteriaParts($criteria, $context, $search, $criteria->getSortings());
@@ -141,20 +158,18 @@ class ProductNumberSearch implements ProductNumberSearchInterface
     private function addCriteriaParts(
         Criteria $criteria,
         ShopContextInterface $context,
-        Search $search,
+        EsSearch $search,
         array $criteriaParts
     ) {
         foreach ($criteriaParts as $criteriaPart) {
             $handler = $this->getHandler($criteriaPart);
-            if (!$handler) {
-                continue;
-            }
+
             $handler->handle($criteriaPart, $criteria, $search, $context);
         }
     }
 
     /**
-     * @return HandlerInterface|null
+     * @return HandlerInterface|PartialConditionHandlerInterface
      */
     private function getHandler(CriteriaPartInterface $criteriaPart)
     {
@@ -171,7 +186,7 @@ class ProductNumberSearch implements ProductNumberSearchInterface
      *
      * @return \Shopware\Bundle\StoreFrontBundle\Struct\BaseProduct[]
      */
-    private function createProducts($data)
+    private function createProducts(array $data): array
     {
         $products = [];
         foreach ($data['hits']['hits'] as $row) {
@@ -197,19 +212,13 @@ class ProductNumberSearch implements ProductNumberSearchInterface
         return $products;
     }
 
-    /**
-     * @throws \Exception
-     */
     private function addConditions(
         Criteria $criteria,
         ShopContextInterface $context,
-        Search $search
-    ) {
+        EsSearch $search
+    ): void {
         foreach ($criteria->getBaseConditions() as $condition) {
             $handler = $this->getHandler($condition);
-            if (!$handler) {
-                continue;
-            }
 
             if ($handler instanceof PartialConditionHandlerInterface) {
                 $handler->handleFilter($condition, $criteria, $search, $context);
@@ -221,10 +230,6 @@ class ProductNumberSearch implements ProductNumberSearchInterface
 
         foreach ($criteria->getUserConditions() as $criteriaPart) {
             $handler = $this->getHandler($criteriaPart);
-
-            if (!$handler) {
-                continue;
-            }
 
             // Trigger error when new interface isn't implemented
             if (!$handler instanceof PartialConditionHandlerInterface) {
@@ -251,10 +256,7 @@ class ProductNumberSearch implements ProductNumberSearchInterface
         }
     }
 
-    /**
-     * @return array
-     */
-    private function sortFacets(Criteria $criteria, ProductNumberSearchResult $result)
+    private function sortFacets(Criteria $criteria, ProductNumberSearchResult $result): array
     {
         $sorting = array_map(function (FacetInterface $facet) {
             return $facet->getName();

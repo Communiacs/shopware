@@ -29,13 +29,6 @@ use Shopware\Models\Dispatch\Holiday;
 use Shopware\Models\Dispatch\ShippingCost;
 use Shopware\Models\Payment\Payment;
 
-/**
- * Shopware Backend Shipping / Dispatch
- *
- * Controller to handle the ExtJS-Requests
- * Handles the adding, the deletion and the editing of shipping costs by
- * calling the repository-functions
- */
 class Shopware_Controllers_Backend_Shipping extends Shopware_Controllers_Backend_ExtJs
 {
     /**
@@ -82,6 +75,17 @@ class Shopware_Controllers_Backend_Shipping extends Shopware_Controllers_Backend
         $totalResult = $paginator->count();
         $shippingCosts = $paginator->getIterator()->getArrayCopy();
         $shippingCosts = $this->convertShippingCostsDates($shippingCosts);
+
+        // Translate dispatch methods
+        // The standard $translationComponent->translateDispatches can not be used here since the
+        // name and the description may not be overridden. Both fields are edible and if the translation is
+        // shown in the edit field, there is a high chance of a user saving the translation as name.
+        $translator = $this->get('translation')->getObjectTranslator('config_dispatch');
+        $shippingCosts = array_map(function ($dispatchMethod) use ($translator) {
+            $translatedDispatchMethod = $translator->translateObjectProperty($dispatchMethod, 'dispatch_name', 'translatedName', $dispatchMethod['name']);
+
+            return $translator->translateObjectProperty($translatedDispatchMethod, 'dispatch_description', 'translatedDescription', $dispatchMethod['description']);
+        }, $shippingCosts);
 
         $this->View()->assign(['success' => true, 'data' => $shippingCosts, 'total' => $totalResult]);
     }
@@ -184,6 +188,8 @@ class Shopware_Controllers_Backend_Shipping extends Shopware_Controllers_Backend
     }
 
     /**
+     * @deprecated in 5.6, will be private in 5.8
+     *
      * Removes all shipping costs for a given dispatch ID and returns the number of
      * deleted records.
      *
@@ -193,6 +199,8 @@ class Shopware_Controllers_Backend_Shipping extends Shopware_Controllers_Backend
      */
     public function deleteCostsMatrix($dispatchId)
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be private with 5.8.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         $dispatchId = (int) $dispatchId;
         $purge = $this->getRepository()->getPurgeShippingCostsMatrixQuery($dispatchId);
 
@@ -247,10 +255,14 @@ class Shopware_Controllers_Backend_Shipping extends Shopware_Controllers_Backend
     }
 
     /**
+     * @deprecated in 5.6, will be private in 5.8
+     *
      * Saves one entry of the shipping aka dispatch costs matrix
      */
     public function saveCostsMatrix()
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be private with 5.8.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         $data = null;
         if (!$this->Request()->isPost()) {
             $this->View()->assign(['success' => false, 'errorMsg' => 'Empty Post Request']);

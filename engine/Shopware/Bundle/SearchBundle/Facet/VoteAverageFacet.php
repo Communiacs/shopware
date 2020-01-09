@@ -26,13 +26,10 @@ namespace Shopware\Bundle\SearchBundle\Facet;
 
 use Shopware\Bundle\SearchBundle\FacetInterface;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class VoteAverageFacet implements FacetInterface
 {
+    private const NAME = 'vote_average';
+
     /**
      * @var string|null
      */
@@ -59,6 +56,6 @@ class VoteAverageFacet implements FacetInterface
      */
     public function getName()
     {
-        return 'vote_average';
+        return self::NAME;
     }
 }

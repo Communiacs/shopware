@@ -30,8 +30,6 @@ use Shopware\Models\Property\Option;
 use Shopware\Models\Property\Value;
 
 /**
- * Backend search controller
- *
  * This controller provides the global search in the Shopware backend. The
  * search has the ability to provides search results from the different
  * areas starting from articles to orders
@@ -88,9 +86,7 @@ class Shopware_Controllers_Backend_Search extends Shopware_Controllers_Backend_E
         }
 
         // Sanitize and clean up the search parameter for later processing
-        $term = $this->Request()->get('search');
-        $term = strtolower($term);
-        $term = trim($term);
+        $term = mb_strtolower(trim($this->Request()->get('search')));
 
         $term = preg_replace('/[^\\w0-9]+/u', ' ', $term);
         $term = trim(preg_replace('/\s+/', '%', $term), '%');
@@ -116,6 +112,8 @@ class Shopware_Controllers_Backend_Search extends Shopware_Controllers_Backend_E
      */
     public function getArticles($search)
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.5.8 and will be removed in 5.7. Use the ProductRepository instead.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         /** @var \Doctrine\DBAL\Query\QueryBuilder $query */
         $query = $this->container->get('dbal_connection')->createQueryBuilder();
 
@@ -160,6 +158,8 @@ class Shopware_Controllers_Backend_Search extends Shopware_Controllers_Backend_E
      */
     public function getCustomers($search)
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.5.8 and will be removed in 5.7. Use the CustomerRepository instead.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         $search2 = Shopware()->Db()->quote("$search%");
         $search = Shopware()->Db()->quote("%$search%");
 
@@ -197,6 +197,8 @@ class Shopware_Controllers_Backend_Search extends Shopware_Controllers_Backend_E
      */
     public function getOrders($search)
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.5.8 and will be removed in 5.7. Use the OrderRepository instead.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         $search = Shopware()->Db()->quote("$search%");
 
         $sql = "
@@ -330,10 +332,10 @@ class Shopware_Controllers_Backend_Search extends Shopware_Controllers_Backend_E
 
         $fields = array_filter(
             $metaData->getFieldNames(),
-            function ($field) use ($metaData) {
+            static function ($field) use ($metaData) {
                 $type = $metaData->getTypeOfField($field);
 
-                return in_array($type, ['string', 'text', 'date', 'datetime', 'decimal', 'float']);
+                return in_array($type, ['string', 'text', 'decimal', 'float']);
             }
         );
 
@@ -355,7 +357,7 @@ class Shopware_Controllers_Backend_Search extends Shopware_Controllers_Backend_E
 
         $builder = Shopware()->Container()->get('shopware.model.search_builder');
 
-        $fields = array_map(function ($field) {
+        $fields = array_map(static function ($field) {
             return 'entity.' . $field;
         }, $fields);
 

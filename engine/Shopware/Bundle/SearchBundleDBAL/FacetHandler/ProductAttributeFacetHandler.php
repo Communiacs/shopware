@@ -25,8 +25,8 @@
 namespace Shopware\Bundle\SearchBundleDBAL\FacetHandler;
 
 use Shopware\Bundle\AttributeBundle\Service\ConfigurationStruct;
-use Shopware\Bundle\AttributeBundle\Service\CrudService;
-use Shopware\Bundle\AttributeBundle\Service\TypeMapping;
+use Shopware\Bundle\AttributeBundle\Service\CrudServiceInterface;
+use Shopware\Bundle\AttributeBundle\Service\TypeMappingInterface;
 use Shopware\Bundle\SearchBundle\Condition\ProductAttributeCondition;
 use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundle\Facet\ProductAttributeFacet;
@@ -43,11 +43,6 @@ use Shopware\Bundle\SearchBundleDBAL\QueryBuilderFactoryInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class ProductAttributeFacetHandler implements PartialFacetHandlerInterface
 {
     /**
@@ -56,13 +51,13 @@ class ProductAttributeFacetHandler implements PartialFacetHandlerInterface
     private $queryBuilderFactory;
 
     /**
-     * @var CrudService
+     * @var CrudServiceInterface
      */
     private $crudService;
 
     public function __construct(
         QueryBuilderFactoryInterface $queryBuilderFactory,
-        CrudService $crudService
+        CrudServiceInterface $crudService
     ) {
         $this->queryBuilderFactory = $queryBuilderFactory;
         $this->crudService = $crudService;
@@ -355,7 +350,7 @@ class ProductAttributeFacetHandler implements PartialFacetHandlerInterface
             return null;
         }
 
-        $result = @unserialize($row[$key]);
+        $result = @unserialize($row[$key], ['allowed_classes' => false]);
         if (!$result) {
             return null;
         }
@@ -377,22 +372,22 @@ class ProductAttributeFacetHandler implements PartialFacetHandlerInterface
     private function getTypeTemplate($type, $mode, $defaultTemplate)
     {
         switch (true) {
-            case $type === TypeMapping::TYPE_DATE && $mode === ProductAttributeFacet::MODE_RANGE_RESULT:
+            case $type === TypeMappingInterface::TYPE_DATE && $mode === ProductAttributeFacet::MODE_RANGE_RESULT:
 
                 return 'frontend/listing/filter/facet-date-range.tpl';
-            case $type === TypeMapping::TYPE_DATE && $mode === ProductAttributeFacet::MODE_VALUE_LIST_RESULT:
+            case $type === TypeMappingInterface::TYPE_DATE && $mode === ProductAttributeFacet::MODE_VALUE_LIST_RESULT:
 
                 return 'frontend/listing/filter/facet-date-multi.tpl';
-            case $type === TypeMapping::TYPE_DATE && $mode !== ProductAttributeFacet::MODE_BOOLEAN_RESULT:
+            case $type === TypeMappingInterface::TYPE_DATE && $mode !== ProductAttributeFacet::MODE_BOOLEAN_RESULT:
 
                 return 'frontend/listing/filter/facet-date.tpl';
-            case $type === TypeMapping::TYPE_DATETIME && $mode === ProductAttributeFacet::MODE_RANGE_RESULT:
+            case $type === TypeMappingInterface::TYPE_DATETIME && $mode === ProductAttributeFacet::MODE_RANGE_RESULT:
 
                 return 'frontend/listing/filter/facet-datetime-range.tpl';
-            case $type === TypeMapping::TYPE_DATETIME && $mode === ProductAttributeFacet::MODE_VALUE_LIST_RESULT:
+            case $type === TypeMappingInterface::TYPE_DATETIME && $mode === ProductAttributeFacet::MODE_VALUE_LIST_RESULT:
 
                 return 'frontend/listing/filter/facet-datetime-multi.tpl';
-            case $type === TypeMapping::TYPE_DATETIME && $mode !== ProductAttributeFacet::MODE_BOOLEAN_RESULT:
+            case $type === TypeMappingInterface::TYPE_DATETIME && $mode !== ProductAttributeFacet::MODE_BOOLEAN_RESULT:
 
                 return 'frontend/listing/filter/facet-datetime.tpl';
             default:

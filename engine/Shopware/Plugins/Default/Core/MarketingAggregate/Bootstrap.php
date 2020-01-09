@@ -22,15 +22,6 @@
  * our trademarks remain entirely with us.
  */
 
-/**
- * Shopware Compare Plugin - Bootstrap
- * The plugin bootstrap of the marketing data plugin registers all events
- * and configurations for the shopware aggregate functions within shopware.
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class Shopware_Plugins_Core_MarketingAggregate_Bootstrap extends Shopware_Components_Plugin_Bootstrap
 {
     /**
@@ -100,7 +91,7 @@ class Shopware_Plugins_Core_MarketingAggregate_Bootstrap extends Shopware_Compon
      */
     public function TopSeller()
     {
-        return Shopware()->Container()->get('TopSeller');
+        return Shopware()->Container()->get('topseller');
     }
 
     /**
@@ -110,7 +101,7 @@ class Shopware_Plugins_Core_MarketingAggregate_Bootstrap extends Shopware_Compon
      */
     public function AlsoBought()
     {
-        return Shopware()->Container()->get('AlsoBought');
+        return Shopware()->Container()->get('alsobought');
     }
 
     /**
@@ -120,7 +111,7 @@ class Shopware_Plugins_Core_MarketingAggregate_Bootstrap extends Shopware_Compon
      */
     public function SimilarShown()
     {
-        return Shopware()->Container()->get('SimilarShown');
+        return Shopware()->Container()->get('similarshown');
     }
 
     /**
@@ -163,7 +154,7 @@ class Shopware_Plugins_Core_MarketingAggregate_Bootstrap extends Shopware_Compon
         );
 
         $similarShown = Enlight_Class::Instance('Shopware_Components_SimilarShown');
-        Shopware()->Container()->set('SimilarShown', $similarShown);
+        Shopware()->Container()->set('similarshown', $similarShown);
 
         return $similarShown;
     }
@@ -294,7 +285,7 @@ class Shopware_Plugins_Core_MarketingAggregate_Bootstrap extends Shopware_Compon
         );
 
         $alsoBought = Enlight_Class::Instance('Shopware_Components_AlsoBought');
-        Shopware()->Container()->set('AlsoBought', $alsoBought);
+        Shopware()->Container()->set('alsobought', $alsoBought);
 
         return $alsoBought;
     }
@@ -360,7 +351,7 @@ class Shopware_Plugins_Core_MarketingAggregate_Bootstrap extends Shopware_Compon
         );
 
         $topSeller = Enlight_Class::Instance('Shopware_Components_TopSeller');
-        Shopware()->Container()->set('TopSeller', $topSeller);
+        Shopware()->Container()->set('topseller', $topSeller);
 
         return $topSeller;
     }

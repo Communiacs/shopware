@@ -161,6 +161,13 @@ class Shopware_Models_Document_Order extends Enlight_Class implements Enlight_Ho
     protected $_discount;
 
     /**
+     * Document configuration
+     *
+     * @var array
+     */
+    protected $_config;
+
+    /**
      * @var \Shopware\Models\Tax\Repository
      */
     protected $_taxRepository;
@@ -185,6 +192,8 @@ class Shopware_Models_Document_Order extends Enlight_Class implements Enlight_Ho
         }
 
         $this->_id = $id;
+
+        $this->_config = $config;
 
         $this->_summaryNet = isset($config['summaryNet']) ? $config['summaryNet'] : false;
 
@@ -226,7 +235,7 @@ class Shopware_Models_Document_Order extends Enlight_Class implements Enlight_Ho
         $array['_paymentInstances'] = $array['_paymentInstances']->getArrayCopy();
         $array['_dispatch'] = $array['_dispatch']->getArrayCopy();
         $array['_currency'] = $array['_currency']->getArrayCopy();
-        //$array["_order"] = current($array["_order"]);
+
         return $array;
     }
 
@@ -283,7 +292,24 @@ class Shopware_Models_Document_Order extends Enlight_Class implements Enlight_Ho
      */
     public function processOrder()
     {
-        $shippingName = Shopware()->Snippets()->getNamespace('documents/index')->get('ShippingCosts', 'Shipping costs', true);
+        $snippetManager = Shopware()->Snippets();
+        $modelManager = Shopware()->Models();
+        $orderLocale = null;
+
+        if ($modelManager !== null) {
+            /** @var \Shopware\Models\Shop\Locale $orderLocale */
+            $orderLocale = $modelManager->find(
+                \Shopware\Models\Shop\Locale::class,
+                $this->_order['language']
+            );
+        }
+
+        if ($orderLocale !== null) {
+            $snippetManager->setLocale($orderLocale);
+        }
+
+        $namespace = $snippetManager->getNamespace('documents/index');
+        $shippingName = $namespace->get('ShippingCosts', 'Shipping costs', true);
 
         if ($this->_order['invoice_shipping_tax_rate'] === null) {
             if ($this->_order['invoice_shipping_net'] != 0) {
@@ -386,9 +412,12 @@ class Shopware_Models_Document_Order extends Enlight_Class implements Enlight_Ho
      */
     public function getPositions()
     {
+        $translator = Shopware()->Container()->get('translation');
+        $orderLocale = $this->_order['language'];
+
         $this->_positions = new ArrayObject(Shopware()->Db()->fetchAll('
         SELECT
-            od.*, a.taxID as articleTaxID,
+            od.*, a.taxID as articleTaxID, d.kind,
             at.attr1, at.attr2, at.attr3, at.attr4, at.attr5, at.attr6, at.attr7, at.attr8, at.attr9, at.attr10,
             at.attr11, at.attr12, at.attr13, at.attr14, at.attr15, at.attr16, at.attr17, at.attr18, at.attr19, at.attr20
         FROM  s_order_details od
@@ -414,6 +443,17 @@ class Shopware_Models_Document_Order extends Enlight_Class implements Enlight_Ho
             $position['attributes'] = Shopware()->Db()->fetchRow('
             SELECT * FROM s_order_details_attributes WHERE detailID = ?
             ', [$position['id']]);
+
+            if (in_array((int) $position['modus'], [0, 1], true)) {
+                $kind = (int) $position['kind'];
+                $translation = $translator->read(
+                    $orderLocale,
+                    $kind === 1 ? 'article' : 'variant',
+                    $position[$kind === 1 ? 'articleID' : 'articleDetailID']
+                );
+
+                $position = $this->assignAttributeTranslation($position, $translation);
+            }
 
             $this->_positions->offsetSet($key, $position);
         }
@@ -516,7 +556,7 @@ class Shopware_Models_Document_Order extends Enlight_Class implements Enlight_Ho
 
                 if ($this->_net == true) {
                     $position['netto'] = round($position['price'], 2);
-                    $position['price'] = round($position['price'], 2) * (1 + $position['tax'] / 100);
+                    $position['price'] = Shopware()->Container()->get('shopware.cart.net_rounding')->round($position['price'], $position['tax'], 1);
                 } else {
                     $position['netto'] = $position['price'] / (100 + $position['tax']) * 100;
                 }
@@ -564,7 +604,7 @@ class Shopware_Models_Document_Order extends Enlight_Class implements Enlight_Ho
             $this->_amount += $position['amount'];
 
             if (!empty($position['tax'])) {
-                $this->_tax[number_format((float) $position['tax'], 2)] += round($position['amount'] / ($position['tax'] + 100) * $position['tax'], 2);
+                $this->_tax[number_format((float) $position['tax'], 2)] += round($position['amount'] - $position['amount_netto'], 2);
             }
             if ($position['amount'] <= 0) {
                 $this->_discount += $position['amount'];
@@ -731,9 +771,9 @@ class Shopware_Models_Document_Order extends Enlight_Class implements Enlight_Ho
     public function getPaymentInstances()
     {
         $this->_paymentInstances = new ArrayObject(
-            Shopware()->Db()->fetchAll('
-                SELECT * FROM s_core_payment_instance
-                WHERE order_id=?',
+            Shopware()->Db()->fetchAll(
+                'SELECT * FROM s_core_payment_instance
+                 WHERE order_id=?',
                 [$this->_id]
             ),
             ArrayObject::ARRAY_AS_PROPS
@@ -781,36 +821,6 @@ class Shopware_Models_Document_Order extends Enlight_Class implements Enlight_Ho
         }
 
         return $this->_taxRepository;
-    }
-
-    /**
-     * Converts the serialized array to utf8 by unserializing it, iterating through each element and setting the encoding to utf8.
-     * It also reverts the arrays to objects
-     *
-     * @param array|\ArrayIterator $array
-     *
-     * @return array
-     */
-    private function convertToUtf8($array)
-    {
-        $testArray = [];
-        foreach ($array as $key => &$arrayElement) {
-            if (preg_match("/\{/", $arrayElement)) {
-                $arrayElement = unserialize($arrayElement);
-            }
-            if (!is_object($arrayElement)) {
-                if (is_array($arrayElement)) {
-                    $testArray[$key] = $this->convertToUtf8($arrayElement);
-                } else {
-                    $testArray[$key] = utf8_encode($arrayElement);
-                }
-            } else {
-                $arrayElement = $arrayElement->getArrayCopy();
-                $testArray[$key] = new ArrayObject($this->convertToUtf8($arrayElement), ArrayObject::ARRAY_AS_PROPS);
-            }
-        }
-
-        return $testArray;
     }
 
     /**
@@ -888,5 +898,26 @@ class Shopware_Models_Document_Order extends Enlight_Class implements Enlight_Ho
         }
 
         return $prices;
+    }
+
+    /**
+     * This method overwrites all attribute values with the translated value
+     * in case there is one.
+     */
+    private function assignAttributeTranslation(array $position, array $translation): array
+    {
+        $prefix = '__attribute_';
+
+        foreach ($translation as $key => $value) {
+            // Abort if the current value is empty or not a translated attribute
+            if ($value === '' || strpos($key, $prefix) !== 0) {
+                continue;
+            }
+
+            $attributeKey = substr($key, strlen($prefix));
+            $position[$attributeKey] = $value;
+        }
+
+        return $position;
     }
 }

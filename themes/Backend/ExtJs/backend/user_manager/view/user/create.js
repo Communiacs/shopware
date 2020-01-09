@@ -60,7 +60,7 @@ Ext.define('Shopware.apps.UserManager.view.user.Create', {
         me.localeStore = Ext.create('Shopware.apps.UserManager.store.Locale').load();
         me.roleStore = Ext.create('Shopware.apps.UserManager.store.Roles').load();
 
-        me.items = me.getUserTab();
+        me.items = me.getUserForm();
 
         me.formPanel.loadRecord(me.record);
         me.attributeForm.loadAttribute(null);
@@ -123,23 +123,8 @@ Ext.define('Shopware.apps.UserManager.view.user.Create', {
      *
      * @return
      */
-    getUserTab: function(){
-      return Ext.create('Ext.tab.Panel',{
-            activeTab: 0,
-            items: [
-               this.getUserForm()
-            ]
-      });
-    },
-
-    /**
-     *
-     * @return
-     */
     getUserForm: function(){
-        var me = this;
-
-        me.attributeForm = Ext.create('Shopware.attribute.Form', {
+        this.attributeForm = Ext.create('Shopware.attribute.Form', {
             table: 's_core_auth_attributes'
         });
 
@@ -148,7 +133,6 @@ Ext.define('Shopware.apps.UserManager.view.user.Create', {
             layout      : 'anchor',
             autoScroll:true,
             name: 'main-form',
-            title: '{s name="create_user/tab_user"}User{/s}',
             bodyPadding : 10,
             defaults    : {
                 labelWidth: 155
@@ -158,7 +142,7 @@ Ext.define('Shopware.apps.UserManager.view.user.Create', {
                 this.getApiFieldset(),
                 this.getUserBaseFieldset(),
                 this.getUserOptionsFieldset(),
-                me.attributeForm
+                this.attributeForm
             ]
         });
         return this.formPanel;
@@ -449,6 +433,7 @@ Ext.define('Shopware.apps.UserManager.view.user.Create', {
                                fieldLabel: '{s name=create_user/email}Email address{/s}',
                                anchor: '100%',
                                vtype: 'remote',
+                               checkChangeBuffer: 500,
                                validationUrl: '{url controller="base" action="validateEmail"}',
                                validationErrorMsg: '{s name=invalid_email namespace=backend/base/vtype}The email address entered is not valid{/s}',
                                name: 'email',

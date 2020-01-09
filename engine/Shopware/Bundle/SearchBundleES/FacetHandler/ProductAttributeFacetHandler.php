@@ -24,14 +24,14 @@
 
 namespace Shopware\Bundle\SearchBundleES\FacetHandler;
 
-use ONGR\ElasticsearchDSL\Aggregation\FilterAggregation;
-use ONGR\ElasticsearchDSL\Aggregation\TermsAggregation;
-use ONGR\ElasticsearchDSL\Aggregation\ValueCountAggregation;
-use ONGR\ElasticsearchDSL\Query\ExistsQuery;
+use ONGR\ElasticsearchDSL\Aggregation\Bucketing\FilterAggregation;
+use ONGR\ElasticsearchDSL\Aggregation\Bucketing\TermsAggregation;
+use ONGR\ElasticsearchDSL\Aggregation\Metric\ValueCountAggregation;
+use ONGR\ElasticsearchDSL\Query\TermLevel\ExistsQuery;
 use ONGR\ElasticsearchDSL\Search;
 use Shopware\Bundle\AttributeBundle\Service\ConfigurationStruct;
-use Shopware\Bundle\AttributeBundle\Service\CrudService;
-use Shopware\Bundle\AttributeBundle\Service\TypeMapping;
+use Shopware\Bundle\AttributeBundle\Service\CrudServiceInterface;
+use Shopware\Bundle\AttributeBundle\Service\TypeMappingInterface;
 use Shopware\Bundle\SearchBundle\Condition\ProductAttributeCondition;
 use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundle\CriteriaPartInterface;
@@ -59,14 +59,11 @@ class ProductAttributeFacetHandler implements HandlerInterface, ResultHydratorIn
     private $criteriaParts = [];
 
     /**
-     * @var CrudService
+     * @var CrudServiceInterface
      */
     private $crudService;
 
-    /**
-     * ProductAttributeFacetHandler constructor.
-     */
-    public function __construct(CrudService $crudService)
+    public function __construct(CrudServiceInterface $crudService)
     {
         $this->crudService = $crudService;
     }
@@ -158,7 +155,7 @@ class ProductAttributeFacetHandler implements HandlerInterface, ResultHydratorIn
 
             $type = $attribute ? $attribute->getColumnType() : null;
 
-            if (in_array($type, [TypeMapping::TYPE_DATE, TypeMapping::TYPE_DATETIME])) {
+            if (in_array($type, [TypeMappingInterface::TYPE_DATE, TypeMappingInterface::TYPE_DATETIME])) {
                 $aggregations[$key] = $this->formatDates($aggregations[$key]);
             }
 
@@ -226,22 +223,22 @@ class ProductAttributeFacetHandler implements HandlerInterface, ResultHydratorIn
     private function getTypeTemplate($type, $mode, $defaultTemplate)
     {
         switch (true) {
-            case $type === TypeMapping::TYPE_DATE && $mode === ProductAttributeFacet::MODE_RANGE_RESULT:
+            case $type === TypeMappingInterface::TYPE_DATE && $mode === ProductAttributeFacet::MODE_RANGE_RESULT:
                 return 'frontend/listing/filter/facet-date-range.tpl';
 
-            case $type === TypeMapping::TYPE_DATE && $mode === ProductAttributeFacet::MODE_VALUE_LIST_RESULT:
+            case $type === TypeMappingInterface::TYPE_DATE && $mode === ProductAttributeFacet::MODE_VALUE_LIST_RESULT:
                 return 'frontend/listing/filter/facet-date-multi.tpl';
 
-            case $type === TypeMapping::TYPE_DATE && $mode !== ProductAttributeFacet::MODE_BOOLEAN_RESULT:
+            case $type === TypeMappingInterface::TYPE_DATE && $mode !== ProductAttributeFacet::MODE_BOOLEAN_RESULT:
                 return 'frontend/listing/filter/facet-date.tpl';
 
-            case $type === TypeMapping::TYPE_DATETIME && $mode === ProductAttributeFacet::MODE_RANGE_RESULT:
+            case $type === TypeMappingInterface::TYPE_DATETIME && $mode === ProductAttributeFacet::MODE_RANGE_RESULT:
                 return 'frontend/listing/filter/facet-datetime-range.tpl';
 
-            case $type === TypeMapping::TYPE_DATETIME && $mode === ProductAttributeFacet::MODE_VALUE_LIST_RESULT:
+            case $type === TypeMappingInterface::TYPE_DATETIME && $mode === ProductAttributeFacet::MODE_VALUE_LIST_RESULT:
                 return 'frontend/listing/filter/facet-datetime-multi.tpl';
 
-            case $type === TypeMapping::TYPE_DATETIME && $mode !== ProductAttributeFacet::MODE_BOOLEAN_RESULT:
+            case $type === TypeMappingInterface::TYPE_DATETIME && $mode !== ProductAttributeFacet::MODE_BOOLEAN_RESULT:
                 return 'frontend/listing/filter/facet-datetime.tpl';
 
             default:

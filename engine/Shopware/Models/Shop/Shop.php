@@ -27,8 +27,7 @@ namespace Shopware\Models\Shop;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
-use Shopware\Components\Theme\Inheritance;
-use Symfony\Component\DependencyInjection\Container;
+use Shopware\Components\ShopRegistrationServiceInterface;
 
 /**
  * @ORM\Table(name="s_core_shops")
@@ -42,18 +41,19 @@ class Shop extends ModelEntity
      * @ORM\Column(name="id", type="integer", nullable=false)
      * @ORM\Id()
      * @ORM\GeneratedValue(strategy="IDENTITY")
+     * @ORM\OneToMany(targetEntity="Shopware\Models\Mail\Log", mappedBy="shop")
      */
     protected $id;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="main_id", type="integer", nullable=true)
      */
     protected $mainId;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="category_id", type="integer", nullable=true)
      */
@@ -74,7 +74,7 @@ class Shop extends ModelEntity
     protected $name;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="title", type="string", length=255, nullable=true)
      */
@@ -88,21 +88,21 @@ class Shop extends ModelEntity
     protected $position = 0;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="host", type="string", length=255, nullable=true)
      */
     protected $host;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="base_path", type="string", length=255, nullable=true)
      */
     protected $basePath;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="base_url", type="string", length=255, nullable=true)
      */
@@ -123,14 +123,14 @@ class Shop extends ModelEntity
     protected $secure = false;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="template_id", type="integer", nullable=true)
      */
     protected $templateId;
 
     /**
-     * @var Template
+     * @var Template|null
      *
      * @ORM\ManyToOne(targetEntity="Template", inversedBy="shops")
      * @ORM\JoinColumn(name="template_id", referencedColumnName="id")
@@ -232,13 +232,10 @@ class Shop extends ModelEntity
      *
      * @ORM\OneToOne(targetEntity="Shopware\Models\Attribute\Shop", mappedBy="shop", orphanRemoval=true, cascade={"persist"})
      *
-     * @var \Shopware\Models\Attribute\Shop
+     * @var \Shopware\Models\Attribute\Shop|null
      */
     protected $attribute;
 
-    /**
-     * Class constructor.
-     */
     public function __construct()
     {
         $this->currencies = new ArrayCollection();
@@ -270,7 +267,7 @@ class Shop extends ModelEntity
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getTitle()
     {
@@ -278,7 +275,7 @@ class Shop extends ModelEntity
     }
 
     /**
-     * @param string $title
+     * @param string|null $title
      */
     public function setTitle($title)
     {
@@ -302,7 +299,7 @@ class Shop extends ModelEntity
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getHost()
     {
@@ -310,7 +307,7 @@ class Shop extends ModelEntity
     }
 
     /**
-     * @param string $host
+     * @param string|null $host
      */
     public function setHost($host)
     {
@@ -318,7 +315,7 @@ class Shop extends ModelEntity
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getBasePath()
     {
@@ -326,7 +323,7 @@ class Shop extends ModelEntity
     }
 
     /**
-     * @param string $basePath
+     * @param string|null $basePath
      */
     public function setBasePath($basePath)
     {
@@ -334,7 +331,7 @@ class Shop extends ModelEntity
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getBaseUrl()
     {
@@ -342,7 +339,7 @@ class Shop extends ModelEntity
     }
 
     /**
-     * @param string $baseUrl
+     * @param string|null $baseUrl
      */
     public function setBaseUrl($baseUrl)
     {
@@ -374,7 +371,7 @@ class Shop extends ModelEntity
     }
 
     /**
-     * @param Template $template
+     * @param Template|null $template
      */
     public function setTemplate($template)
     {
@@ -606,7 +603,7 @@ class Shop extends ModelEntity
     }
 
     /**
-     * @return \Shopware\Models\Attribute\Shop
+     * @return \Shopware\Models\Attribute\Shop|null
      */
     public function getAttribute()
     {
@@ -651,92 +648,19 @@ class Shop extends ModelEntity
     }
 
     /**
-     * @param null $bootstrap Deprecated since 5.2 will be removed in 6.0
-     *
-     * @throws \Exception
-     *
      * @return Shop
+     *
+     * @deprecated Shop::registerResources is deprecated since 5.6 and will be removed with 5.8. Use service ShopRegistrationService instead
      */
-    public function registerResources($bootstrap = null)
+    public function registerResources(): self
     {
-        /** @var Container $container */
-        $container = Shopware()->Container();
+        trigger_error('Shop::registerResources is deprecated since 5.6 and will be removed with 5.8. Use service ShopRegistrationService instead', E_USER_DEPRECATED);
 
-        $container->set('Shop', $this);
+        /** @var ShopRegistrationServiceInterface $service */
+        $service = Shopware()->Container()->get('shopware.components.shop_registration_service');
 
-        /** @var \Zend_Locale $locale */
-        $locale = $container->get('Locale');
-        $locale->setLocale($this->getLocale()->toString());
-
-        /** @var \Zend_Currency $currency */
-        $currency = $container->get('Currency');
-        $currency->setLocale($locale);
-        $currency->setFormat($this->getCurrency()->toArray());
-
-        /** @var \Shopware_Components_Config $config */
-        $config = $container->get('Config');
-        $config->setShop($this);
-
-        /** @var \Shopware_Components_Snippet_Manager $snippets */
-        $snippets = $container->get('Snippets');
-        $snippets->setShop($this);
-
-        /** @var \Enlight_Plugin_PluginManager $plugins */
-        $plugins = $container->get('Plugins');
-
-        /** @var \Shopware_Components_Plugin_Namespace $pluginNamespace */
-        foreach ($plugins as $pluginNamespace) {
-            if ($pluginNamespace instanceof \Shopware_Components_Plugin_Namespace) {
-                $pluginNamespace->setShop($this);
-            }
-        }
-
-        // Initializes the frontend session to prevent output before session started.
-        $container->get('session');
-
-        if ($this->getTemplate() !== null) {
-            /** @var \Enlight_Template_Manager $templateManager */
-            $templateManager = $container->get('Template');
-            $template = $this->getTemplate();
-            $localeName = $this->getLocale()->toString();
-
-            if ($template->getVersion() == 3) {
-                $this->registerTheme($template);
-            } else {
-                throw new \Exception(sprintf(
-                    'Tried to load unsupported template version %s for template: %s',
-                    $template->getVersion(),
-                    $template->getName()
-                ));
-            }
-
-            $templateManager->setCompileId(
-                'frontend' .
-                '_' . $template->toString() .
-                '_' . $localeName .
-                '_' . $this->getId()
-            );
-        }
-
-        /** @var \Shopware_Components_TemplateMail $templateMail */
-        $templateMail = $container->get('TemplateMail');
-        $templateMail->setShop($this);
+        $service->registerShop($this);
 
         return $this;
-    }
-
-    /**
-     * @throws \Exception
-     */
-    private function registerTheme(Template $template)
-    {
-        /** @var \Enlight_Template_Manager $templateManager */
-        $templateManager = Shopware()->Container()->get('template');
-
-        /** @var Inheritance $inheritance */
-        $inheritance = Shopware()->Container()->get('theme_inheritance');
-
-        $path = $inheritance->getTemplateDirectories($template);
-        $templateManager->setTemplateDir($path);
     }
 }

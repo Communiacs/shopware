@@ -22,11 +22,6 @@
  * our trademarks remain entirely with us.
  */
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class Shopware_Components_SeoIndex extends Enlight_Class
 {
     /**
@@ -80,7 +75,7 @@ class Shopware_Components_SeoIndex extends Enlight_Class
         ';
         $cachedTime = Shopware()->Db()->fetchOne($sql, [$elementId, $shopId]);
         if (!empty($cachedTime)) {
-            $cachedTime = unserialize($cachedTime);
+            $cachedTime = unserialize($cachedTime, ['allowed_classes' => false]);
         }
         if (empty($cachedTime)) {
             $cachedTime = '0000-00-00 00:00:00';
@@ -127,7 +122,7 @@ class Shopware_Components_SeoIndex extends Enlight_Class
 
         $shop = $repository->getById($shopId);
 
-        $shop->registerResources();
+        Shopware()->Container()->get('shopware.components.shop_registration_service')->registerShop($shop);
 
         return $shop;
     }
@@ -186,7 +181,8 @@ class Shopware_Components_SeoIndex extends Enlight_Class
 
         // Count total number of associated blog articles
         $builder = Shopware()->Models()->getRepository(\Shopware\Models\Blog\Blog::class)->getListQueryBuilder(
-            $blogCategoryIds, null
+            $blogCategoryIds,
+            null
         );
         $numResults = $builder->select('COUNT(blog)')
             ->getQuery()
@@ -343,5 +339,10 @@ class Shopware_Components_SeoIndex extends Enlight_Class
         $numResults = $repository->getFriendlyUrlSuppliersCountQueryBuilder()->getQuery()->getSingleScalarResult();
 
         return (int) $numResults;
+    }
+
+    public function countContentTypes(): int
+    {
+        return (int) count(Shopware()->Container()->get(\Shopware\Bundle\ContentTypeBundle\Services\TypeProvider::class)->getTypes());
     }
 }

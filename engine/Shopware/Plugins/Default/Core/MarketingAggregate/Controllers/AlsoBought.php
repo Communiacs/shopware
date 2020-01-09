@@ -22,11 +22,6 @@
  * our trademarks remain entirely with us.
  */
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class Shopware_Controllers_Backend_AlsoBought extends Shopware_Controllers_Backend_ExtJs
 {
     /**
@@ -36,7 +31,7 @@ class Shopware_Controllers_Backend_AlsoBought extends Shopware_Controllers_Backe
      */
     public function AlsoBought()
     {
-        return Shopware()->Container()->get('AlsoBought');
+        return Shopware()->Container()->get('alsobought');
     }
 
     /**

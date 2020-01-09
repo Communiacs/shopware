@@ -29,8 +29,6 @@ use Shopware\Bundle\PluginInstallerBundle\Service\UniqueIdGeneratorInterface;
 use Shopware\Components\Random;
 
 /**
- * Class UniqueIdGenerator.
- *
  * A simple class for storing a generated unique Id in the database.
  */
 class UniqueIdGenerator implements UniqueIdGeneratorInterface
@@ -76,7 +74,7 @@ sql;
         $uniqueId = $this->connection->fetchColumn($sql);
 
         if ($uniqueId !== false && is_string($uniqueId)) {
-            return unserialize($uniqueId);
+            return unserialize($uniqueId, ['allowed_classes' => false]);
         }
 
         return null;
@@ -94,7 +92,8 @@ INSERT INTO s_core_config_values (element_id, shop_id, value) VALUES (
 sql;
 
         $this->connection->executeUpdate(
-            $sql, [
+            $sql,
+            [
                 'value' => serialize($uniqueId),
             ]
         );

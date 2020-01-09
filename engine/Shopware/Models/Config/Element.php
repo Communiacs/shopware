@@ -63,28 +63,28 @@ class Element extends ModelEntity
     private $name;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="value", type="object", nullable=true)
      */
     private $value;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="description", type="string", nullable=true)
      */
     private $description;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="label", type="string", nullable=true)
      */
     private $label;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="type", type="string", nullable=true)
      */
@@ -110,6 +110,13 @@ class Element extends ModelEntity
      * @ORM\Column(name="scope", type="integer", nullable=false)
      */
     private $scope = 0;
+
+    /**
+     * @var int
+     *
+     * @ORM\Column(name="form_id", type="integer", nullable=true)
+     */
+    private $formId = 0;
 
     /**
      * @var array
@@ -149,8 +156,6 @@ class Element extends ModelEntity
     }
 
     /**
-     * Get id
-     *
      * @return int
      */
     public function getId()
@@ -159,8 +164,6 @@ class Element extends ModelEntity
     }
 
     /**
-     * Set name
-     *
      * @param string $name
      *
      * @return Element
@@ -173,8 +176,6 @@ class Element extends ModelEntity
     }
 
     /**
-     * Get name
-     *
      * @return string
      */
     public function getName()
@@ -183,8 +184,6 @@ class Element extends ModelEntity
     }
 
     /**
-     * Set value
-     *
      * @return Element
      */
     public function setValue($value)
@@ -195,7 +194,7 @@ class Element extends ModelEntity
     }
 
     /**
-     * Get value
+     * @return mixed|null
      */
     public function getValue()
     {
@@ -203,8 +202,6 @@ class Element extends ModelEntity
     }
 
     /**
-     * Set description
-     *
      * @param string $description
      *
      * @return Element
@@ -217,9 +214,7 @@ class Element extends ModelEntity
     }
 
     /**
-     * Get description
-     *
-     * @return string
+     * @return string|null
      */
     public function getDescription()
     {
@@ -227,8 +222,6 @@ class Element extends ModelEntity
     }
 
     /**
-     * Set label
-     *
      * @param string $label
      *
      * @return Element
@@ -241,9 +234,7 @@ class Element extends ModelEntity
     }
 
     /**
-     * Get label
-     *
-     * @return string
+     * @return string|null
      */
     public function getLabel()
     {
@@ -258,10 +249,7 @@ class Element extends ModelEntity
         $this->form = $form;
     }
 
-    /**
-     * @return \Shopware\Models\Config\Form
-     */
-    public function getForm()
+    public function getForm(): Form
     {
         return $this->form;
     }
@@ -361,7 +349,7 @@ class Element extends ModelEntity
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getType()
     {
@@ -423,5 +411,17 @@ class Element extends ModelEntity
     public function hasTranslations()
     {
         return $this->translations->count() > 0;
+    }
+
+    public function getFormId(): int
+    {
+        return $this->formId;
+    }
+
+    public function setFormId(int $formId): self
+    {
+        $this->formId = $formId;
+
+        return $this;
     }
 }

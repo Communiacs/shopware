@@ -25,11 +25,13 @@
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\AbstractQuery;
 use Shopware\Bundle\AttributeBundle\Repository\SearchCriteria;
+use Shopware\Bundle\MailBundle\Service\LogEntryBuilder;
 use Shopware\Components\CSRFWhitelistAware;
 use Shopware\Components\Model\QueryBuilder;
 use Shopware\Components\Random;
 use Shopware\Components\StateTranslatorService;
 use Shopware\Models\Article\Detail as ArticleDetail;
+use Shopware\Models\Article\Unit;
 use Shopware\Models\Country\Country;
 use Shopware\Models\Country\State;
 use Shopware\Models\Customer\Customer;
@@ -47,12 +49,6 @@ use Shopware\Models\Payment\Payment;
 use Shopware\Models\Shop\Shop;
 use Shopware\Models\Tax\Tax;
 
-/**
- * Backend Controller for the order backend module.
- *
- * Displays all orders in an Ext.grid.Panel and allows to delete,
- * add and edit orders.
- */
 class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_ExtJs implements CSRFWhitelistAware
 {
     /**
@@ -293,6 +289,12 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
         $dispatches = $this->getDispatchRepository()->getDispatchesQuery()->getArrayResult();
         $documentTypes = $this->getRepository()->getDocumentTypesQuery()->getArrayResult();
 
+        // translate objects
+        $translationComponent = $this->get('translation');
+        $payments = $translationComponent->translatePaymentMethods($payments);
+        $documentTypes = $translationComponent->translateDocuments($documentTypes);
+        $dispatches = $translationComponent->translateDispatchMethods($dispatches);
+
         $this->View()->assign([
             'success' => true,
             'data' => [
@@ -331,6 +333,9 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
         }
 
         $list = $this->getList($filter, $sort, $offset, $limit);
+
+        $translationComponent = $this->get('translation');
+        $list['data'] = $translationComponent->translateOrders($list['data']);
 
         $this->View()->assign($list);
     }
@@ -836,7 +841,7 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
                 continue;
             }
 
-            /** @var \Shopware\Models\Order\Order $order */
+            /** @var Order|null $order */
             $order = $modelManager->find(Order::class, $data['id']);
             if (!$order) {
                 continue;
@@ -983,19 +988,51 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
             return;
         }
 
-        $mail = clone $this->container->get('mail');
-        $mail = $this->addAttachments($mail, $orderId, $attachments);
+        $mailTemplateName = $this->Request()->getParam('templateName') ?: 'sORDERDOCUMENTS';
+
+        /** @var Enlight_Components_Mail $mail */
+        $mail = $this->container->get('modules')->Order()->createStatusMail($orderId, 0, $mailTemplateName);
         $mail->clearRecipients();
-        $mail->setSubject($this->Request()->getParam('subject', ''));
+        $mail->clearSubject();
+        $mail->clearFrom();
+        $mail->clearBody();
 
-        if ($this->Request()->getParam('isHtml')) {
-            $mail->setBodyHtml($this->Request()->getParam('contentHtml', ''));
+        $mailData = [
+            'attachments' => $attachments,
+            'subject' => $this->Request()->getParam('subject', ''),
+            'fromMail' => $this->Request()->getParam('fromMail'),
+            'fromName' => $this->Request()->getParam('fromName'),
+            'to' => [$this->Request()->getParam('to')],
+            'isHtml' => $this->Request()->getParam('isHtml'),
+            'bodyHtml' => $this->Request()->getParam('contentHtml', ''),
+            'bodyText' => $this->Request()->getParam('content', ''),
+        ];
+
+        /** @var Enlight_Event_EventManager $events */
+        $events = $this->get('events');
+        $mailData = $events->filter(
+            'Shopware_Controllers_Order_SendMail_Prepare',
+            $mailData,
+            [
+                'subject' => $this,
+                'orderId' => $orderId,
+                'mail' => $mail,
+            ]
+        );
+
+        $mail->setSubject($mailData['subject']);
+
+        $mail->setFrom($mailData['fromMail'], $mailData['fromName']);
+        $mail->addTo($mailData['to']);
+
+        if ($mailData['isHtml']) {
+            $mail->setBodyHtml($mailData['bodyHtml']);
         } else {
-            $mail->setBodyText($this->Request()->getParam('content', ''));
+            $mail->setBodyText($mailData['bodyText']);
         }
+        $mail = $this->addAttachments($mail, $orderId, $mailData['attachments']);
 
-        $mail->setFrom($this->Request()->getParam('fromMail', ''), $this->Request()->getParam('fromName', ''));
-        $mail->addTo($this->Request()->getParam('to', ''));
+        $mail->setAssociation(LogEntryBuilder::ORDER_ID_ASSOCIATION, $orderId);
 
         Shopware()->Modules()->Order()->sendStatusMail($mail);
 
@@ -1129,6 +1166,10 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
         $orderId = $this->Request()->getParam('orderId');
         $documentType = $this->Request()->getParam('documentType');
 
+        // Needs to be called this early since $this->createDocument boots the
+        // shop, the order was made in, and thereby destroys the backend session
+        $translationComponent = $this->get('translation');
+
         if (!empty($orderId) && !empty($documentType)) {
             $this->createDocument($orderId, $documentType);
         }
@@ -1137,6 +1178,8 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
         $query->setHydrationMode(\Doctrine\ORM\AbstractQuery::HYDRATE_ARRAY);
         $paginator = $this->getModelManager()->createPaginator($query);
         $order = $paginator->getIterator()->getArrayCopy();
+
+        $order = $translationComponent->translateOrders($order);
 
         $this->View()->assign([
             'success' => true,
@@ -1172,14 +1215,12 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
         $orderId = $orderModel[0]['documentId'];
 
         $response = $this->Response();
-        $response->setHeader('Cache-Control', 'public');
-        $response->setHeader('Content-Description', 'File Transfer');
-        $response->setHeader('Content-disposition', 'attachment; filename=' . $orderId . '.pdf');
-        $response->setHeader('Content-Type', 'application/pdf');
-        $response->setHeader('Content-Transfer-Encoding', 'binary');
-        $response->setHeader('Content-Length', $filesystem->getSize($file));
-        $response->sendHeaders();
-        $response->sendResponse();
+        $response->headers->set('cache-control', 'public', true);
+        $response->headers->set('content-description', 'File Transfer');
+        $response->headers->set('content-disposition', 'attachment; filename=' . $orderId . '.pdf');
+        $response->headers->set('content-type', 'application/pdf');
+        $response->headers->set('content-transfer-encoding', 'binary');
+        $response->headers->set('content-length', $filesystem->getSize($file));
 
         $upstream = $filesystem->readStream($file);
         $downstream = fopen('php://output', 'wb');
@@ -1302,12 +1343,16 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
     }
 
     /**
+     * @deprecated in 5.6, will be removed in 5.7 without a replacement
+     *
      * Helper function to get access on the static declared repository
      *
      * @return \Shopware\Components\Model\ModelRepository
      */
     protected function getDocumentRepository()
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be removed with 5.7. Will be removed without replacement.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         if (self::$documentRepository === null) {
             self::$documentRepository = Shopware()->Models()->getRepository(Document::class);
         }
@@ -1525,7 +1570,7 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
 
         $pdf->Output($hash . '.pdf', 'D');
 
-        $this->Response()->setHeader('Content-Type', 'application/x-download');
+        $this->Response()->headers->set('content-type', 'application/x-download');
     }
 
     /**
@@ -1575,7 +1620,7 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
      * @param int|null                      $documentTypeId
      * @param bool                          $addAttachments
      *
-     * @return array
+     * @return array|null
      */
     private function checkOrderStatus($order, $statusBefore, $clearedBefore, $autoSend, $documentTypeId, $addAttachments)
     {
@@ -1604,11 +1649,15 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
             if ($addAttachments) {
                 // Attach documents
                 $document = $this->getDocument($documentTypeId, $order);
-                $mail['mail'] = $this->addAttachments($mail['mail'], $order->getId(), [$document]);
+                /** @var Enlight_Components_Mail $mailObject */
+                $mailObject = $mail['mail'];
+                $mail['mail'] = $this->addAttachments($mailObject, $order->getId(), [$document]);
             }
             if ($autoSend) {
                 // Send mail
-                $result = Shopware()->Modules()->Order()->sendStatusMail($mail['mail']);
+                /** @var Enlight_Components_Mail $mailObject */
+                $mailObject = $mail['mail'];
+                $result = Shopware()->Modules()->Order()->sendStatusMail($mailObject);
                 $mail['data']['sent'] = is_object($result);
             }
 
@@ -1676,7 +1725,7 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
             ];
         }
 
-        return[];
+        return [];
     }
 
     /**
@@ -1848,7 +1897,7 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
      *
      * @param array $data
      *
-     * @return array
+     * @return array|null
      */
     private function getPositionAssociatedData($data)
     {
@@ -1870,13 +1919,14 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
             unset($data['tax']);
         }
 
-        /** @var ArticleDetail $variant */
+        /** @var ArticleDetail|null $variant */
         $variant = Shopware()->Models()->getRepository(ArticleDetail::class)
             ->findOneBy(['number' => $data['articleNumber']]);
 
         // Load ean, unit and pack unit (translate if needed)
         if ($variant) {
             $data['ean'] = $variant->getEan() ?: $variant->getArticle()->getMainDetail()->getEan();
+            /** @var Unit|null $unit */
             $unit = $variant->getUnit() ?: $variant->getArticle()->getMainDetail()->getUnit();
             $data['unit'] = $unit ? $unit->getName() : null;
             $data['packunit'] = $variant->getPackUnit() ?: $variant->getArticle()->getMainDetail()->getPackUnit();
@@ -1901,10 +1951,10 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
                         $languageData['languageId'],
                         'config_units'
                     );
+
+                    $data['unit'] = $unit->getName();
                     if (!empty($unitTranslation[$unit->getId()]['description'])) {
                         $data['unit'] = $unitTranslation[$unit->getId()]['description'];
-                    } elseif ($unit) {
-                        $data['unit'] = $unit->getName();
                     }
                 }
 
@@ -2093,6 +2143,10 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
         $criteria->sortings = $request->getParam('sort', []);
         $conditions = $request->getParam('filter', []);
 
+        if ($orderId = $this->Request()->getParam('orderID')) {
+            $criteria->ids[] = (int) $orderId;
+        }
+
         $mapped = [];
         foreach ($conditions as $condition) {
             if ($condition['property'] === 'free') {
@@ -2172,11 +2226,11 @@ class Shopware_Controllers_Backend_Order extends Shopware_Controllers_Backend_Ex
     }
 
     /**
-     * @return \Shopware\Models\Shop\Locale
+     * @return \Shopware\Models\Shop\Locale|null
      */
     private function getCurrentLocale()
     {
-        $user = $this->get('Auth')->getIdentity();
+        $user = $this->get('auth')->getIdentity();
 
         return $user->locale;
     }

@@ -1,5 +1,5 @@
 {
-    "Version": "2.1.49.82",
+    "Version": "36",
     "Names": {
         "Arab": "arabískt",
         "Armn": "armenskt",
@@ -51,7 +51,6 @@
         "Zsye": "emoji-tákn",
         "Zsym": "tákn",
         "Zxxx": "óskrifað",
-        "Zyyy": "almennt",
-        "Zzzz": "óþekkt letur"
+        "Zyyy": "almennt"
     }
 }

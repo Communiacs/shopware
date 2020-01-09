@@ -26,13 +26,10 @@ namespace Shopware\Bundle\SearchBundle\Facet;
 
 use Shopware\Bundle\SearchBundle\FacetInterface;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class ShippingFreeFacet implements FacetInterface
 {
+    private const NAME = 'shipping_free';
+
     /**
      * @var string|null
      */
@@ -59,6 +56,6 @@ class ShippingFreeFacet implements FacetInterface
      */
     public function getName()
     {
-        return 'shipping_free';
+        return self::NAME;
     }
 }

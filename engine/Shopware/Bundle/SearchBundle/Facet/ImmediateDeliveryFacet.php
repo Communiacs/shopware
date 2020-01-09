@@ -26,13 +26,10 @@ namespace Shopware\Bundle\SearchBundle\Facet;
 
 use Shopware\Bundle\SearchBundle\FacetInterface;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class ImmediateDeliveryFacet implements FacetInterface
 {
+    private const NAME = 'immediate_delivery';
+
     /**
      * @var string|null
      */
@@ -59,6 +56,6 @@ class ImmediateDeliveryFacet implements FacetInterface
      */
     public function getName()
     {
-        return 'immediate_delivery';
+        return self::NAME;
     }
 }

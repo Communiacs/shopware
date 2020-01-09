@@ -63,7 +63,7 @@ class Dispatch extends ModelEntity
     /**
      * INVERSE SIDE
      *
-     * @var \Shopware\Models\Attribute\Dispatch
+     * @var \Shopware\Models\Attribute\Dispatch|null
      *
      * @ORM\OneToOne(targetEntity="Shopware\Models\Attribute\Dispatch", mappedBy="dispatch", orphanRemoval=true, cascade={"persist"})
      */
@@ -180,7 +180,7 @@ class Dispatch extends ModelEntity
     /**
      * Defines the value after the shipping fee will be dropped.
      *
-     * @var float
+     * @var float|null
      *
      * @ORM\Column(name="shippingfree", type="decimal", nullable=true)
      */
@@ -189,7 +189,7 @@ class Dispatch extends ModelEntity
     /**
      * Id of the sub shop used for this dispatch
      *
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="multishopID", type="integer", nullable=true)
      */
@@ -199,7 +199,7 @@ class Dispatch extends ModelEntity
      * The dispatch can be restricted to a given user group ID. If non ID is given
      * there will be no restriction to a user group.
      *
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="customergroupID", type="integer", nullable=true)
      */
@@ -222,7 +222,7 @@ class Dispatch extends ModelEntity
      * If the dispatch type should only be available during a given time frame, the start time can be selected here.
      * The time is given as an Integer in seconds.
      *
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="bind_time_from", type="integer", nullable=true)
      */
@@ -232,7 +232,7 @@ class Dispatch extends ModelEntity
      * If the dispatch type should only be available during a given time frame, the end time can be selected here.
      * The time is given as an Integer in seconds.
      *
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="bind_time_to", type="integer", nullable=true)
      */
@@ -245,7 +245,7 @@ class Dispatch extends ModelEntity
      *  - 1 == Order quantity
      *  - 2 == Order quantity + minimum stock
      *
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="bind_instock", type="integer", nullable=true)
      */
@@ -254,7 +254,7 @@ class Dispatch extends ModelEntity
     /**
      * Just use this dispatch if there are sales articles in the shopping cart.
      *
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="bind_laststock", type="integer", nullable=false)
      */
@@ -264,7 +264,7 @@ class Dispatch extends ModelEntity
      * This dispatch is just available between specific weekdays.
      * The beginning of the weekdays is defined here
      *
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="bind_weekday_from", type="integer", nullable=true)
      */
@@ -274,7 +274,7 @@ class Dispatch extends ModelEntity
      * This dispatch is just available between specific weekdays.
      * The ending of the weekdays is defined here
      *
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="bind_weekday_to", type="integer", nullable=true)
      */
@@ -284,7 +284,7 @@ class Dispatch extends ModelEntity
      * This dispatch is only available if the weight of the shopping cart is between this start point and and the end point.
      * The start point is defined here.
      *
-     * @var float
+     * @var float|null
      *
      * @ORM\Column(name="bind_weight_from", type="decimal", nullable=true)
      */
@@ -294,7 +294,7 @@ class Dispatch extends ModelEntity
      * This dispatch is only available if the weight of the shopping cart is between a start point and and this end point.
      * The end point is defined here.
      *
-     * @var float
+     * @var float|null
      *
      * @ORM\Column(name="bind_weight_to", type="decimal", nullable=true)
      */
@@ -304,7 +304,7 @@ class Dispatch extends ModelEntity
      * This dispatch is only available from this price to the end price.
      * The start price is defined here.
      *
-     * @var float
+     * @var float|null
      *
      * @ORM\Column(name="bind_price_from", type="decimal", nullable=true)
      */
@@ -314,7 +314,7 @@ class Dispatch extends ModelEntity
      * This dispatch is only available from a price to this end price.
      * The end price is defined here.
      *
-     * @var float
+     * @var float|null
      *
      * @ORM\Column(name="bind_price_to", type="decimal", nullable=true)
      */
@@ -323,7 +323,7 @@ class Dispatch extends ModelEntity
     /**
      * Defines a SQL Query used to calculate the dispatch prices
      *
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="bind_sql", type="text", nullable=true)
      */
@@ -332,7 +332,7 @@ class Dispatch extends ModelEntity
     /**
      * Link to the delivery tracking system.
      *
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="status_link", type="text", nullable=true)
      */
@@ -341,7 +341,7 @@ class Dispatch extends ModelEntity
     /**
      * Defines a SQL Query used to calculate the dispatch prices
      *
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="calculation_sql", type="text", nullable=true)
      */
@@ -412,8 +412,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Get id
-     *
      * @return int
      */
     public function getId()
@@ -422,8 +420,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Set name
-     *
      * @param string $name
      *
      * @return Dispatch
@@ -436,8 +432,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Get name
-     *
      * @return string
      */
     public function getName()
@@ -446,8 +440,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Set type
-     *
      * @param int $type
      *
      * @return Dispatch
@@ -460,8 +452,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Get type
-     *
      * @return int
      */
     public function getType()
@@ -470,8 +460,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Set description
-     *
      * @param string $description
      *
      * @return Dispatch
@@ -484,8 +472,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Get description
-     *
      * @return string
      */
     public function getDescription()
@@ -494,8 +480,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Set comment
-     *
      * @param string $comment
      *
      * @return Dispatch
@@ -508,8 +492,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Get comment
-     *
      * @return string
      */
     public function getComment()
@@ -518,8 +500,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Set active
-     *
      * @param bool $active
      *
      * @return Dispatch
@@ -532,8 +512,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Get active
-     *
      * @return bool
      */
     public function getActive()
@@ -542,8 +520,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Set position
-     *
      * @param int $position
      *
      * @return Dispatch
@@ -556,8 +532,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Get position
-     *
      * @return int
      */
     public function getPosition()
@@ -566,8 +540,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Set calculation
-     *
      * @param int $calculation
      *
      * @return Dispatch
@@ -580,8 +552,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Get calculation
-     *
      * @return int
      */
     public function getCalculation()
@@ -590,8 +560,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Set surchargeCalculation
-     *
      * @param int $surchargeCalculation
      *
      * @return Dispatch
@@ -604,8 +572,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Get surchargeCalculation
-     *
      * @return int
      */
     public function getSurchargeCalculation()
@@ -614,8 +580,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Set taxCalculation
-     *
      * @param int $taxCalculation
      *
      * @return Dispatch
@@ -628,8 +592,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Get taxCalculation
-     *
      * @return int
      */
     public function getTaxCalculation()
@@ -638,8 +600,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Set shippingFree
-     *
      * @param float $shippingFree
      *
      * @return Dispatch
@@ -652,9 +612,7 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Get shippingFree
-     *
-     * @return float
+     * @return float|null
      */
     public function getShippingFree()
     {
@@ -662,8 +620,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Set multiShopId
-     *
      * @param int $multiShopId
      *
      * @return Dispatch
@@ -676,9 +632,7 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Get multiShopId
-     *
-     * @return int
+     * @return int|null
      */
     public function getMultiShopId()
     {
@@ -686,8 +640,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Set customerGroupId
-     *
      * @param int $customerGroupId
      *
      * @return Dispatch
@@ -700,9 +652,7 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Get customerGroupId
-     *
-     * @return int
+     * @return int|null
      */
     public function getCustomerGroupId()
     {
@@ -710,8 +660,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Set bindShippingFree
-     *
      * @param int $bindShippingFree
      *
      * @return Dispatch
@@ -724,8 +672,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Get bindShippingFree
-     *
      * @return int
      */
     public function getBindShippingFree()
@@ -734,8 +680,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Set bindTimeFrom
-     *
      * @param int $bindTimeFrom
      *
      * @return Dispatch
@@ -748,9 +692,7 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Get bindTimeFrom
-     *
-     * @return int
+     * @return int|null
      */
     public function getBindTimeFrom()
     {
@@ -758,8 +700,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Set bindTimeTo
-     *
      * @param int $bindTimeTo
      *
      * @return Dispatch
@@ -772,9 +712,7 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Get bindTimeTo
-     *
-     * @return int
+     * @return int|null
      */
     public function getBindTimeTo()
     {
@@ -782,8 +720,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Set bindInStock
-     *
      * @param int $bindInStock
      *
      * @return Dispatch
@@ -796,9 +732,7 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Get bindInStock
-     *
-     * @return int
+     * @return int|null
      */
     public function getBindInStock()
     {
@@ -806,8 +740,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Set bindLastStock
-     *
      * @param int $bindLastStock
      *
      * @return Dispatch
@@ -820,8 +752,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Get bindLastStock
-     *
      * @return int
      */
     public function getBindLastStock()
@@ -830,8 +760,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Set bindWeekdayFrom
-     *
      * @param int $bindWeekdayFrom
      *
      * @return Dispatch
@@ -844,9 +772,7 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Get bindWeekdayFrom
-     *
-     * @return int
+     * @return int|null
      */
     public function getBindWeekdayFrom()
     {
@@ -854,8 +780,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Set bindWeekdayTo
-     *
      * @param int $bindWeekdayTo
      *
      * @return Dispatch
@@ -868,9 +792,7 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Get bindWeekdayTo
-     *
-     * @return int
+     * @return int|null
      */
     public function getBindWeekdayTo()
     {
@@ -878,8 +800,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Set bindWeightFrom
-     *
      * @param float $bindWeightFrom
      *
      * @return Dispatch
@@ -892,9 +812,7 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Get bindWeightFrom
-     *
-     * @return float
+     * @return float|null
      */
     public function getBindWeightFrom()
     {
@@ -902,8 +820,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Set bindWeightTo
-     *
      * @param float $bindWeightTo
      *
      * @return Dispatch
@@ -916,9 +832,7 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Get bindWeightTo
-     *
-     * @return float
+     * @return float|null
      */
     public function getBindWeightTo()
     {
@@ -926,8 +840,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Set bindPriceFrom
-     *
      * @param float $bindPriceFrom
      *
      * @return Dispatch
@@ -940,9 +852,7 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Get bindPriceFrom
-     *
-     * @return float
+     * @return float|null
      */
     public function getBindPriceFrom()
     {
@@ -950,8 +860,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Set bindPriceTo
-     *
      * @param float $bindPriceTo
      *
      * @return Dispatch
@@ -964,9 +872,7 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Get bindPriceTo
-     *
-     * @return float
+     * @return float|null
      */
     public function getBindPriceTo()
     {
@@ -974,8 +880,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Set bindSql
-     *
      * @param string $bindSql
      *
      * @return Dispatch
@@ -988,9 +892,7 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Get bindSql
-     *
-     * @return string
+     * @return string|null
      */
     public function getBindSql()
     {
@@ -998,8 +900,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Set statusLink
-     *
      * @param string $statusLink
      *
      * @return Dispatch
@@ -1012,9 +912,7 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Get statusLink
-     *
-     * @return string
+     * @return string|null
      */
     public function getStatusLink()
     {
@@ -1022,8 +920,6 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Set calculationSql
-     *
      * @param string $calculationSql
      *
      * @return Dispatch
@@ -1036,9 +932,7 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * Get calculationSql
-     *
-     * @return string
+     * @return string|null
      */
     public function getCalculationSql()
     {
@@ -1160,7 +1054,7 @@ class Dispatch extends ModelEntity
     }
 
     /**
-     * @return \Shopware\Models\Attribute\Dispatch
+     * @return \Shopware\Models\Attribute\Dispatch|null
      */
     public function getAttribute()
     {

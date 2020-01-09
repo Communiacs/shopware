@@ -14,7 +14,7 @@
 
     {$description = $description|truncate:$SeoDescriptionMaxLength:'…'}
 
-    <meta property="og:type" content="product" />
+    <meta property="og:type" content="product.group" />
     <meta property="og:site_name" content="{{config name=sShopname}|escapeHtml}" />
     <meta property="og:title" content="{$sCategoryContent.name|escapeHtml}" />
     <meta property="og:description" content="{$description|escapeHtml}" />
@@ -28,12 +28,7 @@
     {if $sCategoryContent.media.source}
         {$metaImage = {$sCategoryContent.media.source}}
     {else}
-        {foreach $sArticles as $sArticle}
-            {if $sArticle@first}
-                {$metaImage = $sArticle.image.source}
-                {break}
-            {/if}
-        {/foreach}
+        {$metaImage = {link file=$theme.desktopLogo fullPath}}
     {/if}
 
     <meta property="og:image" content="{$metaImage}" />

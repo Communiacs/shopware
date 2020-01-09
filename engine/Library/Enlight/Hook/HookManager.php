@@ -13,12 +13,8 @@
  * to license@shopware.de so we can send you a copy immediately.
  *
  * @category   Enlight
- * @package    Enlight_Hook
  * @copyright  Copyright (c) 2011, shopware AG (http://www.shopware.de)
  * @license    http://enlight.de/license     New BSD License
- * @version    $Id$
- * @author     Heiner Lohaus
- * @author     $Author$
  */
 
 /**
@@ -174,7 +170,6 @@ class Enlight_Hook_HookManager extends Enlight_Class
      */
     public function executeHooks(Enlight_Hook_Proxy $subject, $method, array $args)
     {
-        $className = get_parent_class($subject);
         $context = new Enlight_Hook_HookExecutionContext(
             $this,
             $subject,

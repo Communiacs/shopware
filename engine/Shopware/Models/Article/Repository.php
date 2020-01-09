@@ -2455,10 +2455,11 @@ class Repository extends ModelRepository
     {
         /** @var QueryBuilder $builder */
         $builder = $this->getEntityManager()->createQueryBuilder();
-        $builder->select(['images', 'attribute'])
+        $builder->select(['images', 'attribute', 'media'])
                 ->from(Image::class, 'images')
                 ->leftJoin('images.attribute', 'attribute')
                 ->leftJoin('images.children', 'children')
+                ->leftJoin('images.media', 'media')
                 ->where('images.articleId = :articleId')
                 ->andWhere('images.parentId IS NULL')
                 ->andWhere('children.id IS NULL')
@@ -2499,9 +2500,10 @@ class Repository extends ModelRepository
     {
         /** @var QueryBuilder $builder */
         $builder = $this->getEntityManager()->createQueryBuilder();
-        $builder->select(['images', 'attribute'])
+        $builder->select(['images', 'media', 'attribute'])
                 ->from(Image::class, 'images')
                 ->leftJoin('images.attribute', 'attribute')
+                ->leftJoin('images.media', 'media')
                 ->where('images.articleId = :articleId')
                 ->andWhere('images.parentId IS NULL')
                 ->andWhere('images.main = :main')
@@ -2558,6 +2560,7 @@ class Repository extends ModelRepository
             'imageParent.height',
             'imageParent.extension',
             'imageParent.parentId',
+            'media.type',
             'attribute.attribute1',
             'attribute.attribute2',
             'attribute.attribute3',
@@ -2566,6 +2569,7 @@ class Repository extends ModelRepository
             ->innerJoin('images.articleDetail', 'articleDetail')
             ->innerJoin('images.parent', 'imageParent')
             ->leftJoin('imageParent.attribute', 'attribute')
+            ->leftJoin('imageParent.media', 'media')
             ->where('articleDetail.number = ?1')
             ->setParameter(1, $number)
             ->orderBy('imageParent.main', 'ASC')
@@ -2598,9 +2602,10 @@ class Repository extends ModelRepository
     {
         /** @var QueryBuilder $builder */
         $builder = $this->getEntityManager()->createQueryBuilder();
-        $builder->select(['images'])
+        $builder->select(['images', 'media'])
                 ->from(Image::class, 'images')
                 ->leftJoin('images.children', 'children')
+                ->leftJoin('images.media', 'media')
                 ->where('images.articleId = :articleId')
                 ->andWhere('images.parentId IS NULL')
                 ->andWhere('images.articleDetailId IS NULL')
@@ -2645,32 +2650,32 @@ class Repository extends ModelRepository
 
     /**
      * Returns an instance of the \Doctrine\ORM\Query object which allows you to delete attributes
-     * associated with the given articleId
+     * associated with the given articleDetailId
      *
-     * @param int $articleId
+     * @param int $articleDetailId
      *
      * @return Query
      */
-    public function getRemoveAttributesQuery($articleId)
+    public function getRemoveAttributesQuery($articleDetailId)
     {
-        return $this->getRemoveAttributesQueryBuilder($articleId)->getQuery();
+        return $this->getRemoveAttributesQueryBuilder($articleDetailId)->getQuery();
     }
 
     /**
      * Helper function to create the query builder for the "getRemoveAttributesQuery" function.
      * This function can be hooked to modify the query builder of the query object.
      *
-     * @param int $articleId
+     * @param int $articleDetailId
      *
      * @return QueryBuilder
      */
-    public function getRemoveAttributesQueryBuilder($articleId)
+    public function getRemoveAttributesQueryBuilder($articleDetailId)
     {
         /** @var QueryBuilder $builder */
         $builder = $this->getEntityManager()->createQueryBuilder();
         $builder->delete(ProductAttribute::class, 'attribute')
-                ->where('attribute.articleId = :id')
-                ->setParameter('id', $articleId);
+                ->where('attribute.articleDetailId = :id')
+                ->setParameter('id', $articleDetailId);
 
         return $builder;
     }

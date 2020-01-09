@@ -23,6 +23,8 @@
  */
 
 use Shopware\Bundle\AttributeBundle\Repository\SearchCriteria;
+use Shopware\Bundle\ContentTypeBundle\Structs\Criteria;
+use Shopware\Bundle\ContentTypeBundle\Structs\Type;
 use Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface;
 use Shopware\Bundle\StoreFrontBundle\Service\ShopPageServiceInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
@@ -34,12 +36,8 @@ use Shopware\Models\Shop\Shop;
 
 /**
  * Deprecated Shopware Class that handles url rewrites
- *
- * @category  Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
-class sRewriteTable
+class sRewriteTable implements \Enlight_Hook
 {
     /**
      * @var \sSystem
@@ -206,14 +204,16 @@ class sRewriteTable
         $keys = isset($this->template->registered_plugins['function']) ? array_keys($this->template->registered_plugins['function']) : [];
         if (!in_array('sCategoryPath', $keys)) {
             $this->template->registerPlugin(
-                Smarty::PLUGIN_FUNCTION, 'sCategoryPath',
+                Smarty::PLUGIN_FUNCTION,
+                'sCategoryPath',
                 [$this, 'sSmartyCategoryPath']
             );
         }
 
         if (!in_array('createSupplierPath', $keys)) {
             $this->template->registerPlugin(
-                Smarty::PLUGIN_FUNCTION, 'createSupplierPath',
+                Smarty::PLUGIN_FUNCTION,
+                'createSupplierPath',
                 [$this, 'createSupplierPath']
             );
         }
@@ -251,6 +251,7 @@ class sRewriteTable
         $lastUpdate = $this->sCreateRewriteTableArticles($lastUpdate);
         $this->sCreateRewriteTableContent(null, null, $context);
         $this->createManufacturerUrls($context);
+        $this->createContentTypeUrls($context);
 
         return $lastUpdate;
     }
@@ -263,59 +264,59 @@ class sRewriteTable
     public function sCreateRewriteTableCleanup()
     {
         // Delete CMS / campaigns
-        $this->db->query("
-            DELETE ru FROM s_core_rewrite_urls ru
-            LEFT JOIN s_cms_static cs
-              ON ru.org_path LIKE CONCAT('sViewport=custom&sCustom=', cs.id)
-            LEFT JOIN s_cms_support ct
-              ON ru.org_path LIKE CONCAT('sViewport=forms&sFid=', ct.id)
-            WHERE (
-                ru.org_path LIKE 'sViewport=custom&sCustom=%'
-                OR ru.org_path LIKE 'sViewport=forms&sFid=%'
-                OR ru.org_path LIKE 'sViewport=campaign&sCampaign=%'
-                OR ru.org_path LIKE 'sViewport=content&sContent=%'
-            )
-            AND cs.id IS NULL
-            AND ct.id IS NULL"
+        $this->db->query(
+            "DELETE ru FROM s_core_rewrite_urls ru
+             LEFT JOIN s_cms_static cs
+               ON ru.org_path LIKE CONCAT('sViewport=custom&sCustom=', cs.id)
+             LEFT JOIN s_cms_support ct
+               ON ru.org_path LIKE CONCAT('sViewport=forms&sFid=', ct.id)
+             WHERE (
+                 ru.org_path LIKE 'sViewport=custom&sCustom=%'
+                 OR ru.org_path LIKE 'sViewport=forms&sFid=%'
+                 OR ru.org_path LIKE 'sViewport=campaign&sCampaign=%'
+                 OR ru.org_path LIKE 'sViewport=content&sContent=%'
+             )
+             AND cs.id IS NULL
+             AND ct.id IS NULL"
         );
 
         // delete non-existing blog categories from rewrite table
-        $this->db->query("
-            DELETE ru FROM s_core_rewrite_urls ru
-            LEFT JOIN s_categories c
-              ON c.id = REPLACE(ru.org_path, 'sViewport=blog&sCategory=', '')
-              AND c.blog = 1
-            WHERE ru.org_path LIKE 'sViewport=blog&sCategory=%'
-            AND c.id IS NULL"
+        $this->db->query(
+            "DELETE ru FROM s_core_rewrite_urls ru
+             LEFT JOIN s_categories c
+               ON c.id = REPLACE(ru.org_path, 'sViewport=blog&sCategory=', '')
+               AND c.blog = 1
+             WHERE ru.org_path LIKE 'sViewport=blog&sCategory=%'
+             AND c.id IS NULL"
         );
 
         // delete non-existing categories
-        $this->db->query("
-            DELETE ru FROM s_core_rewrite_urls ru
-            LEFT JOIN s_categories c
-              ON c.id = REPLACE(ru.org_path, 'sViewport=cat&sCategory=', '')
-              AND (c.external = '' OR c.external IS NULL)
-              AND c.blog = 0
-            WHERE ru.org_path LIKE 'sViewport=cat&sCategory=%'
-            AND c.id IS NULL"
+        $this->db->query(
+            "DELETE ru FROM s_core_rewrite_urls ru
+             LEFT JOIN s_categories c
+               ON c.id = REPLACE(ru.org_path, 'sViewport=cat&sCategory=', '')
+               AND (c.external = '' OR c.external IS NULL)
+               AND c.blog = 0
+             WHERE ru.org_path LIKE 'sViewport=cat&sCategory=%'
+             AND c.id IS NULL"
         );
 
         // delete non-existing products
-        $this->db->query("
-            DELETE ru FROM s_core_rewrite_urls ru
-            LEFT JOIN s_articles a
-              ON a.id = REPLACE(ru.org_path, 'sViewport=detail&sArticle=', '')
-            WHERE ru.org_path LIKE 'sViewport=detail&sArticle=%'
-            AND a.id IS NULL"
+        $this->db->query(
+            "DELETE ru FROM s_core_rewrite_urls ru
+             LEFT JOIN s_articles a
+               ON a.id = REPLACE(ru.org_path, 'sViewport=detail&sArticle=', '')
+             WHERE ru.org_path LIKE 'sViewport=detail&sArticle=%'
+             AND a.id IS NULL"
         );
 
         // delete all non-existing suppliers
-        $this->db->query("
-            DELETE ru FROM s_core_rewrite_urls ru
-            LEFT JOIN s_articles_supplier s
-              ON s.id = REPLACE(ru.org_path, 'sViewport=listing&sAction=manufacturer&sSupplier=', '')
-            WHERE ru.org_path LIKE 'sViewport=listing&sAction=manufacturer&sSupplier=%'
-            AND s.id IS NULL"
+        $this->db->query(
+            "DELETE ru FROM s_core_rewrite_urls ru
+             LEFT JOIN s_articles_supplier s
+               ON s.id = REPLACE(ru.org_path, 'sViewport=listing&sAction=manufacturer&sSupplier=', '')
+             WHERE ru.org_path LIKE 'sViewport=listing&sAction=manufacturer&sSupplier=%'
+             AND s.id IS NULL"
         );
     }
 
@@ -694,6 +695,58 @@ class sRewriteTable
         $this->insertStaticPageUrls($offset, $limit, $context);
     }
 
+    public function createSingleContentTypeUrl(Type $type): void
+    {
+        if (!$type->isShowInFrontend()) {
+            return;
+        }
+
+        $translator = Shopware()->Container()->get(\Shopware\Bundle\ContentTypeBundle\Services\FrontendTypeTranslatorInterface::class);
+        $type = $translator->translate($type);
+
+        // insert controller, itself
+        $path = $type->getName() . '/';
+        $path = $this->sCleanupPath($path);
+        $this->sInsertUrl('sViewport=' . $type->getControllerName() . '&sAction=index', $path);
+    }
+
+    public function createContentTypeUrls(ShopContextInterface $context): void
+    {
+        $translator = Shopware()->Container()->get(\Shopware\Bundle\ContentTypeBundle\Services\FrontendTypeTranslatorInterface::class);
+
+        /** @var Type $type */
+        foreach (Shopware()->Container()->get(\Shopware\Bundle\ContentTypeBundle\Services\TypeProvider::class)->getTypes() as $type) {
+            if (!$type->isShowInFrontend()) {
+                continue;
+            }
+
+            $type = $translator->translate($type);
+
+            // insert controller, itself
+            $path = $type->getName() . '/';
+            $path = $this->sCleanupPath($path);
+            $this->sInsertUrl('sViewport=' . $type->getControllerName() . '&sAction=index', $path);
+
+            $typeArray = json_decode(json_encode($type), true);
+
+            /** @var \Shopware\Bundle\ContentTypeBundle\Services\RepositoryInterface $repository */
+            $repository = Shopware()->Container()->get('shopware.bundle.content_type.' . $type->getInternalName());
+
+            $criteria = new Criteria();
+            $criteria->loadAssociations = true;
+            $criteria->loadTranslations = true;
+            $criteria->limit = null;
+
+            foreach ($repository->findAll($criteria)->items as $item) {
+                $path = $this->template->fetch('string:' . $type->getSeoUrlTemplate(), ['type' => $typeArray, 'item' => $item, 'context' => $context]);
+                $path = $this->sCleanupPath($path);
+
+                $org_path = sprintf('sViewport=%s&sAction=detail&id=%d', $type->getControllerName(), $item['id']);
+                $this->sInsertUrl($org_path, $path);
+            }
+        }
+    }
+
     /**
      * Updates / create a single rewrite URL
      *
@@ -804,10 +857,14 @@ class sRewriteTable
     }
 
     /**
+     * @deprecated in 5.6, will be removed in 5.7 without replacement
+     *
      * @return Smarty_Data
      */
     public function getData()
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be removed with 5.7. Will be removed without replacement.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         return $this->data;
     }
 
@@ -826,8 +883,8 @@ class sRewriteTable
                 continue;
             }
 
-            $objectData = @unserialize($product['objectdata']);
-            $objectDataFallback = @unserialize($product['objectdataFallback']);
+            $objectData = @unserialize($product['objectdata'], ['allowed_classes' => false]);
+            $objectDataFallback = @unserialize($product['objectdataFallback'], ['allowed_classes' => false]);
 
             if (empty($objectData)) {
                 $objectData = [];
@@ -886,11 +943,11 @@ class sRewriteTable
         if ($this->preparedUpdate === null) {
             $this->preparedUpdate = $this->db->prepare(
                 'UPDATE s_core_rewrite_urls
-                SET main = 0
-                WHERE org_path = ?
-                AND path != ?
-                AND subshopID = ?
-            ');
+                 SET main = 0
+                 WHERE org_path = ?
+                   AND path != ?
+                   AND subshopID = ?'
+            );
         }
 
         return $this->preparedUpdate;
@@ -961,8 +1018,8 @@ class sRewriteTable
             $hasSpecificSubShopPath = $this->hasSpecificShopPath($org_path, $path, $shopId);
 
             // If our current form is specific for this subshop OR if we are for all shops and no other form is specific, write URL
-            if (!empty($form['shopIds']) ||
-                (empty($form['shopIds']) && !$hasSpecificSubShopPath)) {
+            if (!empty($form['shopIds'])
+                || (empty($form['shopIds']) && !$hasSpecificSubShopPath)) {
                 $this->sInsertUrl($org_path, $path);
             }
         }
@@ -1002,8 +1059,8 @@ class sRewriteTable
             $hasSpecificSubShopPath = $this->hasSpecificShopPath($org_path, $path, $shopId);
 
             // If our current site is specific for this subshop OR if we are for all shops and no other site is specific, write URL
-            if (!empty($form['shopIds']) ||
-                (empty($form['shopIds']) && !$hasSpecificSubShopPath)) {
+            if (!empty($form['shopIds'])
+                || (empty($form['shopIds']) && !$hasSpecificSubShopPath)) {
                 $this->sInsertUrl($org_path, $path);
             }
         }

@@ -28,9 +28,7 @@ use Assert\Assertion;
 use Shopware\Bundle\SearchBundle\ConditionInterface;
 
 /**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
+ * @deprecated in 5.6, will be removed in 5.7, without replacement
  */
 class SimpleCondition implements ConditionInterface, \JsonSerializable
 {

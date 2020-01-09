@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Elasticsearch\Endpoints\Indices;
 
 use Elasticsearch\Endpoints\AbstractEndpoint;
@@ -9,19 +11,19 @@ use Elasticsearch\Endpoints\AbstractEndpoint;
  *
  * @category Elasticsearch
  * @package  Elasticsearch\Endpoints\Indices
- * @author   Zachary Tong <zachary.tong@elasticsearch.com>
+ * @author   Zachary Tong <zach@elastic.co>
  * @license  http://www.apache.org/licenses/LICENSE-2.0 Apache2
- * @link     http://elasticsearch.org
+ * @link     http://elastic.co
  */
 class ForceMerge extends AbstractEndpoint
 {
     /**
      * @return string
      */
-    protected function getURI()
+    public function getURI()
     {
         $index = $this->index;
-        $uri = "/_forcemerge";
+        $uri   = "/_forcemerge";
 
         if (isset($index) === true) {
             $uri = "/$index/_forcemerge";
@@ -33,9 +35,9 @@ class ForceMerge extends AbstractEndpoint
     /**
      * @return string[]
      */
-    protected function getParamWhitelist()
+    public function getParamWhitelist()
     {
-        return [
+        return array(
             'flush',
             'ignore_unavailable',
             'allow_no_indices',
@@ -44,13 +46,13 @@ class ForceMerge extends AbstractEndpoint
             'only_expunge_deletes',
             'operation_threading',
             'wait_for_merge',
-        ];
+        );
     }
 
     /**
      * @return string
      */
-    protected function getMethod()
+    public function getMethod()
     {
         return 'POST';
     }

@@ -109,8 +109,39 @@
         vendorPropertyDiv = document.createElement('div'),
         vendorPrefixes = ['webkit', 'moz', 'ms', 'o'];
 
-    function hasCookiesAllowed() {
-        return !window.cookieRemoval || (window.cookieRemoval && document.cookie.indexOf('allowCookie') !== -1);
+    /**
+     * @returns { boolean }
+     */
+    function hasCookiesAllowed () {
+        if (window.cookieRemoval === 0) {
+            return true;
+        }
+
+        if (window.cookieRemoval === 1) {
+            if (document.cookie.indexOf('cookiePreferences') !== -1) {
+                return true;
+            }
+
+            return document.cookie.indexOf('cookieDeclined') === -1;
+        }
+
+        /**
+         * Must be cookieRemoval = 2, so only depends on existence of `allowCookie`
+         */
+        return document.cookie.indexOf('allowCookie') !== -1;
+    }
+
+    /**
+     * @returns { boolean }
+     */
+    function isDeviceCookieAllowed () {
+        var cookiesAllowed = hasCookiesAllowed();
+
+        if (window.cookieRemoval !== 1) {
+            return cookiesAllowed;
+        }
+
+        return cookiesAllowed && document.cookie.indexOf('"name":"x-ua-device","active":true') !== -1;
     }
 
     /**
@@ -1099,6 +1130,7 @@
          * @method destroyPlugin
          * @param {String|jQuery} selector
          * @param {String} pluginName
+         * @returns {StateManager}
          */
         destroyPlugin: function (selector, pluginName) {
             var $el = (typeof selector === 'string') ? $(selector) : selector,
@@ -1109,7 +1141,7 @@
                 plugin;
 
             if (!len) {
-                return;
+                return this;
             }
 
             for (; i < len; i++) {
@@ -1120,6 +1152,8 @@
                     $currentEl.removeData(name);
                 }
             }
+
+            return this;
         },
 
         /**
@@ -1327,13 +1361,17 @@
         },
 
         _setDeviceCookie: function() {
-            if (!hasCookiesAllowed()) {
+            if (!isDeviceCookieAllowed()) {
                 return;
             }
 
-            var device = this._getCurrentDevice();
+            var device = this._getCurrentDevice(),
+                cookieString = 'x-ua-device=' + device + '; path=/';
 
-            document.cookie = 'x-ua-device=' + device + '; path=/';
+            if (window.secureShop !== undefined && window.secureShop === true) {
+                cookieString = 'x-ua-device=' + device + ';secure; path=/';
+            }
+            document.cookie = cookieString;
         },
 
         /**
@@ -1341,33 +1379,43 @@
          * and saves it to a object that can be accessed.
          *
          * @private
-         * @property _scrollBarSize
+         * @method _getScrollBarSize
          * @type {Object}
          */
-        _scrollBarSize: (function () {
-            var $el = $('<div>', {
-                    css: {
-                        width: 100,
-                        height: 100,
-                        overflow: 'scroll',
-                        position: 'absolute',
-                        top: -9999
-                    }
-                }),
-                el = $el[0],
-                width,
-                height;
+        _getScrollBarSize: (function () {
+            var cache;
+            var getSize = function(){
+                var $el = $('<div>', {
+                        css: {
+                            width: 100,
+                            height: 100,
+                            overflow: 'scroll',
+                            position: 'absolute',
+                            top: -9999
+                        }
+                    }),
+                    el = $el[0],
+                    width,
+                    height;
 
-            $('body').append($el);
+                $('body').append($el);
 
-            width = el.offsetWidth - el.clientWidth;
-            height = el.offsetHeight - el.clientHeight;
+                width = el.offsetWidth - el.clientWidth;
+                height = el.offsetHeight - el.clientHeight;
 
-            $($el).remove();
+                $($el).remove();
 
-            return {
-                width: width,
-                height: height
+                return {
+                    width: width,
+                    height: height
+                };
+            };
+
+            return function() {
+                if (!cache) {
+                    cache = getSize();
+                }
+                return cache;
             };
         }()),
 
@@ -1380,7 +1428,7 @@
          * @returns {Object} The width/height pair of the scroll bar size.
          */
         getScrollBarSize: function () {
-            return $.extend({}, this._scrollBarSize);
+            return $.extend({}, this._getScrollBarSize());
         },
 
         /**
@@ -1391,7 +1439,7 @@
          * @returns {Number} Width of the default browser scroll bar.
          */
         getScrollBarWidth: function () {
-            return this._scrollBarSize.width;
+            return this._getScrollBarSize().width;
         },
 
         /**
@@ -1402,7 +1450,7 @@
          * @returns {Number} Height of the default browser scroll bar.
          */
         getScrollBarHeight: function () {
-            return this._scrollBarSize.height;
+            return this._getScrollBarSize().height;
         },
 
         /**

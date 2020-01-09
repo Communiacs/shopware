@@ -28,11 +28,6 @@ use Doctrine\DBAL\Connection;
 use Shopware\Bundle\PluginInstallerBundle\Context\PluginsByTechnicalNameRequest;
 use Shopware\Components\DependencyInjection\Container;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class PluginCheck
 {
     /**
@@ -128,7 +123,7 @@ class PluginCheck
     private function getLocale()
     {
         try {
-            return $this->container->get('Auth')->getIdentity()->locale->getLocale();
+            return $this->container->get('auth')->getIdentity()->locale->getLocale();
         } catch (\Exception $e) {
             return null;
         }

@@ -29,12 +29,12 @@ class Shopware_Controllers_Widgets_Error extends Shopware_Controllers_Frontend_E
      */
     public function preDispatch()
     {
-        $this->Response()->setHeader('x-robots', 'noindex');
+        $this->Response()->setHeader('x-robots-tag', 'noindex');
     }
 
     public function serviceAction()
     {
-        $this->Response()->setHttpResponseCode(503);
+        $this->Response()->setStatusCode(503);
 
         // do not render a template when in service mode
         $this->Front()->Plugins()->ViewRenderer()->setNoRender(true);

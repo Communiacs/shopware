@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Elasticsearch\ConnectionPool;
 
 use Elasticsearch\Connections\ConnectionInterface;
@@ -9,9 +11,9 @@ use Elasticsearch\Connections\ConnectionInterface;
  *
  * @category Elasticsearch
  * @package  Elasticsearch\ConnectionPool
- * @author   Zachary Tong <zachary.tong@elasticsearch.com>
+ * @author   Zachary Tong <zach@elastic.co>
  * @license  http://www.apache.org/licenses/LICENSE-2.0 Apache2
- * @link     http://elasticsearch.org
+ * @link     http://elastic.co
  */
 interface ConnectionPoolInterface
 {

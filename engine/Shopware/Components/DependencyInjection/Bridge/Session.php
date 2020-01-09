@@ -24,16 +24,15 @@
 
 namespace Shopware\Components\DependencyInjection\Bridge;
 
+use Enlight_Components_Session as EnlightSession;
+use Enlight_Components_Session_Namespace as SessionNamespace;
 use Shopware\Components\DependencyInjection\Container;
 use Shopware\Components\Session\PdoSessionHandler;
+use Shopware\Models\Shop\Shop;
 
 /**
  * Session Dependency Injection Bridge
  * Starts and handles the session
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
 class Session
 {
@@ -64,27 +63,35 @@ class Session
     }
 
     /**
-     * @return \Enlight_Components_Session_Namespace
+     * @return SessionNamespace
      */
     public function createSession(Container $container, \SessionHandlerInterface $saveHandler = null)
     {
         $sessionOptions = $container->getParameter('shopware.session');
 
         if (!empty($sessionOptions['unitTestEnabled'])) {
-            \Enlight_Components_Session::$_unitTestEnabled = true;
+            EnlightSession::$_unitTestEnabled = true;
         }
         unset($sessionOptions['unitTestEnabled']);
 
-        if (\Enlight_Components_Session::isStarted()) {
-            \Enlight_Components_Session::writeClose();
+        if (EnlightSession::isStarted()) {
+            EnlightSession::writeClose();
         }
 
-        /** @var \Shopware\Models\Shop\Shop $shop */
-        $shop = $container->get('Shop');
-
-        $sessionOptions['name'] = 'session-' . $shop->getId();
-
+        /** @var Shop $shop */
+        $shop = $container->get('shop');
         $mainShop = $shop->getMain() ?: $shop;
+
+        $name = 'session-' . $shop->getId();
+
+        if ($container->get('config')->get('shareSessionBetweenLanguageShops')) {
+            $name = 'session-' . $mainShop->getId();
+        }
+
+        $sessionOptions['name'] = $name;
+        $basePath = $mainShop->getBasePath();
+        $sessionOptions['cookie_path'] = empty($basePath) ? '/' : $basePath;
+
         if ($mainShop->getSecure()) {
             $sessionOptions['cookie_secure'] = true;
         }
@@ -96,12 +103,13 @@ class Session
 
         unset($sessionOptions['locking']);
 
-        \Enlight_Components_Session::start($sessionOptions);
+        EnlightSession::start($sessionOptions);
 
-        $container->set('SessionID', \Enlight_Components_Session::getId());
+        $sessionId = EnlightSession::getId();
+        $container->set('sessionid', $sessionId);
 
-        $namespace = new \Enlight_Components_Session_Namespace('Shopware');
-        $namespace->offsetSet('sessionId', \Enlight_Components_Session::getId());
+        $namespace = new SessionNamespace('Shopware');
+        $namespace->offsetSet('sessionId', $sessionId);
 
         return $namespace;
     }

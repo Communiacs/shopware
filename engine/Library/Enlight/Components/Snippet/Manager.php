@@ -13,12 +13,8 @@
  * to license@shopware.de so we can send you a copy immediately.
  *
  * @category   Enlight
- * @package    Enlight_Snippet
  * @copyright  Copyright (c) 2011, shopware AG (http://www.shopware.de)
  * @license    http://enlight.de/license     New BSD License
- * @version    $Id$
- * @author     Heiner Lohaus
- * @author     $Author$
  */
 
 /**
@@ -79,12 +75,13 @@ class Enlight_Components_Snippet_Manager extends Enlight_Class
         if (isset($options['ignore_namespace'])) {
             $this->ignoreNamespace = (bool) $options['ignore_namespace'];
         }
+        parent::__construct();
     }
 
     /**
      * Returns a snippet model instance
      *
-     * @param string $namespace
+     * @param string|null $namespace
      *
      * @return Enlight_Components_Snippet_Namespace
      */

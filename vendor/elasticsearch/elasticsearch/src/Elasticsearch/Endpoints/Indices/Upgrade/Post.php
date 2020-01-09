@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types = 1);
 /**
  * User: zach
  * Date: 01/20/2014
@@ -7,28 +9,29 @@
 
 namespace Elasticsearch\Endpoints\Indices\Upgrade;
 
-use Elasticsearch\Common\Exceptions;
 use Elasticsearch\Endpoints\AbstractEndpoint;
+use Elasticsearch\Common\Exceptions;
 
 /**
  * Class Post
  *
  * @category Elasticsearch
  * @package Elasticsearch\Endpoints\Indices
- * @author   Zachary Tong <zachary.tong@elasticsearch.com>
+ * @author   Zachary Tong <zach@elastic.co>
  * @license  http://www.apache.org/licenses/LICENSE-2.0 Apache2
- * @link     http://elasticsearch.org
+ * @link     http://elastic.co
  */
+
 class Post extends AbstractEndpoint
 {
 
     /**
      * @return string
      */
-    protected function getURI()
+    public function getURI()
     {
         $index = $this->index;
-        $uri = "/_upgrade";
+        $uri   = "/_upgrade";
 
         if (isset($index) === true) {
             $uri = "/$index/_upgrade";
@@ -42,22 +45,22 @@ class Post extends AbstractEndpoint
     /**
      * @return string[]
      */
-    protected function getParamWhitelist()
+    public function getParamWhitelist()
     {
-        return [
-            'allow_no_indices',
-            'expand_wildcards',
-            'ignore_unavailable',
+        return array(
             'wait_for_completion',
             'only_ancient_segments',
-        ];
+            'ignore_unavailable',
+            'allow_no_indices',
+            'expand_wildcards',
+        );
     }
 
 
     /**
      * @return string
      */
-    protected function getMethod()
+    public function getMethod()
     {
         return 'POST';
     }

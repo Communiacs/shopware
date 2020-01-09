@@ -28,17 +28,16 @@ use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
 
 /**
- * Shopware document model represents a document.
+ * Shopware document element model represents an element in a document.
  *
  * @ORM\Entity()
  * @ORM\Table(name="s_core_documents_box")
- * @ORM\HasLifecycleCallbacks()
  */
 class Element extends ModelEntity
 {
     /**
      * The id property is an identifier property which means
-     * doctrine associations can be defined over this field
+     * doctrine associations can be defined using this field
      *
      * @var int
      *
@@ -49,7 +48,7 @@ class Element extends ModelEntity
     private $id;
 
     /**
-     * Contains the name of the document.
+     * Contains the id of the parent document.
      *
      * @var int
      *
@@ -58,7 +57,7 @@ class Element extends ModelEntity
     private $documentId;
 
     /**
-     * Contains the name of the document.
+     * Contains the name of the element.
      *
      * @var string
      *
@@ -67,7 +66,7 @@ class Element extends ModelEntity
     private $name = '';
 
     /**
-     * Contains the name of the document.
+     * Contains the style of the element.
      *
      * @var string
      *
@@ -76,7 +75,7 @@ class Element extends ModelEntity
     private $style = '';
 
     /**
-     * Contains the name of the document.
+     * Contains the value of the element.
      *
      * @var string
      *
@@ -105,7 +104,7 @@ class Element extends ModelEntity
     }
 
     /**
-     * Gets the name of the document.
+     * Gets the name of the element.
      *
      * @param string $name
      *
@@ -119,7 +118,7 @@ class Element extends ModelEntity
     }
 
     /**
-     * Sets the documents name.
+     * Sets the element's name.
      *
      * @return string
      */
@@ -153,7 +152,7 @@ class Element extends ModelEntity
     }
 
     /**
-     * Sets the style for
+     * Sets the style for an element
      *
      * @param string $style
      *

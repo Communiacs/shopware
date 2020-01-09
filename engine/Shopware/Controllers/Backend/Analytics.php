@@ -24,14 +24,8 @@
 
 use Shopware\Components\CSRFWhitelistAware;
 use Shopware\Models\Analytics\Repository;
+use Shopware\Models\Shop\Shop;
 
-/**
- * Statistics controller
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backend_ExtJs implements CSRFWhitelistAware
 {
     protected $dateFields = [
@@ -53,11 +47,6 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
      * @var \Shopware\Models\Shop\Repository
      */
     protected $shopRepository;
-
-    /**
-     * @var \Shopware\Models\Tracking\Repository
-     */
-    protected $articleImpressionRepository;
 
     /**
      * @var Repository|null
@@ -125,24 +114,31 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
     }
 
     /**
+     * @deprecated since 5.6 will be private in 5.8
      * Helper Method to get access to the shop repository.
      *
      * @return Shopware\Models\Shop\Repository
      */
     public function getShopRepository()
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be private with 5.8.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         if ($this->shopRepository === null) {
-            $this->shopRepository = $this->getManager()->getRepository(\Shopware\Models\Shop\Shop::class);
+            $this->shopRepository = $this->getManager()->getRepository(Shop::class);
         }
 
         return $this->shopRepository;
     }
 
     /**
+     * @deprecated since 5.6, will be private in 5.8
+     *
      * @return Repository
      */
     public function getRepository()
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be private with 5.8.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         if (!$this->repository) {
             $this->repository = new Repository(
                 $this->get('models')->getConnection(),
@@ -292,8 +288,8 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
 
     public function getReferrerRevenueAction()
     {
-        $shop = $this->getManager()->getRepository(\Shopware\Models\Shop\Shop::class)->getActiveDefault();
-        $shop->registerResources();
+        $shop = $this->getManager()->getRepository(Shop::class)->getActiveDefault();
+        $this->get('shopware.components.shop_registration_service')->registerShop($shop);
 
         $result = $this->getRepository()->getReferrerRevenue(
             $shop,
@@ -880,8 +876,8 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
     protected function exportCSV($data)
     {
         $this->Front()->Plugins()->Json()->setRenderer(false);
-        $this->Response()->setHeader('Content-Type', 'text/csv; charset=utf-8');
-        $this->Response()->setHeader('Content-Disposition', 'attachment;filename=' . $this->getCsvFileName());
+        $this->Response()->headers->set('content-type', 'text/csv; charset=utf-8');
+        $this->Response()->headers->set('content-disposition', 'attachment;filename=' . $this->getCsvFileName());
 
         echo "\xEF\xBB\xBF";
         $fp = fopen('php://output', 'w');

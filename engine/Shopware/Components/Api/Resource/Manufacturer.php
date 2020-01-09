@@ -31,10 +31,6 @@ use Shopware\Models\Media\Media as MediaModel;
 
 /**
  * Supplier API Resource
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
 class Manufacturer extends Resource
 {
@@ -59,7 +55,7 @@ class Manufacturer extends Resource
         $this->checkPrivilege('read');
 
         if (empty($id)) {
-            throw new ApiException\ParameterMissingException();
+            throw new ApiException\ParameterMissingException('id');
         }
 
         $query = $this->getRepository()->getDetailQuery($id);
@@ -145,7 +141,7 @@ class Manufacturer extends Resource
         $this->checkPrivilege('update');
 
         if (empty($id)) {
-            throw new ApiException\ParameterMissingException();
+            throw new ApiException\ParameterMissingException('id');
         }
 
         /** @var \Shopware\Models\Article\Supplier|null $manufacturer */
@@ -182,7 +178,7 @@ class Manufacturer extends Resource
         $this->checkPrivilege('delete');
 
         if (empty($id)) {
-            throw new ApiException\ParameterMissingException();
+            throw new ApiException\ParameterMissingException('id');
         }
 
         /** @var \Shopware\Models\Article\Supplier|null $manufacturer */
@@ -236,7 +232,7 @@ class Manufacturer extends Resource
 
         if (isset($data['image']['link'])) {
             /** @var Media $resource */
-            $resource = $this->getResource('media');
+            $resource = $this->getContainer()->get('shopware.api.media');
             $media = $resource->internalCreateMediaByFileLink($data['image']['link'], Album::ALBUM_SUPPLIER);
         } elseif (!empty($data['image']['mediaId'])) {
             $media = $this->getManager()->find(

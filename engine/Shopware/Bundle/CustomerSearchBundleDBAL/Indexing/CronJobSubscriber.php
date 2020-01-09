@@ -26,9 +26,7 @@ namespace Shopware\Bundle\CustomerSearchBundleDBAL\Indexing;
 
 use Doctrine\DBAL\Connection;
 use Enlight\Event\SubscriberInterface;
-use Shopware\Bundle\ESIndexingBundle\Console\ProgressHelperInterface;
 use Shopware\Bundle\ESIndexingBundle\LastIdQuery;
-use Shopware\Components\Api\Manager;
 use Shopware\Components\Api\Resource\CustomerStream;
 use Shopware\Components\CustomerStream\StreamIndexerInterface;
 
@@ -49,11 +47,17 @@ class CronJobSubscriber implements SubscriberInterface
      */
     private $searchIndexer;
 
-    public function __construct(Connection $connection, SearchIndexerInterface $searchIndexer, StreamIndexerInterface $streamIndexer)
+    /**
+     * @var CustomerStream
+     */
+    private $customerStream;
+
+    public function __construct(Connection $connection, SearchIndexerInterface $searchIndexer, StreamIndexerInterface $streamIndexer, CustomerStream $customerStream)
     {
         $this->connection = $connection;
         $this->streamIndexer = $streamIndexer;
         $this->searchIndexer = $searchIndexer;
+        $this->customerStream = $customerStream;
     }
 
     public static function getSubscribedEvents()
@@ -83,14 +87,11 @@ class CronJobSubscriber implements SubscriberInterface
             return true;
         }
 
-        /** @var CustomerStream $resource */
-        $resource = Manager::getResource('CustomerStream');
-
         foreach ($streams as $stream) {
             if ($stream['freeze_up']) {
                 $stream['freeze_up'] = new \DateTime($stream['freeze_up']);
             }
-            $result = $resource->updateFrozenState($stream['id'], $stream['freeze_up'], $stream['conditions']);
+            $result = $this->customerStream->updateFrozenState($stream['id'], $stream['freeze_up'], $stream['conditions']);
             if ($result) {
                 $stream['static'] = $result['static'];
             }
@@ -128,20 +129,5 @@ class CronJobSubscriber implements SubscriberInterface
         $query->setMaxResults(100);
 
         return new LastIdQuery($query);
-    }
-}
-
-class CronJobProgressHelper implements ProgressHelperInterface
-{
-    public function start($count, $label = '')
-    {
-    }
-
-    public function advance($step = 1)
-    {
-    }
-
-    public function finish()
-    {
     }
 }

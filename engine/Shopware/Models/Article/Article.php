@@ -27,16 +27,11 @@ namespace Shopware\Models\Article;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
-use Shopware\Models\Attribute\Article as ProductAttribute;
 use Shopware\Models\Category\Category as ArticleCategory;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Shopware Article Model
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  *
  * @ORM\Entity(repositoryClass="Repository")
  * @ORM\Table(name="s_articles")
@@ -47,12 +42,10 @@ class Article extends ModelEntity
     /**
      * OWNING SIDE
      *
-     * @var \Shopware\Models\Tax\Tax
+     * @var \Shopware\Models\Tax\Tax|null
      *
      * @Assert\NotBlank()
      * @Assert\Valid()
-     *
-     * @var \Shopware\Models\Tax\Tax
      *
      * @ORM\OneToOne(targetEntity="Shopware\Models\Tax\Tax")
      * @ORM\JoinColumn(name="taxID", referencedColumnName="id")
@@ -134,7 +127,7 @@ class Article extends ModelEntity
     /**
      * OWNING SIDE
      *
-     * @var \Shopware\Models\Property\Group
+     * @var \Shopware\Models\Property\Group|null
      *
      * @ORM\ManyToOne(targetEntity="Shopware\Models\Property\Group", inversedBy="articles")
      * @ORM\JoinColumn(name="filtergroupID", referencedColumnName="id")
@@ -174,7 +167,7 @@ class Article extends ModelEntity
     /**
      * OWNING SIDE
      *
-     * @var Supplier
+     * @var Supplier|null
      *
      * @Assert\Valid()
      *
@@ -198,7 +191,7 @@ class Article extends ModelEntity
     /**
      * OWNING SIDE
      *
-     * @var Detail
+     * @var Detail|null
      *
      * @Assert\NotBlank()
      * @Assert\Valid()
@@ -245,7 +238,7 @@ class Article extends ModelEntity
     /**
      * OWNING SIDE
      *
-     * @var \Shopware\Models\Price\Group
+     * @var \Shopware\Models\Price\Group|null
      *
      * @ORM\ManyToOne(targetEntity="Shopware\Models\Price\Group")
      * @ORM\JoinColumn(name="pricegroupID", referencedColumnName="id")
@@ -262,20 +255,9 @@ class Article extends ModelEntity
     protected $votes;
 
     /**
-     * INVERSE SIDE
-     *
-     * @var ProductAttribute
-     *
-     * @Assert\Valid()
-     *
-     * @ORM\OneToOne(targetEntity="Shopware\Models\Attribute\Article", mappedBy="article", cascade={"persist"})
-     */
-    protected $attribute;
-
-    /**
      * OWNING SIDE
      *
-     * @var Configurator\Set
+     * @var Configurator\Set|null
      *
      * @ORM\ManyToOne(targetEntity="Shopware\Models\Article\Configurator\Set", inversedBy="articles", cascade={"persist"})
      * @ORM\JoinColumn(name="configurator_set_id", referencedColumnName="id")
@@ -325,42 +307,42 @@ class Article extends ModelEntity
     private $id;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="main_detail_id", type="integer", nullable=true)
      */
     private $mainDetailId;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="supplierID", type="integer", nullable=true)
      */
     private $supplierId;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="taxID", type="integer", nullable=true)
      */
     private $taxId;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="pricegroupID", type="integer", nullable=true)
      */
     private $priceGroupId;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="filtergroupID", type="integer", nullable=true)
      */
     private $filterGroupId;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="configurator_set_id", type="integer", nullable=true)
      */
@@ -376,21 +358,21 @@ class Article extends ModelEntity
     private $name;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="description", type="text", nullable=true)
      */
     private $description;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="description_long", type="text", nullable=true)
      */
     private $descriptionLong;
 
     /**
-     * @var \DateTimeInterface
+     * @var \DateTimeInterface|null
      *
      * @Assert\DateTime()
      *
@@ -420,14 +402,14 @@ class Article extends ModelEntity
     private $highlight = false;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="keywords", type="string", length=255, nullable=true)
      */
     private $keywords;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="metaTitle", type="string", length=255, nullable=true)
      */
@@ -450,8 +432,8 @@ class Article extends ModelEntity
     /**
      * @var bool
      *
-     * @deprecated Since version 5.4, to be removed in 6.0
-     * @ORM\Column(name="laststock", type="boolean", nullable=false)
+     * @deprecated 5.6 will be removed in 5.8
+     * @ORM\Column(name="laststock", type="boolean", nullable=true)
      */
     private $lastStock = false;
 
@@ -472,7 +454,7 @@ class Article extends ModelEntity
     /**
      * @var string
      *
-     * @ORM\Column(name="template", type="string", length=255, nullable=true)
+     * @ORM\Column(name="template", type="string", length=255, nullable=false)
      */
     private $template = '';
 
@@ -484,14 +466,14 @@ class Article extends ModelEntity
     private $mode = 0;
 
     /**
-     * @var \DateTimeInterface
+     * @var \DateTimeInterface|null
      *
      * @ORM\Column(name="available_from", type="datetime", nullable=true)
      */
     private $availableFrom;
 
     /**
-     * @var \DateTimeInterface
+     * @var \DateTimeInterface|null
      *
      * @ORM\Column(name="available_to", type="datetime", nullable=true)
      */
@@ -517,8 +499,6 @@ class Article extends ModelEntity
     }
 
     /**
-     * Get id
-     *
      * @return int
      */
     public function getId()
@@ -527,8 +507,6 @@ class Article extends ModelEntity
     }
 
     /**
-     * Set name
-     *
      * @param string $name
      *
      * @return Article
@@ -541,8 +519,6 @@ class Article extends ModelEntity
     }
 
     /**
-     * Get name
-     *
      * @return string
      */
     public function getName()
@@ -551,8 +527,6 @@ class Article extends ModelEntity
     }
 
     /**
-     * Set description
-     *
      * @param string $description
      *
      * @return Article
@@ -565,9 +539,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * Get description
-     *
-     * @return string
+     * @return string|null
      */
     public function getDescription()
     {
@@ -575,8 +547,6 @@ class Article extends ModelEntity
     }
 
     /**
-     * Set descriptionLong
-     *
      * @param string $descriptionLong
      *
      * @return Article
@@ -589,9 +559,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * Get descriptionLong
-     *
-     * @return string
+     * @return string|null
      */
     public function getDescriptionLong()
     {
@@ -599,8 +567,6 @@ class Article extends ModelEntity
     }
 
     /**
-     * Set date
-     *
      * @param \DateTimeInterface|string $added
      *
      * @return Article
@@ -617,9 +583,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * Get date
-     *
-     * @return \DateTimeInterface
+     * @return \DateTimeInterface|null
      */
     public function getAdded()
     {
@@ -627,8 +591,6 @@ class Article extends ModelEntity
     }
 
     /**
-     * Set active
-     *
      * @param bool $active
      *
      * @return Article
@@ -641,8 +603,6 @@ class Article extends ModelEntity
     }
 
     /**
-     * Get active
-     *
      * @return bool
      */
     public function getActive()
@@ -651,8 +611,6 @@ class Article extends ModelEntity
     }
 
     /**
-     * Set pseudoSales
-     *
      * @param int $pseudoSales
      *
      * @return Article
@@ -665,8 +623,6 @@ class Article extends ModelEntity
     }
 
     /**
-     * Get pseudoSales
-     *
      * @return int
      */
     public function getPseudoSales()
@@ -675,8 +631,6 @@ class Article extends ModelEntity
     }
 
     /**
-     * Set highlight
-     *
      * @param bool $highlight
      *
      * @return Article
@@ -689,8 +643,6 @@ class Article extends ModelEntity
     }
 
     /**
-     * Get highlight
-     *
      * @return bool
      */
     public function getHighlight()
@@ -699,8 +651,6 @@ class Article extends ModelEntity
     }
 
     /**
-     * Set keywords
-     *
      * @param string $keywords
      *
      * @return Article
@@ -713,9 +663,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * Get keywords
-     *
-     * @return string
+     * @return string|null
      */
     public function getKeywords()
     {
@@ -723,8 +671,6 @@ class Article extends ModelEntity
     }
 
     /**
-     * Set metaTitle
-     *
      * @param string $metaTitle
      *
      * @return Article
@@ -737,9 +683,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * Get metaTitle
-     *
-     * @return string
+     * @return string|null
      */
     public function getMetaTitle()
     {
@@ -747,8 +691,6 @@ class Article extends ModelEntity
     }
 
     /**
-     * Set changed
-     *
      * @param \DateTimeInterface|string $changed
      *
      * @return Article
@@ -765,8 +707,6 @@ class Article extends ModelEntity
     }
 
     /**
-     * Get changed
-     *
      * @return \DateTimeInterface
      */
     public function getChanged()
@@ -775,8 +715,6 @@ class Article extends ModelEntity
     }
 
     /**
-     * Set priceGroupActive
-     *
      * @param bool $priceGroupActive
      *
      * @return Article
@@ -789,8 +727,6 @@ class Article extends ModelEntity
     }
 
     /**
-     * Get priceGroupActive
-     *
      * @return bool
      */
     public function getPriceGroupActive()
@@ -799,7 +735,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * Set lastStock
+     * @deprecated 5.6 will be removed in 5.7
      *
      * @param bool $lastStock
      *
@@ -813,7 +749,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * Get lastStock
+     * @deprecated 5.6 will be removed in 5.7
      *
      * @return bool
      */
@@ -823,8 +759,6 @@ class Article extends ModelEntity
     }
 
     /**
-     * Set notification
-     *
      * @param bool $notification
      *
      * @return Article
@@ -837,8 +771,6 @@ class Article extends ModelEntity
     }
 
     /**
-     * Get notification
-     *
      * @return bool
      */
     public function getNotification()
@@ -847,8 +779,6 @@ class Article extends ModelEntity
     }
 
     /**
-     * Set template
-     *
      * @param string $template
      *
      * @return Article
@@ -861,8 +791,6 @@ class Article extends ModelEntity
     }
 
     /**
-     * Get template
-     *
      * @return string
      */
     public function getTemplate()
@@ -871,8 +799,6 @@ class Article extends ModelEntity
     }
 
     /**
-     * Set mode
-     *
      * @param int $mode
      *
      * @return Article
@@ -885,8 +811,6 @@ class Article extends ModelEntity
     }
 
     /**
-     * Get mode
-     *
      * @return int
      */
     public function getMode()
@@ -973,7 +897,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @param \Shopware\Models\Property\Group $propertyGroup
+     * @param \Shopware\Models\Property\Group|null $propertyGroup
      *
      * @return Article
      */
@@ -1025,7 +949,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @return \Shopware\Models\Tax\Tax
+     * @return \Shopware\Models\Tax\Tax|null
      */
     public function getTax()
     {
@@ -1104,7 +1028,7 @@ class Article extends ModelEntity
      * OWNING SIDE
      * of the association between articles and supplier
      *
-     * @return Supplier
+     * @return Supplier|null
      */
     public function getSupplier()
     {
@@ -1112,7 +1036,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @param Supplier|array|null $supplier
+     * @param Supplier|array $supplier
      *
      * @return \Shopware\Components\Model\ModelEntity
      */
@@ -1165,7 +1089,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @return \Shopware\Models\Price\Group
+     * @return \Shopware\Models\Price\Group|null
      */
     public function getPriceGroup()
     {
@@ -1205,26 +1129,6 @@ class Article extends ModelEntity
     }
 
     /**
-     * @return ProductAttribute
-     */
-    public function getAttribute()
-    {
-        return $this->attribute;
-    }
-
-    /**
-     * @param ProductAttribute|array|null $attribute
-     *
-     * @return Article
-     */
-    public function setAttribute($attribute)
-    {
-        $this->setOneToOne($attribute, ProductAttribute::class, 'attribute', 'article');
-
-        return $this;
-    }
-
-    /**
      * @return int
      */
     public function getCrossBundleLook()
@@ -1245,7 +1149,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @return \DateTimeInterface
+     * @return \DateTimeInterface|null
      */
     public function getAvailableFrom()
     {
@@ -1253,7 +1157,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @param \DateTimeInterface $availableFrom
+     * @param \DateTimeInterface|null $availableFrom
      *
      * @return Article
      */
@@ -1265,7 +1169,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @return \DateTimeInterface
+     * @return \DateTimeInterface|null
      */
     public function getAvailableTo()
     {
@@ -1273,7 +1177,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @param \DateTimeInterface $availableTo
+     * @param \DateTimeInterface|null $availableTo
      *
      * @return Article
      */
@@ -1293,7 +1197,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @param Configurator\Set $configuratorSet
+     * @param Configurator\Set|null $configuratorSet
      *
      * @return Article
      */

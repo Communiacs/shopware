@@ -28,10 +28,6 @@ use Shopware\Components\Api\Exception as ApiException;
 
 /**
  * CustomerGroup API Resource
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
 class CustomerGroup extends Resource
 {
@@ -56,7 +52,7 @@ class CustomerGroup extends Resource
         $this->checkPrivilege('read');
 
         if (empty($id)) {
-            throw new ApiException\ParameterMissingException();
+            throw new ApiException\ParameterMissingException('id');
         }
 
         $builder = $this->getRepository()->createQueryBuilder('customerGroup')
@@ -157,7 +153,7 @@ class CustomerGroup extends Resource
         $this->checkPrivilege('update');
 
         if (empty($id)) {
-            throw new ApiException\ParameterMissingException();
+            throw new ApiException\ParameterMissingException('id');
         }
 
         /** @var \Shopware\Models\Customer\Group|null $result */
@@ -199,7 +195,7 @@ class CustomerGroup extends Resource
         $this->checkPrivilege('delete');
 
         if (empty($id)) {
-            throw new ApiException\ParameterMissingException();
+            throw new ApiException\ParameterMissingException('id');
         }
 
         /** @var \Shopware\Models\Customer\Group|null $result */

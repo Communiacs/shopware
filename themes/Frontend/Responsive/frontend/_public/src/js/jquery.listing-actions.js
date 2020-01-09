@@ -404,9 +404,9 @@
          */
         disableActiveFilterContainer: function (disabled) {
             var me = this;
-            
+
             $.publish('plugin/swListingActions/disableActiveFilter', [this, disabled]);
-            
+
             if (me.showInstantFilterResult || me.isFilterpanelInSidebar) {
                 return;
             }
@@ -802,7 +802,8 @@
 
                 param = $.map(param, function (val) {
                     val = val.replace(/\+/g, '%20');
-                    return decodeURIComponent(val);
+
+                    return $.PluginBase.prototype.safeURIDecode(val);
                 });
 
                 if (param[1] === 'reset') {

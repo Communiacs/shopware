@@ -34,7 +34,7 @@ class RingBuffer implements \ArrayAccess
 
     private $size;
 
-    public function __construct($size)
+    public function __construct(int $size)
     {
         $this->size = $size;
     }
@@ -42,7 +42,7 @@ class RingBuffer implements \ArrayAccess
     /**
      * {@inheritdoc}
      */
-    public function offsetExists($key)
+    public function offsetExists($key): bool
     {
         return isset($this->indices[$key]);
     }

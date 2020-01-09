@@ -5,6 +5,7 @@ use Aws\Api\ApiProvider;
 use Aws\Api\DocModel;
 use Aws\Api\Service;
 use Aws\AwsClient;
+use Aws\CacheInterface;
 use Aws\ClientResolver;
 use Aws\Command;
 use Aws\Exception\AwsException;
@@ -13,6 +14,7 @@ use Aws\Middleware;
 use Aws\RetryMiddleware;
 use Aws\ResultInterface;
 use Aws\CommandInterface;
+use Aws\S3\RegionalEndpoint\ConfigurationProvider;
 use GuzzleHttp\Exception\RequestException;
 use Psr\Http\Message\RequestInterface;
 
@@ -260,6 +262,15 @@ class S3Client extends AwsClient implements S3ClientInterface
      *   interacting with CNAME endpoints.
      * - calculate_md5: (bool) Set to false to disable calculating an MD5
      *   for all Amazon S3 signed uploads.
+     * - s3_us_east_1_regional_endpoint:
+     *   (Aws\S3\RegionalEndpoint\ConfigurationInterface|Aws\CacheInterface\|callable|string|array)
+     *   Specifies whether to use regional or legacy endpoints for the us-east-1
+     *   region. Provide an Aws\S3\RegionalEndpoint\ConfigurationInterface object, an
+     *   instance of Aws\CacheInterface, a callable configuration provider used
+     *   to create endpoint configuration, a string value of `legacy` or
+     *   `regional`, or an associative array with the following keys:
+     *   endpoint_types: (string)  Set to `legacy` or `regional`, defaults to
+     *   `legacy`
      * - use_accelerate_endpoint: (bool) Set to true to send requests to an S3
      *   Accelerate endpoint by default. Can be enabled or disabled on
      *   individual operations by setting '@use_accelerate_endpoint' to true or
@@ -280,6 +291,11 @@ class S3Client extends AwsClient implements S3ClientInterface
      */
     public function __construct(array $args)
     {
+        if (!isset($args['s3_us_east_1_regional_endpoint'])) {
+            $args['s3_us_east_1_regional_endpoint'] = ConfigurationProvider::defaultProvider();
+        } elseif ($args['s3_us_east_1_regional_endpoint'] instanceof CacheInterface) {
+            $args['s3_us_east_1_regional_endpoint'] = ConfigurationProvider::defaultProvider($args);
+        }
         parent::__construct($args);
         $stack = $this->getHandlerList();
         $stack->appendInit(SSECMiddleware::wrap($this->getEndpoint()->getScheme()), 's3.ssec');
@@ -337,7 +353,7 @@ class S3Client extends AwsClient implements S3ClientInterface
             preg_match('/^[a-z0-9]([a-z0-9\-\.]*[a-z0-9])?$/', $bucket);
     }
 
-    public function createPresignedRequest(CommandInterface $command, $expires)
+    public function createPresignedRequest(CommandInterface $command, $expires, array $options = [])
     {
         $command = clone $command;
         $command->getHandlerList()->remove('signer');
@@ -353,10 +369,24 @@ class S3Client extends AwsClient implements S3ClientInterface
         return $signer->presign(
             \Aws\serialize($command),
             $this->getCredentials()->wait(),
-            $expires
+            $expires,
+            $options
         );
     }
 
+    /**
+     * Returns the URL to an object identified by its bucket and key.
+     *
+     * The URL returned by this method is not signed nor does it ensure that the
+     * bucket and key given to the method exist. If you need a signed URL, then
+     * use the {@see \Aws\S3\S3Client::createPresignedRequest} method and get
+     * the URI of the signed request.
+     *
+     * @param string $bucket  The name of the bucket where the object is located
+     * @param string $key     The key of the object
+     *
+     * @return string The URL to the object
+     */
     public function getObjectUrl($bucket, $key)
     {
         $command = $this->getCommand('GetObject', [
@@ -552,7 +582,7 @@ class S3Client extends AwsClient implements S3ClientInterface
     /** @internal */
     public static function _applyApiProvider($value, array &$args, HandlerList $list)
     {
-        ClientResolver::_apply_api_provider($value, $args, $list);
+        ClientResolver::_apply_api_provider($value, $args);
         $args['parser'] = new GetBucketLocationParser(
             new AmbiguousSuccessParser(
                 new RetryableMalformedResponseParser(

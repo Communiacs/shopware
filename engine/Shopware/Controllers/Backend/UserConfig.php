@@ -22,14 +22,11 @@
  * our trademarks remain entirely with us.
  */
 
-/**
- * Basic class to allow changes to UserConfig-table from ExtJs Backends.
- */
 class Shopware_Controllers_Backend_UserConfig extends Shopware_Controllers_Backend_ExtJs
 {
     public function getAction()
     {
-        $identity = (int) $this->container->get('Auth')->getIdentity()->id;
+        $identity = (int) $this->container->get('auth')->getIdentity()->id;
 
         $name = $this->Request()->getParam('name');
 
@@ -43,7 +40,7 @@ class Shopware_Controllers_Backend_UserConfig extends Shopware_Controllers_Backe
 
     public function saveAction()
     {
-        $identity = (int) $this->container->get('Auth')->getIdentity()->id;
+        $identity = (int) $this->container->get('auth')->getIdentity()->id;
 
         $name = $this->Request()->getParam('name');
 

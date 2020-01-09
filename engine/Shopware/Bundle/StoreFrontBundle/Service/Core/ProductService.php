@@ -40,11 +40,6 @@ use Shopware\Bundle\StoreFrontBundle\Struct\Product;
 use Shopware\Bundle\StoreFrontBundle\Struct\ProductContextInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class ProductService implements ProductServiceInterface
 {
     /**
@@ -167,9 +162,7 @@ class ProductService implements ProductServiceInterface
         $configuration = $this->configuratorService->getProductsConfigurations($listProducts, $context);
 
         $products = [];
-        foreach ($listProducts as $listProduct) {
-            $number = $listProduct->getNumber();
-
+        foreach ($listProducts as $number => $listProduct) {
             $product = Product::createFromListProduct($listProduct);
 
             if (isset($relatedProducts[$number])) {

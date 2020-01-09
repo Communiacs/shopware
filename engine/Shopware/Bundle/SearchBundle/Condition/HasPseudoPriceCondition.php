@@ -26,19 +26,16 @@ namespace Shopware\Bundle\SearchBundle\Condition;
 
 use Shopware\Bundle\SearchBundle\ConditionInterface;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class HasPseudoPriceCondition implements ConditionInterface, \JsonSerializable
 {
+    private const NAME = 'has_pseudo_price_condition';
+
     /**
      * {@inheritdoc}
      */
     public function getName()
     {
-        return 'has_pseudo_price_condition';
+        return self::NAME;
     }
 
     /**

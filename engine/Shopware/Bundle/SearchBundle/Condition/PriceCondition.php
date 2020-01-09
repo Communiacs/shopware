@@ -27,13 +27,10 @@ namespace Shopware\Bundle\SearchBundle\Condition;
 use Assert\Assertion;
 use Shopware\Bundle\SearchBundle\ConditionInterface;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class PriceCondition implements ConditionInterface, \JsonSerializable
 {
+    private const NAME = 'price';
+
     /**
      * @var float
      */
@@ -61,7 +58,7 @@ class PriceCondition implements ConditionInterface, \JsonSerializable
      */
     public function getName()
     {
-        return 'price';
+        return self::NAME;
     }
 
     /**

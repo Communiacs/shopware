@@ -29,10 +29,6 @@ use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
 
 /**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- *
  * @ORM\Table(name="s_core_plugins")
  * @ORM\Entity()
  */
@@ -104,35 +100,35 @@ class Plugin extends ModelEntity
     private $added;
 
     /**
-     * @var \DateTimeInterface
+     * @var \DateTimeInterface|null
      *
      * @ORM\Column(name="installation_date", type="datetime", nullable=true)
      */
     private $installed;
 
     /**
-     * @var \DateTimeInterface
+     * @var \DateTimeInterface|null
      *
      * @ORM\Column(name="update_date", type="datetime", nullable=true)
      */
     private $updated;
 
     /**
-     * @var \DateTimeInterface
+     * @var \DateTimeInterface|null
      *
      * @ORM\Column(name="refresh_date", type="datetime", nullable=true)
      */
     private $refreshed;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="author", type="string", nullable=true)
      */
     private $author;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="copyright", type="string", nullable=true)
      */
@@ -441,7 +437,7 @@ class Plugin extends ModelEntity
     }
 
     /**
-     * @return \DateTimeInterface
+     * @return \DateTimeInterface|null
      */
     public function getUpdated()
     {
@@ -449,7 +445,7 @@ class Plugin extends ModelEntity
     }
 
     /**
-     * @param \DateTimeInterface $updated
+     * @param \DateTimeInterface|null $updated
      */
     public function setUpdated($updated)
     {
@@ -457,7 +453,7 @@ class Plugin extends ModelEntity
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getAuthor()
     {
@@ -465,7 +461,7 @@ class Plugin extends ModelEntity
     }
 
     /**
-     * @param string $author
+     * @param string|null $author
      */
     public function setAuthor($author)
     {
@@ -473,7 +469,7 @@ class Plugin extends ModelEntity
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getCopyright()
     {
@@ -481,7 +477,7 @@ class Plugin extends ModelEntity
     }
 
     /**
-     * @param string $copyright
+     * @param string|null $copyright
      */
     public function setCopyright($copyright)
     {

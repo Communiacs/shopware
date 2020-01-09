@@ -24,18 +24,7 @@
 
 namespace Shopware\Bundle\SearchBundle\Sorting;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class ReleaseDateSorting extends Sorting
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function getName()
-    {
-        return 'release_date';
-    }
+    protected const NAME = 'release_date';
 }

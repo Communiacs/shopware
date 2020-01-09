@@ -34,10 +34,6 @@ use Shopware\Models\Shop\Shop as ShopModel;
 
 /**
  * Address API Resource
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
 class Address extends Resource
 {
@@ -72,7 +68,7 @@ class Address extends Resource
         $this->checkPrivilege('read');
 
         if (empty($id)) {
-            throw new ApiException\ParameterMissingException();
+            throw new ApiException\ParameterMissingException('id');
         }
 
         $query = $this->getRepository()->getOne($id);
@@ -167,7 +163,7 @@ class Address extends Resource
         $this->checkPrivilege('update');
 
         if (empty($id)) {
-            throw new ApiException\ParameterMissingException();
+            throw new ApiException\ParameterMissingException('id');
         }
 
         /** @var \Shopware\Models\Customer\Address|null $address */
@@ -208,7 +204,7 @@ class Address extends Resource
         $this->checkPrivilege('delete');
 
         if (empty($id)) {
-            throw new ApiException\ParameterMissingException();
+            throw new ApiException\ParameterMissingException('id');
         }
 
         /** @var \Shopware\Models\Customer\Address|null $address */
@@ -240,7 +236,7 @@ class Address extends Resource
             throw new \RuntimeException('A valid shopId is required.');
         }
 
-        $shop->registerResources();
+        $this->getContainer()->get('shopware.components.shop_registration_service')->registerShop($shop);
     }
 
     /**

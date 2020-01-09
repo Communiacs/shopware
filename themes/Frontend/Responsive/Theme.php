@@ -141,6 +141,8 @@ class Theme extends \Shopware\Components\Theme
         'src/js/jquery.cookie-permission.js',
         'src/js/jquery.shopware-responsive.js',
         'src/js/jquery.invalid-tos-jump.js',
+        'src/js/jquery.notification-message-close.js',
+        'src/js/jquery.cookie-consent-manager.js'
     ];
 
     /**
@@ -1500,6 +1502,18 @@ class Theme extends \Shopware\Components\Theme
                 ['attributes' => [
                     'lessCompatible' => false,
                     'boxLabel' => Shopware()->Snippets()->getNamespace('themes/bare/backend/config')->get('async_javascript_loading_description'),
+                ]]
+            )
+        );
+
+        $fieldSet->addElement(
+            $this->createCheckboxField(
+                'ajaxEmotionLoading',
+                '__ajax_emotion_loading__',
+                true,
+                ['attributes' => [
+                    'lessCompatible' => false,
+                    'boxLabel' => Shopware()->Snippets()->getNamespace('themes/bare/backend/config')->get('ajax_emotion_loading_description'),
                 ]]
             )
         );

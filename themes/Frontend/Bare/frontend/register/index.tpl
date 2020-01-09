@@ -83,6 +83,23 @@
 
 {* Register content *}
 {block name='frontend_index_content'}
+    {block name='frontend_register_index_registration_optin_message'}
+        <div class="register--message content block">
+            <div class="register--headline">
+                {block name='frontend_register_index_form_optin_success'}
+                    {if $smarty.get.optinsuccess && ({config name=optinregister} || {config name=optinaccountless})}
+                        {if $isAccountless}
+                            {s name="RegisterInfoSuccessOptinAccountless" assign="snippetRegisterInfoSuccessOptinAccountless"}{/s}
+                            {include file="frontend/_includes/messages.tpl" type="success" content=$snippetRegisterInfoSuccessOptinAccountless}
+                        {else}
+                            {s name="RegisterInfoSuccessOptin" assign="snippetRegisterInfoSuccessOptin"}{/s}
+                            {include file="frontend/_includes/messages.tpl" type="success" content=$snippetRegisterInfoSuccessOptin}
+                        {/if}
+                    {/if}
+                {/block}
+            </div>
+        </div>
+    {/block}
     {block name='frontend_register_index_registration'}
         <div class="register--content panel content block has--border is--rounded{if $errors.occurred} is--collapsed{/if}" id="registration" data-register="true">
 
@@ -115,19 +132,6 @@
 
             {block name='frontend_register_index_form'}
                 <form method="post" action="{url action=saveRegister sTarget=$sTarget sTargetAction=$sTargetAction}" class="panel register--form" id="register--form">
-
-                    {* Successful optin verification *}
-                    {block name='frontend_register_index_form_optin_success'}
-                        {if $smarty.get.optinsuccess && ({config name=optinregister} || {config name=optinaccountless})}
-                            {if $isAccountless}
-                                {s name="RegisterInfoSuccessOptinAccountless" assign="snippetRegisterInfoSuccessOptinAccountless"}{/s}
-                                {include file="frontend/_includes/messages.tpl" type="success" content=$snippetRegisterInfoSuccessOptinAccountless}
-                            {else}
-                                {s name="RegisterInfoSuccessOptin" assign="snippetRegisterInfoSuccessOptin"}{/s}
-                                {include file="frontend/_includes/messages.tpl" type="success" content=$snippetRegisterInfoSuccessOptin}
-                            {/if}
-                        {/if}
-                    {/block}
 
                     {* Invalid hash while option verification process *}
                     {block name='frontend_register_index_form_optin_invalid_hash'}
@@ -211,7 +215,7 @@
                     {block name='frontend_register_index_form_submit'}
                         {* Submit button *}
                         <div class="register--action">
-                            <button type="submit" class="register--submit btn is--primary is--large is--icon-right" name="Submit">{s name="RegisterIndexNewActionSubmit"}{/s} <i class="icon--arrow-right"></i></button>
+                            <button type="submit" class="register--submit btn is--primary is--large is--icon-right" name="Submit" data-preloader-button="true">{s name="RegisterIndexNewActionSubmit"}{/s} <i class="icon--arrow-right"></i></button>
                         </div>
                     {/block}
                 </form>

@@ -28,19 +28,14 @@ use Shopware\Components\Api\BatchInterface;
 use Shopware\Components\Api\Exception as ApiException;
 use Shopware\Components\CacheManager;
 use Shopware\Components\DependencyInjection\Container;
-use Shopware\Components\DependencyInjection\ContainerAwareInterface;
 
 /**
  * Cache API Resource
  *
  * This resource provides access to all shopware caches.
  * It is used internally by the Cache/Performance backend module
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
-class Cache extends Resource implements ContainerAwareInterface, BatchInterface
+class Cache extends Resource implements BatchInterface
 {
     /**
      * @var \Enlight_Controller_Request_Request
@@ -63,6 +58,7 @@ class Cache extends Resource implements ContainerAwareInterface, BatchInterface
             $this->request = $container->get('front')->Request();
             $this->cacheManager = $container->get('shopware.cache_manager');
         }
+        parent::setContainer($container);
     }
 
     /**
@@ -78,7 +74,7 @@ class Cache extends Resource implements ContainerAwareInterface, BatchInterface
         $this->checkPrivilege('read');
 
         if (empty($id)) {
-            throw new ApiException\ParameterMissingException();
+            throw new ApiException\ParameterMissingException('id');
         }
 
         return $this->getCacheInfo($id);
@@ -116,7 +112,7 @@ class Cache extends Resource implements ContainerAwareInterface, BatchInterface
         $this->checkPrivilege('delete');
 
         if (empty($id)) {
-            throw new ApiException\ParameterMissingException();
+            throw new ApiException\ParameterMissingException('id');
         }
 
         $this->clearCache($id);
@@ -181,10 +177,14 @@ class Cache extends Resource implements ContainerAwareInterface, BatchInterface
     }
 
     /**
+     * @deprecated in 5.6, will be removed without a replacement
+     *
      * @return \Enlight_Controller_Request_Request
      */
     protected function getRequest()
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be removed with 5.7. Will be removed without replacement.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         return $this->request;
     }
 
@@ -217,32 +217,26 @@ class Cache extends Resource implements ContainerAwareInterface, BatchInterface
                 $this->cacheManager->clearHttpCache();
                 break;
             case 'config':
-                $tags[] = 'Shopware_Config';
-                $tags[] = 'Shopware_Plugin';
+                $tags[] = CacheManager::ITEM_TAG_CONFIG;
+                $tags[] = CacheManager::ITEM_TAG_PLUGIN;
                 $this->cacheManager->clearConfigCache();
                 break;
             case 'template':
                 $this->cacheManager->clearTemplateCache();
                 break;
             case 'backend':
-                $tags[] = 'Shopware_Config';
-                $tags[] = 'Shopware_Plugin';
+                $tags[] = CacheManager::ITEM_TAG_CONFIG;
+                $tags[] = CacheManager::ITEM_TAG_PLUGIN;
                 $this->cacheManager->clearTemplateCache();
                 break;
             case 'proxy':
-                $tags[] = 'Shopware_Models';
-                $this->cacheManager->clearProxyCache();
-                break;
             case 'doctrine-proxy':
-                $tags[] = 'Shopware_Models';
-                $this->cacheManager->clearProxyCache();
-                break;
             case 'doctrine-file':
-                $tags[] = 'Shopware_Models';
+                $tags[] = CacheManager::ITEM_TAG_MODELS;
                 $this->cacheManager->clearProxyCache();
                 break;
             case 'search':
-                $tags[] = 'Shopware_Modules_Search';
+                $tags[] = CacheManager::ITEM_TAG_SEARCH;
                 $this->cacheManager->clearSearchCache();
                 break;
             case 'rewrite':

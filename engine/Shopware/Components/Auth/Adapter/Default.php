@@ -127,7 +127,8 @@ class Shopware_Components_Auth_Adapter_Default extends Enlight_Components_Auth_A
             if ($this->_zendDb->fetchOne($sql, [$user->roleID]) == false) {
                 return new Zend_Auth_Result(
                     Zend_Auth_Result::FAILURE_IDENTITY_NOT_FOUND,
-                    $this->_identity, []
+                    $this->_identity,
+                    []
                 );
             }
 
@@ -166,12 +167,16 @@ class Shopware_Components_Auth_Adapter_Default extends Enlight_Components_Auth_A
     }
 
     /**
+     * @deprecated in 5.6, will be private in 5.7
+     *
      * @param string $plaintext
      * @param string $hash
      * @param string $encoderName
      */
     public function rehash($plaintext, $hash, $encoderName)
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be private with 5.7.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         $newHash = Shopware()->PasswordEncoder()->reencodePassword($plaintext, $hash, $encoderName);
 
         if ($newHash === $hash) {
@@ -182,12 +187,15 @@ class Shopware_Components_Auth_Adapter_Default extends Enlight_Components_Auth_A
             $this->_tableName,
             [$this->_credentialColumn => $newHash],
             $this->_zendDb->quoteInto(
-                $this->_zendDb->quoteIdentifier($this->_identityColumn, true) . ' = ?', $this->_identity
+                $this->_zendDb->quoteIdentifier($this->_identityColumn, true) . ' = ?',
+                $this->_identity
             )
         );
     }
 
     /**
+     * Used for updating to new algorithm for the future
+     *
      * @param string $plaintext
      * @param string $defaultEncoderName
      */
@@ -199,7 +207,8 @@ class Shopware_Components_Auth_Adapter_Default extends Enlight_Components_Auth_A
             $this->_tableName,
             ['encoder' => $defaultEncoderName, $this->_credentialColumn => $newHash],
             $this->_zendDb->quoteInto(
-                $this->_zendDb->quoteIdentifier($this->_identityColumn, true) . ' = ?', $this->_identity
+                $this->_zendDb->quoteIdentifier($this->_identityColumn, true) . ' = ?',
+                $this->_identity
             )
         );
     }
@@ -213,12 +222,13 @@ class Shopware_Components_Auth_Adapter_Default extends Enlight_Components_Auth_A
         $user = $this->getResultRowObject();
 
         $this->_zendDb->update(
-           $this->_tableName,
-           [$this->expiryColumn => Zend_Date::now()],
-           $this->_zendDb->quoteInto(
-               $this->_zendDb->quoteIdentifier($this->_identityColumn, true) . ' = ?', $user->username
-           )
-       );
+            $this->_tableName,
+            [$this->expiryColumn => Zend_Date::now()],
+            $this->_zendDb->quoteInto(
+                $this->_zendDb->quoteIdentifier($this->_identityColumn, true) . ' = ?',
+                $user->username
+            )
+        );
     }
 
     /**
@@ -234,7 +244,8 @@ class Shopware_Components_Auth_Adapter_Default extends Enlight_Components_Auth_A
             $this->_tableName,
             ['failedlogins' => $number],
             $this->_zendDb->quoteInto(
-                $this->_zendDb->quoteIdentifier($this->_identityColumn, true) . ' = ?', $this->_identity
+                $this->_zendDb->quoteIdentifier($this->_identityColumn, true) . ' = ?',
+                $this->_identity
             )
         );
 

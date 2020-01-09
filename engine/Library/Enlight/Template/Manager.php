@@ -22,17 +22,13 @@
  * our trademarks remain entirely with us.
  */
 
-require_once 'Smarty/Smarty.class.php';
-
 /**
  * The Enlight_Template_Manager is an extension of smarty to manually set the config in the class constructor.
  *
  * With the Enlight_Template_Manager it is not only possible to overwrite template files,
  * it is also possible to overwrite all the individual blocks within the template.
  *
- * @category   Enlight
  *
- * @copyright  Copyright (c) 2011, shopware AG (http://www.shopware.de)
  * @license    http://enlight.de/license     New BSD License
  */
 class Enlight_Template_Manager extends Smarty
@@ -211,7 +207,7 @@ class Enlight_Template_Manager extends Smarty
      *
      * @param string|string[] $template_dir directory(s) of template sources
      * @param string          $key          of the array element to assign the template dir to
-     * @param null|string     $position
+     * @param string|null     $position
      *
      * @return Smarty current Smarty instance for chaining
      */

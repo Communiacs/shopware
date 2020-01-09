@@ -315,7 +315,6 @@ return array(
     'Symfony\\Component\\Debug\\ErrorHandler' => $vendorDir . '/symfony/debug/ErrorHandler.php',
     'Symfony\\Component\\Debug\\ExceptionHandler' => $vendorDir . '/symfony/debug/ExceptionHandler.php',
     'Symfony\\Component\\Debug\\Exception\\ClassNotFoundException' => $vendorDir . '/symfony/debug/Exception/ClassNotFoundException.php',
-    'Symfony\\Component\\Debug\\Exception\\ContextErrorException' => $vendorDir . '/symfony/debug/Exception/ContextErrorException.php',
     'Symfony\\Component\\Debug\\Exception\\FatalErrorException' => $vendorDir . '/symfony/debug/Exception/FatalErrorException.php',
     'Symfony\\Component\\Debug\\Exception\\FatalThrowableError' => $vendorDir . '/symfony/debug/Exception/FatalThrowableError.php',
     'Symfony\\Component\\Debug\\Exception\\FlattenException' => $vendorDir . '/symfony/debug/Exception/FlattenException.php',

@@ -22,16 +22,13 @@
  * our trademarks remain entirely with us.
  */
 
-use League\Flysystem\Adapter\Local;
 use Shopware\Bundle\AccountBundle\Form\Account\EmailUpdateFormType;
 use Shopware\Bundle\AccountBundle\Form\Account\PasswordUpdateFormType;
 use Shopware\Bundle\AccountBundle\Form\Account\ProfileUpdateFormType;
 use Shopware\Bundle\AccountBundle\Form\Account\ResetPasswordFormType;
+use Shopware\Bundle\StaticContentBundle\Exception\EsdNotFoundException;
 use Shopware\Models\Customer\Customer;
 
-/**
- * Account controller
- */
 class Shopware_Controllers_Frontend_Account extends Enlight_Controller_Action
 {
     /**
@@ -141,7 +138,7 @@ class Shopware_Controllers_Frontend_Account extends Enlight_Controller_Action
         $this->View()->assign('sNumberPages', $orderData['numberOfPages']);
         $this->View()->assign('sPages', $orderData['pages']);
 
-        //this has to be assigned here because the config method in smarty can't handle array structures
+        // This has to be assigned here because the config method in smarty can't handle array structures
         $this->View()->assign('sDownloadAvailablePaymentStatus', Shopware()->Config()->get('downloadAvailablePaymentStatus'));
     }
 
@@ -365,6 +362,8 @@ class Shopware_Controllers_Frontend_Account extends Enlight_Controller_Action
      */
     public function downloadAction()
     {
+        $esdService = $this->container->get('shopware_static_content.service.esd_service');
+        $downloadService = $this->container->get('shopware_static_content.service.download_service');
         $filesystem = $this->container->get('shopware.filesystem.private');
         $esdID = $this->request->getParam('esdID');
 
@@ -372,99 +371,32 @@ class Shopware_Controllers_Frontend_Account extends Enlight_Controller_Action
             return $this->forward('downloads');
         }
 
-        $sql = '
-            SELECT file, articleID
-            FROM s_articles_esd ae, s_order_esd oe
-            WHERE ae.id=oe.esdID
-            AND oe.userID=?
-            AND oe.orderdetailsID=?
-        ';
-        $download = Shopware()->Db()->fetchRow($sql, [Shopware()->Session()->get('sUserId'), $esdID]);
-
-        if (empty($download)) {
-            $sql = '
-                SELECT e.file, ad.articleID
-                FROM s_articles_esd e, s_order_details od, s_articles_details ad, s_order o
-                WHERE e.articledetailsID=ad.id
-                AND ad.ordernumber=od.articleordernumber
-                AND o.id=od.orderID
-                AND o.userID=?
-                AND od.id=?
-            ';
-            $download = Shopware()->Db()->fetchRow($sql, [Shopware()->Session()->sUserId, $esdID]);
-        }
-
-        // @TOOD: Re-Implement ESD download strategies
-
-        if (empty($download['file'])) {
-            $this->View()->assign('sErrorCode', 1);
-
-            return $this->forward('downloads');
-        }
-
-        $filePath = $this->container->get('config')->offsetGet('esdKey') . '/' . $download['file'];
-
-        if ($filesystem->has($filePath) === false) {
-            $this->View()->assign('sErrorCode', 2);
-
-            return $this->forward('downloads');
-        }
-
-        $meta = $filesystem->getMetadata($filePath);
-        $mimeType = $filesystem->getMimetype($filePath) ?: 'application/octet-stream';
-
-        $this->Front()->Plugins()->ViewRenderer()->setNoRender();
-        $downloadStrategy = $this->container->get('config')->get('esdDownloadStrategy');
-
-        if ($filesystem->getAdapter() instanceof Local && in_array($this->container->get('config')->get('esdDownloadStrategy'), [0, 2, 3], true)) {
-            $publicUrl = $this->container->get('shopware.esd.public.url_generator')->generateUrl($filePath);
-            $path = parse_url($publicUrl, PHP_URL_PATH);
-
-            switch ($downloadStrategy) {
-                case 0:
-                    $this->Response()->setRedirect($publicUrl);
-                    break;
-                case 2:
-                    $filePath = $this->container->getParameter('shopware.filesystem.private.config.root') . '/' . $filePath;
-                    $this->Response()
-                        ->setHeader('Content-Type', 'application/octet-stream')
-                        ->setHeader('Content-Disposition', 'attachment; filename="' . $download['file'] . '"')
-                        ->setHeader('X-Sendfile', $filePath);
-                    break;
-                case 3:
-                    $this->Response()
-                        ->setHeader('Content-Type', 'application/octet-stream')
-                        ->setHeader('Content-Disposition', 'attachment; filename="' . $download['file'] . '"')
-                        ->setHeader('X-Accel-Redirect', $path);
-                    break;
-            }
+        try {
+            $download = $esdService->loadEsdOfCustomer($this->container->get('session')->offsetGet('sUserId'), $esdID);
+        } catch (EsdNotFoundException $exception) {
+            $this->forwardDownloadError(1);
 
             return;
         }
 
-        @set_time_limit(0);
+        if (empty($download->getFile())) {
+            $this->forwardDownloadError(1);
 
-        $response = $this->Response();
-        $response->setHeader('Content-Type', $mimeType);
-        $response->setHeader('Content-Disposition', sprintf('attachment; filename="%s"', basename($filePath)));
-        $response->setHeader('Content-Length', $meta['size']);
-        $response->setHeader('Content-Transfer-Encoding', 'binary');
-        $response->sendHeaders();
-
-        $upstream = $filesystem->readStream($filePath);
-        $downstream = fopen('php://output', 'wb');
-
-        if ($this->isNotInUnitTestMode()) {
-            ob_end_clean();
+            return;
         }
 
-        while (!feof($upstream)) {
-            fwrite($downstream, fread($upstream, 4096));
-            flush();
+        $filePath = $esdService->getLocation($download);
+
+        if ($filesystem->has($filePath) === false) {
+            $this->forwardDownloadError(2);
+
+            return;
         }
 
-        if ($this->isNotInUnitTestMode()) {
-            exit;
+        try {
+            $downloadService->send($filePath, $filesystem);
+        } catch (\League\Flysystem\FileNotFoundException $exception) {
+            $this->forwardDownloadError(2);
         }
     }
 
@@ -515,7 +447,7 @@ class Shopware_Controllers_Frontend_Account extends Enlight_Controller_Action
             'sKey' => $hash,
         ];
 
-        $sql = 'SELECT 
+        $sql = 'SELECT
           s_user.accountmode,
           s_user.active,
           s_user.affiliate,
@@ -592,9 +524,10 @@ class Shopware_Controllers_Frontend_Account extends Enlight_Controller_Action
             return;
         }
 
-        $customer->setEncoderName($this->get('PasswordEncoder')->getDefaultPasswordEncoderName());
+        $customer->setEncoderName($this->get('passwordencoder')->getDefaultPasswordEncoderName());
 
-        $this->customerService->update($customer);
+        $this->get('models')->persist($customer);
+        $this->get('models')->flush($customer);
 
         // Perform a login for the user and redirect him to his account
         $this->Request()->setPost(['email' => $customer->getEmail(), 'password' => $form->get('password')->getData()]);
@@ -749,10 +682,14 @@ class Shopware_Controllers_Frontend_Account extends Enlight_Controller_Action
         $modules->Basket()->sRefreshBasket();
     }
 
-    /**
-     * @return array
-     */
-    private function applyTrackingUrl(array $orderData)
+    private function forwardDownloadError(int $errorCode): void
+    {
+        $this->View()->assign('sErrorCode', $errorCode);
+
+        $this->forward('downloads');
+    }
+
+    private function applyTrackingUrl(array $orderData): array
     {
         foreach ($orderData['orderData'] as &$order) {
             if (!empty($order['trackingcode']) && !empty($order['dispatch']) && !empty($order['dispatch']['status_link'])) {
@@ -766,13 +703,7 @@ class Shopware_Controllers_Frontend_Account extends Enlight_Controller_Action
         return $orderData;
     }
 
-    /**
-     * @param string $link
-     * @param string $trackingCode
-     *
-     * @return string
-     */
-    private function renderTrackingLink($link, $trackingCode)
+    private function renderTrackingLink(string $link, string $trackingCode): string
     {
         $regEx = '/(\{\$offerPosition.trackingcode\})/';
 
@@ -793,13 +724,9 @@ class Shopware_Controllers_Frontend_Account extends Enlight_Controller_Action
     }
 
     /**
-     * @param string $hash
-     *
      * @throws Exception
-     *
-     * @return Customer
      */
-    private function getCustomerByResetHash($hash)
+    private function getCustomerByResetHash(string $hash): Customer
     {
         $resetPasswordNamespace = $this->container->get('snippets')->getNamespace('frontend/account/reset_password');
 
@@ -833,19 +760,13 @@ class Shopware_Controllers_Frontend_Account extends Enlight_Controller_Action
         return $customer;
     }
 
-    /**
-     * @return bool
-     */
-    private function shouldForwardToRegister()
+    private function shouldForwardToRegister(): bool
     {
         return !in_array($this->Request()->getActionName(), ['login', 'logout', 'password', 'resetPassword'])
             && !$this->admin->sCheckUser();
     }
 
-    /**
-     * @return array
-     */
-    private function getForwardParameters()
+    private function getForwardParameters(): array
     {
         if (!$this->Request()->getParam('sTarget') && !$this->Request()->getParam('sTargetAction')) {
             return [
@@ -860,20 +781,9 @@ class Shopware_Controllers_Frontend_Account extends Enlight_Controller_Action
         ];
     }
 
-    /**
-     * @return bool
-     */
-    private function isOneTimeAccount()
+    private function isOneTimeAccount(): bool
     {
         return $this->container->get('session')->offsetGet('sOneTimeAccount')
             || $this->View()->getAssign('sUserData')['additional']['user']['accountmode'] == 1;
-    }
-
-    /**
-     * @return bool
-     */
-    private function isNotInUnitTestMode()
-    {
-        return !$this->container->hasParameter('shopware.session.unitTestEnabled') || !$this->container->getParameter('shopware.session.unitTestEnabled');
     }
 }

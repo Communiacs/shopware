@@ -414,7 +414,7 @@ class Assertion
                 static::stringify($value),
                 static::stringify($choices)
             );
-            throw static::createException($value, $message, static::INVALID_VALUE_IN_ARRAY, $propertyPath);
+            throw static::createException($value, $message, static::INVALID_VALUE_IN_ARRAY, $propertyPath, array('choices' => $choices));
         }
 
         return true;
@@ -762,8 +762,7 @@ class Assertion
                 \mb_strlen($value, $encoding)
             );
 
-            $constraints = array('length' => $length, 'encoding' => $encoding);
-            throw static::createException($value, $message, static::INVALID_LENGTH, $propertyPath, $constraints);
+            throw static::createException($value, $message, static::INVALID_LENGTH, $propertyPath, array('length' => $length, 'encoding' => $encoding));
         }
 
         return true;
@@ -794,8 +793,7 @@ class Assertion
                 \mb_strlen($value, $encoding)
             );
 
-            $constraints = array('min_length' => $minLength, 'encoding' => $encoding);
-            throw static::createException($value, $message, static::INVALID_MIN_LENGTH, $propertyPath, $constraints);
+            throw static::createException($value, $message, static::INVALID_MIN_LENGTH, $propertyPath, array('min_length' => $minLength, 'encoding' => $encoding));
         }
 
         return true;
@@ -826,8 +824,7 @@ class Assertion
                 \mb_strlen($value, $encoding)
             );
 
-            $constraints = array('max_length' => $maxLength, 'encoding' => $encoding);
-            throw static::createException($value, $message, static::INVALID_MAX_LENGTH, $propertyPath, $constraints);
+            throw static::createException($value, $message, static::INVALID_MAX_LENGTH, $propertyPath, array('max_length' => $maxLength, 'encoding' => $encoding));
         }
 
         return true;
@@ -880,8 +877,7 @@ class Assertion
                 static::stringify($needle)
             );
 
-            $constraints = array('needle' => $needle, 'encoding' => $encoding);
-            throw static::createException($string, $message, static::INVALID_STRING_START, $propertyPath, $constraints);
+            throw static::createException($string, $message, static::INVALID_STRING_START, $propertyPath, array('needle' => $needle, 'encoding' => $encoding));
         }
 
         return true;
@@ -913,8 +909,7 @@ class Assertion
                 static::stringify($needle)
             );
 
-            $constraints = array('needle' => $needle, 'encoding' => $encoding);
-            throw static::createException($string, $message, static::INVALID_STRING_END, $propertyPath, $constraints);
+            throw static::createException($string, $message, static::INVALID_STRING_END, $propertyPath, array('needle' => $needle, 'encoding' => $encoding));
         }
 
         return true;
@@ -944,8 +939,7 @@ class Assertion
                 static::stringify($needle)
             );
 
-            $constraints = array('needle' => $needle, 'encoding' => $encoding);
-            throw static::createException($string, $message, static::INVALID_STRING_CONTAINS, $propertyPath, $constraints);
+            throw static::createException($string, $message, static::INVALID_STRING_CONTAINS, $propertyPath, array('needle' => $needle, 'encoding' => $encoding));
         }
 
         return true;
@@ -982,8 +976,6 @@ class Assertion
      * Assert that value is in array of choices.
      *
      * This is an alias of {@see choice()}.
-     *
-     * @aliasOf choice()
      *
      * @param mixed                $value
      * @param array                $choices
@@ -1592,19 +1584,21 @@ class Assertion
         $protocols = array('http', 'https');
 
         $pattern = '~^
-            (%s)://                                     # protocol
-            (([\.\pL\pN-]+:)?([\.\pL\pN-]+)@)?          # basic auth
+            (%s)://                                                             # protocol
+            (([\.\pL\pN-]+:)?([\.\pL\pN-]+)@)?                                  # basic auth
             (
-                ([\pL\pN\pS-\.])+(\.?([\pL\pN]|xn\-\-[\pL\pN-]+)+\.?) # a domain name
-                    |                                                 # or
-                \d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}                    # an IP address
-                    |                                                 # or
+                ([\pL\pN\pS\-\.])+(\.?([\pL\pN]|xn\-\-[\pL\pN-]+)+\.?)          # a domain name
+                    |                                                           # or
+                \d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}                              # an IP address
+                    |                                                           # or
                 \[
                     (?:(?:(?:(?:(?:(?:(?:[0-9a-f]{1,4})):){6})(?:(?:(?:(?:(?:[0-9a-f]{1,4})):(?:(?:[0-9a-f]{1,4})))|(?:(?:(?:(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9]))\.){3}(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9])))))))|(?:(?:::(?:(?:(?:[0-9a-f]{1,4})):){5})(?:(?:(?:(?:(?:[0-9a-f]{1,4})):(?:(?:[0-9a-f]{1,4})))|(?:(?:(?:(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9]))\.){3}(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9])))))))|(?:(?:(?:(?:(?:[0-9a-f]{1,4})))?::(?:(?:(?:[0-9a-f]{1,4})):){4})(?:(?:(?:(?:(?:[0-9a-f]{1,4})):(?:(?:[0-9a-f]{1,4})))|(?:(?:(?:(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9]))\.){3}(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9])))))))|(?:(?:(?:(?:(?:(?:[0-9a-f]{1,4})):){0,1}(?:(?:[0-9a-f]{1,4})))?::(?:(?:(?:[0-9a-f]{1,4})):){3})(?:(?:(?:(?:(?:[0-9a-f]{1,4})):(?:(?:[0-9a-f]{1,4})))|(?:(?:(?:(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9]))\.){3}(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9])))))))|(?:(?:(?:(?:(?:(?:[0-9a-f]{1,4})):){0,2}(?:(?:[0-9a-f]{1,4})))?::(?:(?:(?:[0-9a-f]{1,4})):){2})(?:(?:(?:(?:(?:[0-9a-f]{1,4})):(?:(?:[0-9a-f]{1,4})))|(?:(?:(?:(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9]))\.){3}(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9])))))))|(?:(?:(?:(?:(?:(?:[0-9a-f]{1,4})):){0,3}(?:(?:[0-9a-f]{1,4})))?::(?:(?:[0-9a-f]{1,4})):)(?:(?:(?:(?:(?:[0-9a-f]{1,4})):(?:(?:[0-9a-f]{1,4})))|(?:(?:(?:(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9]))\.){3}(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9])))))))|(?:(?:(?:(?:(?:(?:[0-9a-f]{1,4})):){0,4}(?:(?:[0-9a-f]{1,4})))?::)(?:(?:(?:(?:(?:[0-9a-f]{1,4})):(?:(?:[0-9a-f]{1,4})))|(?:(?:(?:(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9]))\.){3}(?:(?:25[0-5]|(?:[1-9]|1[0-9]|2[0-4])?[0-9])))))))|(?:(?:(?:(?:(?:(?:[0-9a-f]{1,4})):){0,5}(?:(?:[0-9a-f]{1,4})))?::)(?:(?:[0-9a-f]{1,4})))|(?:(?:(?:(?:(?:(?:[0-9a-f]{1,4})):){0,6}(?:(?:[0-9a-f]{1,4})))?::))))
-                \]  # an IPv6 address
+                \]                                                              # an IPv6 address
             )
-            (:[0-9]+)?                              # a port (optional)
-            (/?|/\S+|\?\S*|\#\S*)                   # a /, nothing, a / with something, a query or a fragment
+            (:[0-9]+)?                                                          # a port (optional)
+            (?:/ (?:[\pL\pN\-._\~!$&\'()*+,;=:@]|%%[0-9A-Fa-f]{2})* )*          # a path
+            (?:\? (?:[\pL\pN\-._\~!$&\'\[\]()*+,;=:@/?]|%%[0-9A-Fa-f]{2})* )?   # a query (optional)
+            (?:\# (?:[\pL\pN\-._\~!$&\'()*+,;=:@/?]|%%[0-9A-Fa-f]{2})* )?       # a fragment (optional)
         $~ixu';
 
         $pattern = \sprintf($pattern, \implode('|', $protocols));
@@ -1883,8 +1877,9 @@ class Assertion
     {
         if ($count !== \count($countable)) {
             $message = \sprintf(
-                static::generateMessage($message ?: 'List does not contain exactly "%d" elements.'),
-                static::stringify($count)
+                static::generateMessage($message ?: 'List does not contain exactly %d elements (%d given).'),
+                static::stringify($count),
+                static::stringify(\count($countable))
             );
 
             throw static::createException($countable, $message, static::INVALID_COUNT, $propertyPath, array('count' => $count));
@@ -1970,8 +1965,6 @@ class Assertion
      * @param string|null          $propertyPath
      *
      * @return bool
-     *
-     * @throws
      */
     public static function methodExists($value, $object, $message = null, $propertyPath = null)
     {
@@ -1983,7 +1976,7 @@ class Assertion
                 static::stringify($value)
             );
 
-            throw static::createException($value, $message, static::INVALID_METHOD, $propertyPath);
+            throw static::createException($value, $message, static::INVALID_METHOD, $propertyPath, array('object' => \get_class($object)));
         }
 
         return true;
@@ -2031,7 +2024,7 @@ class Assertion
                 static::stringify($limit)
             );
 
-            throw static::createException($value, $message, static::INVALID_LESS, $propertyPath);
+            throw static::createException($value, $message, static::INVALID_LESS, $propertyPath, array('limit' => $limit));
         }
 
         return true;
@@ -2056,7 +2049,7 @@ class Assertion
                 static::stringify($limit)
             );
 
-            throw static::createException($value, $message, static::INVALID_LESS_OR_EQUAL, $propertyPath);
+            throw static::createException($value, $message, static::INVALID_LESS_OR_EQUAL, $propertyPath, array('limit' => $limit));
         }
 
         return true;
@@ -2081,7 +2074,7 @@ class Assertion
                 static::stringify($limit)
             );
 
-            throw static::createException($value, $message, static::INVALID_GREATER, $propertyPath);
+            throw static::createException($value, $message, static::INVALID_GREATER, $propertyPath, array('limit' => $limit));
         }
 
         return true;
@@ -2106,7 +2099,7 @@ class Assertion
                 static::stringify($limit)
             );
 
-            throw static::createException($value, $message, static::INVALID_GREATER_OR_EQUAL, $propertyPath);
+            throw static::createException($value, $message, static::INVALID_GREATER_OR_EQUAL, $propertyPath, array('limit' => $limit));
         }
 
         return true;
@@ -2133,7 +2126,7 @@ class Assertion
                 static::stringify($upperLimit)
             );
 
-            throw static::createException($value, $message, static::INVALID_BETWEEN, $propertyPath);
+            throw static::createException($value, $message, static::INVALID_BETWEEN, $propertyPath, array('lower' => $lowerLimit, 'upper' => $upperLimit));
         }
 
         return true;
@@ -2160,7 +2153,7 @@ class Assertion
                 static::stringify($upperLimit)
             );
 
-            throw static::createException($value, $message, static::INVALID_BETWEEN_EXCLUSIVE, $propertyPath);
+            throw static::createException($value, $message, static::INVALID_BETWEEN_EXCLUSIVE, $propertyPath, array('lower' => $lowerLimit, 'upper' => $upperLimit));
         }
 
         return true;
@@ -2209,7 +2202,7 @@ class Assertion
         static::string($value, $message, $propertyPath);
         static::string($format, $message, $propertyPath);
 
-        $dateTime = \DateTime::createFromFormat($format, $value);
+        $dateTime = \DateTime::createFromFormat('!' . $format, $value);
 
         if (false === $dateTime || $value !== $dateTime->format($format)) {
             $message = \sprintf(
@@ -2267,7 +2260,7 @@ class Assertion
                 static::stringify($property)
             );
 
-            throw static::createException($value, $message, static::INVALID_PROPERTY, $propertyPath);
+            throw static::createException($value, $message, static::INVALID_PROPERTY, $propertyPath, array('property' => $property));
         }
 
         return true;
@@ -2304,7 +2297,7 @@ class Assertion
                 static::stringify(\implode(', ', $invalidProperties))
             );
 
-            throw static::createException($value, $message, static::INVALID_PROPERTY, $propertyPath);
+            throw static::createException($value, $message, static::INVALID_PROPERTY, $propertyPath, array('properties' => $properties));
         }
 
         return true;
@@ -2335,7 +2328,7 @@ class Assertion
                 static::stringify($version2)
             );
 
-            throw static::createException($version1, $message, static::INVALID_VERSION, $propertyPath);
+            throw static::createException($version1, $message, static::INVALID_VERSION, $propertyPath, array('operator' => $operator, 'version' => $version2));
         }
 
         return true;
@@ -2436,7 +2429,7 @@ class Assertion
      * (using input_filter/FILTER_VALIDATE_IP).
      *
      * @param string               $value
-     * @param null|int             $flag
+     * @param int|null             $flag
      * @param string|callable|null $message
      * @param string|null          $propertyPath
      *
@@ -2452,7 +2445,7 @@ class Assertion
                 static::generateMessage($message ?: 'Value "%s" was expected to be a valid IP address.'),
                 static::stringify($value)
             );
-            throw static::createException($value, $message, static::INVALID_IP, $propertyPath);
+            throw static::createException($value, $message, static::INVALID_IP, $propertyPath, array('flag' => $flag));
         }
 
         return true;
@@ -2463,7 +2456,7 @@ class Assertion
      * (using input_filter/FILTER_VALIDATE_IP).
      *
      * @param string               $value
-     * @param null|int             $flag
+     * @param int|null             $flag
      * @param string|callable|null $message
      * @param string|null          $propertyPath
      *
@@ -2483,7 +2476,7 @@ class Assertion
      * (using input_filter/FILTER_VALIDATE_IP).
      *
      * @param string               $value
-     * @param null|int             $flag
+     * @param int|null             $flag
      * @param string|callable|null $message
      * @param string|null          $propertyPath
      *

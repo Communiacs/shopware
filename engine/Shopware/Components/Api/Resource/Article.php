@@ -51,10 +51,6 @@ use Shopware_Components_Translation;
 
 /**
  * Article API Resource
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
 class Article extends Resource implements BatchInterface
 {
@@ -97,7 +93,7 @@ class Article extends Resource implements BatchInterface
     public function getIdFromNumber($number)
     {
         if (empty($number)) {
-            throw new ApiException\ParameterMissingException();
+            throw new ApiException\ParameterMissingException('id');
         }
 
         /** @var Detail|null $productVariant */
@@ -139,7 +135,7 @@ class Article extends Resource implements BatchInterface
         $this->checkPrivilege('read');
 
         if (empty($id)) {
-            throw new ApiException\ParameterMissingException();
+            throw new ApiException\ParameterMissingException('id');
         }
 
         $builder = $this->getManager()->createQueryBuilder();
@@ -263,7 +259,6 @@ class Article extends Resource implements BatchInterface
         /** @var QueryBuilder $builder */
         $builder = $this->getRepository()->createQueryBuilder('article')
             ->addSelect(['mainDetail', 'attribute'])
-            ->addSelect('mainDetail.lastStock')
             ->leftJoin('article.mainDetail', 'mainDetail')
             ->leftJoin('mainDetail.attribute', 'attribute')
             ->addFilter($criteria)
@@ -280,18 +275,7 @@ class Article extends Resource implements BatchInterface
         // Returns the total count of the query
         $totalResult = $paginator->count();
 
-        /**
-         * @Deprecated Since 5.4, to be removed in 5.6
-         *
-         * To support Shopware <= 5.3 we make sure the lastStock-column of the main variant is being used instead of the
-         * one on the product itself.
-         */
-        $products = array_map(function (array $val) {
-            $val[0]['lastStock'] = $val['lastStock'];
-            unset($val['lastStock']);
-
-            return $val[0];
-        }, $paginator->getIterator()->getArrayCopy());
+        $products = $paginator->getIterator()->getArrayCopy();
 
         if ($this->getResultMode() === self::HYDRATE_ARRAY
             && isset($options['language'])
@@ -346,21 +330,6 @@ class Article extends Resource implements BatchInterface
             $this->writeTranslations($product->getId(), $translations);
         }
 
-        /*
-         * @Deprecated Since 5.4, to be removed in 5.6
-         *
-         * Necessary for backward compatibility with < 5.4, will be removed in 5.6
-         *
-         * If `lastStock` was only defined on the main product, apply it to all it's variants
-         */
-        if (!array_key_exists('mainDetail', $params) && array_key_exists('lastStock', $params)) {
-            $db = $this->getContainer()->get('dbal_connection');
-            $db->executeQuery('UPDATE `s_articles_details` SET lastStock=:lastStock WHERE `articleID`=:articleId', [
-                'lastStock' => $product->getLastStock(),
-                'articleId' => $product->getId(),
-            ]);
-        }
-
         return $product;
     }
 
@@ -396,7 +365,7 @@ class Article extends Resource implements BatchInterface
         $this->checkPrivilege('update');
 
         if (empty($id)) {
-            throw new ApiException\ParameterMissingException();
+            throw new ApiException\ParameterMissingException('id');
         }
 
         $builder = $this->getManager()->createQueryBuilder();
@@ -472,7 +441,7 @@ class Article extends Resource implements BatchInterface
         $this->checkPrivilege('delete');
 
         if (empty($id)) {
-            throw new ApiException\ParameterMissingException();
+            throw new ApiException\ParameterMissingException('id');
         }
 
         /** @var ProductModel|null $product */
@@ -484,8 +453,6 @@ class Article extends Resource implements BatchInterface
 
         // Delete associated data
         $query = $this->getRepository()->getRemovePricesQuery($product->getId());
-        $query->execute();
-        $query = $this->getRepository()->getRemoveAttributesQuery($product->getId());
         $query->execute();
         $query = $this->getRepository()->getRemoveESDQuery($product->getId());
         $query->execute();
@@ -516,6 +483,10 @@ class Article extends Resource implements BatchInterface
             $detail->setKind(1);
             $detail->setArticle($article);
             $article->setMainDetail($detail);
+        }
+
+        if (!$data['mainDetail']) {
+            $data['mainDetail'] = [];
         }
 
         $data['mainDetail'] = $this->getVariantResource()->prepareMainVariantData($data['mainDetail'], $article, $detail);
@@ -720,10 +691,7 @@ class Article extends Resource implements BatchInterface
      */
     protected function getVariantResource()
     {
-        /** @var Variant $return */
-        $return = $this->getResource('Variant');
-
-        return $return;
+        return $this->getContainer()->get('shopware.api.variant');
     }
 
     /**
@@ -731,10 +699,7 @@ class Article extends Resource implements BatchInterface
      */
     protected function getTranslationResource()
     {
-        /** @var Translation $return */
-        $return = $this->getResource('Translation');
-
-        return $return;
+        return $this->getContainer()->get('shopware.api.translation');
     }
 
     /**
@@ -742,10 +707,7 @@ class Article extends Resource implements BatchInterface
      */
     protected function getMediaResource()
     {
-        /** @var Media $return */
-        $return = $this->getResource('Media');
-
-        return $return;
+        return $this->getContainer()->get('shopware.api.media');
     }
 
     /**
@@ -939,6 +901,9 @@ class Article extends Resource implements BatchInterface
         $sql = 'SELECT id FROM s_articles_details WHERE articleID = ? AND kind != 1';
 
         foreach (Shopware()->Db()->fetchAll($sql, [$article->getId()]) as $detail) {
+            $query = $this->getRepository()->getRemoveAttributesQuery($detail['id']);
+            $query->execute();
+
             $query = $this->getRepository()->getRemoveImageQuery($detail['id']);
             $query->execute();
 
@@ -1016,10 +981,6 @@ class Article extends Resource implements BatchInterface
         // and if non of the following variants has the mainDetail's number
         $oldMainDetail = $article->getMainDetail();
 
-        if (isset($data['__options_variants']) && $data['__options_variants']['replace']) {
-            $this->removeArticleDetails($article);
-        }
-
         if ($oldMainDetail) {
             $mainDetailGetsConfigurator = false;
             foreach ($data['variants'] as $variantData) {
@@ -1046,17 +1007,6 @@ class Article extends Resource implements BatchInterface
         }
 
         foreach ($data['variants'] as $variantData) {
-            /*
-             * @Deprecated Since 5.4, to be removed in 5.6
-             *
-             * Necessary for backward compatibility with <= 5.3, will be removed in 5.6
-             *
-             * If `lastStock` was only defined on the main product, apply it to all it's variants
-             */
-            if (!isset($variantData['lastStock'])) {
-                $variantData['lastStock'] = $article->getLastStock();
-            }
-
             if (isset($variantData['id'])) {
                 $variant = $this->getVariantResource()->internalUpdate(
                     $variantData['id'],
@@ -1214,7 +1164,7 @@ class Article extends Resource implements BatchInterface
                 throw new ApiException\CustomValidationException('At least the groupname is required');
             }
 
-            $groupOptions = [];
+            $groupOptions = $group->getOptions();
             $optionPosition = 0;
             foreach ($groupData['options'] as $optionData) {
                 $option = null;
@@ -1360,7 +1310,6 @@ class Article extends Resource implements BatchInterface
         if (isset($data['mainDetail']['attribute']['articleDetailId'])) {
             unset($data['mainDetail']['attribute']['articleDetailId']);
         }
-        $data['mainDetail']['attribute']['article'] = $article;
 
         return $data;
     }
@@ -1400,7 +1349,7 @@ class Article extends Resource implements BatchInterface
             if (!$category) {
                 if (!empty($categoryData['path'])) {
                     /** @var CategoryResource $categoryResource */
-                    $categoryResource = $this->getResource('Category');
+                    $categoryResource = $this->getContainer()->get('shopware.api.category');
                     $category = $categoryResource->findCategoryByPath($categoryData['path'], true);
 
                     if (!$category) {
@@ -1491,7 +1440,7 @@ class Article extends Resource implements BatchInterface
                 $seoCategory->setCategory($category);
             } elseif (isset($categoryData['categoryPath'])) {
                 /** @var CategoryResource $categoryResource */
-                $categoryResource = $this->getResource('Category');
+                $categoryResource = $this->getContainer()->get('shopware.api.category');
                 $category = $categoryResource->findCategoryByPath(
                     $categoryData['categoryPath'],
                     true
@@ -1830,6 +1779,8 @@ class Article extends Resource implements BatchInterface
     }
 
     /**
+     * @deprecated in 5.6, will be removed in 5.7 without a replacement
+     *
      * Checks if the passed product image is already created
      * as variant image.
      *
@@ -1837,6 +1788,8 @@ class Article extends Resource implements BatchInterface
      */
     protected function isVariantImageExist(Detail $variant, Image $image)
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be removed with 5.7. Will be removed without replacement.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         /** @var Image $variantImage */
         foreach ($variant->getImages() as $variantImage) {
             if ((int) $variantImage->getParent()->getId() === (int) $image->getId()) {
@@ -2465,7 +2418,7 @@ class Article extends Resource implements BatchInterface
      */
     private function getAttributeProperties()
     {
-        /** @var \Shopware\Bundle\AttributeBundle\Service\CrudService $crud */
+        /** @var \Shopware\Bundle\AttributeBundle\Service\CrudServiceInterface $crud */
         $crud = $this->getContainer()->get('shopware_attribute.crud_service');
         $attributeNames = $crud->getList('s_articles_attributes');
         $fields = [];

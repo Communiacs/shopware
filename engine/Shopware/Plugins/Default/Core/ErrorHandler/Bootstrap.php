@@ -23,6 +23,7 @@
  */
 
 use Monolog\Handler\BufferHandler;
+use Shopware\Components\CSRFTokenValidationException;
 use Shopware\Components\Log\Formatter\HtmlFormatter;
 use Shopware\Components\Log\Handler\EnlightMailHandler;
 use Shopware\Components\Log\Processor\ShopwareEnvironmentProcessor;
@@ -30,10 +31,6 @@ use Shopware\Components\Logger;
 
 /**
  * Shopware Error Handler
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
 class Shopware_Plugins_Core_ErrorHandler_Bootstrap extends Shopware_Components_Plugin_Bootstrap
 {
@@ -46,16 +43,6 @@ class Shopware_Plugins_Core_ErrorHandler_Bootstrap extends Shopware_Components_P
      * @var bool
      */
     protected static $_registeredErrorHandler = false;
-
-    /**
-     * @var array
-     */
-    protected $_errorHandlerMap;
-
-    /**
-     * @var array
-     */
-    protected $_errorLevel = 0;
 
     /**
      * @var array
@@ -95,6 +82,11 @@ class Shopware_Plugins_Core_ErrorHandler_Bootstrap extends Shopware_Components_P
     private $throwOnRecoverableError = false;
 
     /**
+     * @var string[]
+     */
+    private $ignoredExceptionClasses;
+
+    /**
      * Returns plugin capabilities
      */
     public function getCapabilities()
@@ -126,7 +118,10 @@ class Shopware_Plugins_Core_ErrorHandler_Bootstrap extends Shopware_Components_P
      */
     public function onStartDispatch($args)
     {
-        $this->throwOnRecoverableError = Shopware()->Container()->getParameter('shopware.errorhandler.throwOnRecoverableError');
+        $parameters = $this->get('service_container')->getParameter('shopware.errorHandler');
+
+        $this->throwOnRecoverableError = $parameters['throwOnRecoverableError'];
+        $this->ignoredExceptionClasses = $parameters['ignoredExceptionClasses'];
 
         // Register ErrorHandler for all errors, including strict
         $this->registerErrorHandler(E_ALL | E_STRICT);
@@ -278,6 +273,15 @@ class Shopware_Plugins_Core_ErrorHandler_Bootstrap extends Shopware_Components_P
         /** @var Logger $logger */
         $logger = $this->get('corelogger');
         foreach ($exceptions as $exception) {
+            // Check the exception having been catched with the list of exceptions to ignore
+            if (in_array(get_class($exception), $this->ignoredExceptionClasses, true)) {
+                continue;
+            }
+
+            if ($exception instanceof CSRFTokenValidationException) {
+                $logger->warning((string) $exception);
+                continue;
+            }
             $logger->error((string) $exception);
         }
     }
@@ -287,17 +291,19 @@ class Shopware_Plugins_Core_ErrorHandler_Bootstrap extends Shopware_Components_P
      */
     public function createMailHandler()
     {
-        $mail = Shopware()->Config()->get('logMailAddress');
-        $logLevel = Shopware()->Config()->get('logMailLevel');
-        $logLevel = \Monolog\Logger::toMonologLevel($logLevel);
+        /** @var Shopware_Components_Config $config */
+        $config = $this->get('config');
 
-        if (empty($mail)) {
-            $mail = Shopware()->Config()->Mail;
+        $logLevel = \Monolog\Logger::toMonologLevel($config->get('logMailLevel'));
+        $recipients = array_filter(explode("\n", $config->get('logMailAddress')));
+
+        if (count($recipients) < 1) {
+            $recipients[] = $config->get('mail');
         }
 
         $mailer = new \Enlight_Components_Mail();
-        $mailer->addTo($mail);
-        $mailer->setSubject('Error in shop "' . Shopware()->Config()->Shopname . '".');
+        $mailer->addTo($recipients);
+        $mailer->setSubject('Error in shop "' . $config->get('shopName') . '".');
         $mailHandler = new EnlightMailHandler($mailer, $logLevel);
         $mailHandler->pushProcessor(new ShopwareEnvironmentProcessor());
         $mailHandler->setFormatter(new HtmlFormatter());

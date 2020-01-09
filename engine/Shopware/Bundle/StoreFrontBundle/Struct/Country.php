@@ -26,11 +26,6 @@ namespace Shopware\Bundle\StoreFrontBundle\Struct;
 
 use Shopware\Bundle\StoreFrontBundle\Struct\Country\State;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class Country extends Extendable
 {
     /**
@@ -107,6 +102,11 @@ class Country extends Extendable
      * @var State[] indexed by id
      */
     protected $states;
+
+    /**
+     * @var int
+     */
+    private $areaId;
 
     /**
      * @param int $id
@@ -354,5 +354,15 @@ class Country extends Extendable
     public function setActive($active)
     {
         $this->active = $active;
+    }
+
+    public function getAreaId(): ?int
+    {
+        return $this->areaId;
+    }
+
+    public function setAreaId(int $areaId): void
+    {
+        $this->areaId = $areaId;
     }
 }

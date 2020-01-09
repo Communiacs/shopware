@@ -1,5 +1,5 @@
 {
-    "Version": "2.1.48.42",
+    "Version": "36",
     "Names": {
         "Afak": "afaka",
         "Aghb": "kaukasus-albansk",
@@ -169,7 +169,6 @@
         "Zsye": "emoji",
         "Zsym": "symboler",
         "Zxxx": "språk uten skrift",
-        "Zyyy": "felles",
-        "Zzzz": "ukjent skrift"
+        "Zyyy": "felles"
     }
 }

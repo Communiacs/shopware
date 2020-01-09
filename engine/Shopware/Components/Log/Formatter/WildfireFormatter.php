@@ -29,10 +29,6 @@ use Monolog\Logger;
 
 /**
  * Serializes a log message according to Wildfire's header requirements
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
 class WildfireFormatter extends BaseWildfireFormatter
 {
@@ -61,6 +57,7 @@ class WildfireFormatter extends BaseWildfireFormatter
      * @var array
      */
     protected $objectStack = [];
+
     /**
      * Translates Monolog log levels to Wildfire levels.
      */
@@ -252,10 +249,9 @@ class WildfireFormatter extends BaseWildfireFormatter
                     }
                 }
 
-                if (!(isset($this->objectFilters[$class]) && is_array($this->objectFilters[$class]) && in_array(
-                                $just_name,
-                                $this->objectFilters[$class]
-                        ))
+                if (!(isset($this->objectFilters[$class])
+                    && is_array($this->objectFilters[$class])
+                    && in_array($just_name, $this->objectFilters[$class]))
                 ) {
                     if (array_key_exists($raw_name, $members) && !$property->isStatic()) {
                         $return[$name] = $this->encodeObject($members[$raw_name], $objectDepth + 1);
@@ -286,10 +282,9 @@ class WildfireFormatter extends BaseWildfireFormatter
                 if (!isset($properties[$name])) {
                     $name = 'undeclared:' . $name;
 
-                    if (!(isset($this->objectFilters[$class]) && is_array($this->objectFilters[$class]) && in_array(
-                                    $just_name,
-                                    $this->objectFilters[$class]
-                            ))
+                    if (!(isset($this->objectFilters[$class])
+                        && is_array($this->objectFilters[$class])
+                        && in_array($just_name, $this->objectFilters[$class]))
                     ) {
                         $return[$name] = $this->encodeObject($value, $objectDepth + 1);
                     } else {

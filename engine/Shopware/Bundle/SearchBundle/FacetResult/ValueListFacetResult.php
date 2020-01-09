@@ -29,13 +29,10 @@ use Shopware\Bundle\SearchBundle\TemplateSwitchable;
 use Shopware\Bundle\StoreFrontBundle\Struct\Attribute;
 use Shopware\Bundle\StoreFrontBundle\Struct\Extendable;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class ValueListFacetResult extends Extendable implements FacetResultInterface, TemplateSwitchable
 {
+    private const TEMPLATE = 'frontend/listing/filter/facet-value-list.tpl';
+
     /**
      * @var string
      */
@@ -82,7 +79,7 @@ class ValueListFacetResult extends Extendable implements FacetResultInterface, T
         $values,
         $fieldName,
         $attributes = [],
-        $template = 'frontend/listing/filter/facet-value-list.tpl'
+        $template = self::TEMPLATE
     ) {
         $this->facetName = $facetName;
         $this->active = $active;

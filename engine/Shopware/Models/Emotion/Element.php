@@ -28,10 +28,6 @@ use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
 
 /**
- * @category   Shopware
- *
- * @copyright  Copyright (c) shopware AG (http://www.shopware.de)
- *
  * @ORM\Entity()
  * @ORM\Table(name="s_emotion_element")
  */
@@ -153,7 +149,7 @@ class Element extends ModelEntity
     /**
      * Defines a custom user CSS class for every element.
      *
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="css_class", type="string", length=255, nullable=true)
      */
@@ -269,7 +265,7 @@ class Element extends ModelEntity
     }
 
     /**
-     * @param string $cssClass
+     * @param string|null $cssClass
      */
     public function setCssClass($cssClass)
     {
@@ -277,7 +273,7 @@ class Element extends ModelEntity
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getCssClass()
     {

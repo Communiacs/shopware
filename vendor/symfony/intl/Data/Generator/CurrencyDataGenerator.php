@@ -11,8 +11,8 @@
 
 namespace Symfony\Component\Intl\Data\Generator;
 
-use Symfony\Component\Intl\Data\Bundle\Compiler\GenrbCompiler;
-use Symfony\Component\Intl\Data\Bundle\Reader\BundleReaderInterface;
+use Symfony\Component\Intl\Data\Bundle\Compiler\BundleCompilerInterface;
+use Symfony\Component\Intl\Data\Bundle\Reader\BundleEntryReaderInterface;
 use Symfony\Component\Intl\Data\Util\ArrayAccessibleResourceBundle;
 use Symfony\Component\Intl\Data\Util\LocaleScanner;
 
@@ -25,37 +25,20 @@ use Symfony\Component\Intl\Data\Util\LocaleScanner;
  */
 class CurrencyDataGenerator extends AbstractDataGenerator
 {
-    const UNKNOWN_CURRENCY_ID = 'XXX';
-    const EUROPEAN_COMPOSITE_UNIT_ID = 'XBA';
-    const EUROPEAN_MONETARY_UNIT_ID = 'XBB';
-    const EUROPEAN_UNIT_OF_ACCOUNT_XBC_ID = 'XBC';
-    const EUROPEAN_UNIT_OF_ACCOUNT_XBD_ID = 'XBD';
-    const TESTING_CURRENCY_CODE_ID = 'XTS';
-    const ADB_UNIT_OF_ACCOUNT_ID = 'XUA';
-    const GOLD_ID = 'XAU';
-    const SILVER_ID = 'XAG';
-    const PLATINUM_ID = 'XPT';
-    const PALLADIUM_ID = 'XPD';
-    const SUCRE_ID = 'XSU';
-    const SPECIAL_DRAWING_RIGHTS_ID = 'XDR';
-
-    /**
-     * Monetary units excluded from generation.
-     */
     private static $blacklist = [
-        self::UNKNOWN_CURRENCY_ID => true,
-        self::EUROPEAN_COMPOSITE_UNIT_ID => true,
-        self::EUROPEAN_MONETARY_UNIT_ID => true,
-        self::EUROPEAN_UNIT_OF_ACCOUNT_XBC_ID => true,
-        self::EUROPEAN_UNIT_OF_ACCOUNT_XBD_ID => true,
-        self::TESTING_CURRENCY_CODE_ID => true,
-        self::ADB_UNIT_OF_ACCOUNT_ID => true,
-        self::GOLD_ID => true,
-        self::SILVER_ID => true,
-        self::PLATINUM_ID => true,
-        self::PALLADIUM_ID => true,
-        self::SUCRE_ID => true,
-        self::SPECIAL_DRAWING_RIGHTS_ID => true,
+        'XBA' => true, // European Composite Unit
+        'XBB' => true, // European Monetary Unit
+        'XBC' => true, // European Unit of Account (XBC)
+        'XBD' => true, // European Unit of Account (XBD)
+        'XUA' => true, // ADB Unit of Account
+        'XAU' => true, // Gold
+        'XAG' => true, // Silver
+        'XPT' => true, // Platinum
+        'XPD' => true, // Palladium
+        'XSU' => true, // Sucre
+        'XDR' => true, // Special Drawing Rights
+        'XTS' => true, // Testing Currency Code
+        'XXX' => true, // Unknown Currency
     ];
 
     /**
@@ -68,7 +51,7 @@ class CurrencyDataGenerator extends AbstractDataGenerator
     /**
      * {@inheritdoc}
      */
-    protected function scanLocales(LocaleScanner $scanner, $sourceDir)
+    protected function scanLocales(LocaleScanner $scanner, string $sourceDir): array
     {
         return $scanner->scanLocales($sourceDir.'/curr');
     }
@@ -76,7 +59,7 @@ class CurrencyDataGenerator extends AbstractDataGenerator
     /**
      * {@inheritdoc}
      */
-    protected function compileTemporaryBundles(GenrbCompiler $compiler, $sourceDir, $tempDir)
+    protected function compileTemporaryBundles(BundleCompilerInterface $compiler, string $sourceDir, string $tempDir)
     {
         $compiler->compile($sourceDir.'/curr', $tempDir);
         $compiler->compile($sourceDir.'/misc/currencyNumericCodes.txt', $tempDir);
@@ -93,7 +76,7 @@ class CurrencyDataGenerator extends AbstractDataGenerator
     /**
      * {@inheritdoc}
      */
-    protected function generateDataForLocale(BundleReaderInterface $reader, $tempDir, $displayLocale)
+    protected function generateDataForLocale(BundleEntryReaderInterface $reader, string $tempDir, string $displayLocale): ?array
     {
         $localeBundle = $reader->read($tempDir, $displayLocale);
 
@@ -107,12 +90,14 @@ class CurrencyDataGenerator extends AbstractDataGenerator
 
             return $data;
         }
+
+        return null;
     }
 
     /**
      * {@inheritdoc}
      */
-    protected function generateDataForRoot(BundleReaderInterface $reader, $tempDir)
+    protected function generateDataForRoot(BundleEntryReaderInterface $reader, string $tempDir): ?array
     {
         $rootBundle = $reader->read($tempDir, 'root');
 
@@ -125,7 +110,7 @@ class CurrencyDataGenerator extends AbstractDataGenerator
     /**
      * {@inheritdoc}
      */
-    protected function generateDataForMeta(BundleReaderInterface $reader, $tempDir)
+    protected function generateDataForMeta(BundleEntryReaderInterface $reader, string $tempDir): ?array
     {
         $rootBundle = $reader->read($tempDir, 'root');
         $supplementalDataBundle = $reader->read($tempDir, 'supplementalData');
@@ -147,10 +132,7 @@ class CurrencyDataGenerator extends AbstractDataGenerator
         return $data;
     }
 
-    /**
-     * @return array
-     */
-    private function generateSymbolNamePairs(ArrayAccessibleResourceBundle $rootBundle)
+    private function generateSymbolNamePairs(ArrayAccessibleResourceBundle $rootBundle): array
     {
         $symbolNamePairs = iterator_to_array($rootBundle['Currencies']);
 
@@ -160,14 +142,14 @@ class CurrencyDataGenerator extends AbstractDataGenerator
         return $symbolNamePairs;
     }
 
-    private function generateCurrencyMeta(ArrayAccessibleResourceBundle $supplementalDataBundle)
+    private function generateCurrencyMeta(ArrayAccessibleResourceBundle $supplementalDataBundle): array
     {
         // The metadata is already de-duplicated. It contains one key "DEFAULT"
         // which is used for currencies that don't have dedicated entries.
         return iterator_to_array($supplementalDataBundle['CurrencyMeta']);
     }
 
-    private function generateAlpha3ToNumericMapping(ArrayAccessibleResourceBundle $numericCodesBundle, array $currencyCodes)
+    private function generateAlpha3ToNumericMapping(ArrayAccessibleResourceBundle $numericCodesBundle, array $currencyCodes): array
     {
         $alpha3ToNumericMapping = iterator_to_array($numericCodesBundle['codeMap']);
 
@@ -179,7 +161,7 @@ class CurrencyDataGenerator extends AbstractDataGenerator
         return $alpha3ToNumericMapping;
     }
 
-    private function generateNumericToAlpha3Mapping(array $alpha3ToNumericMapping)
+    private function generateNumericToAlpha3Mapping(array $alpha3ToNumericMapping): array
     {
         $numericToAlpha3Mapping = [];
 

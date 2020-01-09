@@ -29,11 +29,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\HttpCache\StoreInterface;
 
 /**
- * Dummy Storage
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
+ * Black Hole Storage for the Config
  */
 class BlackHoleStore implements StoreInterface
 {

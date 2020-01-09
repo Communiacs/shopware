@@ -39,9 +39,17 @@ class ProductNumberSearchFactory
      */
     private $handlers;
 
-    public function __construct(IteratorAggregate $handlers)
-    {
+    /**
+     * @var string
+     */
+    private $esVersion;
+
+    public function __construct(
+        IteratorAggregate $handlers,
+        string $esVersion
+    ) {
         $this->handlers = iterator_to_array($handlers, false);
+        $this->esVersion = $esVersion;
     }
 
     /**
@@ -57,15 +65,19 @@ class ProductNumberSearchFactory
         return new ProductNumberSearch(
             $searchClient,
             $indexFactory,
-            $container->get('shopware_search_es.handler_collection')->toArray()
+            $container->get('shopware_search_es.handler_collection')->toArray(),
+            $this->esVersion
         );
     }
 
     /**
      * @return ArrayCollection
+     *
+     * @deprecated since Shopware 5.6, will be removed with 5.7. Please use the di tag shopware_search_es.search_handler instead
      */
     public function registerHandlerCollection(ContainerInterface $container)
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6, will be removed in 5.7. Please use the di tag shopware_search_es.search_handler instead', __CLASS__, __FUNCTION__), E_USER_DEPRECATED);
         $handlers = $this->registerHandlers($container);
 
         return new ArrayCollection($handlers);

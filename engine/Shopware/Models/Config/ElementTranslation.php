@@ -61,14 +61,14 @@ class ElementTranslation extends ModelEntity
     private $id;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="description", type="string", nullable=true)
      */
     private $description = null;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="label", type="string", nullable=true)
      */
@@ -89,8 +89,6 @@ class ElementTranslation extends ModelEntity
     private $localeId;
 
     /**
-     * Get id
-     *
      * @return int
      */
     public function getId()
@@ -99,8 +97,6 @@ class ElementTranslation extends ModelEntity
     }
 
     /**
-     * Set description
-     *
      * @param string $description
      *
      * @return ElementTranslation
@@ -113,9 +109,7 @@ class ElementTranslation extends ModelEntity
     }
 
     /**
-     * Get description
-     *
-     * @return string
+     * @return string|null
      */
     public function getDescription()
     {
@@ -123,8 +117,6 @@ class ElementTranslation extends ModelEntity
     }
 
     /**
-     * Set label
-     *
      * @param string $label
      *
      * @return ElementTranslation
@@ -137,9 +129,7 @@ class ElementTranslation extends ModelEntity
     }
 
     /**
-     * Get label
-     *
-     * @return string
+     * @return string|null
      */
     public function getLabel()
     {
@@ -155,8 +145,6 @@ class ElementTranslation extends ModelEntity
     }
 
     /**
-     * Set element
-     *
      * @param \Shopware\Models\Config\Element $element
      *
      * @return ElementTranslation

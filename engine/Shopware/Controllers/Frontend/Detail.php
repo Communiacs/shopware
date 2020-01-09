@@ -24,11 +24,6 @@
 
 use Shopware\Components\Random;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class Shopware_Controllers_Frontend_Detail extends Enlight_Controller_Action
 {
     /**
@@ -53,7 +48,7 @@ class Shopware_Controllers_Frontend_Detail extends Enlight_Controller_Action
             throw new Enlight_Controller_Exception('Product not found', 404);
         }
 
-        $this->Response()->setHttpResponseCode(
+        $this->Response()->setStatusCode(
             $config->get('PageNotFoundCode', 404)
         );
         $this->View()->assign('sRelatedArticles', Shopware()->Modules()->Marketing()->sGetSimilarArticles(
@@ -197,7 +192,7 @@ class Shopware_Controllers_Frontend_Detail extends Enlight_Controller_Action
                 SELECT * FROM s_core_optin WHERE hash = ?
             ', [$hash]);
             if (!empty($getVote['data'])) {
-                Shopware()->System()->_POST = unserialize($getVote['data']);
+                Shopware()->System()->_POST = unserialize($getVote['data'], ['allowed_classes' => false]);
                 $voteConfirmed = true;
                 Shopware()->Db()->query('DELETE FROM s_core_optin WHERE hash = ?', [$hash]);
             }

@@ -37,7 +37,6 @@
 //{block name="backend/user_manager/store/rules"}
 Ext.define('Shopware.apps.UserManager.store.Rules', {
     extend: 'Ext.data.TreeStore',
-    autoLoad: true,
     /**
      * Enable remote filtering
      * @boolean
@@ -46,4 +45,3 @@ Ext.define('Shopware.apps.UserManager.store.Rules', {
     model : 'Shopware.apps.UserManager.model.Rules'
 });
 //{/block}
-

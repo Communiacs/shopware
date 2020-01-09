@@ -26,26 +26,9 @@ use Shopware\Components\DependencyInjection\Container;
 
 /**
  * Shopware Application
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
 class Shopware extends Enlight_Application
 {
-    /**
-     * @Deprecated to be removed in 5.6
-     *
-     * Use the following parameters from the DIC instead:
-     *      'shopware.release.version'
-     *      'shopware.release.revision'
-     *      'shopware.release.version_text'
-     *      'shopware.release' (a Struct containing all the above parameters)
-     */
-    const VERSION = '5.5.10';
-    const VERSION_TEXT = '';
-    const REVISION = '201906060858';
-
     /**
      * @var string
      */

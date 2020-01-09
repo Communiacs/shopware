@@ -36,10 +36,6 @@ use Shopware\Models\Theme\Settings;
  * for the shop templates.
  * It supports to get translated data, nested configuration
  * and shop configuration.
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
 class Service
 {
@@ -435,8 +431,8 @@ class Service
     protected function buildConfigLayout(
         Shop\Template $template,
         Shop\Shop $shop = null,
-        $parentId = null)
-    {
+        $parentId = null
+    ) {
         $builder = $this->entityManager->createQueryBuilder();
         $builder->select([
             'layout',

@@ -22,16 +22,13 @@
  * our trademarks remain entirely with us.
  */
 
+use Shopware\Components\OrderNumberValidator\Exception\InvalidOrderNumberException;
 use Shopware\Components\Random;
 use Shopware\Models\Form\Field;
 use Shopware\Models\Form\Form;
 
 /**
  * Shopware Frontend Controller for the form module
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
 class Shopware_Controllers_Frontend_Forms extends Enlight_Controller_Action
 {
@@ -91,6 +88,8 @@ class Shopware_Controllers_Frontend_Forms extends Enlight_Controller_Action
     }
 
     /**
+     * @deprecated in 5.6, will be private in 5.8
+     *
      * Commit form via email (default) or database (ticket system)
      *
      * @throws \Enlight_Exception
@@ -99,6 +98,8 @@ class Shopware_Controllers_Frontend_Forms extends Enlight_Controller_Action
      */
     public function commitForm()
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be private with 5.8.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         /** @var Enlight_Components_Mail $mail */
         $mail = $this->get('mail');
 
@@ -165,6 +166,15 @@ class Shopware_Controllers_Frontend_Forms extends Enlight_Controller_Action
             );
         }
 
+        if ($form->getAttribute()) {
+            $this->getModelManager()->detach($form->getAttribute());
+        }
+
+        $this->getModelManager()->detach($form);
+        foreach ($form->getFields() as $field) {
+            $this->getModelManager()->detach($field);
+        }
+
         /* @var Field $field */
         foreach ($form->getFields() as $field) {
             $fieldId = $field->getId();
@@ -190,16 +200,23 @@ class Shopware_Controllers_Frontend_Forms extends Enlight_Controller_Action
         if (empty($this->Request()->Submit) || count($this->_errors)) {
             foreach ($this->_elements as $id => $element) {
                 if ($element['name'] === 'sordernumber') {
-                    $sOrdernumber = $this->Request()->getParam('sOrdernumber');
+                    $orderNumber = $this->Request()->getParam('sOrdernumber');
 
-                    if ($this->isValidOrderNumber($sOrdernumber)) {
+                    try {
+                        $this->get(\Shopware\Components\OrderNumberValidator\OrderNumberValidatorInterface::class)
+                            ->validate($orderNumber);
+
                         $product = Shopware()->Modules()
                             ->Articles()
-                            ->sGetArticleNameByOrderNumber($sOrdernumber, false, true);
+                            ->sGetArticleNameByOrderNumber($orderNumber, false, true);
 
                         $element['value'] = sprintf('%s (%s)', $product, $this->get('shopware.escaper')
-                            ->escapeHtml($sOrdernumber));
+                            ->escapeHtml($orderNumber));
                         $this->_elements[$id]['value'] = $element['value'];
+                    } catch (InvalidOrderNumberException $exception) {
+                        // Explicit empty catch
+                    } catch (\TypeError $exception) {
+                        // Explicit empty catch
                     }
                 }
 
@@ -613,17 +630,6 @@ class Shopware_Controllers_Frontend_Forms extends Enlight_Controller_Action
     }
 
     /**
-     * @param string $orderNumber
-     *
-     * @return bool
-     */
-    protected function isValidOrderNumber($orderNumber)
-    {
-        // This regex needs to match with the one in the assert in \Shopware\Models\Article\Detail::$number
-        return preg_match('/^[a-zA-Z0-9-_.]+$/', $orderNumber) === 1;
-    }
-
-    /**
      * @throws \Exception
      */
     private function renderElementNote(Enlight_View_Default $view)
@@ -698,9 +704,9 @@ class Shopware_Controllers_Frontend_Forms extends Enlight_Controller_Action
                     if ($this->_elements[$key]['typ'] === 'text2') {
                         $class = explode(';', $this->_elements[$key]['class']);
                         $this->_elements[$key]['class'] = implode(
-                                ' instyle_error has--error;',
-                                $class
-                            ) . ' instyle_error has--error';
+                            ' instyle_error has--error;',
+                            $class
+                        ) . ' instyle_error has--error';
                     } else {
                         $this->_elements[$key]['class'] .= ' instyle_error has--error';
                     }

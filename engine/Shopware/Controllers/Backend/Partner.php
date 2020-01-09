@@ -24,15 +24,9 @@
 
 use Doctrine\ORM\AbstractQuery;
 use Shopware\Components\CSRFWhitelistAware;
+use Shopware\Models\Customer\Customer;
 use Shopware\Models\Partner\Partner;
 
-/**
- * Shopware Backend Controller for the Partner Module
- *
- * Backend Controller for the partner backend module.
- * Displays all data in an Ext.grid.Panel and allows to delete,
- * add and edit items. On the detail page the partner data are displayed and can be edited
- */
 class Shopware_Controllers_Backend_Partner extends Shopware_Controllers_Backend_ExtJs implements CSRFWhitelistAware
 {
     /**
@@ -205,17 +199,25 @@ class Shopware_Controllers_Backend_Partner extends Shopware_Controllers_Backend_
      */
     public function mapCustomerAccountAction()
     {
-        $mapCustomerAccountValue = $this->Request()->mapCustomerAccountValue;
+        $mapCustomerAccountValue = $this->Request()->request->getInt('mapCustomerAccountValue');
 
-        /** @var \Shopware\Models\Partner\Repository $repository */
-        $repository = Shopware()->Models()->getRepository(Partner::class);
-        $dataQuery = $repository->getCustomerForMappingQuery($mapCustomerAccountValue);
-        $customerData = $dataQuery->getOneOrNullResult(AbstractQuery::HYDRATE_ARRAY);
-        $userId = $customerData['id'];
-        unset($customerData['id']);
-        if (!empty($customerData)) {
-            echo implode(', ', array_filter($customerData)) . '|' . $userId;
+        /** @var \Shopware\Models\Customer\Repository $repository */
+        $repository = $this->getModelManager()->getRepository(Customer::class);
+        /** @var Customer|null $customer */
+        $customer = $repository->find($mapCustomerAccountValue);
+
+        if (!$customer) {
+            return;
         }
+
+        echo sprintf(
+            '%s %s %s %s|%d',
+            $customer->getNumber(),
+            $customer->getFirstname() . ' ' . $customer->getLastname(),
+            $customer->getDefaultBillingAddress()->getCompany(),
+            $customer->getEmail(),
+            $customer->getId()
+        );
     }
 
     /**
@@ -262,8 +264,8 @@ class Shopware_Controllers_Backend_Partner extends Shopware_Controllers_Backend_
         $dataQuery = $repository->getStatisticListQuery(null, null, null, $partnerId, false, $this->getFromDate(), $this->getToDate());
         $resultArray = $dataQuery->getArrayResult();
 
-        $this->Response()->setHeader('Content-Type', 'text/csv; charset=utf-8');
-        $this->Response()->setHeader('Content-Disposition', 'attachment;filename=partner_statistic.csv');
+        $this->Response()->headers->set('content-type', 'text/csv; charset=utf-8');
+        $this->Response()->headers->set('content-disposition', 'attachment;filename=partner_statistic.csv');
         // Use this to set the BOM to show it in the right way for excel and stuff
         echo "\xEF\xBB\xBF";
         $fp = fopen('php://output', 'w');
@@ -295,7 +297,7 @@ class Shopware_Controllers_Backend_Partner extends Shopware_Controllers_Backend_
             throw new Exception('Invalid shop provided.');
         }
 
-        $shop->registerResources();
+        $this->get('shopware.components.shop_registration_service')->registerShop($shop);
 
         $url = $this->Front()->Router()->assemble(['module' => 'frontend', 'controller' => 'index']);
 

@@ -43,6 +43,7 @@ Ext.define('Shopware.apps.Translation.view.main.Form',
     bodyPadding: 10,
     title: '{s name=form_title}Translatable fields{/s}',
     layout: 'anchor',
+    cls: Ext.baseCSSPrefix + 'translation-manager-form',
 
     disabled: true,
     defaultType: 'textfield',
@@ -80,8 +81,10 @@ Ext.define('Shopware.apps.Translation.view.main.Form',
            var elementType = currentField.xtype || '';
 
            switch(elementType) {
+                case 'ace-editor' :
+                case 'codemirror' :
                 case 'codemirrorfield' :
-                    currentField.height = "100";
+                    currentField.height = 200;
                     break;
                 case 'textfield':
                     currentField.emptyText = Ext.util.Format.htmlEncode(
@@ -89,7 +92,7 @@ Ext.define('Shopware.apps.Translation.view.main.Form',
                     );
                     break;
             }
-            
+
             currentField.hidden = false;
             items.push(currentField);
         });

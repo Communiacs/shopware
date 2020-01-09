@@ -29,11 +29,6 @@ use Shopware\Components\Model\ModelRepository;
 use Shopware\Components\Model\QueryBuilder;
 use Shopware\Models\Attribute\Emotion as EmotionAttribute;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class Repository extends ModelRepository
 {
     /**
@@ -87,6 +82,7 @@ class Repository extends ModelRepository
             'emotions.is_landingpage as isLandingPage',
             'emotions.parent_id as parentId',
             'emotions.modified',
+            'emotions.listing_visibility as listingVisibility',
             'GROUP_CONCAT(categories.description ORDER BY categories.description ASC) AS categoriesNames',
         ]);
 
@@ -173,14 +169,14 @@ class Repository extends ModelRepository
                 ->setParameter(':category', $path)
                 ->setParameter(':categoryId', $categoryId);
         } else {
-            $builder->addSelect('(
-                CASE
-                    WHEN (emotions.is_landingpage = 1 AND emotions.parent_id IS NOT NULL) THEN parent.name
-                    WHEN (emotions.is_landingpage = 1 AND emotions.parent_id IS NULL)     THEN emotions.name
-                    WHEN (emotions.is_landingpage = 1) THEN -10
-                    ELSE -15
-                END
-                ) as emotionGroup'
+            $builder->addSelect(
+                '(CASE
+                      WHEN (emotions.is_landingpage = 1 AND emotions.parent_id IS NOT NULL) THEN parent.name
+                      WHEN (emotions.is_landingpage = 1 AND emotions.parent_id IS NULL)     THEN emotions.name
+                      WHEN (emotions.is_landingpage = 1) THEN -10
+                      ELSE -15
+                  END
+                 ) as emotionGroup'
             );
         }
 

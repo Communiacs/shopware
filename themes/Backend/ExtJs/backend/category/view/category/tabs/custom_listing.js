@@ -52,6 +52,9 @@ Ext.define('Shopware.apps.Category.view.category.tabs.CustomListing', {
         me.callParent(arguments);
     },
 
+    /**
+     * @return { Ext.form.FieldSet[] }
+     */
     createItems: function() {
         var me = this;
 
@@ -80,7 +83,9 @@ Ext.define('Shopware.apps.Category.view.category.tabs.CustomListing', {
         return [me.sortingFieldSet, me.facetFieldSet];
     },
 
-
+    /**
+     * @return { Ext.form.field.Checkbox }
+     */
     createHideFacetItem: function() {
         var me = this;
 
@@ -95,6 +100,9 @@ Ext.define('Shopware.apps.Category.view.category.tabs.CustomListing', {
         return me.hideFilterItem;
     },
 
+    /**
+     * @return { Ext.form.field.Checkbox }
+     */
     createActivateSortingItem: function() {
         var me = this;
 
@@ -110,6 +118,9 @@ Ext.define('Shopware.apps.Category.view.category.tabs.CustomListing', {
         return me.activateSorting;
     },
 
+    /**
+     * @return { Ext.form.field.Checkbox }
+     */
     createActivateFacetItem: function() {
         var me = this;
 
@@ -125,6 +136,9 @@ Ext.define('Shopware.apps.Category.view.category.tabs.CustomListing', {
         return me.activateFacets;
     },
 
+    /**
+     * @return { Ext.form.field.Checkbox }
+     */
     createHideSortingItem: function() {
         var me = this;
 
@@ -138,6 +152,9 @@ Ext.define('Shopware.apps.Category.view.category.tabs.CustomListing', {
         return me.hideSorting;
     },
 
+    /**
+     * @return { Shopware.form.field.CustomSortingGrid }
+     */
     createSortingSelection: function() {
         var me = this, store;
 
@@ -156,10 +173,18 @@ Ext.define('Shopware.apps.Category.view.category.tabs.CustomListing', {
         return me.sortingSelection;
     },
 
+    /**
+     * @return { Shopware.form.field.CustomFacetGrid }
+     */
     createFacetSelection: function() {
-        var me = this, store;
+        var me = this, store, searchStore;
 
         store = me.createEntitySearchStore("Shopware\\Models\\Search\\CustomFacet");
+        searchStore = me.createEntitySearchStore("Shopware\\Models\\Search\\CustomFacet");
+        searchStore.remoteFilter = true;
+        searchStore.filter(me.createFacetStoreFilter());
+        store.remoteFilter = true;
+        store.filter(me.createFacetStoreFilter());
         store.pageSize = 200;
 
         me.facetSelection = Ext.create('Shopware.form.field.CustomFacetGrid', {
@@ -167,13 +192,18 @@ Ext.define('Shopware.apps.Category.view.category.tabs.CustomListing', {
             disabled: true,
             ignoreDisabled: false,
             store: store,
-            searchStore: me.createEntitySearchStore("Shopware\\Models\\Search\\CustomFacet"),
+            searchStore: searchStore,
             fieldLabel: '{s name="category/facet_selection"}{/s}',
             name: 'facetIds'
         });
         return me.facetSelection;
     },
 
+    /**
+     * @param { function } copyFunction
+     *
+     * @return { Ext.button.Button }
+     */
     createCopySettingsButton: function(copyFunction) {
         var me = this;
 
@@ -228,6 +258,31 @@ Ext.define('Shopware.apps.Category.view.category.tabs.CustomListing', {
         });
     },
 
+    /**
+     * @return { Ext.util.Filter[] }
+     */
+    createFacetStoreFilter: function() {
+        var filterCategoryFacet = new Ext.util.Filter({
+            property: 'uniqueKey',
+            expression: '!=',
+            value: 'CategoryFacet'
+        });
+
+        var includeFacetsWithoutUniqueKey = new Ext.util.Filter({
+            property: 'uniqueKey',
+            operator: 'OR',
+            expression: 'IS NULL'
+        });
+
+        return [filterCategoryFacet, includeFacetsWithoutUniqueKey]
+    },
+
+    /**
+     * @param { Ext.form.field.Checkbox } checkbox
+     * @param { boolean } active
+     *
+     * @return { boolean }
+     */
     onActivateSorting: function(checkbox, active) {
         var me = this;
 
@@ -242,6 +297,12 @@ Ext.define('Shopware.apps.Category.view.category.tabs.CustomListing', {
         return true;
     },
 
+    /**
+     * @param { Ext.form.field.Checkbox } checkbox
+     * @param { boolean } active
+     *
+     * @return { boolean }
+     */
     onActivateFacet: function(checkbox, active) {
         var me = this;
 
@@ -256,7 +317,11 @@ Ext.define('Shopware.apps.Category.view.category.tabs.CustomListing', {
         return true;
     },
 
-
+    /**
+     * @param { Ext.data.Model } category
+     *
+     * @return { boolean }
+     */
     loadCategory: function(category) {
         var me = this, hasSortings, hasFacets;
 

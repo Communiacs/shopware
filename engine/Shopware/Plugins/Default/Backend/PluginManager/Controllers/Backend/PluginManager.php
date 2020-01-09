@@ -76,7 +76,7 @@ class Shopware_Controllers_Backend_PluginManager extends Shopware_Controllers_Ba
             /** @var DownloadService $service */
             $service = $this->get('shopware_plugininstaller.plugin_download_service');
             $result = $service->getMetaInformation($request);
-            $this->get('BackendSession')->offsetSet('plugin_manager_meta_download', $result);
+            $this->get('backendsession')->offsetSet('plugin_manager_meta_download', $result);
         } catch (Exception $e) {
             $this->handleException($e);
 
@@ -89,7 +89,7 @@ class Shopware_Controllers_Backend_PluginManager extends Shopware_Controllers_Ba
     public function rangeDownloadAction()
     {
         /** @var MetaStruct $metaStruct */
-        $metaStruct = $this->get('BackendSession')->offsetGet('plugin_manager_meta_download');
+        $metaStruct = $this->get('backendsession')->offsetGet('plugin_manager_meta_download');
         if (!$metaStruct) {
             $this->View()->assign(['success' => false, 'message' => 'Unable to retrieve meta information']);
 
@@ -133,7 +133,7 @@ class Shopware_Controllers_Backend_PluginManager extends Shopware_Controllers_Ba
     public function extractAction()
     {
         /** @var MetaStruct $metaStruct */
-        $metaStruct = $this->get('BackendSession')->offsetGet('plugin_manager_meta_download');
+        $metaStruct = $this->get('backendsession')->offsetGet('plugin_manager_meta_download');
         if (!$metaStruct) {
             $this->View()->assign(['success' => false, 'message' => 'Unable to retrieve meta information']);
 
@@ -251,9 +251,7 @@ class Shopware_Controllers_Backend_PluginManager extends Shopware_Controllers_Ba
 
         $filter = $this->Request()->getParam('filter', []);
 
-        $sort = $this->Request()->getParam('sort',
-            [['property' => 'release']]
-        );
+        $sort = $this->Request()->getParam('sort', [['property' => 'release']]);
 
         if ($categoryId) {
             switch ($categoryId) {
@@ -646,7 +644,7 @@ class Shopware_Controllers_Backend_PluginManager extends Shopware_Controllers_Ba
             return;
         }
 
-        $this->get('BackendSession')->offsetSet('store_token', serialize($token));
+        $this->get('backendsession')->offsetSet('store_token', serialize($token));
 
         $this->View()->clearAssign();
         $this->View()->assign('success', true);
@@ -722,7 +720,7 @@ class Shopware_Controllers_Backend_PluginManager extends Shopware_Controllers_Ba
      */
     private function getAccessToken()
     {
-        if (!$this->get('BackendSession')->offsetExists('store_token')) {
+        if (!$this->get('backendsession')->offsetExists('store_token')) {
             return null;
         }
 
@@ -730,7 +728,14 @@ class Shopware_Controllers_Backend_PluginManager extends Shopware_Controllers_Ba
             return null;
         }
 
-        return unserialize($this->get('BackendSession')->offsetGet('store_token'));
+        $allowedClassList = [
+            AccessTokenStruct::class,
+        ];
+
+        return unserialize(
+            $this->get('backendsession')->offsetGet('store_token'),
+            ['allowed_classes' => $allowedClassList]
+        );
     }
 
     /**
@@ -738,7 +743,7 @@ class Shopware_Controllers_Backend_PluginManager extends Shopware_Controllers_Ba
      */
     private function getLocale()
     {
-        return Shopware()->Container()->get('Auth')->getIdentity()->locale->getLocale();
+        return Shopware()->Container()->get('auth')->getIdentity()->locale->getLocale();
     }
 
     /**
@@ -755,18 +760,6 @@ class Shopware_Controllers_Backend_PluginManager extends Shopware_Controllers_Ba
     private function getVersion()
     {
         return $this->container->getParameter('shopware.release.version');
-    }
-
-    /**
-     * @param string $technicalName
-     *
-     * @return Plugin
-     */
-    private function getPluginModel($technicalName)
-    {
-        $repo = Shopware()->Models()->getRepository(Plugin::class);
-
-        return $repo->findOneBy(['name' => $technicalName]);
     }
 
     /**
@@ -808,8 +801,8 @@ class Shopware_Controllers_Backend_PluginManager extends Shopware_Controllers_Ba
      */
     private function isApiAvailable()
     {
-        if ($this->get('BackendSession')->offsetExists('sbp_available')) {
-            return (bool) $this->get('BackendSession')->offsetGet('sbp_available');
+        if ($this->get('backendsession')->offsetExists('sbp_available')) {
+            return (bool) $this->get('backendsession')->offsetGet('sbp_available');
         }
 
         return $this->checkStoreApi();
@@ -822,12 +815,12 @@ class Shopware_Controllers_Backend_PluginManager extends Shopware_Controllers_Ba
     {
         try {
             $this->get('shopware_plugininstaller.account_manager_service')->pingServer();
-            $this->get('BackendSession')->offsetSet('sbp_available', 1);
+            $this->get('backendsession')->offsetSet('sbp_available', 1);
         } catch (Exception $e) {
-            $this->get('BackendSession')->offsetSet('sbp_available', 0);
+            $this->get('backendsession')->offsetSet('sbp_available', 0);
         }
 
-        return (bool) $this->get('BackendSession')->offsetGet('sbp_available');
+        return (bool) $this->get('backendsession')->offsetGet('sbp_available');
     }
 
     /**

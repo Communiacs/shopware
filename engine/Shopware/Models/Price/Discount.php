@@ -45,7 +45,7 @@ class Discount extends ModelEntity
     private $id;
 
     /**
-     * @var \Shopware\Models\Price\Group
+     * @var \Shopware\Models\Price\Group|null
      *
      * @ORM\ManyToOne(targetEntity="Shopware\Models\Price\Group", inversedBy="discounts")
      * @ORM\JoinColumn(name="groupID", referencedColumnName="id")
@@ -53,7 +53,7 @@ class Discount extends ModelEntity
     private $group;
 
     /**
-     * @var \Shopware\Models\Customer\Group
+     * @var \Shopware\Models\Customer\Group|null
      *
      * @ORM\ManyToOne(targetEntity="Shopware\Models\Customer\Group")
      * @ORM\JoinColumn(name="customergroupID", referencedColumnName="id")
@@ -75,22 +75,20 @@ class Discount extends ModelEntity
     private $start;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="customergroupID", type="integer", nullable=true)
      */
     private $customerGroupId = null;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="groupID", type="integer", nullable=true)
      */
     private $groupId = null;
 
     /**
-     * Get id
-     *
      * @return int
      */
     public function getId()
@@ -99,8 +97,6 @@ class Discount extends ModelEntity
     }
 
     /**
-     * Set group
-     *
      * @param Group $group
      *
      * @return Discount
@@ -113,9 +109,7 @@ class Discount extends ModelEntity
     }
 
     /**
-     * Get group
-     *
-     * @return Group
+     * @return Group|null
      */
     public function getGroup()
     {
@@ -123,8 +117,6 @@ class Discount extends ModelEntity
     }
 
     /**
-     * Set customerGroup
-     *
      * @param \Shopware\Models\Customer\Group $customerGroup
      *
      * @return Discount
@@ -137,9 +129,7 @@ class Discount extends ModelEntity
     }
 
     /**
-     * Get customerGroup
-     *
-     * @return \Shopware\Models\Customer\Group
+     * @return \Shopware\Models\Customer\Group|null
      */
     public function getCustomerGroup()
     {
@@ -147,8 +137,6 @@ class Discount extends ModelEntity
     }
 
     /**
-     * Set discount
-     *
      * @param float $discount
      *
      * @return Discount
@@ -161,8 +149,6 @@ class Discount extends ModelEntity
     }
 
     /**
-     * Get discount
-     *
      * @return float
      */
     public function getDiscount()
@@ -171,8 +157,6 @@ class Discount extends ModelEntity
     }
 
     /**
-     * Set start
-     *
      * @param float $start
      *
      * @return Discount
@@ -185,8 +169,6 @@ class Discount extends ModelEntity
     }
 
     /**
-     * Get start
-     *
      * @return float
      */
     public function getStart()
@@ -195,7 +177,7 @@ class Discount extends ModelEntity
     }
 
     /**
-     * @return int
+     * @return int|null
      */
     public function getCustomerGroupId()
     {

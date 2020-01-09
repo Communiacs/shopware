@@ -26,9 +26,6 @@ namespace Shopware\Bundle\ESIndexingBundle\Product;
 
 use Shopware\Bundle\ESIndexingBundle\LastIdQuery;
 
-/**
- * Class ProductQueryFactoryInterface
- */
 interface ProductQueryFactoryInterface
 {
     /**
@@ -40,6 +37,8 @@ interface ProductQueryFactoryInterface
     public function createCategoryQuery($categoryId, $limit = null);
 
     /**
+     * @deprecated in 5.6, will be removed in 5.7 without replacement
+     *
      * @param int[]    $priceIds
      * @param int|null $limit
      *
@@ -56,6 +55,8 @@ interface ProductQueryFactoryInterface
     public function createUnitIdQuery($unitIds, $limit = null);
 
     /**
+     * @deprecated in 5.6, will be removed in 5.7 without replacement
+     *
      * @param int[]    $voteIds
      * @param int|null $limit
      *
@@ -72,6 +73,8 @@ interface ProductQueryFactoryInterface
     public function createProductIdQuery($productIds, $limit = null);
 
     /**
+     * @deprecated in 5.6, will be removed in 5.7 without replacement
+     *
      * @param int[]    $variantIds
      * @param int|null $limit
      *
@@ -96,6 +99,8 @@ interface ProductQueryFactoryInterface
     public function createManufacturerQuery($manufacturerIds, $limit = null);
 
     /**
+     * @deprecated in 5.6, will be removed in 5.7 without replacement
+     *
      * @param int[]    $categoryIds
      * @param int|null $limit
      *

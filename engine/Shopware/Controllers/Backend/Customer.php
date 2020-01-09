@@ -26,17 +26,13 @@ use Shopware\Bundle\AccountBundle\Service\CustomerUnlockServiceInterface;
 use Shopware\Components\CSRFWhitelistAware;
 use Shopware\Components\NumberRangeIncrementerInterface;
 use Shopware\Components\OptinServiceInterface;
+use Shopware\Components\Random;
 use Shopware\Components\StateTranslatorService;
 use Shopware\Models\Customer\Customer;
 use Shopware\Models\Customer\PaymentData;
 use Shopware\Models\Payment\Payment;
+use Symfony\Component\HttpFoundation\Cookie;
 
-/**
- * Backend Controller for the customer backend module.
- * Displays all customers in an Ext.grid.Panel and allows to delete,
- * add and edit customers. On the detail page the customer data displayed
- * and a list of all done orders shown.
- */
 class Shopware_Controllers_Backend_Customer extends Shopware_Controllers_Backend_ExtJs implements CSRFWhitelistAware
 {
     /**
@@ -146,6 +142,11 @@ class Shopware_Controllers_Backend_Customer extends Shopware_Controllers_Backend
             return $stateTranslator->translateState(StateTranslatorService::STATE_PAYMENT, $paymentStateItem);
         }, $paymentStatus);
 
+        // Translate payment and dispatch method names.
+        $translationComponent = $this->get('translation');
+        $payment = $translationComponent->translatePaymentMethods($payment);
+        $dispatch = $translationComponent->translateDispatchMethods($dispatch);
+
         $this->View()->assign([
             'success' => true,
             'data' => [
@@ -197,8 +198,8 @@ class Shopware_Controllers_Backend_Customer extends Shopware_Controllers_Backend
             $this->View()->assign([
                 'success' => false,
                 'data' => $this->Request()->getParams(),
-                'message' => $namespace->get('no_order_rights', 'You do not have sufficient rights to view customer orders.'), ]
-            );
+                'message' => $namespace->get('no_order_rights', 'You do not have sufficient rights to view customer orders.'),
+            ]);
 
             return;
         }
@@ -243,8 +244,8 @@ class Shopware_Controllers_Backend_Customer extends Shopware_Controllers_Backend
             $this->View()->assign([
                 'success' => false,
                 'data' => $this->Request()->getParams(),
-                'message' => $namespace->get('no_order_rights', 'You do not have sufficient rights to view customer orders.'), ]
-            );
+                'message' => $namespace->get('no_order_rights', 'You do not have sufficient rights to view customer orders.'),
+            ]);
 
             return;
         }
@@ -341,7 +342,7 @@ class Shopware_Controllers_Backend_Customer extends Shopware_Controllers_Backend
             $customer = new Customer();
         }
 
-        if (!$paymentData instanceof PaymentData && !empty($params['paymentData']) && array_filter($params['paymentData'][0])) {
+        if (!($paymentData instanceof PaymentData) && !empty($params['paymentData']) && !empty(array_filter($params['paymentData'][0]))) {
             $paymentData = new PaymentData();
             $customer->addPaymentData($paymentData);
 
@@ -402,9 +403,9 @@ class Shopware_Controllers_Backend_Customer extends Shopware_Controllers_Backend
         $this->getManager()->flush();
 
         $this->View()->assign([
-                'success' => true,
-                'data' => $this->Request()->getParams(), ]
-        );
+            'success' => true,
+            'data' => $this->Request()->getParams(),
+        ]);
     }
 
     /**
@@ -428,9 +429,9 @@ class Shopware_Controllers_Backend_Customer extends Shopware_Controllers_Backend
         $emailValidator = $this->container->get('validator.email');
 
         if (empty($customer) && $emailValidator->isValid($mail)) {
-            $this->Response()->setBody(1);
+            $this->Response()->setContent(1);
         } else {
-            $this->Response()->setBody('');
+            $this->Response()->setContent('');
         }
     }
 
@@ -455,7 +456,18 @@ class Shopware_Controllers_Backend_Customer extends Shopware_Controllers_Backend
         $repository = $this->getShopRepository();
         $shop = $repository->getActiveById($user['language']);
 
-        $shop->registerResources();
+        $this->get('shopware.components.shop_registration_service')->registerShop($shop);
+
+        session_regenerate_id(true);
+        $newSessionId = session_id();
+
+        session_write_close();
+        session_start();
+
+        Shopware()->Session()->offsetSet('sessionId', $newSessionId);
+        Shopware()->Container()->reset('SessionId');
+        Shopware()->Container()->set('SessionId', $newSessionId);
+        Shopware()->Session()->unsetAll();
 
         Shopware()->Session()->Admin = true;
         Shopware()->System()->_POST = [
@@ -507,11 +519,15 @@ class Shopware_Controllers_Backend_Customer extends Shopware_Controllers_Backend
         $repository = $this->getShopRepository();
         $shop = $repository->getActiveById($data['shopId']);
 
-        $path = rtrim($shop->getBasePath(), '/') . '/';
+        $path = $shop->getBasePath();
+        if ($path === null || $path === '') {
+            $path = '/';
+        }
 
         // Update right domain cookies
-        $this->Response()->setCookie('shop', $data['shopId'], 0, $path);
-        $this->Response()->setCookie('session-' . $data['shopId'], $data['sessionId'], 0, '/');
+        $this->Response()->headers->setCookie(new Cookie('shop', $data['shopId'], 0, $path));
+        $this->Response()->headers->setCookie(new Cookie('sUniqueID', Random::getString(20), 0, $path));
+        $this->Response()->headers->setCookie(new Cookie('session-' . $data['shopId'], $data['sessionId'], 0, $path));
 
         $this->redirect($shop->getBaseUrl());
     }

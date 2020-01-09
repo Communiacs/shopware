@@ -11,8 +11,8 @@
 
 namespace Symfony\Component\Intl\Data\Generator;
 
-use Symfony\Component\Intl\Data\Bundle\Compiler\GenrbCompiler;
-use Symfony\Component\Intl\Data\Bundle\Reader\BundleReaderInterface;
+use Symfony\Component\Intl\Data\Bundle\Compiler\BundleCompilerInterface;
+use Symfony\Component\Intl\Data\Bundle\Reader\BundleEntryReaderInterface;
 use Symfony\Component\Intl\Data\Util\LocaleScanner;
 
 /**
@@ -24,6 +24,10 @@ use Symfony\Component\Intl\Data\Util\LocaleScanner;
  */
 class ScriptDataGenerator extends AbstractDataGenerator
 {
+    private static $blacklist = [
+        'Zzzz' => true, // Unknown Script
+    ];
+
     /**
      * Collects all available language codes.
      *
@@ -34,7 +38,7 @@ class ScriptDataGenerator extends AbstractDataGenerator
     /**
      * {@inheritdoc}
      */
-    protected function scanLocales(LocaleScanner $scanner, $sourceDir)
+    protected function scanLocales(LocaleScanner $scanner, string $sourceDir): array
     {
         return $scanner->scanLocales($sourceDir.'/lang');
     }
@@ -42,7 +46,7 @@ class ScriptDataGenerator extends AbstractDataGenerator
     /**
      * {@inheritdoc}
      */
-    protected function compileTemporaryBundles(GenrbCompiler $compiler, $sourceDir, $tempDir)
+    protected function compileTemporaryBundles(BundleCompilerInterface $compiler, string $sourceDir, string $tempDir)
     {
         $compiler->compile($sourceDir.'/lang', $tempDir);
     }
@@ -58,7 +62,7 @@ class ScriptDataGenerator extends AbstractDataGenerator
     /**
      * {@inheritdoc}
      */
-    protected function generateDataForLocale(BundleReaderInterface $reader, $tempDir, $displayLocale)
+    protected function generateDataForLocale(BundleEntryReaderInterface $reader, string $tempDir, string $displayLocale): ?array
     {
         $localeBundle = $reader->read($tempDir, $displayLocale);
 
@@ -66,26 +70,29 @@ class ScriptDataGenerator extends AbstractDataGenerator
         if (isset($localeBundle['Scripts']) && null !== $localeBundle['Scripts']) {
             $data = [
                 'Version' => $localeBundle['Version'],
-                'Names' => iterator_to_array($localeBundle['Scripts']),
+                'Names' => array_diff_key(iterator_to_array($localeBundle['Scripts']), self::$blacklist),
             ];
 
             $this->scriptCodes = array_merge($this->scriptCodes, array_keys($data['Names']));
 
             return $data;
         }
+
+        return null;
     }
 
     /**
      * {@inheritdoc}
      */
-    protected function generateDataForRoot(BundleReaderInterface $reader, $tempDir)
+    protected function generateDataForRoot(BundleEntryReaderInterface $reader, string $tempDir): ?array
     {
+        return null;
     }
 
     /**
      * {@inheritdoc}
      */
-    protected function generateDataForMeta(BundleReaderInterface $reader, $tempDir)
+    protected function generateDataForMeta(BundleEntryReaderInterface $reader, string $tempDir): ?array
     {
         $rootBundle = $reader->read($tempDir, 'root');
 

@@ -25,12 +25,7 @@
 use Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface;
 use Shopware\Components\DependencyInjection\Container;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
-class sArticlesComparisons
+class sArticlesComparisons implements \Enlight_Hook
 {
     /**
      * @var sArticles
@@ -322,14 +317,14 @@ class sArticlesComparisons
     private function extractPropertyTranslation($articleProperty)
     {
         if ($articleProperty['translation']) {
-            $translation = unserialize($articleProperty['translation']);
+            $translation = unserialize($articleProperty['translation'], ['allowed_classes' => false]);
             if ($this->containsTranslation($translation)) {
                 return (string) $translation['optionName'];
             }
         }
 
         if ($articleProperty['translationFallback']) {
-            $translation = unserialize($articleProperty['translationFallback']);
+            $translation = unserialize($articleProperty['translationFallback'], ['allowed_classes' => false]);
             if ($this->containsTranslation($translation)) {
                 return (string) $translation['optionName'];
             }

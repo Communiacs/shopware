@@ -25,6 +25,7 @@
 namespace Shopware\Components;
 
 use Enlight\Event\SubscriberInterface;
+use Enlight_Event_EventManager as EnlightEventManager;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -52,9 +53,21 @@ class ErrorSubscriber implements SubscriberInterface
      */
     private $logger;
 
-    public function __construct(LoggerInterface $logger)
+    /**
+     * @var EnlightEventManager
+     */
+    private $eventManager;
+
+    /**
+     * @var string[]
+     */
+    private $ignoredExceptionClasses;
+
+    public function __construct(LoggerInterface $logger, EnlightEventManager $eventManager, array $ignoredExceptionClasses = [])
     {
         $this->logger = $logger;
+        $this->eventManager = $eventManager;
+        $this->ignoredExceptionClasses = $ignoredExceptionClasses;
     }
 
     /**
@@ -92,14 +105,28 @@ class ErrorSubscriber implements SubscriberInterface
 
             if (is_array($exceptions)) {
                 $last = array_pop($exceptions);
+
+                if ($this->eventManager->notifyUntil('Shopware_Components_Error_Log', [
+                    'exception' => $last,
+                ])) {
+                    return false;
+                }
+
                 // Make sure this is an Exception and also no minor one
-                if ($last instanceof \Exception && !in_array($last->getCode(), [
+                if ($last instanceof \Exception
+                    && !in_array($last->getCode(), [
                     \Enlight_Controller_Exception::ActionNotFound,
                     \Enlight_Controller_Exception::Controller_Dispatcher_Controller_Not_Found,
                     \Enlight_Controller_Exception::Controller_Dispatcher_Controller_No_Route,
                     \Enlight_Controller_Exception::NO_ROUTE,
-                    ], true)) {
-                    $this->logger->critical($last->getMessage());
+                    ], true)
+                    && !in_array(get_class($last), $this->ignoredExceptionClasses, true) // Check for exceptions to be ignored
+                ) {
+                    if ($last instanceof CSRFTokenValidationException) {
+                        $this->logger->warning($last->getMessage());
+                    } else {
+                        $this->logger->critical($last->getMessage());
+                    }
                 }
             }
 

@@ -101,6 +101,12 @@
                     {block name="frontend_index_content_top"}{/block}
 
                     <div class="content-main--inner">
+
+                        {* Cookie consent manager*}
+                        {block name='frontend_index_cookie_consent_manager'}
+                            {include file='frontend/index/cookie_consent.tpl'}
+                        {/block}
+
                         {* Sidebar left *}
                         {block name='frontend_index_content_left'}
                             {include file='frontend/index/sidebar.tpl'}
@@ -120,7 +126,7 @@
                         {block name='frontend_index_left_last_articles'}
                             {if $sLastArticlesShow && !$isEmotionLandingPage}
                                 {* Last seen products *}
-                                <div class="last-seen-products is--hidden" data-last-seen-products="true">
+                                <div class="last-seen-products is--hidden" data-last-seen-products="true" data-productLimit="{config name='LastArticles::lastarticlestoshow'}">
                                     <div class="last-seen-products--title">
                                         {s namespace="frontend/plugins/index/viewlast" name='WidgetsRecentlyViewedHeadline'}{/s}
                                     </div>
@@ -211,16 +217,21 @@
 
         {$csrfConfig = [
             'generateUrl' => {url controller="csrftoken" fullPath=false},
-            'basePath' => $Shop->getBasePath(),
+            'basePath' => {$Shop->getBasePath()|cat:'/'},
             'shopId' => $Shop->getId()
         ]}
+
+        {if {config name="shareSessionBetweenLanguageShops"} && $Shop->getMain()}
+            {$csrfConfig['shopId'] = $Shop->getMain()->getId()}
+        {/if}
 
         {* let the user modify the data here *}
         {block name="frontend_index_header_javascript_data"}{/block}
 
-        <script type="text/javascript" id="footer--js-inline">
+        <script id="footer--js-inline">
             {block name="frontend_index_header_javascript_inline"}
                 var timeNow = {time() nocache};
+                var secureShop = {if $Shop->getSecure() eq 1}true{else}false{/if};
 
                 var asyncCallbacks = [];
 
@@ -261,7 +272,7 @@
         {compileJavascript timestamp={themeTimestamp} output="javascriptFiles"}
         {foreach $javascriptFiles as $file}
             {block name="frontend_index_header_javascript_jquery_lib_file"}
-                <script{if $theme.asyncJavascriptLoading} async{/if} src="{$file}" id="main-script"></script>
+                <script{if $theme.asyncJavascriptLoading} async{/if} src="{preload file=$file as="script"}" id="main-script"></script>
             {/block}
         {/foreach}
     {/block}

@@ -24,8 +24,6 @@
 
 class Shopware_Plugins_Core_Cron_Bootstrap extends Shopware_Components_Plugin_Bootstrap
 {
-    protected $results = [];
-
     public function install()
     {
         $this->subscribeEvent(
@@ -59,9 +57,9 @@ class Shopware_Plugins_Core_Cron_Bootstrap extends Shopware_Components_Plugin_Bo
 
         // At least one of the security policies is enabled.
         // If at least one of them validates, cron tasks will be executed
-        $cronSecureAllowedKey = Shopware()->Config()->get('cronSecureAllowedKey');
-        $cronSecureAllowedIp = Shopware()->Config()->get('cronSecureAllowedIp');
-        $cronSecureByAccount = Shopware()->Config()->get('cronSecureByAccount');
+        $cronSecureAllowedKey = $this->Config()->get('cronSecureAllowedKey');
+        $cronSecureAllowedIp = $this->Config()->get('cronSecureAllowedIp');
+        $cronSecureByAccount = $this->Config()->get('cronSecureByAccount');
 
         // No security policy specified, accept all requests
         if (empty($cronSecureAllowedKey) && empty($cronSecureAllowedIp) && !$cronSecureByAccount) {
@@ -88,7 +86,7 @@ class Shopware_Plugins_Core_Cron_Bootstrap extends Shopware_Components_Plugin_Bo
 
         // Validate user auth
         if ($cronSecureByAccount) {
-            if (Shopware()->Container()->get('Auth')->hasIdentity() === true) {
+            if (Shopware()->Container()->get('auth')->hasIdentity() === true) {
                 return true;
             }
         }

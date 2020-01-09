@@ -41,7 +41,7 @@ class Template extends ModelEntity
     /**
      * OWNING SIDE
      *
-     * @var Product
+     * @var Product|null
      *
      * @ORM\OneToOne(targetEntity="Shopware\Models\Article\Article", inversedBy="configuratorTemplate")
      * @ORM\JoinColumn(name="article_id", referencedColumnName="id")
@@ -60,7 +60,7 @@ class Template extends ModelEntity
     /**
      * INVERSE SIDE
      *
-     * @var TemplateAttribute
+     * @var TemplateAttribute|null
      *
      * @ORM\OneToOne(targetEntity="Shopware\Models\Attribute\Template", mappedBy="template", orphanRemoval=true, cascade={"persist"})
      */
@@ -69,7 +69,7 @@ class Template extends ModelEntity
     /**
      * OWNING SIDE
      *
-     * @var Unit
+     * @var Unit|null
      *
      * @ORM\ManyToOne(targetEntity="Shopware\Models\Article\Unit", inversedBy="articles", cascade={"persist"})
      * @ORM\JoinColumn(name="unit_id", referencedColumnName="id")
@@ -86,14 +86,14 @@ class Template extends ModelEntity
     private $id;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="article_id", type="integer", nullable=false)
      */
     private $articleId;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="unit_id", type="integer", nullable=true)
      */
@@ -110,14 +110,14 @@ class Template extends ModelEntity
     private $number = '';
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="suppliernumber", type="string", nullable=true)
      */
     private $supplierNumber;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="additionaltext", type="string", nullable=true)
      */
@@ -131,14 +131,14 @@ class Template extends ModelEntity
     private $active = false;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="instock", type="integer", nullable=true)
      */
     private $inStock;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="stockmin", type="integer", nullable=true)
      */
@@ -152,35 +152,35 @@ class Template extends ModelEntity
     private $lastStock;
 
     /**
-     * @var float
+     * @var float|null
      *
      * @ORM\Column(name="weight", type="decimal", nullable=true, precision=3)
      */
     private $weight;
 
     /**
-     * @var float
+     * @var float|null
      *
      * @ORM\Column(name="width", type="decimal", nullable=true, precision=3)
      */
     private $width;
 
     /**
-     * @var float
+     * @var float|null
      *
      * @ORM\Column(name="length", type="decimal", nullable=true, precision=3)
      */
     private $len;
 
     /**
-     * @var float
+     * @var float|null
      *
      * @ORM\Column(name="height", type="decimal", nullable=true, precision=3)
      */
     private $height;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="ean", type="string", nullable=true)
      */
@@ -201,42 +201,42 @@ class Template extends ModelEntity
     private $position = 0;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="minpurchase", type="integer", nullable=true)
      */
     private $minPurchase;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="purchasesteps", type="integer", nullable=true)
      */
     private $purchaseSteps;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="maxpurchase", type="integer", nullable=true)
      */
     private $maxPurchase;
 
     /**
-     * @var float
+     * @var float|null
      *
      * @ORM\Column(name="purchaseunit", type="decimal", nullable=true)
      */
     private $purchaseUnit;
 
     /**
-     * @var float
+     * @var float|null
      *
      * @ORM\Column(name="referenceunit", type="decimal", nullable=true)
      */
     private $referenceUnit;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="packunit", type="text", nullable=true)
      */
@@ -250,30 +250,25 @@ class Template extends ModelEntity
     private $shippingFree = false;
 
     /**
-     * @var \DateTimeInterface
+     * @var \DateTimeInterface|null
      *
      * @ORM\Column(name="releasedate", type="date", nullable=true)
      */
     private $releaseDate;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="shippingtime", type="string", length=11, nullable=true)
      */
     private $shippingTime;
 
-    /**
-     * Class constructor. Initials the array collections.
-     */
     public function __construct()
     {
         $this->prices = new ArrayCollection();
     }
 
     /**
-     * Get id
-     *
      * @return int
      */
     public function getId()
@@ -282,8 +277,6 @@ class Template extends ModelEntity
     }
 
     /**
-     * Set number
-     *
      * @param string $number
      *
      * @return Template
@@ -296,8 +289,6 @@ class Template extends ModelEntity
     }
 
     /**
-     * Get number
-     *
      * @return string
      */
     public function getNumber()
@@ -306,8 +297,6 @@ class Template extends ModelEntity
     }
 
     /**
-     * Set supplierNumber
-     *
      * @param string $supplierNumber
      *
      * @return Template
@@ -320,9 +309,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * Get supplierNumber
-     *
-     * @return string
+     * @return string|null
      */
     public function getSupplierNumber()
     {
@@ -330,7 +317,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * @param string $additionalText
+     * @param string|null $additionalText
      *
      * @return Template
      */
@@ -342,9 +329,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * Get additionalText
-     *
-     * @return string
+     * @return string|null
      */
     public function getAdditionalText()
     {
@@ -352,8 +337,6 @@ class Template extends ModelEntity
     }
 
     /**
-     * Set active
-     *
      * @param int $active
      *
      * @return Template
@@ -366,8 +349,6 @@ class Template extends ModelEntity
     }
 
     /**
-     * Get active
-     *
      * @return int
      */
     public function getActive()
@@ -376,8 +357,6 @@ class Template extends ModelEntity
     }
 
     /**
-     * Set inStock
-     *
      * @param int $inStock
      *
      * @return Template
@@ -390,9 +369,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * Get inStock
-     *
-     * @return int
+     * @return int|null
      */
     public function getInStock()
     {
@@ -400,8 +377,6 @@ class Template extends ModelEntity
     }
 
     /**
-     * Set stockMin
-     *
      * @param int $stockMin
      *
      * @return Template
@@ -414,9 +389,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * Get stockMin
-     *
-     * @return int
+     * @return int|null
      */
     public function getStockMin()
     {
@@ -424,8 +397,6 @@ class Template extends ModelEntity
     }
 
     /**
-     * Set lastStock
-     *
      * @param int $lastStock
      */
     public function setLastStock($lastStock)
@@ -444,8 +415,6 @@ class Template extends ModelEntity
     }
 
     /**
-     * Set weight
-     *
      * @param float $weight
      *
      * @return Template
@@ -458,9 +427,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * Get weight
-     *
-     * @return float
+     * @return float|null
      */
     public function getWeight()
     {
@@ -468,8 +435,6 @@ class Template extends ModelEntity
     }
 
     /**
-     * Set position
-     *
      * @param int $position
      *
      * @return Template
@@ -482,8 +447,6 @@ class Template extends ModelEntity
     }
 
     /**
-     * Get position
-     *
      * @return int
      */
     public function getPosition()
@@ -492,7 +455,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * @return Product
+     * @return Product|null
      */
     public function getArticle()
     {
@@ -500,7 +463,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * @param Product $article
+     * @param Product|null $article
      *
      * @return Template
      */
@@ -548,7 +511,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * @return float
+     * @return float|null
      */
     public function getWidth()
     {
@@ -556,7 +519,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * @param float $width
+     * @param float|null $width
      */
     public function setWidth($width)
     {
@@ -564,7 +527,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * @return float
+     * @return float|null
      */
     public function getLen()
     {
@@ -572,7 +535,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * @param float $length
+     * @param float|null $length
      */
     public function setLen($length)
     {
@@ -580,7 +543,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * @return float
+     * @return float|null
      */
     public function getHeight()
     {
@@ -588,7 +551,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * @param float $height
+     * @param float|null $height
      */
     public function setHeight($height)
     {
@@ -596,7 +559,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getEan()
     {
@@ -604,7 +567,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * @param string $ean
+     * @param string|null $ean
      */
     public function setEan($ean)
     {
@@ -638,7 +601,7 @@ class Template extends ModelEntity
     /**
      * Set shipping time
      *
-     * @param string $shippingTime
+     * @param string|null $shippingTime
      *
      * @return Template
      */
@@ -652,7 +615,7 @@ class Template extends ModelEntity
     /**
      * Get shipping time
      *
-     * @return string
+     * @return string|null
      */
     public function getShippingTime()
     {
@@ -660,8 +623,6 @@ class Template extends ModelEntity
     }
 
     /**
-     * Set shippingFree
-     *
      * @param bool $shippingFree
      *
      * @return Template
@@ -674,8 +635,6 @@ class Template extends ModelEntity
     }
 
     /**
-     * Get shippingFree
-     *
      * @return bool
      */
     public function getShippingFree()
@@ -684,8 +643,6 @@ class Template extends ModelEntity
     }
 
     /**
-     * Set releaseDate
-     *
      * @param \DateTimeInterface|string|null $releaseDate
      *
      * @return Template
@@ -702,9 +659,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * Get releaseDate
-     *
-     * @return \DateTimeInterface
+     * @return \DateTimeInterface|null
      */
     public function getReleaseDate()
     {
@@ -712,8 +667,6 @@ class Template extends ModelEntity
     }
 
     /**
-     * Set minPurchase
-     *
      * @param int $minPurchase
      *
      * @return Template
@@ -726,9 +679,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * Get minPurchase
-     *
-     * @return int
+     * @return int|null
      */
     public function getMinPurchase()
     {
@@ -736,8 +687,6 @@ class Template extends ModelEntity
     }
 
     /**
-     * Set purchaseSteps
-     *
      * @param int $purchaseSteps
      *
      * @return Template
@@ -750,9 +699,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * Get purchaseSteps
-     *
-     * @return int
+     * @return int|null
      */
     public function getPurchaseSteps()
     {
@@ -760,8 +707,6 @@ class Template extends ModelEntity
     }
 
     /**
-     * Set maxPurchase
-     *
      * @param int $maxPurchase
      *
      * @return Template
@@ -774,9 +719,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * Get maxPurchase
-     *
-     * @return int
+     * @return int|null
      */
     public function getMaxPurchase()
     {
@@ -784,8 +727,6 @@ class Template extends ModelEntity
     }
 
     /**
-     * Set purchaseUnit
-     *
      * @param float $purchaseUnit
      *
      * @return Template
@@ -798,9 +739,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * Get purchaseUnit
-     *
-     * @return float
+     * @return float|null
      */
     public function getPurchaseUnit()
     {
@@ -808,8 +747,6 @@ class Template extends ModelEntity
     }
 
     /**
-     * Set referenceUnit
-     *
      * @param float $referenceUnit
      *
      * @return Template
@@ -822,9 +759,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * Get referenceUnit
-     *
-     * @return float
+     * @return float|null
      */
     public function getReferenceUnit()
     {
@@ -832,8 +767,6 @@ class Template extends ModelEntity
     }
 
     /**
-     * Set packUnit
-     *
      * @param string $packUnit
      *
      * @return Template
@@ -846,9 +779,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * Get packUnit
-     *
-     * @return string
+     * @return string|null
      */
     public function getPackUnit()
     {
@@ -859,7 +790,7 @@ class Template extends ModelEntity
      * OWNING SIDE
      * of the association between articles and unit
      *
-     * @return Unit
+     * @return Unit|null
      */
     public function getUnit()
     {
@@ -867,7 +798,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * @param Unit|array|null $unit
+     * @param Unit|array $unit
      *
      * @return Template
      */

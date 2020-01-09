@@ -29,13 +29,9 @@ use Shopware\Components\HttpCache\Store;
 use Shopware\Components\Model\ModelManager;
 use ShopwarePlugins\HttpCache\CacheControl;
 use ShopwarePlugins\HttpCache\CacheIdCollector;
+use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpKernel\HttpCache\HttpCache;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class Shopware_Plugins_Core_HttpCache_Bootstrap extends Shopware_Components_Plugin_Bootstrap
 {
     /**
@@ -463,7 +459,7 @@ class Shopware_Plugins_Core_HttpCache_Bootstrap extends Shopware_Components_Plug
         }
 
         if ($cacheControl->useNoCacheControl($this->request, $this->response, $shopId)) {
-            $this->response->setHeader('Cache-Control', 'private, no-cache');
+            $this->response->headers->set('cache-control', 'private, no-cache', true);
 
             return false;
         }
@@ -471,11 +467,11 @@ class Shopware_Plugins_Core_HttpCache_Bootstrap extends Shopware_Components_Plug
         $cacheTime = (int) $cacheControl->getCacheTime($this->request);
 
         $this->request->setParam('__cache', $cacheTime);
-        $this->response->setHeader('Cache-Control', 'public, max-age=' . $cacheTime . ', s-maxage=' . $cacheTime);
+        $this->response->headers->set('cache-control', 'public, max-age=' . $cacheTime . ', s-maxage=' . $cacheTime, true);
 
         $noCacheTags = $cacheControl->getNoCacheTagsForRequest($this->request, $shopId);
         if (!empty($noCacheTags)) {
-            $this->response->setHeader('x-shopware-allow-nocache', implode(', ', $noCacheTags));
+            $this->response->headers->set('x-shopware-allow-nocache', implode(', ', $noCacheTags), true);
         }
 
         $cacheCollector = $this->get('http_cache.cache_id_collector');
@@ -547,11 +543,8 @@ class Shopware_Plugins_Core_HttpCache_Bootstrap extends Shopware_Components_Plug
         }
 
         if (isset($newCacheTags)) {
-            $this->response->setCookie(
-                'nocache',
-                implode(', ', $newCacheTags),
-                0,
-                $this->request->getBasePath() . '/'
+            $this->response->headers->setCookie(
+                new Cookie('nocache', implode(', ', $newCacheTags), 0, $this->request->getBasePath() . '/')
             );
         }
     }
@@ -638,7 +631,7 @@ class Shopware_Plugins_Core_HttpCache_Bootstrap extends Shopware_Components_Plug
         }
 
         $cacheIds = ';' . implode(';', $cacheIds) . ';';
-        $this->response->setHeader('x-shopware-cache-id', $cacheIds);
+        $this->response->headers->set('x-shopware-cache-id', $cacheIds, true);
     }
 
     /**
@@ -725,7 +718,7 @@ class Shopware_Plugins_Core_HttpCache_Bootstrap extends Shopware_Components_Plug
      */
     public function enableControllerCache($cacheTime = 3600, $cacheIds = [])
     {
-        $this->response->setHeader('Cache-Control', 'public, max-age=' . $cacheTime . ', s-maxage=' . $cacheTime, true);
+        $this->response->headers->set('cache-control', 'public, max-age=' . $cacheTime . ', s-maxage=' . $cacheTime, true);
         $this->setCacheIdHeader($cacheIds);
     }
 
@@ -734,7 +727,7 @@ class Shopware_Plugins_Core_HttpCache_Bootstrap extends Shopware_Components_Plug
      */
     public function disableControllerCache()
     {
-        $this->response->setHeader('Cache-Control', 'private', true);
+        $this->response->headers->set('cache-control', 'private', true);
     }
 
     private function getResponseCookie(Response $response)
@@ -793,11 +786,11 @@ class Shopware_Plugins_Core_HttpCache_Bootstrap extends Shopware_Components_Plug
             return $this->invalidateWithBANRequest($proxyUrl, $cacheId);
         }
 
-        if ($this->get('service_container')->has('httpCache')) {
+        if ($this->get('service_container')->has('httpcache')) {
             return $this->invalidateWithStore($cacheId);
         }
 
-        // if no explicit proxy was configured + no host is configured
+        // If no explicit proxy was configured + no host is configured
         $proxyUrl = $this->getProxyUrl($this->request);
         if ($proxyUrl !== null) {
             return $this->invalidateWithBANRequest($proxyUrl, $cacheId);
@@ -814,7 +807,7 @@ class Shopware_Plugins_Core_HttpCache_Bootstrap extends Shopware_Components_Plug
      */
     private function invalidateWithBANRequest($urls, $cacheId)
     {
-        // expand + trim proxies (comma separated)
+        // Expand + trim proxies (comma separated)
         $urls = array_map(
             'trim',
             explode(',', $urls)
@@ -856,7 +849,7 @@ class Shopware_Plugins_Core_HttpCache_Bootstrap extends Shopware_Components_Plug
     private function invalidateWithStore($cacheId = null)
     {
         /** @var HttpCache $httpCache */
-        $httpCache = $this->get('httpCache');
+        $httpCache = $this->get('httpcache');
 
         /** @var Store $store */
         $store = $httpCache->getStore();
@@ -877,7 +870,7 @@ class Shopware_Plugins_Core_HttpCache_Bootstrap extends Shopware_Components_Plug
      */
     private function addSurrogateControl(Response $response)
     {
-        $response->setHeader('Surrogate-Control', 'content="ESI/1.0"');
+        $response->headers->set('surrogate-control', 'content="ESI/1.0"', true);
     }
 
     /**

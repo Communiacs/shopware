@@ -69,7 +69,7 @@
             contentSelector: '#tab--product-comment'
         }, ['xs'])
         .addPlugin('.tab-menu--product', 'swTabMenu', ['s', 'm', 'l', 'xl'])
-        .addPlugin('.tab-menu--cross-selling', 'swTabMenu', ['m', 'l', 'xl'])
+        .addPlugin('.tab-menu--cross-selling', 'swTabMenu')
         .addPlugin('.tab-menu--product .tab--container', 'swOffcanvasButton', {
             titleSelector: '.tab--title',
             previewSelector: '.tab--preview',
@@ -126,6 +126,8 @@
         .addPlugin('*[data-cookie-permission="true"]', 'swCookiePermission')
         .addPlugin('.navigation--entry.entry--account.with-slt', 'swDropdownMenu', [ 'm', 'l', 'xl' ])
         .addPlugin('*[data-storage-field="true"]', 'swStorageField')
+        .addPlugin('*[data-notification-message-close="true"]', 'swNotificationMessageClose')
+        .addPlugin('*[data-cookie-consent-manager="true"]', 'swCookieConsentManager')
     ;
 
     $(function($) {
@@ -159,12 +161,13 @@
         // Lightbox auto trigger
         $('*[data-lightbox="true"]').on('click.lightbox', function (event) {
             var $el = $(this),
-                target = ($el.is('[data-lightbox-target]')) ? $el.attr('data-lightbox-target') : $el.attr('href');
+                target = ($el.is('[data-lightbox-target]')) ? $el.attr('data-lightbox-target') : $el.attr('href'),
+                isSvg = $el.is('[data-is-svg]');
 
             event.preventDefault();
 
             if (target.length) {
-                $.lightbox.open(target);
+                $.lightbox.open(target, isSvg);
             }
         });
 
@@ -175,7 +178,7 @@
             $('.add-voucher--panel')[method]('is--hidden');
         });
 
-        $('body').on('click touchstart', '.table--shipping-costs-trigger', function (event) {
+        $('body').on('click', '.table--shipping-costs-trigger', function (event) {
             event.preventDefault();
 
             var $this = $(this),

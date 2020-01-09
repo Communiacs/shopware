@@ -15,10 +15,6 @@ return array(
     'Enlight' => array($baseDir . '/engine/Library'),
     'Egulias\\' => array($vendorDir . '/egulias/email-validator/src'),
     'Doctrine\\ORM\\Persisters\\Entity\\BasicEntityPersister' => array($baseDir . '/engine/Library'),
-    'Doctrine\\ORM\\' => array($vendorDir . '/doctrine/orm/lib'),
     'Doctrine\\DBAL\\' => array($vendorDir . '/doctrine/dbal/lib'),
     'Doctrine\\Common\\Proxy\\AbstractProxyFactory' => array($baseDir . '/engine/Library'),
-    'Doctrine\\Common\\Lexer\\' => array($vendorDir . '/doctrine/lexer/lib'),
-    'Doctrine\\Common\\Inflector\\' => array($vendorDir . '/doctrine/inflector/lib'),
-    'Doctrine\\Common\\Collections\\' => array($vendorDir . '/doctrine/collections/lib'),
 );

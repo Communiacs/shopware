@@ -45,8 +45,6 @@ use Shopware\Models\Tax\Tax;
 
 /**
  * The dql helper class holds some general helper methods used by various components
- *
- * Class DqlHelper
  */
 class DqlHelper
 {
@@ -132,10 +130,15 @@ class DqlHelper
      * Some mappings we will need later
      */
     protected $attributeToEntityMapping = [];
+
     protected $attributeToColumn = [];
+
     protected $entityToPrefix = [];
+
     protected $prefixToEntity = [];
+
     protected $columns = [];
+
     protected $columnInfo = [];
 
     public function __construct(

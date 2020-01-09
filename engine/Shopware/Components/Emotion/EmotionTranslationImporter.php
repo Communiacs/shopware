@@ -28,9 +28,6 @@ use Doctrine\DBAL\Connection;
 use Shopware\Components\Emotion\Exception\MappingRequiredException;
 use Shopware_Components_Translation;
 
-/**
- * Class EmotionTranslationImporter
- */
 class EmotionTranslationImporter
 {
     /**
@@ -98,7 +95,7 @@ class EmotionTranslationImporter
             ->fetchAll(\PDO::FETCH_COLUMN);
 
         foreach ($translations as &$translation) {
-            $translation['objectdata'] = unserialize($translation['objectdata']);
+            $translation['objectdata'] = unserialize($translation['objectdata'], ['allowed_classes' => false]);
             switch ($translation['objecttype']) {
                 case 'emotion':
                     $translation['objectkey'] = $emotionId;

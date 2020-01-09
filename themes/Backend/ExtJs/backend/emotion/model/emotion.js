@@ -54,6 +54,7 @@ Ext.define('Shopware.apps.Emotion.model.Emotion', {
         { name: 'templateId', type: 'int', useNull: true, defaultValue: 1 },
         { name: 'active', type: 'boolean' },
         { name: 'showListing', type: 'boolean' },
+        { name: 'listingVisibility', type: 'string' },
         { name: 'name', type: 'string' },
 
         { name: 'position', type: 'int', useNull: false, defaultValue: 1 },
@@ -98,12 +99,12 @@ Ext.define('Shopware.apps.Emotion.model.Emotion', {
      * Configure the data communication
      * @object
      */
-    proxy:{
+    proxy: {
         /**
          * Set proxy type to ajax
          * @string
          */
-        type:'ajax',
+        type: 'ajax',
 
         /**
          * Configure the url mapping for the different
@@ -120,10 +121,10 @@ Ext.define('Shopware.apps.Emotion.model.Emotion', {
          * Configure the data reader
          * @object
          */
-        reader:{
-            type:'json',
-            root:'data',
-            totalProperty:'total'
+        reader: {
+            type: 'json',
+            root: 'data',
+            totalProperty: 'total'
         }
     }
 

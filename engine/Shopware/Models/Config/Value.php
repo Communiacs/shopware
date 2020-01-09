@@ -67,15 +67,13 @@ class Value extends ModelEntity
     private $shopId;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="value", type="object", nullable=true)
      */
     private $value;
 
     /**
-     * Get id
-     *
      * @return int
      */
     public function getId()
@@ -84,8 +82,6 @@ class Value extends ModelEntity
     }
 
     /**
-     * Set element
-     *
      * @param Element $element
      *
      * @return Value
@@ -98,8 +94,6 @@ class Value extends ModelEntity
     }
 
     /**
-     * Get element
-     *
      * @return Element
      */
     public function getElement()
@@ -108,8 +102,6 @@ class Value extends ModelEntity
     }
 
     /**
-     * Set shop
-     *
      * @param Shop $shop
      *
      * @return Value
@@ -122,8 +114,6 @@ class Value extends ModelEntity
     }
 
     /**
-     * Get shop
-     *
      * @return Shop
      */
     public function getShop()
@@ -132,7 +122,7 @@ class Value extends ModelEntity
     }
 
     /**
-     * Set value
+     * @param string $value
      *
      * @return Value
      */
@@ -144,7 +134,7 @@ class Value extends ModelEntity
     }
 
     /**
-     * Get value
+     * @return mixed|null
      */
     public function getValue()
     {

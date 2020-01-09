@@ -26,11 +26,6 @@ namespace Shopware\Bundle\StoreFrontBundle\Struct\Country;
 
 use Shopware\Bundle\StoreFrontBundle\Struct\Extendable;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class State extends Extendable
 {
     /**
@@ -52,6 +47,11 @@ class State extends Extendable
      * @var int
      */
     protected $position;
+
+    /**
+     * @var bool
+     */
+    private $active;
 
     /**
      * @param int $id
@@ -123,5 +123,21 @@ class State extends Extendable
     public function setPosition($position)
     {
         $this->position = $position;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isActive()
+    {
+        return $this->active;
+    }
+
+    /**
+     * @param bool $active
+     */
+    public function setActive($active)
+    {
+        $this->active = $active;
     }
 }

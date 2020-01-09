@@ -41,10 +41,6 @@ use Shopware_Components_Config as Config;
  * Shopware Application
  *
  * Warm up the cache with direct http calls using the SEO URLs
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
 class CacheWarmer
 {
@@ -85,9 +81,6 @@ class CacheWarmer
      */
     private $eventManager;
 
-    /**
-     * standard constructor
-     */
     public function __construct(LoggerInterface $logger, GuzzleFactory $guzzleFactory, Config $config, ModelManager $modelManager, ContainerAwareEventManager $eventManager)
     {
         $this->connection = $modelManager->getConnection();
@@ -127,17 +120,12 @@ class CacheWarmer
                 'pool_size' => $concurrentRequests,
                 'error' => function (ErrorEvent $e) use ($shopId, $events) {
                     $events->notify('Shopware_Components_CacheWarmer_ErrorOccured');
-                    if ($e->getResponse() !== null && $e->getResponse()->getStatusCode() === 404) {
-                        $this->logger->error(
-                            'Warm up http-cache error with shopId ' . $shopId . ' ' . $e->getException()->getMessage()
-                        );
-                    } else {
-                        $this->logger->error(
-                            'Warm up http-cache error with shopId ' . $shopId . ' ' . $e->getException()->getMessage()
-                        );
-                    }
+                    $this->logger->warning(
+                        'Warm up http-cache error with shopId ' . $shopId . ' ' . $e->getException()->getMessage()
+                    );
                 },
-            ]);
+            ]
+        );
 
         $pool->wait();
     }

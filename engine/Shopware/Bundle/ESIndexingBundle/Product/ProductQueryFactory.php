@@ -28,15 +28,16 @@ use Doctrine\DBAL\Connection;
 use Shopware\Bundle\ESIndexingBundle\LastIdQuery;
 use Shopware\Bundle\SearchBundleDBAL\VariantHelperInterface;
 
-/**
- * Class ProductQueryFactory
- */
 class ProductQueryFactory implements ProductQueryFactoryInterface
 {
     /**
      * @var Connection
      */
     private $connection;
+
+    /**
+     * @var VariantHelperInterface
+     */
     private $variantHelper;
 
     public function __construct(Connection $connection, VariantHelperInterface $variantHelper)
@@ -74,10 +75,14 @@ class ProductQueryFactory implements ProductQueryFactoryInterface
     }
 
     /**
+     * @deprecated in 5.6, will be removed in 5.7 without replacement.
+     *
      * {@inheritdoc}
      */
     public function createPriceIdQuery($priceIds, $limit = null)
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be removed with 5.7. Will be removed without replacement.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         $dbal = $this->createQuery($limit)
             ->innerJoin('variant', 's_articles_details', 'subVariant', 'subVariant.articleID = variant.articleID')
             ->innerJoin('subVariant', 's_articles_prices', 'price', 'price.articledetailsID = subVariant.id')
@@ -100,10 +105,14 @@ class ProductQueryFactory implements ProductQueryFactoryInterface
     }
 
     /**
+     * @deprecated in 5.6, will be removed in 5.7 without replacement
+     *
      * {@inheritdoc}
      */
     public function createVoteIdQuery($voteIds, $limit = null)
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be removed with 5.7. Will be removed without replacement.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         $dbal = $this->createQuery($limit)
             ->innerJoin('product', 's_articles_vote', 'vote', 'vote.articleID = product.id')
             ->andWhere('vote.id IN (:voteIds)')
@@ -125,10 +134,14 @@ class ProductQueryFactory implements ProductQueryFactoryInterface
     }
 
     /**
+     * @deprecated in 5.6, will be removed in 5.7 without replacement.
+     *
      * {@inheritdoc}
      */
     public function createVariantIdQuery($variantIds, $limit = null)
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be removed with 5.7. Will be removed without replacement.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         $dbal = $this->createQuery($limit)
             ->innerJoin('variant', 's_articles_details', 'subVariant', 'subVariant.articleID = variant.articleID')
             ->andWhere('subVariant.id IN (:variantIds)')
@@ -162,10 +175,14 @@ class ProductQueryFactory implements ProductQueryFactoryInterface
     }
 
     /**
+     * @deprecated in 5.6, will be removed in 5.7 without replacement.
+     *
      * {@inheritdoc}
      */
     public function createProductCategoryQuery($categoryIds, $limit = null)
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be removed with 5.7. Will be removed without replacement.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         $dbal = $this->createQuery($limit)
             ->innerJoin('variant', 's_articles_categories_ro', 'shopProducts', 'shopProducts.articleID = variant.articleID')
             ->andWhere('shopProducts.categoryID IN (:categoryIds)')

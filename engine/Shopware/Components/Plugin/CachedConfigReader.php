@@ -24,13 +24,10 @@
 
 namespace Shopware\Components\Plugin;
 
+use Shopware\Components\CacheManager;
 use Shopware\Models\Shop\Shop;
+use Zend_Cache_Core as Cache;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.com)
- */
 class CachedConfigReader implements ConfigReader
 {
     /**
@@ -39,13 +36,14 @@ class CachedConfigReader implements ConfigReader
     private $reader;
 
     /**
-     * @var array
+     * @var Cache
      */
-    private $configStorage;
+    private $cache;
 
-    public function __construct(ConfigReader $reader)
+    public function __construct(ConfigReader $reader, Cache $cache)
     {
         $this->reader = $reader;
+        $this->cache = $cache;
     }
 
     /**
@@ -59,10 +57,14 @@ class CachedConfigReader implements ConfigReader
             $cacheKey = $pluginName;
         }
 
-        if (!isset($this->configStorage[$cacheKey])) {
-            $this->configStorage[$cacheKey] = $this->reader->getByPluginName($pluginName, $shop);
+        if ($this->cache->test($cacheKey)) {
+            return $this->cache->load($cacheKey, true);
         }
 
-        return $this->configStorage[$cacheKey];
+        $config = $this->reader->getByPluginName($pluginName, $shop);
+
+        $this->cache->save($config, $cacheKey, [CacheManager::ITEM_TAG_CONFIG, CacheManager::ITEM_TAG_PLUGIN_CONFIG . strtolower($pluginName)], 86400);
+
+        return $config;
     }
 }

@@ -30,10 +30,6 @@ use Shopware\Models\Shop\Shop;
 
 /**
  * Shopware Plugin Namespace
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
 class Shopware_Components_Plugin_Namespace extends Enlight_Plugin_Namespace_Config
 {
@@ -53,8 +49,6 @@ class Shopware_Components_Plugin_Namespace extends Enlight_Plugin_Namespace_Conf
     private $configReader;
 
     /**
-     * Shopware_Components_Plugin_Namespace constructor.
-     *
      * @param string              $name
      * @param Enlight_Config|null $storage
      */
@@ -558,6 +552,13 @@ class Shopware_Components_Plugin_Namespace extends Enlight_Plugin_Namespace_Conf
             $plugins[$pluginName]['class'] = $this->buildClassName($this->name, $pluginName);
             $plugins[$pluginName]['path'] = $this->buildPath($this->name, $pluginName, $row['source']);
             $plugins[$pluginName]['config'] = [];
+
+            if ($plugins[$pluginName]['installationDate']) {
+                $plugins[$pluginName]['installationDate'] = new \DateTime($row['installationDate']);
+            }
+            if ($plugins[$pluginName]['updateDate']) {
+                $plugins[$pluginName]['updateDate'] = new \DateTime($row['updateDate']);
+            }
         }
 
         $listeners = $this->loadListeners($this->name);

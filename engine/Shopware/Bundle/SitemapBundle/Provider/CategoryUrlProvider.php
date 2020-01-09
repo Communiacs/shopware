@@ -24,6 +24,7 @@
 
 namespace Shopware\Bundle\SitemapBundle\Provider;
 
+use Doctrine\ORM\AbstractQuery;
 use Shopware\Bundle\SitemapBundle\Struct\Url;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 use Shopware\Components\Routing;
@@ -44,7 +45,7 @@ class CategoryUrlProvider extends BaseUrlProvider
         $categoryRepository = $this->modelManager->getRepository(Category::class);
         $categories = $categoryRepository->getActiveChildrenList($parentId, $shopContext->getFallbackCustomerGroup()->getId(), null, $shopContext->getShop()->getId());
 
-        /** @var array<string, array> $category */
+        /** @var array $category */
         foreach ($categories as $key => &$category) {
             if (!empty($category['external'])) {
                 unset($categories[$key]);
@@ -61,6 +62,17 @@ class CategoryUrlProvider extends BaseUrlProvider
                 $category['urlParams']['sViewport'] = 'blog';
             }
         }
+
+        $parentCategory = $categoryRepository->getDetailQuery($parentId)->getSingleResult(AbstractQuery::HYDRATE_ARRAY);
+
+        // Add home page
+        array_unshift($categories, [
+            'id' => $parentCategory['id'],
+            'changed' => $parentCategory['changed'],
+            'urlParams' => [
+                'sViewport' => 'index',
+            ],
+        ]);
 
         unset($category);
 

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Elasticsearch\Endpoints;
 
 use Elasticsearch\Common\Exceptions;
@@ -42,21 +44,17 @@ class UpdateByQuery extends AbstractEndpoint
      * @throws \Elasticsearch\Common\Exceptions\BadMethodCallException
      * @return string
      */
-    protected function getURI()
+    public function getURI()
     {
-        if (isset($this->index) !== true) {
+        if (!$this->index) {
             throw new Exceptions\RuntimeException(
                 'index is required for UpdateByQuery'
             );
         }
-        $index = $this->index;
-        $type = $this->type;
-        $uri = "/$index/_update_by_query";
-        if (isset($index) === true && isset($type) === true) {
-            $uri = "/$index/$type/_update_by_query";
-        }
-        if (isset($index) === true) {
-            $uri = "/$index/_update_by_query";
+
+        $uri = "/{$this->index}/_update_by_query";
+        if ($this->type) {
+            $uri = "/{$this->index}/{$this->type}/_update_by_query";
         }
 
         return $uri;
@@ -66,7 +64,7 @@ class UpdateByQuery extends AbstractEndpoint
     /**
      * @return string[]
      */
-    protected function getParamWhitelist()
+    public function getParamWhitelist()
     {
         return [
             'analyzer',
@@ -92,8 +90,10 @@ class UpdateByQuery extends AbstractEndpoint
             'size',
             'sort',
             '_source',
-            '_source_exclude',
             '_source_include',
+            '_source_includes',
+            '_source_exclude',
+            '_source_excludes',
             'terminate_after',
             'stats',
             'suggest_field',
@@ -109,6 +109,7 @@ class UpdateByQuery extends AbstractEndpoint
             'consistency',
             'scroll_size',
             'wait_for_completion',
+            'pipeline',
         ];
     }
 
@@ -116,7 +117,7 @@ class UpdateByQuery extends AbstractEndpoint
     /**
      * @return string
      */
-    protected function getMethod()
+    public function getMethod()
     {
         return 'POST';
     }

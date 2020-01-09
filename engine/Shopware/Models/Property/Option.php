@@ -47,7 +47,7 @@ class Option extends ModelEntity
     /**
      * INVERSE SIDE
      *
-     * @var PropertyOptionAttribute
+     * @var PropertyOptionAttribute|null
      *
      * @ORM\OneToOne(targetEntity="Shopware\Models\Attribute\PropertyOption", mappedBy="propertyOption", orphanRemoval=true, cascade={"persist"})
      */
@@ -107,8 +107,6 @@ class Option extends ModelEntity
     }
 
     /**
-     * Get id
-     *
      * @return int
      */
     public function getId()
@@ -117,8 +115,6 @@ class Option extends ModelEntity
     }
 
     /**
-     * Set name
-     *
      * @param string $name
      *
      * @return Option
@@ -131,8 +127,6 @@ class Option extends ModelEntity
     }
 
     /**
-     * Get name
-     *
      * @return string
      */
     public function getName()
@@ -141,8 +135,6 @@ class Option extends ModelEntity
     }
 
     /**
-     * Set filterable
-     *
      * @param bool $filterable
      *
      * @return Option
@@ -155,8 +147,6 @@ class Option extends ModelEntity
     }
 
     /**
-     * Get filterable
-     *
      * @return bool
      */
     public function isFilterable()
@@ -189,7 +179,7 @@ class Option extends ModelEntity
     }
 
     /**
-     * @return PropertyOptionAttribute
+     * @return PropertyOptionAttribute|null
      */
     public function getAttribute()
     {

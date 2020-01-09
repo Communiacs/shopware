@@ -26,17 +26,13 @@ namespace Shopware\Plugin\Debug\Components;
 
 use Shopware\Components\Logger;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class ErrorCollector implements CollectorInterface
 {
     /**
      * @var \Shopware_Plugins_Core_ErrorHandler_Bootstrap
      */
     protected $errorHandler;
+
     /**
      * @var Utils
      */

@@ -24,11 +24,6 @@
 
 namespace Shopware\Bundle\AttributeBundle\Service;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.com)
- */
 class ConfigurationStruct implements \JsonSerializable
 {
     /**
@@ -60,6 +55,11 @@ class ConfigurationStruct implements \JsonSerializable
      * @var bool
      */
     private $displayInBackend = false;
+
+    /**
+     * @var bool
+     */
+    private $readonly = false;
 
     /**
      * @var bool
@@ -225,6 +225,16 @@ class ConfigurationStruct implements \JsonSerializable
     public function setDisplayInBackend($displayInBackend)
     {
         $this->displayInBackend = $displayInBackend;
+    }
+
+    public function isReadonly(): bool
+    {
+        return $this->readonly;
+    }
+
+    public function setReadonly(bool $readonly): void
+    {
+        $this->readonly = $readonly;
     }
 
     /**

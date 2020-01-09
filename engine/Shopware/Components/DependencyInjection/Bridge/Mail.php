@@ -26,11 +26,6 @@ namespace Shopware\Components\DependencyInjection\Bridge;
 
 use Shopware\Components\DependencyInjection\Container;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class Mail
 {
     /**
@@ -38,7 +33,7 @@ class Mail
      */
     public function factory(Container $container, \Shopware_Components_Config $config, array $options)
     {
-        if (!$container->load('MailTransport')) {
+        if (!$container->load('mailtransport')) {
             return null;
         }
 

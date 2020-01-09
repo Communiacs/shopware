@@ -22,33 +22,14 @@
  * our trademarks remain entirely with us.
  */
 
-/**
- * Shopware ExtJs Controller
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
-class Shopware_Controllers_Backend_ExtJs extends Enlight_Controller_Action
+abstract class Shopware_Controllers_Backend_ExtJs extends Enlight_Controller_Action
 {
-    /**
-     * @var Shopware_Plugins_Backend_Auth_Bootstrap
-     */
-    protected $auth;
-
     /**
      * Array with all permissions to check in this controller
      *
      * @var array
      */
     protected $aclPermissions = [];
-
-    /**
-     * Holds optionally acl error message
-     *
-     * @var string
-     */
-    protected $errorMessage;
 
     /**
      * Enable script renderer and json request plugin
@@ -92,12 +73,14 @@ class Shopware_Controllers_Backend_ExtJs extends Enlight_Controller_Action
      */
     public function indexAction()
     {
-        $identity = Shopware()->Container()->get('Auth')->getIdentity();
+        $identity = Shopware()->Container()->get('auth')->getIdentity();
         $this->View()->assign('user', $identity, true);
 
         if ($this->Request()->get('file') === 'bootstrap') {
             $this->View()->assign('tinymceLang', $this->getTinyMceLang($identity), true);
         }
+
+        $this->enableBrowserCache();
     }
 
     /**
@@ -105,74 +88,7 @@ class Shopware_Controllers_Backend_ExtJs extends Enlight_Controller_Action
      */
     public function loadAction()
     {
-    }
-
-    public function extendsAction()
-    {
-        $request = $this->Request();
-        $moduleName = 'backend';
-        $controllerName = $this->Request()->getParam('baseController');
-
-        $fileNames = (array) $request->getParam('file');
-        if (empty($fileNames)) {
-            $fileNames = $request->getParam('f', []);
-            $fileNames = explode('|', $fileNames);
-        }
-
-        if (empty($fileNames)) {
-            return;
-        }
-
-        $this->Response()->setHeader('Content-Type', 'application/javascript; charset=utf-8', true);
-        $template = 'snippet:string:';
-
-        $this->View()->Engine()->setCompileId($this->View()->Engine()->getCompileId() . '_' . $this->Request()->getControllerName());
-
-        foreach ($fileNames as $fileName) {
-            // Remove unwanted characters
-            $fileName = preg_replace('/[^a-z0-9\/_-]/i', '', $fileName);
-
-            // Replace multiple forward slashes
-            $fileName = preg_replace('#/+#', '/', $fileName);
-
-            // Remove leading and trailing forward slash
-            $fileName = trim($fileName, '/');
-
-            // if string starts with "m/" replace with "model/"
-            $fileName = preg_replace('/^m\//', 'model/', $fileName);
-            $fileName = preg_replace('/^c\//', 'controller/', $fileName);
-            $fileName = preg_replace('/^v\//', 'view/', $fileName);
-
-            if (empty($fileName)) {
-                continue;
-            }
-
-            $templateBase = $this->inflectPath($moduleName, $controllerName, $fileName);
-
-            $templateExtend = $this->inflectPath(
-                $moduleName,
-                $this->Request()->getControllerName(),
-                $fileName
-            );
-
-            if ($this->View()->templateExists($templateBase)) {
-                $template .= '{include file="' . $templateBase . '"}' . "\n";
-            }
-            if ($this->View()->templateExists($templateExtend)) {
-                $template .= '{include file="' . $templateExtend . '"}' . "\n";
-            }
-        }
-
-        $toFind = $this->Request()->getParam('find');
-        $toReplace = $this->Request()->getParam('replace');
-        $toFind = rtrim($toFind, '.') . '.';
-        $toReplace = rtrim($toReplace, '.') . '.';
-
-        $this->View()->setTemplate();
-        $template = $this->View()->fetch($template);
-        $template = str_replace($toFind, $toReplace, $template);
-
-        echo $template;
+        $this->enableBrowserCache();
     }
 
     /**
@@ -275,5 +191,14 @@ class Shopware_Controllers_Backend_ExtJs extends Enlight_Controller_Action
         $replacement = ['_\1', '_\1'];
 
         return preg_replace($pattern, $replacement, $input);
+    }
+
+    private function enableBrowserCache(): void
+    {
+        if ($this->container->getParameter('shopware.template.forceCompile')) {
+            return;
+        }
+
+        $this->Response()->headers->set('cache-control', 'max-age=2592000, public', true);
     }
 }

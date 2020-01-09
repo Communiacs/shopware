@@ -13,12 +13,8 @@
  * to license@shopware.de so we can send you a copy immediately.
  *
  * @category   Enlight
- * @package    Enlight_Extensions
  * @copyright  Copyright (c) 2011, shopware AG (http://www.shopware.de)
  * @license    http://enlight.de/license     New BSD License
- * @version    $Id$
- * @author     Heiner Lohaus
- * @author     $Author$
  */
 
 /**
@@ -176,7 +172,7 @@ class Enlight_Controller_Plugins_ViewRenderer_Bootstrap extends Enlight_Plugin_B
     protected function initEngine()
     {
         if ($this->engine === null) {
-            $this->engine = Shopware()->Container()->get('Template');
+            $this->engine = Shopware()->Container()->get('template');
         }
     }
 

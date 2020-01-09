@@ -57,6 +57,17 @@ class Shopware_Plugins_Frontend_AdvancedMenu_Bootstrap extends Shopware_Componen
     /**
      * @return array
      */
+    public function disable()
+    {
+        return [
+            'success' => true,
+            'invalidateCache' => ['template', 'theme'],
+        ];
+    }
+
+    /**
+     * @return array
+     */
     public function getInfo()
     {
         return [
@@ -139,11 +150,19 @@ class Shopware_Plugins_Frontend_AdvancedMenu_Bootstrap extends Shopware_Componen
     {
         $context = Shopware()->Container()->get('shopware_storefront.context_service')->getShopContext();
 
-        $cacheKey = sprintf('Shopware_AdvancedMenu_Tree_%s_%s_%s',
+        $cacheKey = sprintf(
+            'Shopware_AdvancedMenu_Tree_%s_%s_%s',
             $context->getShop()->getId(),
             $category,
             ($this->Config()->get('includeCustomergroup') ? $context->getCurrentCustomerGroup()->getId() : 'x')
         );
+
+        $eventManager = $this->get('events');
+        $cacheKey = $eventManager->filter('Shopware_Plugins_AdvancedMenu_CacheKey', $cacheKey, [
+            'shopContext' => $context,
+            'config' => $this->Config(),
+        ]);
+
         $cache = Shopware()->Container()->get('cache');
 
         if ($this->Config()->get('caching') && $cache->test($cacheKey)) {
@@ -379,20 +398,5 @@ class Shopware_Plugins_Frontend_AdvancedMenu_Bootstrap extends Shopware_Componen
 
             return $data;
         }, $categories);
-    }
-
-    /**
-     * @param array $categories
-     * @param array $path
-     *
-     * @return array
-     */
-    private function setActiveCategoriesFlag($categories, $path)
-    {
-        foreach ($path as $categoryId) {
-            $categories[$categoryId]['flag'] = true;
-        }
-
-        return $categories;
     }
 }

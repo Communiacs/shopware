@@ -80,7 +80,7 @@ class Detail extends ModelEntity
     /**
      * INVERSE SIDE
      *
-     * @var \Shopware\Models\Attribute\OrderDetail
+     * @var \Shopware\Models\Attribute\OrderDetail|null
      *
      * @ORM\OneToOne(targetEntity="Shopware\Models\Attribute\OrderDetail", mappedBy="orderDetail", orphanRemoval=true, cascade={"persist"})
      */
@@ -159,7 +159,7 @@ class Detail extends ModelEntity
     private $articleDetailID;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="ordernumber", type="string", length=255, nullable=true)
      */
@@ -216,7 +216,7 @@ class Detail extends ModelEntity
     private $shippedGroup = 0;
 
     /**
-     * @var \DateTimeInterface
+     * @var \DateTimeInterface|null
      *
      * @ORM\Column(name="releasedate", type="date", nullable=true)
      */
@@ -244,29 +244,27 @@ class Detail extends ModelEntity
     private $config = '';
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="ean", type="string", length=255, nullable=true)
      */
     private $ean;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="unit", type="string", length=255, nullable=true)
      */
     private $unit;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="pack_unit", type="string", length=255, nullable=true)
      */
     private $packUnit;
 
     /**
-     * Get id
-     *
      * @return int
      */
     public function getId()
@@ -275,8 +273,6 @@ class Detail extends ModelEntity
     }
 
     /**
-     * Set number
-     *
      * @param string $number
      *
      * @return Detail
@@ -289,9 +285,7 @@ class Detail extends ModelEntity
     }
 
     /**
-     * Get number
-     *
-     * @return string
+     * @return string|null
      */
     public function getNumber()
     {
@@ -299,8 +293,6 @@ class Detail extends ModelEntity
     }
 
     /**
-     * Set articleId
-     *
      * @param int $articleId
      *
      * @return Detail
@@ -313,8 +305,6 @@ class Detail extends ModelEntity
     }
 
     /**
-     * Get articleId
-     *
      * @return int
      */
     public function getArticleId()
@@ -323,8 +313,6 @@ class Detail extends ModelEntity
     }
 
     /**
-     * Set price
-     *
      * @param float $price
      *
      * @return Detail
@@ -337,8 +325,6 @@ class Detail extends ModelEntity
     }
 
     /**
-     * Get price
-     *
      * @return float
      */
     public function getPrice()
@@ -347,8 +333,6 @@ class Detail extends ModelEntity
     }
 
     /**
-     * Set quantity
-     *
      * @param int $quantity
      *
      * @return Detail
@@ -361,8 +345,6 @@ class Detail extends ModelEntity
     }
 
     /**
-     * Get quantity
-     *
      * @return int
      */
     public function getQuantity()
@@ -371,8 +353,6 @@ class Detail extends ModelEntity
     }
 
     /**
-     * Set articleName
-     *
      * @param string $articleName
      *
      * @return Detail
@@ -385,8 +365,6 @@ class Detail extends ModelEntity
     }
 
     /**
-     * Get name
-     *
      * @return string
      */
     public function getArticleName()
@@ -408,8 +386,6 @@ class Detail extends ModelEntity
     }
 
     /**
-     * Set shipped
-     *
      * @param int $shipped
      *
      * @return Detail
@@ -422,8 +398,6 @@ class Detail extends ModelEntity
     }
 
     /**
-     * Get shipped
-     *
      * @return int
      */
     public function getShipped()
@@ -432,8 +406,6 @@ class Detail extends ModelEntity
     }
 
     /**
-     * Set shippedGroup
-     *
      * @param int $shippedGroup
      *
      * @return Detail
@@ -446,8 +418,6 @@ class Detail extends ModelEntity
     }
 
     /**
-     * Get shippedGroup
-     *
      * @return int
      */
     public function getShippedGroup()
@@ -456,8 +426,6 @@ class Detail extends ModelEntity
     }
 
     /**
-     * Set releaseDate
-     *
      * @param \DateTimeInterface $releaseDate
      *
      * @return Detail
@@ -470,9 +438,7 @@ class Detail extends ModelEntity
     }
 
     /**
-     * Get releaseDate
-     *
-     * @return \DateTimeInterface
+     * @return \DateTimeInterface|null
      */
     public function getReleaseDate()
     {
@@ -480,8 +446,6 @@ class Detail extends ModelEntity
     }
 
     /**
-     * Set mode
-     *
      * @param int $mode
      *
      * @return Detail
@@ -494,8 +458,6 @@ class Detail extends ModelEntity
     }
 
     /**
-     * Get mode
-     *
      * @return int
      */
     public function getMode()
@@ -504,8 +466,6 @@ class Detail extends ModelEntity
     }
 
     /**
-     * Set esdArticle
-     *
      * @param int $esdArticle
      *
      * @return Detail
@@ -518,8 +478,6 @@ class Detail extends ModelEntity
     }
 
     /**
-     * Get esdArticle
-     *
      * @return int
      */
     public function getEsdArticle()
@@ -528,8 +486,6 @@ class Detail extends ModelEntity
     }
 
     /**
-     * Set config
-     *
      * @param string $config
      *
      * @return Detail
@@ -542,8 +498,6 @@ class Detail extends ModelEntity
     }
 
     /**
-     * Get config
-     *
      * @return string
      */
     public function getConfig()
@@ -552,7 +506,7 @@ class Detail extends ModelEntity
     }
 
     /**
-     * @return Order
+     * @return Order|null
      */
     public function getOrder()
     {
@@ -584,7 +538,7 @@ class Detail extends ModelEntity
     }
 
     /**
-     * @return \Shopware\Models\Tax\Tax
+     * @return \Shopware\Models\Tax\Tax|null
      */
     public function getTax()
     {
@@ -729,7 +683,7 @@ class Detail extends ModelEntity
     }
 
     /**
-     * @return \Shopware\Models\Attribute\OrderDetail
+     * @return \Shopware\Models\Attribute\OrderDetail|null
      */
     public function getAttribute()
     {
@@ -739,7 +693,7 @@ class Detail extends ModelEntity
     /**
      * @param \Shopware\Models\Attribute\OrderDetail|array|null $attribute
      *
-     * @return \Shopware\Models\Attribute\OrderDetail
+     * @return \Shopware\Models\Order\Detail
      */
     public function setAttribute($attribute)
     {
@@ -795,7 +749,7 @@ class Detail extends ModelEntity
     }
 
     /**
-     * @param string $ean
+     * @param string|null $ean
      */
     public function setEan($ean)
     {
@@ -803,7 +757,7 @@ class Detail extends ModelEntity
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getEan()
     {
@@ -811,7 +765,7 @@ class Detail extends ModelEntity
     }
 
     /**
-     * @param string $unit
+     * @param string|null $unit
      */
     public function setUnit($unit)
     {
@@ -819,7 +773,7 @@ class Detail extends ModelEntity
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getUnit()
     {
@@ -827,7 +781,7 @@ class Detail extends ModelEntity
     }
 
     /**
-     * @param string $packUnit
+     * @param string|null $packUnit
      */
     public function setPackUnit($packUnit)
     {
@@ -835,7 +789,7 @@ class Detail extends ModelEntity
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getPackUnit()
     {

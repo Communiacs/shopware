@@ -86,8 +86,23 @@ class MediaReplaceService implements MediaReplaceServiceInterface
         }
 
         $fileContent = file_get_contents($file->getRealPath());
+        $oldExtension = strtolower($media->getExtension());
+        $newExtension = strtolower($this->getExtension($file));
 
-        $this->mediaService->write($media->getPath(), $fileContent);
+        $newFileName = null;
+        if ($oldExtension === $newExtension) {
+            $this->mediaService->write($media->getPath(), $fileContent);
+        } else {
+            $pathInfo = pathinfo($media->getPath());
+            $newFileName = sprintf('%s/%s.%s', $pathInfo['dirname'], $pathInfo['filename'], $newExtension);
+            $this->mediaService->delete($media->getPath());
+            $this->mediaService->write($newFileName, $fileContent);
+            $this->modelManager->getConnection()->update('s_articles_img', [
+                'extension' => $newExtension,
+            ], [
+                'media_id' => $media->getId(),
+            ]);
+        }
 
         $media->setExtension($this->getExtension($file));
         $media->setFileSize(filesize($file->getRealPath()));
@@ -102,21 +117,18 @@ class MediaReplaceService implements MediaReplaceServiceInterface
             }
 
             $media->removeThumbnails();
+
+            if ($newFileName) {
+                $media->setPath($newFileName);
+            }
+
             $this->thumbnailManager->createMediaThumbnail($media, $media->getDefaultThumbnails(), true);
             $media->createAlbumThumbnails($media->getAlbum());
+        } elseif ($newFileName) {
+            $media->setPath($newFileName);
         }
 
         $this->modelManager->flush();
-    }
-
-    /**
-     * @return bool
-     */
-    private function validateMediaType(Media $media, UploadedFile $file)
-    {
-        $uploadedFileExtension = $this->getExtension($file);
-
-        return $media->getType() === $this->mappingService->getType($uploadedFileExtension);
     }
 
     /**

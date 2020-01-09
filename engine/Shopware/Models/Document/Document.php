@@ -24,6 +24,7 @@
 
 namespace Shopware\Models\Document;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
 
@@ -61,7 +62,7 @@ class Document extends ModelEntity
      * An internal key, which can be used to identify a document type independently
      * from its id or name, because these values may have been changed by the user.
      *
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="`key`", type="string", nullable=true, unique=true)
      */
@@ -140,6 +141,11 @@ class Document extends ModelEntity
      */
     private $elements;
 
+    public function __construct()
+    {
+        $this->elements = new ArrayCollection();
+    }
+
     /**
      * Getter function for the unique id identifier property
      *
@@ -191,7 +197,7 @@ class Document extends ModelEntity
     /**
      * Gets the document's unique key
      *
-     * @return string
+     * @return string|null
      */
     public function getKey()
     {
@@ -369,13 +375,13 @@ class Document extends ModelEntity
     /**
      * Sets the form-elements.
      *
-     * @param \Doctrine\Common\Collections\ArrayCollection<\Shopware\Models\Document\Element> $elements
+     * @param \Doctrine\Common\Collections\ArrayCollection<\Shopware\Models\Document\Element>|Element[] $elements
      *
      * @return Document
      */
     public function setElements($elements)
     {
-        $this->elements = $elements;
+        $this->setOneToMany($elements, \Shopware\Models\Document\Element::class, 'elements', 'document');
 
         return $this;
     }

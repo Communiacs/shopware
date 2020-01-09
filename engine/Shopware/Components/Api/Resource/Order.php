@@ -24,6 +24,7 @@
 
 namespace Shopware\Components\Api\Resource;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Shopware\Components\Api\Exception as ApiException;
 use Shopware\Models\Country\Country as CountryModel;
 use Shopware\Models\Country\State;
@@ -42,10 +43,6 @@ use Shopware\Models\Tax\Tax;
 
 /**
  * Order API Resource
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
 class Order extends Resource
 {
@@ -73,7 +70,7 @@ class Order extends Resource
             throw new ApiException\ParameterMissingException();
         }
 
-        /** @var OrderModel $orderModel */
+        /** @var OrderModel|null $orderModel */
         $orderModel = $this->getRepository()->findOneBy(['number' => $number]);
 
         if (!$orderModel) {
@@ -116,7 +113,7 @@ class Order extends Resource
 
         $filters = [['property' => 'orders.id', 'expression' => '=', 'value' => $id]];
         $builder = $this->getRepository()->getOrdersQueryBuilder($filters);
-        /** @var OrderModel $order */
+        /** @var OrderModel|array|null $order */
         $order = $builder->getQuery()->getOneOrNullResult($this->getResultMode());
 
         if (!$order) {
@@ -126,8 +123,7 @@ class Order extends Resource
         if (is_array($order)) {
             $order['paymentStatusId'] = $order['cleared'];
             $order['orderStatusId'] = $order['status'];
-            unset($order['cleared']);
-            unset($order['status']);
+            unset($order['cleared'], $order['status']);
         }
 
         return $order;
@@ -261,17 +257,17 @@ class Order extends Resource
         $this->checkPrivilege('update');
 
         if (empty($id)) {
-            throw new ApiException\ParameterMissingException();
+            throw new ApiException\ParameterMissingException('id');
         }
 
-        /** @var OrderModel $order */
+        /** @var OrderModel|null $order */
         $order = $this->getRepository()->find($id);
 
         if (!$order) {
             throw new ApiException\NotFoundException(sprintf('Order by id %d not found', $id));
         }
 
-        $params = $this->prepareOrderData($params);
+        $params = $this->prepareOrderData($params, $order);
 
         $order->fromArray($params);
 
@@ -475,15 +471,15 @@ class Order extends Resource
             }
 
             // If no order number was specified for the details we use the one from the order if there is one
-            if ((!array_key_exists('number', $detail) || $detail['number'] !== $params['number']) &&
-                !empty($params['number'])) {
+            if ((!array_key_exists('number', $detail) || $detail['number'] !== $params['number'])
+                && !empty($params['number'])) {
                 $detail['number'] = $params['number'];
             }
 
             $detailModel = new Detail();
             $detailModel->fromArray($detail);
 
-            /** @var DetailStatus $status */
+            /** @var DetailStatus|null $status */
             $status = $this->getContainer()->get('models')->find(DetailStatus::class, $detail['statusId']);
             if (!$status) {
                 throw new ApiException\NotFoundException(sprintf('DetailStatus by id %s not found', $detail['statusId']));
@@ -523,9 +519,9 @@ class Order extends Resource
      *
      * @return array
      */
-    public function prepareOrderData(array $params)
+    public function prepareOrderData(array $params, OrderModel $order)
     {
-        $params = $this->prepareOrderDetailsData($params);
+        $params = $this->prepareOrderDetailsData($params, $order);
 
         $orderWhiteList = [
             'paymentStatusId',
@@ -586,7 +582,7 @@ class Order extends Resource
      *
      * @return array
      */
-    public function prepareOrderDetailsData(array $params)
+    public function prepareOrderDetailsData(array $params, OrderModel $order)
     {
         $detailWhiteList = [
             'status',
@@ -605,25 +601,21 @@ class Order extends Resource
         foreach ($details as &$detail) {
             // Apply whiteList
             $detail = array_intersect_key($detail, array_flip($detailWhiteList));
+        }
 
-            // Technically "articleID" and "articleordernumber" are not unique per orderId,
-            // so we cannot use those to identify order positions.
-            if (!isset($detail['id']) || empty($detail['id'])) {
-                throw new ApiException\CustomValidationException('You need to specify the id of the order positions you want to modify');
-            }
+        $detailModels = $this->checkDataReplacement(new ArrayCollection($order->getDetails()->toArray()), $params, 'details', true);
 
-            // Check order detail model
+        foreach ($details as &$detail) {
             /** @var Detail $detailModel */
-            $detailModel = Shopware()->Models()->find(Detail::class, $detail['id']);
-            if (!$detailModel) {
-                throw new ApiException\NotFoundException(sprintf(
-                    'Detail by id %s not found',
-                    $detail['id']
-                ));
+            $detailModel = $this->getOneToManySubElement($order->getDetails(), $detail, Detail::class);
+
+            if (empty($detailModel->getId())) {
+                // skip new entries
+                continue;
             }
 
             if (isset($detail['status'])) {
-                /** @var DetailStatus $status */
+                /** @var DetailStatus|null $status */
                 $status = Shopware()->Models()->find(DetailStatus::class, $detail['status']);
 
                 if (!$status) {
@@ -641,10 +633,10 @@ class Order extends Resource
                 $detailModel->setShipped($detail['shipped']);
             }
 
-            $detail = $detailModel;
+            $detailModels->add($detailModel);
         }
 
-        $params['details'] = $details;
+        $params['details'] = $detailModels->toArray();
 
         return $params;
     }

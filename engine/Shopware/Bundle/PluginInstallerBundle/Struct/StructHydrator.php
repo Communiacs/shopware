@@ -24,9 +24,6 @@
 
 namespace Shopware\Bundle\PluginInstallerBundle\Struct;
 
-/**
- * Class StructHydrator
- */
 class StructHydrator
 {
     /**
@@ -466,6 +463,7 @@ class StructHydrator
         $domains = [];
         foreach ($data as $row) {
             $domains[] = new DomainStruct(
+                $row['id'],
                 $row['domain'],
                 $row['balance'],
                 $row['dispo'],

@@ -26,18 +26,15 @@ namespace Shopware\Bundle\SearchBundle\Facet;
 
 use Shopware\Bundle\SearchBundle\FacetInterface;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class PropertyFacet implements FacetInterface
 {
+    private const NAME = 'property';
+
     /**
      * {@inheritdoc}
      */
     public function getName()
     {
-        return 'property';
+        return self::NAME;
     }
 }

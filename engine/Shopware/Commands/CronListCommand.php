@@ -28,11 +28,6 @@ use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class CronListCommand extends ShopwareCommand
 {
     /**
@@ -43,7 +38,8 @@ class CronListCommand extends ShopwareCommand
         $this
             ->setName('sw:cron:list')
             ->setDescription('Lists cronjobs.')
-            ->setHelp(<<<'EOF'
+            ->setHelp(
+                <<<'EOF'
 The <info>%command.name%</info> lists cronjobs.
 EOF
             );

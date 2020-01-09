@@ -74,6 +74,11 @@ class ShopIndexer implements ShopIndexerInterface
     private $backlogProcessor;
 
     /**
+     * @var string
+     */
+    private $esVersion;
+
+    /**
      * @param DataIndexerInterface[] $indexer
      * @param MappingInterface[]     $mappings
      * @param SettingsInterface[]    $settings
@@ -86,7 +91,8 @@ class ShopIndexer implements ShopIndexerInterface
         EvaluationHelperInterface $evaluation,
         array $indexer,
         array $mappings,
-        array $settings
+        array $settings,
+        string $esVersion
     ) {
         $this->client = $client;
         $this->backlogReader = $backlogReader;
@@ -96,6 +102,7 @@ class ShopIndexer implements ShopIndexerInterface
         $this->mappings = $mappings;
         $this->settings = $settings;
         $this->evaluation = $evaluation;
+        $this->esVersion = $esVersion;
     }
 
     /**
@@ -103,11 +110,15 @@ class ShopIndexer implements ShopIndexerInterface
      *
      * @throws \RuntimeException
      */
-    public function index(Shop $shop, ProgressHelperInterface $helper)
+    public function index(Shop $shop, ProgressHelperInterface $helper, array $indexNames = null)
     {
         $lastBacklogId = $this->backlogReader->getLastBacklogId();
 
         foreach ($this->mappings as $mapping) {
+            if (!empty($indexNames) && !in_array($mapping->getType(), $indexNames)) {
+                continue;
+            }
+
             $configuration = $this->indexFactory->createIndexConfiguration($shop, $mapping->getType());
             $shopIndex = new ShopIndex($configuration->getName(), $shop, $mapping->getType());
 
@@ -148,16 +159,7 @@ class ShopIndexer implements ShopIndexerInterface
         }
 
         $mergedSettings = [
-            'settings' => [
-                'number_of_shards' => $configuration->getNumberOfShards(),
-                'number_of_replicas' => $configuration->getNumberOfReplicas(),
-                'mapping' => [
-                    'total_fields' => [
-                        'limit' => $configuration->getTotalFieldsLimit(),
-                    ],
-                ],
-                'max_result_window' => $configuration->getMaxResultWindow(),
-            ],
+            'settings' => $configuration->toArray(),
         ];
 
         // Merge default settings with those set by plugins
@@ -178,11 +180,24 @@ class ShopIndexer implements ShopIndexerInterface
 
     private function updateMapping(ShopIndex $index, MappingInterface $mapping)
     {
-        $this->client->indices()->putMapping([
-                'index' => $index->getName(),
-                'type' => $mapping->getType(),
-                'body' => $mapping->get($index->getShop()),
-            ]);
+        $arguments = [
+            'index' => $index->getName(),
+            'type' => $mapping->getType(),
+            'body' => $mapping->get($index->getShop()),
+        ];
+
+        if (version_compare($this->esVersion, '7', '>=')) {
+            $arguments = array_merge(
+                $arguments,
+                [
+                    'include_type_name' => true,
+                ]
+            );
+        }
+
+        $this->client->indices()->putMapping(
+            $arguments
+        );
     }
 
     private function populate(ShopIndex $index, ProgressHelperInterface $progress)

@@ -47,7 +47,7 @@ Ext.define('Shopware.form.field.Grid', {
     baseBodyCls: Ext.baseCSSPrefix + 'form-item-body shopware-multi-selection-form-item-body',
     separator: '|',
     allowBlank: true,
-    
+
     fieldLabelConfig: 'default',
 
     /**
@@ -84,6 +84,13 @@ Ext.define('Shopware.form.field.Grid', {
     initComponent: function() {
         var me = this;
 
+        if ((!Ext.isDefined(this.store) || this.store === null) && Ext.isDefined(this.model)) {
+            var factory = Ext.create('Shopware.attribute.SelectionFactory');
+            this.store = factory.createEntitySearchStore(this.model);
+            this.searchStore = factory.createEntitySearchStore(this.model);
+        }
+
+        me.setReadOnlyProperties();
         me.store = me.initializeStore();
         me.items = me.createItems();
 
@@ -94,12 +101,40 @@ Ext.define('Shopware.form.field.Grid', {
         me.callParent(arguments);
     },
 
+    setReadOnlyProperties: function () {
+        this.allowSorting = !this.readOnly;
+        this.allowDelete = !this.readOnly;
+        this.allowAdd = !this.readOnly;
+
+        if (this.readOnly) {
+            this.cls = 'multi-selection-readonly'
+        }
+    },
+
+    /**
+     *
+     * @param { boolean } readOnly
+     */
+    setReadOnly: function(readOnly) {
+        this.readOnly = readOnly;
+
+        this.setReadOnlyProperties();
+
+        var columns = this.grid.columns;
+        columns[0].setHidden(readOnly);
+        columns[columns.length - 1].down('[cls=sprite-minus-circle-frame]').hidden = readOnly;
+    },
+
     initializeStore: function() {
         var me = this;
 
         return Ext.create('Ext.data.Store', {
             model: me.store.model,
-            proxy: me.store.getProxy()
+            proxy: me.store.getProxy(),
+            remoteSort: me.store.remoteSort,
+            remoteFilter: me.store.remoteFilter,
+            sorters: me.store.getSorters(),
+            filters: me.store.filters.items
         });
     },
 
@@ -127,6 +162,11 @@ Ext.define('Shopware.form.field.Grid', {
                 plugins: {
                     ptype: 'gridviewdragdrop',
                     ddGroup: 'shopware-form-field-grid' + this.id
+                },
+                listeners: {
+                    drop: function () {
+                        me.fireEvent('change', me, me.getValue());
+                    }
                 }
             };
         }
@@ -175,6 +215,7 @@ Ext.define('Shopware.form.field.Grid', {
         }
 
         return {
+            hidden: me.readOnly,
             width: 24,
             hideable: false,
             renderer : me.renderSorthandleColumn
@@ -193,7 +234,7 @@ Ext.define('Shopware.form.field.Grid', {
     createActionColumnItems: function() {
         var items = [];
 
-        if (this.allowDelete) {
+        if (this.allowDelete && !this.readOnly) {
             items.push(this.createDeleteColumn());
         }
 
@@ -204,6 +245,7 @@ Ext.define('Shopware.form.field.Grid', {
         var me = this;
         return {
             action: 'delete',
+            hidden: me.allowDelete,
             iconCls: 'sprite-minus-circle-frame',
             handler: function (view, rowIndex, colIndex, item, opts, record) {
                 me.removeItem(record);
@@ -225,6 +267,7 @@ Ext.define('Shopware.form.field.Grid', {
     removeItem: function(record) {
         var me = this;
         me.store.remove(record);
+        this.fireEvent('change', this, this.getValue());
         me.fixLayout();
     },
 
@@ -249,6 +292,9 @@ Ext.define('Shopware.form.field.Grid', {
             this.store.add(record);
         }
         me.fixLayout();
+
+        this.fireEvent('change', this, this.getValue());
+
         return !exist;
     },
 
@@ -269,6 +315,8 @@ Ext.define('Shopware.form.field.Grid', {
         }
 
         return {
+            disabled: me.disabled,
+            readOnly: me.readOnly,
             emptyText: emptyText,
             helpText: me.helpText,
             helpTitle: me.helpTitle,

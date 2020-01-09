@@ -1,5 +1,5 @@
 {
-    "Version": "2.1.47.71",
+    "Version": "36",
     "Names": {
         "AF": "Afghanistani",
         "AI": "Anguila",
@@ -11,9 +11,9 @@
         "CC": "Visiwa vya Kokos (Keeling)",
         "CD": "Kongo - Kinshasa",
         "CI": "Ivorikosti",
+        "CV": "Kepuvede",
         "CY": "Saiprasi",
         "DK": "Denmaki",
-        "EA": "Keuta na Melilla",
         "EC": "Ekwado",
         "FM": "Mikronesia",
         "GA": "Gaboni",
@@ -35,7 +35,6 @@
         "MC": "Monako",
         "MK": "Masedonia",
         "MM": "Myama (Burma)",
-        "MO": "Makau SAR China",
         "MQ": "Martiniki",
         "MS": "Montserati",
         "MV": "Maldivi",

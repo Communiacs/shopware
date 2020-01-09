@@ -32,11 +32,6 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class AdminCreateCommand extends ShopwareCommand
 {
     /**
@@ -174,7 +169,7 @@ class AdminCreateCommand extends ShopwareCommand
     private function setPassword(User $user, $plainPassword)
     {
         /** @var \Shopware\Components\Password\Manager $passworEncoderRegistry */
-        $passworEncoderRegistry = $this->getContainer()->get('PasswordEncoder');
+        $passworEncoderRegistry = $this->getContainer()->get('passwordencoder');
         $defaultEncoderName = $passworEncoderRegistry->getDefaultPasswordEncoderName();
         $encoder = $passworEncoderRegistry->getEncoderByName($defaultEncoderName);
 

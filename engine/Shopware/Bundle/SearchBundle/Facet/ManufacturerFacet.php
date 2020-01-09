@@ -26,13 +26,10 @@ namespace Shopware\Bundle\SearchBundle\Facet;
 
 use Shopware\Bundle\SearchBundle\FacetInterface;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class ManufacturerFacet implements FacetInterface
 {
+    private const NAME = 'manufacturer';
+
     /**
      * @var string|null
      */
@@ -59,6 +56,6 @@ class ManufacturerFacet implements FacetInterface
      */
     public function getName()
     {
-        return 'manufacturer';
+        return self::NAME;
     }
 }

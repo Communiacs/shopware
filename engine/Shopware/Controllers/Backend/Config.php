@@ -22,13 +22,12 @@
  * our trademarks remain entirely with us.
  */
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Shopware\Models\Config\Element;
 use Shopware\Models\Config\Value;
+use Shopware\Models\Document\Element as DocumentElement;
 use Shopware\Models\Shop\Shop;
 
-/**
- * Shopware Config Controller
- */
 class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_ExtJs
 {
     /**
@@ -54,7 +53,7 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
         $filter = $this->Request()->getParam('filter');
         $repository = $this->getRepository('form');
 
-        $user = Shopware()->Container()->get('Auth')->getIdentity();
+        $user = Shopware()->Container()->get('auth')->getIdentity();
         /** @var \Shopware\Models\Shop\Locale $locale */
         $locale = $user->locale;
 
@@ -131,7 +130,7 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
     {
         $repository = $this->getRepository('form');
 
-        $user = Shopware()->Container()->get('Auth')->getIdentity();
+        $user = Shopware()->Container()->get('auth')->getIdentity();
         /** @var \Shopware\Models\Shop\Locale $locale */
         $locale = $user->locale;
         $language = $locale->toString();
@@ -189,8 +188,7 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
 
             $store = $values['options']['store'];
 
-            // Replace the store, which may contain multiple translations, with
-            // a store with translated messages:
+            // Replace the store, which may contain multiple translations, with a store with translated messages:
             if ($values['options']['translateUsingSnippets']) {
                 $values['options']['store'] = $this->translateStoreUsingSnippets($store, $values['options']['namespace']);
             } else {
@@ -270,6 +268,7 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
                 $builder->addOrderBy('shop.host', 'DESC');
                 $builder->addOrderBy('name');
                 break;
+
             case 'pageGroup':
                 $builder->leftJoin('pageGroup.mapping', 'mapping');
                 $builder->addSelect([
@@ -277,10 +276,12 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
                 ]);
                 $builder->orderBy('pageGroup.mapping');
                 break;
+
             case 'country':
                 $builder->leftJoin('country.area', 'area')
                     ->addSelect('area');
                 break;
+
             case 'widgetView':
                 $builder->leftJoin('widgetView.auth', 'auth')
                     ->leftJoin('widgetView.widget', 'widget')
@@ -292,6 +293,7 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
                     ->orderBy('widgetView.column')
                     ->addOrderBy('widgetView.position');
                 break;
+
             default:
                 break;
         }
@@ -314,6 +316,18 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
             $data = $this->getSnippetsForLocales($data);
         }
 
+        if ($name === 'document') {
+            // Translate document type
+            // The standard $translationComponent->translateDocuments can not be used here since the
+            // name may not be overridden. The field is edible and if the translation is
+            // shown in the edit field, there is a high chance of a user saving the translation as name
+            $translator = $this->get('translation')->getObjectTranslator('documents');
+
+            $data = array_map(static function ($document) use ($translator) {
+                return $translator->translateObjectProperty($document, 'name', 'description', $document['name']);
+            }, $data);
+        }
+
         $this->View()->assign(['success' => true, 'data' => $data, 'total' => $total]);
     }
 
@@ -328,7 +342,7 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
         $table = $this->getTable($name);
         $filter = $this->Request()->get('filter');
         $data = [];
-        if (isset($filter[0]['property']) && $filter[0]['property'] == 'name') {
+        if (isset($filter[0]['property']) && $filter[0]['property'] === 'name') {
             $search = $filter[0]['value'];
         }
         switch ($name) {
@@ -356,7 +370,7 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
                         'active' => !empty($row['active']) && !empty($row['end']),
                         'disableOnError' => ($row['disable_on_error'] == 1),
                         'elementId' => $row['elementID'],
-                        'data' => !empty($row['data']) ? unserialize($row['data']) : $row['data'],
+                        'data' => !empty($row['data']) ? unserialize($row['data'], ['allowed_classes' => false]) : $row['data'],
                         'next' => isset($row['next']) ? new DateTime($row['next']) : $row['next'],
                         'start' => isset($row['start']) ? new DateTime($row['start']) : $row['start'],
                         'interval' => (int) $row['interval'],
@@ -375,6 +389,7 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
                 $totalCount = Shopware()->Db()->fetchOne($select);
 
                 break;
+
             case 'searchTable':
                 $select = Shopware()->Db()->select();
                 $select->from(['t' => $table], [
@@ -390,6 +405,7 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
                 }
                 $data = Shopware()->Db()->fetchAll($select);
                 break;
+
             case 'searchField':
                 $sqlParams = [];
                 $sql = 'SELECT SQL_CALC_FOUND_ROWS f.id, f.name, f.relevance, f.field, f.tableId as tableId, t.table, f.do_not_split
@@ -409,11 +425,12 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
 
                 $data = Shopware()->Db()->fetchAll($sql, $sqlParams);
 
-                //get the total count
+                // Get the total count
                 $sql = 'SELECT FOUND_ROWS()';
                 $totalCount = Shopware()->Db()->fetchOne($sql);
 
                 break;
+
             default:
                 break;
         }
@@ -463,25 +480,30 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
                     ->orderBy('shop.default', 'DESC')
                     ->addOrderBy('shop.name');
                 break;
+
             case 'customerGroup':
                 $builder->leftJoin('customerGroup.discounts', 'discounts')
                     ->addSelect('discounts');
                 break;
+
             case 'tax':
                 $builder->leftJoin('tax.rules', 'rules')
                     ->addSelect('rules');
                 break;
+
             case 'country':
                 $builder->leftJoin('country.area', 'area')
                     ->leftJoin('country.states', 'states')
                     ->addSelect('area', 'states');
                 break;
+
             case 'priceGroup':
                 $builder->leftJoin('priceGroup.discounts', 'discounts')
                     ->addSelect('discounts')
                     ->leftJoin('discounts.customerGroup', 'customerGroup')
                     ->addSelect('PARTIAL customerGroup.{id,name}');
                 break;
+
             case 'document':
                 $builder->leftJoin('document.elements', 'elements')->addSelect('elements');
                 break;
@@ -532,6 +554,7 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
                 $this->saveTaxRules($data, $model);
 
                 return;
+
             case 'customerGroup':
                 if (isset($data['discounts'])) {
                     $model->getDiscounts()->clear();
@@ -551,6 +574,7 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
                     $data['discount'] = 0;
                 }
                 break;
+
             case 'shop':
                 if (isset($data['currencies'])) {
                     $mappingRepository = $this->getRepository('currency');
@@ -599,6 +623,7 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
                     unset($data[$field]);
                 }
                 break;
+
             case 'country':
                 unset($data['area']);
                 if (isset($data['areaId'])) {
@@ -607,18 +632,20 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
                     unset($data['areaId']);
                 }
                 break;
+
             case 'widgetView':
                 if (isset($data['widgetId'])) {
                     $mappingRepository = $this->getRepository('widget');
                     $data['widget'] = $mappingRepository->find($data['widgetId']);
                     unset($data['widgetId']);
                 }
-                if (Shopware()->Container()->get('Auth')->hasIdentity()) {
+                if (Shopware()->Container()->get('auth')->hasIdentity()) {
                     $mappingRepository = $this->getRepository('auth');
-                    $authId = Shopware()->Container()->get('Auth')->getIdentity()->id;
+                    $authId = Shopware()->Container()->get('auth')->getIdentity()->id;
                     $data['auth'] = $mappingRepository->find($authId);
                 }
                 break;
+
             case 'pageGroup':
                 if (isset($data['mappingId'])) {
                     $mappingRepository = $this->getRepository('pageGroup');
@@ -629,47 +656,72 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
                 }
                 $connection = $this->container->get('dbal_connection');
 
-                $sql = 'SELECT pages.id as id, pages.grouping as grouping FROM s_cms_static as pages INNER JOIN s_cms_static_groups ON pages.grouping LIKE CONCAT(\'%\', s_cms_static_groups.key, \'%\') WHERE s_cms_static_groups.Id = :id';
-                $statement = $connection->prepare($sql);
-                $statement->execute(['id' => $data['id']]);
-                $sites = $statement->fetchAll();
+                $currentKey = $connection->fetchColumn('SELECT `key` FROM s_cms_static_groups WHERE id = ?', [
+                    (int) $this->Request()->getParam('id'),
+                ]);
 
-                $sql = 'SELECT `key` FROM s_cms_static_groups WHERE id = :id';
-                $statement = $connection->prepare($sql);
-                $statement->execute(['id' => $data['id']]);
-                $group = $statement->fetchColumn();
+                $qb = $connection->createQueryBuilder();
+
+                $sites = $qb
+                    ->addSelect('sites.id')
+                    ->addSelect('sites.grouping')
+                    ->from('s_cms_static', 'sites')
+                    ->andWhere(
+                        $qb->expr()->orX(
+                            $qb->expr()->eq('sites.grouping', ':g1'),   //  = bottom
+                            $qb->expr()->like('sites.grouping', ':g2'), // like 'bottom|%
+                            $qb->expr()->like('sites.grouping', ':g3'), // like '|bottom
+                            $qb->expr()->like('sites.grouping', ':g4')  // like '|bottom|
+                        )
+                    )->setParameter('g1', $currentKey)
+                    ->setParameter('g2', $currentKey . '|%')
+                    ->setParameter('g3', '%|' . $currentKey)
+                    ->setParameter('g4', '%|' . $currentKey . '|%')
+                    ->execute()
+                    ->fetchAll();
 
                 foreach ($sites as $site) {
                     $groups = array_filter(explode('|', $site['grouping']));
 
-                    $key = array_search($group, $groups);
+                    $key = array_search($currentKey, $groups, true);
                     $groups[$key] = $data['key'];
 
                     $site['grouping'] = implode('|', $groups);
 
-                    $sql = 'UPDATE s_cms_static SET grouping = :grouping WHERE id = :id';
+                    $sql = 'UPDATE s_cms_static SET `grouping` = :grouping WHERE id = :id';
                     $statement = $connection->prepare($sql);
-                    $statement->execute(['grouping' => $site['grouping'], 'id' => $site['id']]);
+                    $statement->execute(
+                        [
+                            'grouping' => $site['grouping'],
+                            'id' => $site['id'],
+                        ]
+                    );
                 }
                 break;
+
             case 'document':
                 if ($data['id']) {
-                    $elements = new \Doctrine\Common\Collections\ArrayCollection();
+                    $elements = new ArrayCollection();
                     foreach ($data['elements'] as $element) {
-                        /**
-                         * @var Shopware\Models\Document\Element
-                         */
                         $elementRepository = $this->getRepository('documentElement');
+
+                        /** @var DocumentElement|null $elementModel */
                         $elementModel = $elementRepository->find($element['id']);
+
+                        if (!$elementModel) {
+                            $elementModel = new DocumentElement();
+                            $elementModel->setDocument($model);
+                        }
+
                         $elementModel->fromArray($element);
-                        $elements[] = $elementModel;
+                        $elements->add($elementModel);
                     }
                     $data['elements'] = $elements;
                 } else {
                     $data['elements'] = $this->createDocumentElements($model);
                 }
-
                 break;
+
             default:
                 break;
         }
@@ -691,8 +743,7 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
                 case 'document':
                     $exceptionMessage = $ex->getMessage();
                     if (strpos($exceptionMessage, '1062 Duplicate entry') !== false
-                        &&
-                        strpos($exceptionMessage, 'for key \'key\'') !== false
+                        && strpos($exceptionMessage, 'for key \'key\'') !== false
                     ) {
                         $this->View()->assign([
                             'success' => false,
@@ -1057,7 +1108,7 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
 
     private function createDocumentElements($model)
     {
-        $elementCollection = new \Doctrine\Common\Collections\ArrayCollection();
+        $elementCollection = new ArrayCollection();
 
         /**
          * @var Shopware\Models\Document\Document
@@ -1393,11 +1444,14 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
 
         $this->beforeSaveElement($elementData);
 
-        $values = Shopware()->Events()->filter('Shopware_Controllers_Backend_Config_Before_Save_Config_Element',
-            $values, [
+        $values = Shopware()->Events()->filter(
+            'Shopware_Controllers_Backend_Config_Before_Save_Config_Element',
+            $values,
+            [
                 'subject' => $this,
                 'element' => $element,
-            ]);
+            ]
+        );
 
         $element->setValues($values);
 
@@ -1439,12 +1493,18 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
         $snippets = $this->container->get('snippets');
         foreach ($data as &$locale) {
             if (!empty($locale['language'])) {
-                $locale['language'] = $snippets->getNamespace('backend/locale/language')->get($locale['locale'],
-                    $locale['language'], true);
+                $locale['language'] = $snippets->getNamespace('backend/locale/language')->get(
+                    $locale['locale'],
+                    $locale['language'],
+                    true
+                );
             }
             if (!empty($locale['territory'])) {
-                $locale['territory'] = $snippets->getNamespace('backend/locale/territory')->get($locale['locale'],
-                    $locale['territory'], true);
+                $locale['territory'] = $snippets->getNamespace('backend/locale/territory')->get(
+                    $locale['locale'],
+                    $locale['territory'],
+                    true
+                );
             }
         }
 

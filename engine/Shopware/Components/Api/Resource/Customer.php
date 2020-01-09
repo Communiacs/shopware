@@ -38,10 +38,6 @@ use Shopware\Models\Shop\Shop as ShopModel;
 
 /**
  * Customer API Resource
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
 class Customer extends Resource
 {
@@ -66,7 +62,7 @@ class Customer extends Resource
     public function getIdFromNumber($number)
     {
         if (empty($number)) {
-            throw new ApiException\ParameterMissingException();
+            throw new ApiException\ParameterMissingException('id');
         }
 
         $builder = Shopware()->Models()->createQueryBuilder();
@@ -112,7 +108,7 @@ class Customer extends Resource
         $this->checkPrivilege('read');
 
         if (empty($id)) {
-            throw new ApiException\ParameterMissingException();
+            throw new ApiException\ParameterMissingException('id');
         }
 
         $builder = $this->getRepository()->createQueryBuilder('customer');
@@ -256,7 +252,7 @@ class Customer extends Resource
         $this->checkPrivilege('update');
 
         if (empty($id)) {
-            throw new ApiException\ParameterMissingException();
+            throw new ApiException\ParameterMissingException('id');
         }
 
         /** @var \Shopware\Models\Customer\Customer|null $customer */
@@ -318,7 +314,7 @@ class Customer extends Resource
         $this->checkPrivilege('delete');
 
         if (empty($id)) {
-            throw new ApiException\ParameterMissingException();
+            throw new ApiException\ParameterMissingException('id');
         }
 
         /** @var \Shopware\Models\Customer\Customer|null $customer */
@@ -486,7 +482,7 @@ class Customer extends Resource
             $shop = $shopRepository->getActiveDefault();
         }
 
-        $shop->registerResources();
+        $this->getContainer()->get('shopware.components.shop_registration_service')->registerShop($shop);
     }
 
     /**

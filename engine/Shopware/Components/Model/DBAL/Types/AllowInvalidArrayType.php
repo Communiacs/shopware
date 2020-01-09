@@ -27,15 +27,6 @@ namespace Shopware\Components\Model\DBAL\Types;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
 
-/**
- * Type that maps a PHP array to a clob SQL type.
- *
- * @licence   This code was originally released under the MIT license
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class AllowInvalidArrayType extends Type
 {
     public function getSQLDeclaration(array $fieldDeclaration, \Doctrine\DBAL\Platforms\AbstractPlatform $platform)
@@ -55,7 +46,7 @@ class AllowInvalidArrayType extends Type
         }
 
         $value = (is_resource($value)) ? stream_get_contents($value) : $value;
-        $val = unserialize($value);
+        $val = unserialize($value, ['allowed_classes' => false]);
         if ($val === false && $value != 'b:0;') {
             return null;
         }

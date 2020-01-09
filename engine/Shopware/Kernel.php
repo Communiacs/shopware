@@ -25,68 +25,80 @@
 namespace Shopware;
 
 use Enlight_Controller_Request_RequestHttp as EnlightRequest;
-use Enlight_Controller_Response_ResponseHttp as EnlightResponse;
+use Shopware\Bundle\AccountBundle\AccountBundle;
+use Shopware\Bundle\AttributeBundle\AttributeBundle;
 use Shopware\Bundle\AttributeBundle\DependencyInjection\Compiler\StaticResourcesCompilerPass;
+use Shopware\Bundle\BenchmarkBundle\BenchmarkBundle;
 use Shopware\Bundle\BenchmarkBundle\DependencyInjection\Compiler\MatcherCompilerPass;
+use Shopware\Bundle\ContentTypeBundle\ContentTypeBundle;
+use Shopware\Bundle\ContentTypeBundle\DependencyInjection\RegisterDynamicController;
+use Shopware\Bundle\ContentTypeBundle\DependencyInjection\RegisterFieldsCompilerPass;
+use Shopware\Bundle\ContentTypeBundle\DependencyInjection\RegisterTypeRepositories;
+use Shopware\Bundle\ControllerBundle\ControllerBundle;
+use Shopware\Bundle\ControllerBundle\DependencyInjection\Compiler\ControllerCompilerPass;
 use Shopware\Bundle\ControllerBundle\DependencyInjection\Compiler\RegisterControllerCompilerPass;
+use Shopware\Bundle\CookieBundle\CookieBundle;
+use Shopware\Bundle\CustomerSearchBundleDBAL\CustomerSearchBundleDBALBundle;
+use Shopware\Bundle\EmotionBundle\EmotionBundle;
+use Shopware\Bundle\EsBackendBundle\EsBackendBundle;
+use Shopware\Bundle\ESIndexingBundle\DependencyInjection\CompilerPass\VersionCompilerPass;
+use Shopware\Bundle\ESIndexingBundle\ESIndexingBundle;
 use Shopware\Bundle\FormBundle\DependencyInjection\CompilerPass\AddConstraintValidatorsPass;
 use Shopware\Bundle\FormBundle\DependencyInjection\CompilerPass\FormPass;
+use Shopware\Bundle\FormBundle\FormBundle;
+use Shopware\Bundle\MailBundle\MailBundle;
+use Shopware\Bundle\MediaBundle\MediaBundle;
+use Shopware\Bundle\PluginInstallerBundle\PluginInstallerBundle;
 use Shopware\Bundle\PluginInstallerBundle\Service\PluginInitializer;
+use Shopware\Bundle\SearchBundle\SearchBundle;
+use Shopware\Bundle\SearchBundleDBAL\SearchBundleDBAL;
+use Shopware\Bundle\SearchBundleES\SearchBundleES;
+use Shopware\Bundle\SitemapBundle\SitemapBundle;
+use Shopware\Bundle\StaticContentBundle\StaticContentBundle;
+use Shopware\Bundle\StoreFrontBundle\StoreFrontBundle;
 use Shopware\Components\ConfigLoader;
+use Shopware\Components\DependencyInjection\Compiler\ConfigureApiResourcesPass;
 use Shopware\Components\DependencyInjection\Compiler\DoctrineEventSubscriberCompilerPass;
 use Shopware\Components\DependencyInjection\Compiler\EventListenerCompilerPass;
 use Shopware\Components\DependencyInjection\Compiler\EventSubscriberCompilerPass;
+use Shopware\Components\DependencyInjection\Compiler\LegacyApiResourcesPass;
+use Shopware\Components\DependencyInjection\Compiler\PluginLoggerCompilerPass;
 use Shopware\Components\DependencyInjection\Container;
 use Shopware\Components\DependencyInjection\LegacyPhpDumper;
 use Shopware\Components\Plugin;
 use Symfony\Component\Config\ConfigCache;
 use Symfony\Component\Config\FileLocator;
+use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\Config\Resource\FileResource;
 use Symfony\Component\Console\DependencyInjection\AddConsoleCommandPass;
 use Symfony\Component\DependencyInjection\Compiler\PassConfig;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
-use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
+use Symfony\Component\HttpKernel\Bundle\BundleInterface;
+use Symfony\Component\HttpKernel\DependencyInjection\MergeExtensionConfigurationPass;
+use Symfony\Component\HttpKernel\DependencyInjection\RegisterControllerArgumentLocatorsPass;
 use Symfony\Component\HttpKernel\Event\PostResponseEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\Kernel as SymfonyKernel;
 use Symfony\Component\HttpKernel\KernelEvents;
-use Symfony\Component\HttpKernel\TerminableInterface;
 
 /**
  * Middleware class between the old Shopware bootstrap mechanism
  * and the Symfony Kernel handling
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
-class Kernel implements HttpKernelInterface, TerminableInterface
+class Kernel extends SymfonyKernel
 {
-    /**
-     * @Deprecated Since 5.4, to be removed in 5.6
-     *
-     * Use the following parameters from the DIC instead:
-     *      'shopware.release.version'
-     *      'shopware.release.revision'
-     *      'shopware.release.version_text'
-     *      'shopware.release' (a Struct containing all the parameters below)
-     */
-    const VERSION = \Shopware::VERSION;
-    const VERSION_TEXT = \Shopware::VERSION_TEXT;
-    const REVISION = \Shopware::REVISION;
-
     /**
      * Shopware Version definition. Is being replaced by the correct release information in release packages.
      * Is available in the DIC as parameter 'shopware.release.*' or a Struct containing all the parameters below.
      */
     protected $release = [
-        'version' => self::VERSION,
-        'version_text' => self::VERSION_TEXT,
-        'revision' => self::REVISION,
+        'version' => '5.6.4',
+        'version_text' => '',
+        'revision' => '201912171122',
     ];
 
     /**
@@ -105,37 +117,6 @@ class Kernel implements HttpKernelInterface, TerminableInterface
      * @var Container|null
      */
     protected $container;
-
-    /**
-     * Enables the debug mode
-     *
-     * @var bool
-     */
-    protected $debug;
-
-    /**
-     * Contains the current environment
-     *
-     * @var string
-     */
-    protected $environment;
-
-    /**
-     * Flag if the kernel already booted
-     *
-     * @var bool
-     */
-    protected $booted = false;
-
-    /**
-     * @var string
-     */
-    protected $name;
-
-    /**
-     * @var Plugin[]
-     */
-    private $plugins = [];
 
     /**
      * @var string[]
@@ -160,10 +141,13 @@ class Kernel implements HttpKernelInterface, TerminableInterface
      */
     public function __construct($environment, $debug)
     {
-        $this->environment = $environment;
-        $this->debug = (bool) $debug;
-        $this->name = 'Shopware';
+        parent::__construct($environment, $debug);
 
+        if ($debug) {
+            $this->startTime = microtime(true);
+        }
+
+        $this->initializeBundles();
         $this->initializeConfig();
 
         if (!empty($this->config['phpsettings'])) {
@@ -205,15 +189,13 @@ class Kernel implements HttpKernelInterface, TerminableInterface
             $response = clone $front->Response();
 
             $response->clearHeaders()
-                ->clearRawHeaders()
                 ->clearBody();
 
-            $response->setHttpResponseCode(200);
+            $response->setStatusCode(SymfonyResponse::HTTP_OK);
             $enlightRequest->setDispatched();
             $dispatcher->dispatch($enlightRequest, $response);
         }
 
-        $response = $this->transformEnlightResponseToSymfonyResponse($response);
         $response->prepare($request);
 
         return $response;
@@ -227,55 +209,11 @@ class Kernel implements HttpKernelInterface, TerminableInterface
         // Overwrite superglobals with state of the SymfonyRequest
         $request->overrideGlobals();
 
-        // Create enlight request from global state
-        $enlightRequest = new EnlightRequest();
-
-        // Let the symfony request handle the trusted proxies
-        $enlightRequest->setRemoteAddress($request->getClientIp());
-        $enlightRequest->setSecure($request->isSecure());
+        $enlightRequest = EnlightRequest::createFromGlobals();
+        $enlightRequest->setContent($request->getContent());
+        $enlightRequest->setFiles($request->files->all());
 
         return $enlightRequest;
-    }
-
-    /**
-     * @throws \InvalidArgumentException
-     *
-     * @return SymfonyResponse
-     */
-    public function transformEnlightResponseToSymfonyResponse(EnlightResponse $response)
-    {
-        $rawHeaders = $response->getHeaders();
-        $headers = [];
-        foreach ($rawHeaders as $header) {
-            if (!isset($headers[$header['name']]) || !empty($header['replace'])) {
-                header_remove($header['name']);
-                $headers[$header['name']] = [$header['value']];
-            } else {
-                $headers[$header['name']][] = $header['value'];
-            }
-        }
-
-        $symfonyResponse = new SymfonyResponse(
-            $response->getBody(),
-            $response->getHttpResponseCode(),
-            $headers
-        );
-
-        foreach ($response->getCookies() as $cookieContent) {
-            $sfCookie = new Cookie(
-                $cookieContent['name'],
-                $cookieContent['value'],
-                $cookieContent['expire'],
-                $cookieContent['path'],
-                $cookieContent['domain'],
-                (bool) $cookieContent['secure'],
-                (bool) $cookieContent['httpOnly']
-            );
-
-            $symfonyResponse->headers->setCookie($sfCookie);
-        }
-
-        return $symfonyResponse;
     }
 
     /**
@@ -300,15 +238,23 @@ class Kernel implements HttpKernelInterface, TerminableInterface
         $this->initializeContainer();
         $this->initializeShopware();
 
-        foreach ($this->getPlugins() as $plugin) {
-            $plugin->setContainer($this->container);
+        foreach ($this->getBundles() as $bundle) {
+            $bundle->setContainer($this->container);
 
-            if (!$plugin->isActive()) {
+            if ((!$bundle instanceof Plugin) || $bundle->isActive()) {
+                $bundle->boot();
+            }
+
+            if (!$bundle instanceof Plugin) {
                 continue;
             }
 
-            $this->container->get('events')->addSubscriber($plugin);
-            $this->container->get('events')->addSubscriber(new Plugin\ResourceSubscriber($plugin->getPath()));
+            if (!$bundle->isActive()) {
+                continue;
+            }
+
+            $this->container->get('events')->addSubscriber($bundle);
+            $this->container->get('events')->addSubscriber(new Plugin\ResourceSubscriber($bundle->getPath()));
         }
 
         $this->booted = true;
@@ -319,7 +265,9 @@ class Kernel implements HttpKernelInterface, TerminableInterface
      */
     public function getPlugins()
     {
-        return $this->plugins;
+        return array_filter($this->bundles, function (BundleInterface $bundle) {
+            return $bundle instanceof Plugin;
+        });
     }
 
     /**
@@ -386,7 +334,7 @@ class Kernel implements HttpKernelInterface, TerminableInterface
      */
     public function getRootDir()
     {
-        return dirname(dirname(__DIR__));
+        return dirname(__DIR__, 2);
     }
 
     /**
@@ -477,6 +425,52 @@ class Kernel implements HttpKernelInterface, TerminableInterface
         }
     }
 
+    public function getName(): string
+    {
+        return 'Shopware';
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function registerContainerConfiguration(LoaderInterface $loader)
+    {
+        $config = $this->config;
+        $loader->load(static function (ContainerBuilder $containerBuilder) use ($config) {
+            foreach ($config as $key => $values) {
+                if ($containerBuilder->hasExtension($key)) {
+                    $containerBuilder->loadFromExtension($key, $values);
+                }
+            }
+        });
+    }
+
+    public function registerBundles(): array
+    {
+        return [
+            new AccountBundle(),
+            new AttributeBundle(),
+            new BenchmarkBundle(),
+            new CookieBundle(),
+            new ContentTypeBundle(),
+            new ControllerBundle(),
+            new CustomerSearchBundleDBALBundle(),
+            new EmotionBundle(),
+            new EsBackendBundle(),
+            new ESIndexingBundle(),
+            new FormBundle(),
+            new MailBundle(),
+            new MediaBundle(),
+            new PluginInstallerBundle(),
+            new SearchBundle(),
+            new SearchBundleDBAL(),
+            new SearchBundleES(),
+            new SitemapBundle(),
+            new StaticContentBundle(),
+            new StoreFrontBundle(),
+        ];
+    }
+
     protected function initializePlugins()
     {
         $initializer = new PluginInitializer(
@@ -487,18 +481,20 @@ class Kernel implements HttpKernelInterface, TerminableInterface
             ]
         );
 
-        $this->plugins = $initializer->initializePlugins();
+        $plugins = $initializer->initializePlugins();
 
         /*
-         * @deprecated since 5.5, sorting will be default in Shopware 5.6
+         * @deprecated since 5.5, is true by default since 5.6 will be removed in Shopware 5.7
          */
-        if ($this->config['backward_compatibility']['predictable_plugin_order'] !== false) {
-            ksort($this->plugins);
+        if ($this->config['backward_compatibility']['predictable_plugin_order'] === true) {
+            ksort($plugins);
         }
+
+        $this->bundles = array_merge($this->bundles, $plugins);
 
         $this->activePlugins = $initializer->getActivePlugins();
 
-        $this->pluginHash = $this->createPluginHash($this->plugins);
+        $this->pluginHash = $this->createPluginHash($this->bundles);
     }
 
     /**
@@ -628,6 +624,10 @@ class Kernel implements HttpKernelInterface, TerminableInterface
         $container->addObjectResource($this);
         $this->prepareContainer($container);
 
+        if (null !== $cont = $this->registerContainerConfiguration($this->getContainerLoader($container))) {
+            $container->merge($cont);
+        }
+
         return $container;
     }
 
@@ -646,23 +646,6 @@ class Kernel implements HttpKernelInterface, TerminableInterface
         $loader->load('logger.xml');
         $loader->load('commands.xml');
 
-        $loader = new XmlFileLoader($container, new FileLocator(__DIR__ . '/Bundle/'));
-        $loader->load('SearchBundle/services.xml');
-        $loader->load('SearchBundleDBAL/services.xml');
-        $loader->load('StoreFrontBundle/services.xml');
-        $loader->load('PluginInstallerBundle/services.xml');
-        $loader->load('ESIndexingBundle/services.xml');
-        $loader->load('MediaBundle/services.xml');
-        $loader->load('FormBundle/services.xml');
-        $loader->load('AccountBundle/services.xml');
-        $loader->load('AttributeBundle/services.xml');
-        $loader->load('EmotionBundle/services.xml');
-        $loader->load('SearchBundleES/services.xml');
-        $loader->load('CustomerSearchBundleDBAL/services.xml');
-        $loader->load('BenchmarkBundle/services.xml');
-        $loader->load('EsBackendBundle/services.xml');
-        $loader->load('SitemapBundle/services.xml');
-
         if (is_file($file = __DIR__ . '/Components/DependencyInjection/services_local.xml')) {
             $loader->load($file);
         }
@@ -678,6 +661,14 @@ class Kernel implements HttpKernelInterface, TerminableInterface
         $container->addCompilerPass(new StaticResourcesCompilerPass());
         $container->addCompilerPass(new AddConsoleCommandPass());
         $container->addCompilerPass(new MatcherCompilerPass());
+        $container->addCompilerPass(new LegacyApiResourcesPass());
+        $container->addCompilerPass(new ConfigureApiResourcesPass(), PassConfig::TYPE_OPTIMIZE, -500);
+        $container->addCompilerPass(new RegisterFieldsCompilerPass(), PassConfig::TYPE_BEFORE_OPTIMIZATION, 500);
+        $container->addCompilerPass(new RegisterDynamicController());
+        $container->addCompilerPass(new RegisterTypeRepositories());
+        $container->addCompilerPass(new ControllerCompilerPass());
+        $container->addCompilerPass(new RegisterControllerArgumentLocatorsPass('argument_resolver.service', 'shopware.controller'));
+        $container->addCompilerPass(new VersionCompilerPass());
 
         $container->setParameter('active_plugins', $this->activePlugins);
 
@@ -723,19 +714,35 @@ class Kernel implements HttpKernelInterface, TerminableInterface
      */
     protected function getKernelParameters()
     {
+        $bundles = [];
+        $bundlesMetadata = [];
+
+        foreach ($this->bundles as $name => $bundle) {
+            $bundles[$name] = \get_class($bundle);
+            $bundlesMetadata[$name] = [
+                'parent' => $bundle->getParent(),
+                'path' => $bundle->getPath(),
+                'namespace' => $bundle->getNamespace(),
+            ];
+        }
+
         return [
             'kernel.root_dir' => $this->getRootDir(),
+            'kernel.project_dir' => realpath($this->getProjectDir()) ?: $this->getProjectDir(),
             'kernel.environment' => $this->environment,
             'kernel.debug' => $this->debug,
             'kernel.name' => $this->name,
             'kernel.cache_dir' => $this->getCacheDir(),
             'kernel.logs_dir' => $this->getLogDir(),
+            'kernel.bundles' => $bundles,
+            'kernel.bundles_metadata' => $bundlesMetadata,
             'kernel.charset' => 'UTF-8',
             'kernel.container_class' => $this->getContainerClass(),
             'shopware.release.version' => $this->release['version'],
             'shopware.release.version_text' => $this->release['version_text'],
             'shopware.release.revision' => $this->release['revision'],
             'kernel.default_error_level' => $this->config['logger']['level'],
+            'shopware.bundle.content_type.types' => $this->loadContentTypes(),
         ];
     }
 
@@ -752,11 +759,9 @@ class Kernel implements HttpKernelInterface, TerminableInterface
     /**
      * Returns a hash containing the plugin names
      *
-     * @param Plugin[] $plugins
-     *
-     * @return string
+     * @param array<int, BundleInterface> $plugins
      */
-    private function createPluginHash(array $plugins)
+    private function createPluginHash(array $plugins): string
     {
         $string = '';
         foreach ($plugins as $plugin) {
@@ -766,23 +771,63 @@ class Kernel implements HttpKernelInterface, TerminableInterface
         return sha1($string);
     }
 
-    private function loadPlugins(ContainerBuilder $container)
+    private function loadPlugins(ContainerBuilder $container): void
     {
-        if (count($this->plugins) === 0) {
+        if (count($this->bundles) === 0) {
             return;
         }
 
         $activePlugins = [];
-        foreach ($this->plugins as $plugin) {
-            if (!$plugin->isActive()) {
+        foreach ($this->getBundles() as $bundle) {
+            if ($bundle instanceof Plugin && !$bundle->isActive()) {
                 continue;
             }
 
-            $container->addObjectResource($plugin);
-            $plugin->build($container);
-            $activePlugins[] = $plugin;
+            if ($extension = $bundle->getContainerExtension()) {
+                $container->registerExtension($extension);
+            }
+
+            $container->addObjectResource($bundle);
+            $bundle->build($container);
+
+            if ($bundle instanceof Plugin) {
+                $activePlugins[] = $bundle;
+            }
         }
 
         $container->addCompilerPass(new RegisterControllerCompilerPass($activePlugins));
+        $container->addCompilerPass(new PluginLoggerCompilerPass($activePlugins));
+
+        $extensions = [];
+
+        foreach ($container->getExtensions() as $extension) {
+            $extensions[] = $extension->getAlias();
+        }
+        // ensure these extensions are implicitly loaded
+        $container->getCompilerPassConfig()->setMergePass(new MergeExtensionConfigurationPass($extensions));
+    }
+
+    private function loadContentTypes(): array
+    {
+        if ($this->connection === null) {
+            return [];
+        }
+
+        try {
+            $contentTypes = $this->connection->query('SELECT internalName, config FROM s_content_types');
+        } catch (\Exception $e) {
+            return [];
+        }
+
+        $result = [];
+
+        try {
+            foreach ($contentTypes->fetchAll(\PDO::FETCH_KEY_PAIR) as $key => $type) {
+                $result[$key] = json_decode($type, true);
+            }
+        } catch (\Exception $e) {
+        }
+
+        return $result;
     }
 }

@@ -25,11 +25,13 @@
 use Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface;
 use Shopware\Components\NumberRangeIncrementerInterface;
 use Shopware\Models\Customer\Customer;
+use Shopware\Models\Mail\Mail;
+use Shopware\Models\Shop\Shop;
 
 /**
- * Deprecated Shopware Class that handle frontend orders
+ * Deprecated Shopware Class that handles frontend orders
  */
-class sOrder
+class sOrder implements \Enlight_Hook
 {
     /**
      * Array with user data
@@ -60,6 +62,7 @@ class sOrder
     public $sComment;
 
     /**
+     * @deprecated in 5.6, will be removed in 5.7 without replacement
      * Payment-mean object
      *
      * @var object
@@ -209,17 +212,21 @@ class sOrder
     private $numberRangeIncrementer;
 
     /**
-     * @var Shopware\Bundle\AttributeBundle\Service\DataLoader
+     * @var Shopware\Bundle\AttributeBundle\Service\DataLoaderInterface
      */
     private $attributeLoader;
 
     /**
-     * @var Shopware\Bundle\AttributeBundle\Service\DataPersister
+     * @var Shopware\Bundle\AttributeBundle\Service\DataPersisterInterface
      */
     private $attributePersister;
 
     /**
-     * Class constructor.
+     * @var Shopware\Components\Model\ModelManager
+     */
+    private $modelManager;
+
+    /**
      * Injects all dependencies which are required for this class.
      *
      * @param ContextServiceInterface $contextService
@@ -229,14 +236,17 @@ class sOrder
     public function __construct(
         ContextServiceInterface $contextService = null
     ) {
+        $container = Shopware()->Container();
+
         $this->db = Shopware()->Db();
         $this->eventManager = Shopware()->Events();
         $this->config = Shopware()->Config();
-        $this->numberRangeIncrementer = Shopware()->Container()->get('shopware.number_range_incrementer');
+        $this->numberRangeIncrementer = $container->get('shopware.number_range_incrementer');
 
-        $this->contextService = $contextService ?: Shopware()->Container()->get('shopware_storefront.context_service');
-        $this->attributeLoader = Shopware()->Container()->get('shopware_attribute.data_loader');
-        $this->attributePersister = Shopware()->Container()->get('shopware_attribute.data_persister');
+        $this->contextService = $contextService ?: $container->get('shopware_storefront.context_service');
+        $this->attributeLoader = $container->get('shopware_attribute.data_loader');
+        $this->attributePersister = $container->get('shopware_attribute.data_persister');
+        $this->modelManager = $container->get('models');
     }
 
     /**
@@ -253,7 +263,7 @@ class sOrder
             ['subject' => $this]
         );
 
-        return $number;
+        return (string) $number;
     }
 
     /**
@@ -456,10 +466,7 @@ class sOrder
         // Create order attributes
         $this->attributePersister->persist($this->orderAttributes, 's_order_attributes', $orderID);
 
-        $position = 0;
         foreach ($this->sBasketData['content'] as $basketRow) {
-            ++$position;
-
             if (!$basketRow['price']) {
                 $basketRow['price'] = '0,00';
             }
@@ -580,7 +587,9 @@ class sOrder
         );
 
         $ip = Shopware()->Container()->get('shopware.components.privacy.ip_anonymizer')
-            ->anonymize((string) $_SERVER['REMOTE_ADDR']);
+            ->anonymize(
+                (string) Shopware()->Container()->get('request_stack')->getCurrentRequest()->getClientIp()
+            );
 
         $orderParams = [
             'ordernumber' => $orderNumber,
@@ -668,11 +677,8 @@ class sOrder
         $attributes = $this->attributeLoader->load('s_order_attributes', $orderID);
         unset($attributes['id'], $attributes['orderID']);
 
-        $position = 0;
         $esdOrder = null;
         foreach ($this->sBasketData['content'] as $key => $basketRow) {
-            ++$position;
-
             $basketRow = $this->formatBasketRow($basketRow);
 
             $preparedQuery = '
@@ -698,7 +704,8 @@ class sOrder
                 VALUES (%d, %s, %d, %s, %f, %d, %s, %d, %s, %d, %d, %d, %f, %s, %s, %s, %d)
             ';
 
-            $sql = sprintf($preparedQuery,
+            $sql = sprintf(
+                $preparedQuery,
                 $orderID,
                 $this->db->quote((string) $orderNumber),
                 $basketRow['articleID'],
@@ -743,8 +750,11 @@ class sOrder
                 $this->db->executeUpdate($sql);
                 $orderdetailsID = $this->db->lastInsertId();
             } catch (Exception $e) {
-                throw new Enlight_Exception(sprintf('Shopware Order Fatal-Error %s :%s', $_SERVER['HTTP_HOST'],
-                    $e->getMessage()), 0, $e);
+                throw new Enlight_Exception(sprintf(
+                    'Shopware Order Fatal-Error %s :%s',
+                    $_SERVER['HTTP_HOST'],
+                    $e->getMessage()
+                ), 0, $e);
             }
 
             $this->sBasketData['content'][$key]['orderDetailId'] = $orderdetailsID;
@@ -856,6 +866,13 @@ class sOrder
             $this->getSession()->offsetSet('sOrderVariables', $variables);
         }
 
+        $this->eventManager->notify('Shopware_Modules_Order_SaveOrder_OrderCreated', [
+            'subject' => $this,
+            'details' => $this->sBasketData['content'],
+            'orderId' => $orderID,
+            'orderNumber' => $orderNumber,
+        ]);
+
         return $orderNumber;
     }
 
@@ -906,9 +923,9 @@ class sOrder
 
         // Support for individual payment means with custom-tables
         if ($variables['additional']['payment']['table']) {
-            $paymentTable = $this->db->fetchRow("
-                  SELECT * FROM {$variables['additional']['payment']['table']}
-                  WHERE userID=?",
+            $paymentTable = $this->db->fetchRow(
+                "SELECT * FROM {$variables['additional']['payment']['table']}
+                 WHERE userID=?",
                 [$variables['additional']['user']['id']]
             );
             $context['sPaymentTable'] = $paymentTable ?: [];
@@ -1000,7 +1017,7 @@ class sOrder
     public function sSaveBillingAddress($address, $id)
     {
         /** @var Customer $customer */
-        $customer = Shopware()->Container()->get('models')->find(Customer::class, $address['userID']);
+        $customer = $this->modelManager->find(Customer::class, $address['userID']);
 
         $sql = '
         INSERT INTO s_order_billingaddress
@@ -1191,7 +1208,7 @@ class sOrder
 
         if ($shippingAddressId === null) {
             /** @var Customer $customer */
-            $customer = Shopware()->Models()->getRepository(\Shopware\Models\Customer\Customer::class)
+            $customer = $this->modelManager->getRepository(\Shopware\Models\Customer\Customer::class)
                 ->find($address['userID']);
             $shippingAddressId = $customer->getDefaultShippingAddress()->getId();
         }
@@ -1304,11 +1321,11 @@ class sOrder
             return;
         }
 
-        $repository = Shopware()->Models()->getRepository('Shopware\Models\Shop\Shop');
+        $repository = $this->modelManager->getRepository(Shop::class);
         $shopId = is_numeric($order['language']) ? $order['language'] : $order['subshopID'];
         // The (sub-)shop might be inactive by now, so that's why we use `getById` instead of `getActiveById`
         $shop = $repository->getById($shopId);
-        $shop->registerResources();
+        Shopware()->Container()->get('shopware.components.shop_registration_service')->registerShop($shop);
 
         $dispatch = Shopware()->Modules()->Admin()->sGetDispatchTranslation($dispatch);
         $payment = Shopware()->Modules()->Admin()->sGetPaymentTranslation(['id' => $order['paymentID']]);
@@ -1327,7 +1344,7 @@ class sOrder
         }
 
         /* @var \Shopware\Models\Mail\Mail $mailModel */
-        $mailModel = Shopware()->Models()->getRepository('Shopware\Models\Mail\Mail')->findOneBy(
+        $mailModel = $this->modelManager->getRepository(Mail::class)->findOneBy(
             ['name' => $templateName]
         );
 
@@ -1866,11 +1883,11 @@ EOT;
      */
     private function refreshOrderedVariant($orderNumber, $quantity)
     {
-        $this->db->executeUpdate('
-            UPDATE s_articles_details
-            SET sales = sales + :quantity,
-                instock = instock - :quantity
-            WHERE ordernumber = :number',
+        $this->db->executeUpdate(
+            'UPDATE s_articles_details
+             SET sales = sales + :quantity,
+                 instock = instock - :quantity
+             WHERE ordernumber = :number',
             [':quantity' => $quantity, ':number' => $orderNumber]
         );
 

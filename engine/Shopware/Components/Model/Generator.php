@@ -294,6 +294,7 @@ class %className% extends ModelEntity
             }
 
             $table = $this->getSchemaManager()->listTableDetails($tableName);
+
             $sourceCode = $this->generateModel($table);
             $result = $this->createModelFile($table, $sourceCode);
             if ($result === false) {
@@ -329,7 +330,8 @@ class %className% extends ModelEntity
 
         if (file_exists($file) && !is_writable($file)) {
             throw new \Exception(
-                sprintf('File: "%s" isn\'t writable, please check the file permissions for this model!', $file), 501
+                sprintf('File: "%s" isn\'t writable, please check the file permissions for this model!', $file),
+                501
             );
         }
 
@@ -560,6 +562,10 @@ class %className% extends ModelEntity
         $columns = [];
         /** @var \Doctrine\DBAL\Schema\Column $column */
         foreach ($table->getColumns() as $column) {
+            if ($table->getName() === 's_articles_attributes' && $column->getName() === 'articleID') {
+                continue;
+            }
+
             $columns[] = $this->getColumnProperty($table, $column);
         }
 
@@ -726,6 +732,10 @@ class %className% extends ModelEntity
         $associations = [];
         /** @var \Doctrine\DBAL\Schema\ForeignKeyConstraint $foreignKey */
         foreach ($table->getForeignKeys() as $foreignKey) {
+            if ($table->getName() === 's_articles_attributes' && $foreignKey->getColumns()[0] === 'articleID') {
+                continue;
+            }
+
             $associations[] = $this->getAssociationProperty($table, $foreignKey);
         }
 
@@ -883,6 +893,10 @@ class %className% extends ModelEntity
         $columns = [];
         /** @var \Doctrine\DBAL\Schema\ForeignKeyConstraint $foreignKey */
         foreach ($table->getForeignKeys() as $foreignKey) {
+            if ($table->getName() === 's_articles_attributes' && $foreignKey->getColumns()[0] === 'articleID') {
+                continue;
+            }
+
             $columns[] = $this->getAssociationFunctions($foreignKey);
         }
 

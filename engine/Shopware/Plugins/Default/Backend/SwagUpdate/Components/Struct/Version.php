@@ -24,11 +24,6 @@
 
 namespace ShopwarePlugins\SwagUpdate\Components\Struct;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class Version extends Struct
 {
     /**
@@ -65,4 +60,24 @@ class Version extends Struct
      * @var array
      */
     public $checks;
+
+    /**
+     * @var string
+     */
+    public $release_date;
+
+    /**
+     * @var bool
+     */
+    public $security_update;
+
+    /**
+     * @var string
+     */
+    public $sha256;
+
+    /**
+     * @var bool
+     */
+    public $signature_verified;
 }

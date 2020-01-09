@@ -22,9 +22,6 @@
  * our trademarks remain entirely with us.
  */
 
-/**
- * Newsletter controller
- */
 class Shopware_Controllers_Frontend_Newsletter extends Enlight_Controller_Action
 {
     /**
@@ -66,9 +63,9 @@ class Shopware_Controllers_Frontend_Newsletter extends Enlight_Controller_Action
         $config = $this->container->get('config');
         $noCaptchaAfterLogin = $config->get('noCaptchaAfterLogin');
         // redirect user if captcha is active and request is sent from the footer
-        if ($config->get('newsletterCaptcha') !== 'noCaptcha' &&
-            $this->Request()->getPost('redirect') !== null &&
-            !($noCaptchaAfterLogin && Shopware()->Modules()->Admin()->sCheckUser())) {
+        if ($config->get('newsletterCaptcha') !== 'noCaptcha'
+            && $this->Request()->getPost('redirect') !== null
+            && !($noCaptchaAfterLogin && Shopware()->Modules()->Admin()->sCheckUser())) {
             return;
         }
 
@@ -165,6 +162,7 @@ class Shopware_Controllers_Frontend_Newsletter extends Enlight_Controller_Action
         $this->View()->assign('sNumberPages', $count);
         $this->View()->assign('sPages', $pages);
         $this->View()->assign('sContent', $content);
+        $this->View()->assign('shortParameters', $this->container->get('query_alias_mapper')->getQueryAliases());
     }
 
     /**
@@ -254,7 +252,7 @@ class Shopware_Controllers_Frontend_Newsletter extends Enlight_Controller_Action
         // Needed for 'added' date
         $this->front->setParam('optinDate', $getVote['datum']);
 
-        Shopware()->System()->_POST = unserialize($getVote['data']);
+        Shopware()->System()->_POST = unserialize($getVote['data'], ['allowed_classes' => false]);
 
         Shopware()->Db()->query(
             'DELETE FROM s_core_optin WHERE hash = ?',

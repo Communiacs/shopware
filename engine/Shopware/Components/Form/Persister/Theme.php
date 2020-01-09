@@ -32,9 +32,6 @@ use Shopware\Components\Model\ModelManager;
 use Shopware\Models\Shop\Template;
 use Shopware\Models\Shop\TemplateConfig;
 
-/**
- * Class Base
- */
 class Theme implements Form\Interfaces\Persister
 {
     /**
@@ -105,8 +102,8 @@ class Theme implements Form\Interfaces\Persister
     private function createContainer(
         ContainerInterface $container,
         Template $template,
-        TemplateConfig\Layout $parent = null)
-    {
+        TemplateConfig\Layout $parent = null
+    ) {
         $entity = $this->checkExistingLayout(
             $template->getLayouts(),
             $container->getName()

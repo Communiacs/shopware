@@ -68,13 +68,6 @@ class Shopware_Plugins_Core_ControllerBase_Bootstrap extends Shopware_Components
         $shop = Shopware()->Shop();
         $view->assign('Controller', $args->getSubject()->Request()->getControllerName());
 
-        /*
-         * @deprecated
-         *
-         * This assignment is deprecated and will be removed in Shopware 5.6 without replacement
-         */
-        $view->assign('Shopware', Shopware());
-
         $view->assign('sBasketQuantity', $view->sBasketQuantity ?: 0);
         $view->assign('sBasketAmount', $view->sBasketAmount ?: 0);
         $view->assign('sNotesQuantity', $view->sNotesQuantity ?: 0);
@@ -177,7 +170,8 @@ class Shopware_Plugins_Core_ControllerBase_Bootstrap extends Shopware_Components
 
         foreach ($campaigns as $position => $content) {
             $campaigns[$position] = Shopware()->Modules()->Marketing()->sCampaignsGetList(
-                $parentId, $position
+                $parentId,
+                $position
             );
         }
 

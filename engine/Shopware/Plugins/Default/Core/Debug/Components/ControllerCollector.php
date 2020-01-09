@@ -26,11 +26,6 @@ namespace Shopware\Plugin\Debug\Components;
 
 use Shopware\Components\Logger;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class ControllerCollector implements CollectorInterface
 {
     /**
@@ -127,7 +122,9 @@ class ControllerCollector implements CollectorInterface
         foreach ($events as $event) {
             $listeners->registerListener(
                 new \Enlight_Event_Handler_Default(
-                    $event, [$this, 'onBenchmarkEvent'], -99
+                    $event,
+                    [$this, 'onBenchmarkEvent'],
+                    -99
                 )
             );
         }

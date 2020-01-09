@@ -95,7 +95,7 @@ class Order extends ModelEntity
     protected $payment;
 
     /**
-     * @var \Shopware\Models\Dispatch\Dispatch
+     * @var \Shopware\Models\Dispatch\Dispatch|null
      *
      * @ORM\OneToOne(targetEntity="\Shopware\Models\Dispatch\Dispatch")
      * @ORM\JoinColumn(name="dispatchID", referencedColumnName="id")
@@ -128,7 +128,7 @@ class Order extends ModelEntity
     /**
      * INVERSE SIDE
      *
-     * @var \Shopware\Models\Attribute\Order
+     * @var \Shopware\Models\Attribute\Order|null
      *
      * @ORM\OneToOne(targetEntity="Shopware\Models\Attribute\Order", mappedBy="order", orphanRemoval=true, cascade={"persist"})
      */
@@ -241,7 +241,7 @@ class Order extends ModelEntity
     /**
      * Contains the alphanumeric order number. If the
      *
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="ordernumber", type="string", length=255, nullable=true)
      */
@@ -276,7 +276,7 @@ class Order extends ModelEntity
     private $paymentId;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="dispatchID", type="integer", nullable=true)
      */
@@ -333,7 +333,7 @@ class Order extends ModelEntity
     private $invoiceShippingNet;
 
     /**
-     * @var float
+     * @var float|null
      *
      * @ORM\Column(name="invoice_shipping_tax_rate", type="decimal", nullable=true)
      */
@@ -407,7 +407,7 @@ class Order extends ModelEntity
     private $referer;
 
     /**
-     * @var \DateTimeInterface
+     * @var \DateTimeInterface|null
      *
      * @ORM\Column(name="cleareddate", type="datetime", nullable=true)
      */
@@ -458,14 +458,14 @@ class Order extends ModelEntity
     private $currencyFactor;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="remote_addr", type="string", length=255, nullable=true)
      */
     private $remoteAddress;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="deviceType", type="string", length=50, nullable=true)
      */
@@ -487,8 +487,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Get id
-     *
      * @return int
      */
     public function getId()
@@ -505,8 +503,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Set number
-     *
      * @param string $number
      *
      * @return Order
@@ -519,9 +515,7 @@ class Order extends ModelEntity
     }
 
     /**
-     * Get number
-     *
-     * @return string
+     * @return string|null
      */
     public function getNumber()
     {
@@ -529,8 +523,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Set invoiceAmount
-     *
      * @param float $invoiceAmount
      *
      * @return Order
@@ -543,8 +535,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Get invoiceAmount
-     *
      * @return float
      */
     public function getInvoiceAmount()
@@ -553,8 +543,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Set invoiceAmountNet
-     *
      * @param float $invoiceAmountNet
      *
      * @return Order
@@ -567,8 +555,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Get invoiceAmountNet
-     *
      * @return float
      */
     public function getInvoiceAmountNet()
@@ -577,8 +563,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Set invoiceShipping
-     *
      * @param float $invoiceShipping
      *
      * @return Order
@@ -591,8 +575,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Get invoiceShipping
-     *
      * @return float
      */
     public function getInvoiceShipping()
@@ -601,8 +583,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Set invoiceShippingNet
-     *
      * @param float $invoiceShippingNet
      *
      * @return Order
@@ -615,8 +595,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Get invoiceShippingNet
-     *
      * @return float
      */
     public function getInvoiceShippingNet()
@@ -625,7 +603,7 @@ class Order extends ModelEntity
     }
 
     /**
-     * @return float
+     * @return float|null
      */
     public function getInvoiceShippingTaxRate()
     {
@@ -633,7 +611,7 @@ class Order extends ModelEntity
     }
 
     /**
-     * @param float $invoiceShippingTaxRate
+     * @param float|null $invoiceShippingTaxRate
      */
     public function setInvoiceShippingTaxRate($invoiceShippingTaxRate)
     {
@@ -641,8 +619,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Set orderTime
-     *
      * @param \DateTimeInterface|string $orderTime
      *
      * @return Order
@@ -658,8 +634,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Get orderTime
-     *
      * @return \DateTimeInterface
      */
     public function getOrderTime()
@@ -668,8 +642,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Set transactionId
-     *
      * @param string $transactionId
      *
      * @return Order
@@ -682,8 +654,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Get transactionId
-     *
      * @return string
      */
     public function getTransactionId()
@@ -692,8 +662,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Set comment
-     *
      * @param string $comment
      *
      * @return Order
@@ -706,8 +674,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Get comment
-     *
      * @return string
      */
     public function getComment()
@@ -716,8 +682,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Set customerComment
-     *
      * @param string $customerComment
      *
      * @return Order
@@ -730,8 +694,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Get customerComment
-     *
      * @return string
      */
     public function getCustomerComment()
@@ -740,8 +702,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Set internalComment
-     *
      * @param string $internalComment
      *
      * @return Order
@@ -754,8 +714,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Get internalComment
-     *
      * @return string
      */
     public function getInternalComment()
@@ -764,8 +722,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Set net
-     *
      * @param int $net
      *
      * @return Order
@@ -778,8 +734,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Get net
-     *
      * @return int
      */
     public function getNet()
@@ -788,8 +742,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Set taxFree
-     *
      * @param int $taxFree
      *
      * @return Order
@@ -802,8 +754,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Get taxFree
-     *
      * @return int
      */
     public function getTaxFree()
@@ -812,8 +762,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Set temporaryId
-     *
      * @param string $temporaryId
      *
      * @return Order
@@ -826,8 +774,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Get temporaryId
-     *
      * @return string
      */
     public function getTemporaryId()
@@ -836,8 +782,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Set referer
-     *
      * @param string $referer
      *
      * @return Order
@@ -850,8 +794,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Get referer
-     *
      * @return string
      */
     public function getReferer()
@@ -860,8 +802,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Set clearedDate
-     *
      * @param \DateTimeInterface|string $clearedDate
      *
      * @return Order
@@ -877,9 +817,7 @@ class Order extends ModelEntity
     }
 
     /**
-     * Get clearedDate
-     *
-     * @return \DateTimeInterface
+     * @return \DateTimeInterface|null
      */
     public function getClearedDate()
     {
@@ -887,8 +825,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Set trackingCode
-     *
      * @param string $trackingCode
      *
      * @return Order
@@ -901,8 +837,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Get trackingCode
-     *
      * @return string
      */
     public function getTrackingCode()
@@ -911,8 +845,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Set languageIso
-     *
      * @param string $languageIso
      *
      * @return Order
@@ -925,8 +857,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Get languageIso
-     *
      * @return string
      */
     public function getLanguageIso()
@@ -935,8 +865,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Set currency
-     *
      * @param string $currency
      *
      * @return Order
@@ -949,8 +877,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Get currency
-     *
      * @return string
      */
     public function getCurrency()
@@ -959,8 +885,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Set currencyFactor
-     *
      * @param float $currencyFactor
      *
      * @return Order
@@ -973,8 +897,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Get currencyFactor
-     *
      * @return float
      */
     public function getCurrencyFactor()
@@ -983,8 +905,6 @@ class Order extends ModelEntity
     }
 
     /**
-     * Set remoteAddress
-     *
      * @param string $remoteAddress
      *
      * @return Order
@@ -997,9 +917,7 @@ class Order extends ModelEntity
     }
 
     /**
-     * Get remoteAddress
-     *
-     * @return string
+     * @return string|null
      */
     public function getRemoteAddress()
     {
@@ -1039,7 +957,7 @@ class Order extends ModelEntity
     }
 
     /**
-     * @return \Shopware\Models\Dispatch\Dispatch
+     * @return \Shopware\Models\Dispatch\Dispatch|null
      */
     public function getDispatch()
     {
@@ -1111,7 +1029,7 @@ class Order extends ModelEntity
     }
 
     /**
-     * @param \Shopware\Models\Order\Shipping|null $shipping
+     * @param \Shopware\Models\Order\Shipping $shipping
      *
      * @return Order
      */
@@ -1129,7 +1047,7 @@ class Order extends ModelEntity
     }
 
     /**
-     * @param \Shopware\Models\Order\Billing|null $billing
+     * @param \Shopware\Models\Order\Billing $billing
      *
      * @return Order
      */
@@ -1157,7 +1075,7 @@ class Order extends ModelEntity
     }
 
     /**
-     * @return \Doctrine\Common\Collections\ArrayCollection<\Shopware\Models\Order\History>
+     * @return ArrayCollection<\Shopware\Models\Order\History>
      */
     public function getHistory()
     {
@@ -1165,7 +1083,7 @@ class Order extends ModelEntity
     }
 
     /**
-     * @param \Doctrine\Common\Collections\ArrayCollection<\Shopware\Models\Order\History>
+     * @param ArrayCollection<\Shopware\Models\Order\History> $history
      */
     public function setHistory($history)
     {
@@ -1192,13 +1110,13 @@ class Order extends ModelEntity
 
             $taxValue = $detail->getTaxRate();
 
-            // additional tax checks required for sw-2238, sw-2903 and sw-3164
+            // Additional tax checks required for sw-2238, sw-2903 and sw-3164
             if ($tax && $tax->getId() !== 0 && $tax->getId() !== null && $tax->getTax() !== null) {
                 $taxValue = $tax->getTax();
             }
 
             if ($this->net) {
-                $invoiceAmountNet += round(($price * $detail->getQuantity()) / 100 * (100 + $taxValue), 2);
+                $invoiceAmountNet += Shopware()->Container()->get('shopware.cart.net_rounding')->round($price, $taxValue, $detail->getQuantity());
             } else {
                 $invoiceAmountNet += round(($price * $detail->getQuantity()) / (100 + $taxValue) * 100, 2);
             }
@@ -1217,7 +1135,7 @@ class Order extends ModelEntity
     }
 
     /**
-     * @return \Shopware\Models\Attribute\Order
+     * @return \Shopware\Models\Attribute\Order|null
      */
     public function getAttribute()
     {
@@ -1247,7 +1165,7 @@ class Order extends ModelEntity
      */
     public function setPartner($partner)
     {
-        $this->partner = $this->cleanup($partner);
+        $this->partner = $partner;
     }
 
     /**
@@ -1317,7 +1235,7 @@ class Order extends ModelEntity
     }
 
     /**
-     * @param string $deviceType
+     * @param string|null $deviceType
      */
     public function setDeviceType($deviceType)
     {
@@ -1325,7 +1243,7 @@ class Order extends ModelEntity
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getDeviceType()
     {

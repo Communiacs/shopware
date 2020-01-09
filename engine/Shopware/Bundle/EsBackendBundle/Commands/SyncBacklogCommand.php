@@ -26,27 +26,38 @@ namespace Shopware\Bundle\EsBackendBundle\Commands;
 
 use Shopware\Bundle\AttributeBundle\Repository\SearchCriteria;
 use Shopware\Bundle\EsBackendBundle\EsAwareRepository;
-use Shopware\Bundle\EsBackendBundle\EsBackendIndexer;
+use Shopware\Bundle\EsBackendBundle\IndexFactoryInterface;
 use Shopware\Bundle\ESIndexingBundle\LastIdQuery;
 use Shopware\Commands\ShopwareCommand;
 use Shopware\Models\Article\Article;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class SyncBacklogCommand extends ShopwareCommand
 {
+    /**
+     * @var int
+     */
+    private $batchSize;
+
+    /**
+     * @var IndexFactoryInterface
+     */
+    private $indexFactory;
+
+    public function __construct(int $batchSize, IndexFactoryInterface $indexFactory)
+    {
+        $this->batchSize = $batchSize;
+        parent::__construct();
+        $this->indexFactory = $indexFactory;
+    }
+
     /**
      * {@inheritdoc}
      */
     protected function configure()
     {
-        $this->setName('sw:es:backend:sync')
-            ->setDescription('Synchronize events from the backlog to the live index.');
+        $this->setDescription('Synchronize events from the backlog to the live index.');
     }
 
     /**
@@ -54,9 +65,8 @@ class SyncBacklogCommand extends ShopwareCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $connection = $this->container->get('dbal_connection');
-
-        $backlogs = $connection->fetchAll('SELECT * FROM s_es_backend_backlog ORDER BY id ASC LIMIT 20');
+        $backlogService = $this->container->get('shopware_bundle_es_backend.backlog_service');
+        $backlogs = $backlogService->read($this->batchSize);
 
         if (empty($backlogs)) {
             $output->writeln('Backlog empty');
@@ -89,11 +99,7 @@ class SyncBacklogCommand extends ShopwareCommand
 
         $ids = array_column($backlogs, 'id');
 
-        $connection->executeUpdate(
-            'DELETE FROM s_es_backend_backlog WHERE id IN (:ids)',
-            ['ids' => $ids],
-            ['ids' => \Doctrine\DBAL\Connection::PARAM_INT_ARRAY]
-        );
+        $backlogService->cleanup($ids);
     }
 
     private function indexArticle($id)
@@ -125,10 +131,9 @@ class SyncBacklogCommand extends ShopwareCommand
     private function getIndexName($domainName)
     {
         $client = $this->container->get('shopware_elastic_search.client');
+        $indexConfig = $this->indexFactory->createIndexConfiguration($domainName);
 
-        $alias = EsBackendIndexer::buildAlias($domainName);
-
-        $exist = $client->indices()->getAlias(['name' => $alias]);
+        $exist = $client->indices()->getAlias(['name' => $indexConfig->getAlias()]);
 
         $index = array_keys($exist);
 

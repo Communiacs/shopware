@@ -31,11 +31,6 @@ use Shopware\Components\License\Struct\LicenseInformation;
 use Shopware\Components\License\Struct\LicenseUnpackRequest;
 use Shopware\Components\License\Struct\ShopwareEdition;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class LocalLicenseUnpackService implements LicenseUnpackServiceInterface
 {
     /**
@@ -102,7 +97,7 @@ class LocalLicenseUnpackService implements LicenseUnpackServiceInterface
             throw new LicenseInvalidException('License key seems to be incorrect');
         }
 
-        $info = unserialize($info);
+        $info = unserialize($info, ['allowed_classes' => false]);
         if ($info === false) {
             throw new LicenseInvalidException('License key seems to be incorrect');
         }

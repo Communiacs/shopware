@@ -26,11 +26,13 @@ namespace Shopware\Bundle\SearchBundleES\FacetHandler;
 
 use Doctrine\DBAL\Connection;
 use Elasticsearch\Client;
-use ONGR\ElasticsearchDSL\Aggregation\TermsAggregation;
-use ONGR\ElasticsearchDSL\Query\IdsQuery;
-use ONGR\ElasticsearchDSL\Query\TermQuery;
+use ONGR\ElasticsearchDSL\Aggregation\Bucketing\TermsAggregation;
+use ONGR\ElasticsearchDSL\Query\Compound\BoolQuery;
+use ONGR\ElasticsearchDSL\Query\TermLevel\IdsQuery;
+use ONGR\ElasticsearchDSL\Query\TermLevel\TermQuery;
 use ONGR\ElasticsearchDSL\Search;
 use ONGR\ElasticsearchDSL\Sort\FieldSort;
+use Shopware\Bundle\ESIndexingBundle\EsSearch;
 use Shopware\Bundle\ESIndexingBundle\IndexFactoryInterface;
 use Shopware\Bundle\ESIndexingBundle\Property\PropertyMapping;
 use Shopware\Bundle\SearchBundle\Condition\PropertyCondition;
@@ -79,18 +81,25 @@ class PropertyFacetHandler implements HandlerInterface, ResultHydratorInterface
      */
     private $indexFactory;
 
+    /**
+     * @var string
+     */
+    private $esVersion;
+
     public function __construct(
         QueryAliasMapper $queryAliasMapper,
         Client $client,
         Connection $connection,
         StructHydrator $hydrator,
-        IndexFactoryInterface $indexFactory
+        IndexFactoryInterface $indexFactory,
+        string $esVersion
     ) {
         $this->queryAliasMapper = $queryAliasMapper;
         $this->client = $client;
         $this->connection = $connection;
         $this->hydrator = $hydrator;
         $this->indexFactory = $indexFactory;
+        $this->esVersion = $esVersion;
     }
 
     /**
@@ -141,19 +150,35 @@ class PropertyFacetHandler implements HandlerInterface, ResultHydratorInterface
 
         $groupIds = $this->getGroupIds($ids);
 
-        $search = new Search();
-        $search->addFilter(new IdsQuery($groupIds));
-        $search->addFilter(new TermQuery('filterable', true));
+        $search = new EsSearch();
+        $search->addQuery(new IdsQuery($groupIds), BoolQuery::FILTER);
+        $search->addQuery(new TermQuery('filterable', true), BoolQuery::FILTER);
         $search->addSort(new FieldSort('name', 'asc'));
         $search->setFrom(0);
         $search->setSize(self::AGGREGATION_SIZE);
 
         $index = $this->indexFactory->createShopIndex($context->getShop(), PropertyMapping::TYPE);
-        $data = $this->client->search([
+
+        $arguments = [
             'index' => $index->getName(),
             'type' => PropertyMapping::TYPE,
             'body' => $search->toArray(),
-        ]);
+        ];
+
+        if (version_compare($this->esVersion, '7', '>=')) {
+            $arguments = array_merge(
+                $arguments,
+                [
+                    'rest_total_hits_as_int' => true,
+                    'track_total_hits' => true,
+                ]
+            );
+        }
+
+        $data = $this->client->search(
+            $arguments
+        );
+
         $data = $data['hits']['hits'];
 
         $properties = $this->hydrateProperties($data, $ids);

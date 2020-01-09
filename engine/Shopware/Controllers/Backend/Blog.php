@@ -27,8 +27,6 @@ use Shopware\Models\Blog\Media;
 use Shopware\Models\Blog\Tag;
 
 /**
- * Shopware Backend Controller for the Blog Module
- *
  * Backend Controller for the blog backend module.
  * Displays all data in an Ext.grid.Panel and allows to delete,
  * add and edit items. On the detail page the blog data are displayed and can be edited
@@ -63,12 +61,16 @@ class Shopware_Controllers_Backend_Blog extends Shopware_Controllers_Backend_Ext
     protected $articleRepository;
 
     /**
+     * @deprecated in 5.6, will be private in 5.8
+     *
      * Helper Method to get access to the category repository.
      *
      * @return Shopware\Models\Category\Repository
      */
     public function getCategoryRepository()
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be private with 5.8.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         if ($this->categoryRepository === null) {
             $this->categoryRepository = $this->getManager()->getRepository(\Shopware\Models\Category\Category::class);
         }
@@ -77,12 +79,16 @@ class Shopware_Controllers_Backend_Blog extends Shopware_Controllers_Backend_Ext
     }
 
     /**
+     * @deprecated in 5.6, will be private in 5.8
+     *
      * Helper Method to get access to the article repository.
      *
      * @return Shopware\Models\Article\Repository
      */
     public function getArticleRepository()
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be private with 5.8.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         if ($this->articleRepository === null) {
             $this->articleRepository = $this->getManager()->getRepository(\Shopware\Models\Article\Article::class);
         }
@@ -91,12 +97,16 @@ class Shopware_Controllers_Backend_Blog extends Shopware_Controllers_Backend_Ext
     }
 
     /**
+     * @deprecated in 5.6, will be private in 5.8
+     *
      * Helper Method to get access to the blog repository.
      *
      * @return Shopware\Models\Blog\Repository
      */
     public function getRepository()
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be private with 5.8.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         if ($this->blogRepository === null) {
             $this->blogRepository = $this->getManager()->getRepository(\Shopware\Models\Blog\Blog::class);
         }
@@ -105,12 +115,16 @@ class Shopware_Controllers_Backend_Blog extends Shopware_Controllers_Backend_Ext
     }
 
     /**
+     * @deprecated in 5.6, will be private in 5.8
+     *
      * Helper Method to get access to the blog comment repository.
      *
      * @return Shopware\Models\Blog\Repository
      */
     public function getBlogCommentRepository()
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be private with 5.8.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         if ($this->blogCommentRepository === null) {
             $this->blogCommentRepository = $this->getManager()->getRepository(\Shopware\Models\Blog\Comment::class);
         }
@@ -189,7 +203,7 @@ class Shopware_Controllers_Backend_Blog extends Shopware_Controllers_Backend_Ext
     {
         $params = $this->Request()->getParams();
 
-        $id = $this->Request()->id;
+        $id = (int) $this->Request()->getParam('id');
 
         if (!empty($id)) {
             // Edit Data
@@ -203,6 +217,10 @@ class Shopware_Controllers_Backend_Blog extends Shopware_Controllers_Backend_Ext
         }
         // Setting the date in this way cause ext js got no datetime field
         $params['displayDate'] = $params['displayDate'] . ' ' . $params['displayTime'];
+
+        if (!$params['shopIds']) {
+            $params['shopIds'] = null;
+        }
 
         $this->prepareTagAssociatedData($params, $blogModel);
         $params = $this->prepareAssignedArticlesAssociatedData($params);

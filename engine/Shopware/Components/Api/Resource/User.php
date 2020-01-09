@@ -34,11 +34,7 @@ use Shopware\Models\User\User as UserModel;
 
 /**
  * User API Resource
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
+` */
 class User extends Resource
 {
     /**
@@ -70,7 +66,7 @@ class User extends Resource
         $this->checkPrivilege('read', 'usermanager');
 
         if (empty($id)) {
-            throw new ApiException\ParameterMissingException();
+            throw new ApiException\ParameterMissingException('id');
         }
 
         $builder = $this->getRepository()->createQueryBuilder('user');
@@ -87,8 +83,8 @@ class User extends Resource
             throw new ApiException\NotFoundException(sprintf('User by id %s not found', $id));
         }
 
-        if (!$this->hasPrivilege('create', 'usermanager') &&
-            !$this->hasPrivilege('update', 'usermanager')) {
+        if (!$this->hasPrivilege('create', 'usermanager')
+            && !$this->hasPrivilege('update', 'usermanager')) {
             if (is_array($user)) {
                 unset($user['apiKey'], $user['sessionId'], $user['password'], $user['encoder']);
             } else {
@@ -130,8 +126,8 @@ class User extends Resource
 
         $users = $paginator->getIterator()->getArrayCopy();
 
-        if (!$this->hasPrivilege('create', 'usermanager') &&
-            !$this->hasPrivilege('update', 'usermanager')) {
+        if (!$this->hasPrivilege('create', 'usermanager')
+            && !$this->hasPrivilege('update', 'usermanager')) {
             foreach ($users as &$user) {
                 unset($user['apiKey'], $user['sessionId'], $user['password'], $user['encoder']);
             }
@@ -178,7 +174,7 @@ class User extends Resource
         $this->checkPrivilege('update', 'usermanager');
 
         if (empty($id)) {
-            throw new ApiException\ParameterMissingException();
+            throw new ApiException\ParameterMissingException('id');
         }
 
         $builder = $this->getManager()->createQueryBuilder();
@@ -226,7 +222,7 @@ class User extends Resource
         $this->checkPrivilege('delete', 'usermanager');
 
         if (empty($id)) {
-            throw new ApiException\ParameterMissingException();
+            throw new ApiException\ParameterMissingException('id');
         }
 
         /** @var UserModel|null $user */
@@ -359,7 +355,7 @@ class User extends Resource
         }
 
         /** @var \Shopware\Components\Password\Manager $passwordEncoderRegistry */
-        $passwordEncoderRegistry = $this->getContainer()->get('PasswordEncoder');
+        $passwordEncoderRegistry = $this->getContainer()->get('passwordencoder');
         $defaultEncoderName = $passwordEncoderRegistry->getDefaultPasswordEncoderName();
         $encoder = $passwordEncoderRegistry->getEncoderByName($defaultEncoderName);
 

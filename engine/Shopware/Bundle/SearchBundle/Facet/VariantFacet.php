@@ -27,13 +27,10 @@ namespace Shopware\Bundle\SearchBundle\Facet;
 use Assert\Assertion;
 use Shopware\Bundle\SearchBundle\FacetInterface;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class VariantFacet implements FacetInterface
 {
+    private const NAME = 'option';
+
     /**
      * @var array
      */
@@ -94,6 +91,6 @@ class VariantFacet implements FacetInterface
      */
     public function getName()
     {
-        return 'option';
+        return self::NAME;
     }
 }

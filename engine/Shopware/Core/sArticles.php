@@ -53,16 +53,13 @@ use Shopware\Models\Article\Repository as ArticleRepository;
 use Shopware\Models\Article\Supplier;
 use Shopware\Models\Category\Category;
 use Shopware\Models\Media\Album;
+use Shopware\Models\Media\Media;
 use Shopware\Models\Media\Repository as MediaRepository;
 
 /**
  * Shopware Class that handle products
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
-class sArticles
+class sArticles implements \Enlight_Hook
 {
     /**
      * Pointer to sSystem object
@@ -292,6 +289,8 @@ class sArticles
     }
 
     /**
+     * @deprecated in 5.6, will be removed in 5.7. Use the sArticlesComparisons::sGetComparisonProperties instead.
+     *
      * Returns all filterable properties depending on the given products
      *
      * @param array $articles
@@ -300,10 +299,14 @@ class sArticles
      */
     public function sGetComparisonProperties($articles)
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be removed with 5.7. Use the sArticlesComparisons::sGetComparisonProperties instead.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         return $this->productComparisons->sGetComparisonProperties($articles);
     }
 
     /**
+     * @deprecated in 5.6, will be removed in 5.7. Use sArticlesComparisons::sFillUpComparisonArticles instead
+     *
      * fills the product properties with the values and fills up empty values
      *
      * @param array $properties
@@ -313,6 +316,8 @@ class sArticles
      */
     public function sFillUpComparisonArticles($properties, $articles)
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be removed with 5.7. Use sArticlesComparisons::sFillUpComparisonArticles instead.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         return $this->productComparisons->sFillUpComparisonArticles($properties, $articles);
     }
 
@@ -388,8 +393,8 @@ class sArticles
 
         $container = Shopware()->Container();
         $shopId = null;
-        if ($container->initialized('Shop')) {
-            $shopId = $container->get('Shop')->getId();
+        if ($container->initialized('shop')) {
+            $shopId = $container->get('shop')->getId();
         }
 
         $connection = $container->get('dbal_connection');
@@ -433,6 +438,8 @@ class sArticles
     }
 
     /**
+     * @deprecated in 5.6, will be removed in 5.7 without replacement
+     *
      * Get id from all products, that belongs to a specific supplier
      *
      * @param int $supplierID Supplier id (s_articles.supplierID)
@@ -441,6 +448,8 @@ class sArticles
      */
     public function sGetArticlesBySupplier($supplierID = null)
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be removed with 5.7. Will be removed without replacement.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         if (!empty($supplierID)) {
             $this->frontController->Request()->setQuery('sSearch', $supplierID);
         }
@@ -488,6 +497,8 @@ class sArticles
     }
 
     /**
+     * @deprecated in 5.6, will be removed in 5.7 without replacement
+     *
      * Get supplier by id
      *
      * Uses the new Supplier Manager
@@ -500,6 +511,8 @@ class sArticles
      */
     public function sGetSupplierById($id)
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be removed with 5.7. Will be removed without replacement.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         $id = (int) $id;
         $categoryId = (int) $this->frontController->Request()->getQuery('sCategory');
 
@@ -700,6 +713,8 @@ class sArticles
      */
     public function sCheckIfEsd($id, $detailsID, $realtime = false)
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be removed with 5.7. Will be removed without replacement.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         // Check if this product is esd-only (check in variants, too -> later)
         $id = (int) $id;
         if ($detailsID) {
@@ -775,7 +790,7 @@ class sArticles
                       AND objectlanguage=" . Shopware()->Shop()->getId();
             $translation = $this->db->fetchOne($sql);
             if (!empty($translation)) {
-                $translation = unserialize($translation);
+                $translation = unserialize($translation, ['allowed_classes' => false]);
             }
             if (!empty($translation[$id])) {
                 $unit = array_merge($unit, $translation[$id]);
@@ -914,6 +929,8 @@ class sArticles
     }
 
     /**
+     * @deprecated in 5.6, will be removed in 5.7 without replacement
+     *
      * Get the cheapest price for a certain product
      *
      * @param int  $article                   id
@@ -935,6 +952,8 @@ class sArticles
         $returnArrayIfConfigurator = false,
         $checkLiveshopping = false
     ) {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be removed with 5.7. Will be removed without replacement.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         if ($group != $this->sSYSTEM->sUSERGROUP) {
             $fetchGroup = $group;
         } else {
@@ -1215,7 +1234,14 @@ class sArticles
         }
         $money_str[1] = substr($money_str[1], 0, 3); // convert to rounded (to the nearest thousandth) string
 
-        return round((float) ($money_str[0] . '.' . $money_str[1]), 2);
+        $value = (float) ($money_str[0] . '.' . $money_str[1]);
+
+        // round handles "-0" different since PHP 7.4, @see https://bugs.php.net/bug.php?id=78660
+        if ($value === -0.0) {
+            return 0;
+        }
+
+        return round($value, 2);
     }
 
     /**
@@ -1366,6 +1392,8 @@ class sArticles
     }
 
     /**
+     * @deprecated in 5.6, will be removed in 5.7. Use the sArticles::sGetArticlePictures instead.
+     *
      * Wrapper method to specialize the sGetArticlePictures method for the listing images
      *
      * @param int  $articleId
@@ -1375,6 +1403,8 @@ class sArticles
      */
     public function getArticleListingCover($articleId, $forceMainImage = false)
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be removed with 5.7. Use the sArticles::sGetArticlePictures instead.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         return $this->sGetArticlePictures($articleId, true, 0, null, false, false, $forceMainImage);
     }
 
@@ -1601,6 +1631,8 @@ class sArticles
     }
 
     /**
+     * @deprecated in 5.6, will be removed in 5.7 without replacement
+     *
      * Get product taxrate by id
      *
      * @param int $id product id
@@ -1609,6 +1641,8 @@ class sArticles
      */
     public function sGetArticleTaxById($id)
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be removed with 5.7. Will be removed without replacement.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         $checkForProduct = $this->db->fetchRow(
             'SELECT s_core_tax.tax AS tax
             FROM s_core_tax, s_articles
@@ -1625,6 +1659,8 @@ class sArticles
     }
 
     /**
+     * @deprecated in 5.6, will be removed in 5.7. Use sArticle::sGetTranslation instead.
+     *
      * Read translation for one or more products
      *
      * @param array  $data
@@ -1634,6 +1670,8 @@ class sArticles
      */
     public function sGetTranslations($data, $object)
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be removed with 5.7. Use sArticle::sGetTranslation instead.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         if (Shopware()->Shop()->get('skipbackend') || empty($data)) {
             return $data;
         }
@@ -1698,7 +1736,7 @@ class sArticles
 
         foreach ($translations as $translation) {
             $productId = (int) $translation['objectkey'];
-            $object = unserialize($translation['objectdata']);
+            $object = unserialize($translation['objectdata'], ['allowed_classes' => false]);
             foreach ($object as $translateKey => $value) {
                 if (isset($map[$translateKey])) {
                     $key = $map[$translateKey];
@@ -1781,7 +1819,7 @@ class sArticles
         ";
         $objectData = $this->db->fetchOne($sql, [$id]);
         if (!empty($objectData)) {
-            $objectData = unserialize($objectData);
+            $objectData = unserialize($objectData, ['allowed_classes' => false]);
         } else {
             $objectData = [];
         }
@@ -1794,7 +1832,7 @@ class sArticles
             ";
             $objectFallback = $this->db->fetchOne($sql);
             if (!empty($objectFallback)) {
-                $objectFallback = unserialize($objectFallback);
+                $objectFallback = unserialize($objectFallback, ['allowed_classes' => false]);
                 $objectData = array_merge($objectFallback, $objectData);
             }
         }
@@ -2008,7 +2046,7 @@ class sArticles
     private function getMediaRepository()
     {
         if ($this->mediaRepository === null) {
-            $this->mediaRepository = Shopware()->Models()->getRepository(\Shopware\Models\Media\Media::class);
+            $this->mediaRepository = Shopware()->Models()->getRepository(Media::class);
         }
 
         return $this->mediaRepository;
@@ -2253,7 +2291,7 @@ class sArticles
             $image['extension'] = 'jpg';
         }
 
-        $imageData['src']['original'] = $mediaService->getUrl('media/image/' . $image['path'] . '.' . $image['extension']);
+        $imageData['src']['original'] = $mediaService->getUrl($image['media']['path']);
         $imageData['res']['original']['width'] = $image['width'];
         $imageData['res']['original']['height'] = $image['height'];
         $imageData['res']['description'] = $image['description'];
@@ -2289,9 +2327,19 @@ class sArticles
             if (strpos($size, 'x') === 0) {
                 $size = $size . 'x' . $size;
             }
-            $imageData['src'][$key] = $mediaService->getUrl('media/image/thumbnail/' . $image['path'] . '_' . $size . '.' . $image['extension']);
-            if ($highDpiThumbnails) {
-                $imageData['srchd'][$key] = $mediaService->getUrl('media/image/thumbnail/' . $image['path'] . '_' . $size . '@2x.' . $image['extension']);
+
+            if ($image['type'] === Media::TYPE_IMAGE || $image['media']['type'] === Media::TYPE_IMAGE) {
+                $imageData['src'][$key] = $mediaService->getUrl('media/image/thumbnail/' . $image['path'] . '_' . $size . '.' . $image['extension']);
+
+                if ($highDpiThumbnails) {
+                    $imageData['srchd'][$key] = $mediaService->getUrl('media/image/thumbnail/' . $image['path'] . '_' . $size . '@2x.' . $image['extension']);
+                }
+            } else {
+                $imageData['src'][$key] = $mediaService->getUrl($image['media']['path']);
+
+                if ($highDpiThumbnails) {
+                    $imageData['srchd'][$key] = $mediaService->getUrl($image['media']['path']);
+                }
             }
         }
 

@@ -30,11 +30,6 @@ use Shopware\Bundle\SearchBundleDBAL\ConditionHandlerInterface;
 use Shopware\Bundle\SearchBundleDBAL\QueryBuilder;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class SalesConditionHandler implements ConditionHandlerInterface
 {
     const STATE_INCLUDES_TOPSELLER_TABLE = 'topseller';
@@ -52,7 +47,7 @@ class SalesConditionHandler implements ConditionHandlerInterface
      */
     public function generateCondition(
         ConditionInterface $condition,
-        QueryBuilder  $query,
+        QueryBuilder $query,
         ShopContextInterface $context
     ) {
         if (!$query->hasState(self::STATE_INCLUDES_TOPSELLER_TABLE)) {

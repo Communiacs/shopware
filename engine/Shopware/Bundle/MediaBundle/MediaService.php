@@ -30,9 +30,6 @@ use Shopware\Bundle\MediaBundle\Strategy\StrategyInterface;
 use Shopware\Models\Shop\Shop;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
-/**
- * Class MediaService
- */
 class MediaService implements MediaServiceInterface
 {
     /**
@@ -297,9 +294,9 @@ class MediaService implements MediaServiceInterface
             return ($request->isSecure() ? 'https' : 'http') . '://' . $request->getHttpHost() . $request->getBasePath() . '/';
         }
 
-        if ($this->container->has('Shop')) {
+        if ($this->container->has('shop')) {
             /** @var Shop $shop */
-            $shop = $this->container->get('Shop');
+            $shop = $this->container->get('shop');
         } else {
             /** @var Shop $shop */
             $shop = $this->container->get('models')->getRepository(Shop::class)->getActiveDefault();

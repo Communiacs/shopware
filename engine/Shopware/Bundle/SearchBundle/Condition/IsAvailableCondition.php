@@ -26,19 +26,16 @@ namespace Shopware\Bundle\SearchBundle\Condition;
 
 use Shopware\Bundle\SearchBundle\ConditionInterface;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class IsAvailableCondition implements ConditionInterface, \JsonSerializable
 {
+    private const NAME = 'is_available_condition';
+
     /**
      * {@inheritdoc}
      */
     public function getName()
     {
-        return 'is_available_condition';
+        return self::NAME;
     }
 
     /**

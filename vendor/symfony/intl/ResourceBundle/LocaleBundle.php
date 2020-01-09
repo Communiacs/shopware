@@ -19,7 +19,7 @@ use Symfony\Component\Intl\Exception\MissingResourceException;
  *
  * @author Bernhard Schussek <bschussek@gmail.com>
  *
- * @internal
+ * @internal to be removed in 5.0.
  */
 class LocaleBundle extends LocaleDataProvider implements LocaleBundleInterface
 {
@@ -43,7 +43,7 @@ class LocaleBundle extends LocaleDataProvider implements LocaleBundleInterface
         try {
             return $this->getName($locale, $displayLocale);
         } catch (MissingResourceException $e) {
-            return;
+            return null;
         }
     }
 

@@ -25,6 +25,7 @@
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\AbstractQuery;
 use Shopware\Bundle\PluginInstallerBundle\Service\InstallerService;
+use Shopware\Components\CacheManager;
 use Shopware\Components\HttpCache\CacheWarmer;
 use Shopware\Components\HttpCache\UrlProviderFactoryInterface;
 use Shopware\Components\Routing\Context;
@@ -34,13 +35,10 @@ use Shopware\Models\Plugin\Plugin;
 use Shopware\Models\Shop\Repository as ShopRepository;
 use Shopware\Models\Shop\Shop;
 
-/**
- * Shopware Performance Controller
- */
 class Shopware_Controllers_Backend_Performance extends Shopware_Controllers_Backend_ExtJs
 {
-    const PHP_RECOMMENDED_VERSION = '7.1.0';
-    const PHP_MINIMUM_VERSION = '5.6.4';
+    const PHP_RECOMMENDED_VERSION = '7.3.0';
+    const PHP_MINIMUM_VERSION = '7.2.0';
 
     const PERFORMANCE_VALID = 1;
     const PERFORMANCE_WARNING = 2;
@@ -109,7 +107,7 @@ class Shopware_Controllers_Backend_Performance extends Shopware_Controllers_Back
 
     public function getConfigAction()
     {
-        Shopware()->Container()->get('cache')->remove('Shopware_Config');
+        Shopware()->Container()->get('cache')->remove(CacheManager::ITEM_TAG_CONFIG);
         $this->View()->assign([
             'success' => true,
             'data' => $this->prepareConfigData(),
@@ -143,7 +141,7 @@ class Shopware_Controllers_Backend_Performance extends Shopware_Controllers_Back
         $data = $this->prepareDataForSaving($data);
         $this->saveConfigData($data);
 
-        Shopware()->Container()->get('cache')->remove('Shopware_Config');
+        Shopware()->Container()->get('cache')->remove(CacheManager::ITEM_TAG_CONFIG);
 
         // Reload config, so that the actual config from the
         // db is returned
@@ -156,10 +154,14 @@ class Shopware_Controllers_Backend_Performance extends Shopware_Controllers_Back
     }
 
     /**
+     * @deprecated in 5.6, will be private in 5.8
+     *
      * Iterates the given data array and persists all config variables
      */
     public function saveConfigData(array $data)
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be private with 5.8.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         foreach ($data as $values) {
             foreach ($values as $configKey => $value) {
                 $this->saveConfig($configKey, $value);
@@ -168,6 +170,8 @@ class Shopware_Controllers_Backend_Performance extends Shopware_Controllers_Back
     }
 
     /**
+     * @deprecated in 5.6, will be private in 5.8
+     *
      * General helper method which triggers the prepare...ConfigForSaving methods
      *
      * @param array $data
@@ -176,6 +180,8 @@ class Shopware_Controllers_Backend_Performance extends Shopware_Controllers_Back
      */
     public function prepareDataForSaving($data)
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be private with 5.8.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         $output = [];
         $output['httpCache'] = $this->prepareHttpCacheConfigForSaving($data['httpCache'][0]);
         $output['topSeller'] = $this->prepareForSavingDefault($data['topSeller'][0]);
@@ -191,24 +197,32 @@ class Shopware_Controllers_Backend_Performance extends Shopware_Controllers_Back
     }
 
     /**
+     * @deprecated in 5.6, will be private in 5.8
+     *
      * Generic helper method which prepares a given array for saving
      *
      * @return array
      */
     public function prepareForSavingDefault(array $data)
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be private with 5.8.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         unset($data['id']);
 
         return $data;
     }
 
     /**
+     * @deprecated in 5.6, will be private in 5.8
+     *
      * Prepare seo array for saving
      *
      * @return array
      */
     public function prepareSeoConfigForSaving(array $data)
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be private with 5.8.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         unset($data['id']);
 
         $date = date_create($data['routerlastupdateDate'])->format('Y-m-d');
@@ -226,12 +240,16 @@ class Shopware_Controllers_Backend_Performance extends Shopware_Controllers_Back
     }
 
     /**
+     * @deprecated in 5.6, will be private in 5.8
+     *
      * Prepare the http config array so that it can easily be saved
      *
      * @return array
      */
     public function prepareHttpCacheConfigForSaving(array $data)
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be private with 5.8.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         $modelManager = $this->container->get('models');
         $repo = $modelManager->getRepository(Plugin::class);
 
@@ -274,12 +292,16 @@ class Shopware_Controllers_Backend_Performance extends Shopware_Controllers_Back
     }
 
     /**
+     * @deprecated in 5.6, will be private in 5.8
+     *
      * Helper method to persist a given config value
      *
      * @param string $name
      */
     public function saveConfig($name, $value)
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be private with 5.8.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         $modelManager = $this->container->get('models');
         /** @var ShopRepository $shopRepository */
         $shopRepository = $modelManager->getRepository(Shop::class);
@@ -330,6 +352,8 @@ class Shopware_Controllers_Backend_Performance extends Shopware_Controllers_Back
     }
 
     /**
+     * @deprecated in 5.6, will be private in 5.8
+     *
      * Read a given config by name
      *
      * @param string $configName
@@ -339,6 +363,8 @@ class Shopware_Controllers_Backend_Performance extends Shopware_Controllers_Back
      */
     public function readConfig($configName, $defaultValue = '')
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be private with 5.8.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         // If we have a simple config item, we can return it by using Shopware()->Config()
         if (strpos($configName, ':') === false) {
             return Shopware()->Config()->get($configName);
@@ -347,8 +373,8 @@ class Shopware_Controllers_Backend_Performance extends Shopware_Controllers_Back
         // The colon separates formName and elementName
         list($scope, $config) = explode(':', $configName, 2);
 
-        $elementRepository = $this->container->get('models')->getRepository('Shopware\Models\Config\Element');
-        $formRepository = $this->container->get('models')->getRepository('Shopware\Models\Config\Form');
+        $elementRepository = $this->container->get('models')->getRepository(\Shopware\Models\Config\Element::class);
+        $formRepository = $this->container->get('models')->getRepository(\Shopware\Models\Config\Form::class);
 
         $form = $formRepository->findOneBy(['name' => $scope]);
 
@@ -382,12 +408,12 @@ class Shopware_Controllers_Backend_Performance extends Shopware_Controllers_Back
      */
     public function fixCategoriesAction()
     {
-        $offset = $this->Request()->getParam('offset', 0);
-        $limit = $this->Request()->getParam('limit');
+        $offset = (int) $this->Request()->getParam('offset', 0);
+        $limit = (int) $this->Request()->getParam('limit');
 
-        $component = Shopware()->Container()->get('CategoryDenormalization');
+        $component = Shopware()->Container()->get('categorydenormalization');
 
-        if ($offset == 0) {
+        if ($offset === 0) {
             $component->rebuildCategoryPath();
             $component->removeAllAssignments();
         }
@@ -402,7 +428,7 @@ class Shopware_Controllers_Backend_Performance extends Shopware_Controllers_Back
 
     public function prepareTreeAction()
     {
-        $component = Shopware()->Container()->get('CategoryDenormalization');
+        $component = Shopware()->Container()->get('categorydenormalization');
 
         $component->removeOrphanedAssignments();
 
@@ -427,8 +453,7 @@ class Shopware_Controllers_Backend_Performance extends Shopware_Controllers_Back
             $this->container->get('config')
         );
 
-        $urlProviderFactory = $this->get('shopware_cache_warmer.url_provider_factory');
-        $providers = $urlProviderFactory->getAllProviders();
+        $providers = $this->get('shopware_cache_warmer.url_provider_factory')->getAllProviders();
 
         // Count for each provider, if enabled
         $config = json_decode($this->Request()->getParam('config', '{}'), true);
@@ -544,6 +569,8 @@ class Shopware_Controllers_Backend_Performance extends Shopware_Controllers_Back
                 'LastArticles:lastarticles_show',
                 'LastArticles:lastarticlestoshow',
                 'disableArticleNavigation',
+                'http2Push',
+                'minifyHtml',
             ]),
             'customer' => $this->genericConfigLoader([
                 'alsoBoughtShow',

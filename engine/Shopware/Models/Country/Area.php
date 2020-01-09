@@ -24,6 +24,7 @@
 
 namespace Shopware\Models\Country;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
 
@@ -54,22 +55,25 @@ class Area extends ModelEntity
     private $id;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="name", type="string", length=255, nullable=true)
      */
     private $name = null;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="active", type="integer", nullable=true)
      */
     private $active = null;
 
+    public function __construct()
+    {
+        $this->countries = new ArrayCollection();
+    }
+
     /**
-     * Get id
-     *
      * @return int
      */
     public function getId()
@@ -78,8 +82,6 @@ class Area extends ModelEntity
     }
 
     /**
-     * Set name
-     *
      * @param string $name
      *
      * @return Area
@@ -92,9 +94,7 @@ class Area extends ModelEntity
     }
 
     /**
-     * Get name
-     *
-     * @return string
+     * @return string|null
      */
     public function getName()
     {
@@ -102,8 +102,6 @@ class Area extends ModelEntity
     }
 
     /**
-     * Set active
-     *
      * @param int $active
      *
      * @return Area
@@ -116,9 +114,7 @@ class Area extends ModelEntity
     }
 
     /**
-     * Get active
-     *
-     * @return int
+     * @return int|null
      */
     public function getActive()
     {

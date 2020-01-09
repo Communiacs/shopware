@@ -24,6 +24,7 @@
 
 namespace Shopware\Models\User;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
 
@@ -81,8 +82,22 @@ class Privilege extends ModelEntity
     private $resource;
 
     /**
-     * Get id
+     * @ORM\ManyToMany(targetEntity="Shopware\Models\User\Privilege")
+     * @ORM\JoinTable(name="s_core_acl_privilege_requirements",
+     *     joinColumns={@ORM\JoinColumn(name="privilege_id", referencedColumnName="id")},
+     *     inverseJoinColumns={@ORM\JoinColumn(name="required_privilege_id", referencedColumnName="id")}
+     * )
      *
+     * @var ArrayCollection<Privilege>
+     */
+    private $requirements;
+
+    public function __construct()
+    {
+        $this->requirements = new ArrayCollection();
+    }
+
+    /**
      * @return int
      */
     public function getId()
@@ -117,8 +132,6 @@ class Privilege extends ModelEntity
     }
 
     /**
-     * Set resourceId
-     *
      * @param int|null $resourceId
      *
      * @return Privilege
@@ -136,8 +149,6 @@ class Privilege extends ModelEntity
     }
 
     /**
-     * Get resourceId
-     *
      * @return int
      */
     public function getResourceId()
@@ -146,8 +157,6 @@ class Privilege extends ModelEntity
     }
 
     /**
-     * Set name
-     *
      * @param string $name
      *
      * @return Privilege
@@ -160,13 +169,24 @@ class Privilege extends ModelEntity
     }
 
     /**
-     * Get name
-     *
      * @return string
      */
     public function getName()
     {
         return $this->name;
+    }
+
+    /**
+     * @return ArrayCollection<Privilege>
+     */
+    public function getRequirements()
+    {
+        return $this->requirements;
+    }
+
+    public function setRequirements(ArrayCollection $requirements)
+    {
+        $this->requirements = $requirements;
     }
 
     /**

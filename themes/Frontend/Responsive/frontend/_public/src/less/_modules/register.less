@@ -6,6 +6,10 @@ Contains the styles of the registration process form and its components.
 The user can see the registration steps, advantages and required information.
 */
 
+.register--message {
+    .unitize(margin-top, 20);
+}
+
 .register--content {
     .unitize-margin(10, 0);
     .clearfix();
@@ -86,6 +90,13 @@ The user can see the registration steps, advantages and required information.
 
         .select-field {
             .unitize(margin-bottom, 15);
+            max-width: 100%;
+            float: left;
+        }
+
+        .datepicker {
+            .unitize(margin-bottom, 15);
+            width: 100%;
             max-width: 100%;
             float: left;
         }
@@ -275,6 +286,9 @@ The user can see the registration steps, advantages and required information.
 }
 
 @media screen and (min-width: @tabletViewportWidth) {
+    .register--message {
+        .unitize(margin-top, 45);
+    }
 
     // General Register Form
     .register--content {

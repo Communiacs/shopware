@@ -34,10 +34,6 @@ use Symfony\Component\DependencyInjection\Container;
 
 /**
  * CategorySubscriber
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
 class CategorySubscriber implements BaseEventSubscriber
 {
@@ -87,7 +83,7 @@ class CategorySubscriber implements BaseEventSubscriber
     public function getCategoryComponent()
     {
         /** @var CategoryDenormalization $categoryDenormalization */
-        $categoryDenormalization = $this->container->get('CategoryDenormalization');
+        $categoryDenormalization = $this->container->get('categorydenormalization');
         $this->categoryDenormalization = $categoryDenormalization;
 
         $this->categoryDenormalization->disableTransactions();

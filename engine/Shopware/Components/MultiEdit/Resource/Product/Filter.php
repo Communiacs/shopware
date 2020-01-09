@@ -29,8 +29,6 @@ use Shopware\Models\Article\Detail;
 
 /**
  * The filter class will search for products matching a given filter
- *
- * Class Filter
  */
 class Filter
 {
@@ -180,9 +178,10 @@ class Filter
 
         $totalCount = $paginator->count();
 
-        $result = array_map(function ($item) {
-            return $item->getId();
-        },
+        $result = array_map(
+            function ($item) {
+                return $item->getId();
+            },
             $paginator->getIterator()->getArrayCopy()
         );
 

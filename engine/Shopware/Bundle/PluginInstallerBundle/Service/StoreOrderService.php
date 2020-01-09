@@ -30,9 +30,6 @@ use Shopware\Bundle\PluginInstallerBundle\Struct\AccessTokenStruct;
 use Shopware\Bundle\PluginInstallerBundle\Struct\BasketStruct;
 use Shopware\Bundle\PluginInstallerBundle\Struct\StructHydrator;
 
-/**
- * Class StoreOrderService
- */
 class StoreOrderService
 {
     /**
@@ -85,6 +82,14 @@ class StoreOrderService
         $basket = $this->hydrator->hydrateBasket($response);
 
         $basket->setLicenceDomain($context->getLicenceShop());
+
+        foreach ($basket->getDomains() as $domain) {
+            if ($domain->getDomain() !== $context->getLicenceShop()) {
+                continue;
+            }
+
+            $basket->setLicenceShopId($domain->getId());
+        }
 
         return $basket;
     }

@@ -24,8 +24,8 @@
 
 namespace Shopware\Bundle\SearchBundleES;
 
-use ONGR\ElasticsearchDSL\Query\BoolQuery;
-use ONGR\ElasticsearchDSL\Query\MultiMatchQuery;
+use ONGR\ElasticsearchDSL\Query\Compound\BoolQuery;
+use ONGR\ElasticsearchDSL\Query\FullText\MultiMatchQuery;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
 class SearchTermQueryBuilder implements SearchTermQueryBuilderInterface
@@ -55,12 +55,7 @@ class SearchTermQueryBuilder implements SearchTermQueryBuilderInterface
         return $boolQuery;
     }
 
-    /**
-     * @param string $term
-     *
-     * @return MultiMatchQuery
-     */
-    private function getBestFieldQuery($term)
+    private function getBestFieldQuery(string $term): MultiMatchQuery
     {
         return new MultiMatchQuery(
             [
@@ -81,14 +76,7 @@ class SearchTermQueryBuilder implements SearchTermQueryBuilderInterface
         );
     }
 
-    /**
-     * @param string $term
-     * @param string $field
-     * @param int    $maxExpansion
-     *
-     * @return MultiMatchQuery
-     */
-    private function getPhrasePrefixQuery($term, $field, $maxExpansion)
+    private function getPhrasePrefixQuery(string $term, string $field, int $maxExpansion): MultiMatchQuery
     {
         return new MultiMatchQuery(
             [$field],

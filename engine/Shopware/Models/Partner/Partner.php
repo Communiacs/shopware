@@ -46,7 +46,7 @@ class Partner extends ModelEntity
     /**
      * INVERSE SIDE
      *
-     * @var \Shopware\Models\Attribute\Partner
+     * @var \Shopware\Models\Attribute\Partner|null
      *
      * @ORM\OneToOne(targetEntity="Shopware\Models\Attribute\Partner", mappedBy="partner", orphanRemoval=true, cascade={"persist"})
      */
@@ -181,7 +181,7 @@ class Partner extends ModelEntity
     private $active = 0;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="userID", type="integer", nullable=true)
      */
@@ -196,8 +196,6 @@ class Partner extends ModelEntity
     private $orders;
 
     /**
-     * Get id
-     *
      * @return int
      */
     public function getId()
@@ -206,8 +204,6 @@ class Partner extends ModelEntity
     }
 
     /**
-     * Set idCode
-     *
      * @param string $idCode
      *
      * @return Partner
@@ -220,8 +216,6 @@ class Partner extends ModelEntity
     }
 
     /**
-     * Get idCode
-     *
      * @return string
      */
     public function getIdCode()
@@ -230,7 +224,7 @@ class Partner extends ModelEntity
     }
 
     /**
-     * @param \DateTimeInterface|string|null $date
+     * @param \DateTimeInterface|string $date
      *
      * @return Partner
      */
@@ -254,8 +248,6 @@ class Partner extends ModelEntity
     }
 
     /**
-     * Set company
-     *
      * @param string $company
      *
      * @return Partner
@@ -268,8 +260,6 @@ class Partner extends ModelEntity
     }
 
     /**
-     * Get company
-     *
      * @return string
      */
     public function getCompany()
@@ -278,8 +268,6 @@ class Partner extends ModelEntity
     }
 
     /**
-     * Set contact
-     *
      * @param string $contact
      *
      * @return Partner
@@ -292,8 +280,6 @@ class Partner extends ModelEntity
     }
 
     /**
-     * Get contact
-     *
      * @return string
      */
     public function getContact()
@@ -302,8 +288,6 @@ class Partner extends ModelEntity
     }
 
     /**
-     * Set street
-     *
      * @param string $street
      *
      * @return Partner
@@ -316,8 +300,6 @@ class Partner extends ModelEntity
     }
 
     /**
-     * Get street
-     *
      * @return string
      */
     public function getStreet()
@@ -326,8 +308,6 @@ class Partner extends ModelEntity
     }
 
     /**
-     * Set zipCode
-     *
      * @param string $zipCode
      *
      * @return Partner
@@ -584,7 +564,7 @@ class Partner extends ModelEntity
     }
 
     /**
-     * @return int
+     * @return int|null
      */
     public function getCustomerId()
     {
@@ -600,7 +580,7 @@ class Partner extends ModelEntity
     }
 
     /**
-     * @return \Shopware\Models\Attribute\Partner
+     * @return \Shopware\Models\Attribute\Partner|null
      */
     public function getAttribute()
     {

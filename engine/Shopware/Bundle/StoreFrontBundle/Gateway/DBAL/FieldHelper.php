@@ -29,11 +29,6 @@ use Doctrine\DBAL\Query\QueryBuilder;
 use Shopware\Bundle\StoreFrontBundle\Service\CacheInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class FieldHelper
 {
     /**
@@ -1252,6 +1247,12 @@ class FieldHelper
     {
         $this->addTranslation('payment', 'config_payment', $query, $context, '1');
         $this->addTranslation('paymentAttribute', 's_core_paymentmeans_attributes', $query, $context, 'paymentAttribute.paymentmeanID');
+    }
+
+    public function addBlogTranslation(QueryBuilder $query, ShopContextInterface $context): void
+    {
+        $this->addTranslation('blog', 'blog', $query, $context, 'blog.id');
+        $this->addTranslation('blogAttribute', 's_blog_attributes', $query, $context, 'blog.id');
     }
 
     /**

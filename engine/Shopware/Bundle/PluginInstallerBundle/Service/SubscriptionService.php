@@ -29,15 +29,14 @@ use Enlight_Controller_Request_Request as Request;
 use Enlight_Controller_Response_ResponseHttp as Response;
 use Shopware\Bundle\PluginInstallerBundle\Exception\ShopSecretException;
 use Shopware\Bundle\PluginInstallerBundle\StoreClient;
+use Shopware\Bundle\PluginInstallerBundle\Struct\AccessTokenStruct;
 use Shopware\Bundle\PluginInstallerBundle\Struct\PluginInformationResultStruct;
 use Shopware\Bundle\PluginInstallerBundle\Struct\PluginInformationStruct;
 use Shopware\Components\Model\ModelManager;
 use Shopware\Components\ShopwareReleaseStruct;
 use Shopware\Models\Shop\Shop;
+use Symfony\Component\HttpFoundation\Cookie;
 
-/**
- * Class SubscriptionService
- */
 class SubscriptionService
 {
     /**
@@ -107,7 +106,7 @@ class SubscriptionService
 
         $statement = $queryBuilder->execute();
 
-        $secret = unserialize($statement->fetchColumn());
+        $secret = unserialize($statement->fetchColumn(), ['allowed_classes' => false]);
 
         return $secret;
     }
@@ -138,7 +137,7 @@ class SubscriptionService
         }
 
         try {
-            $response->setCookie('lastCheckSubscriptionDate', date('dmY'), time() + 60 * 60 * 24);
+            $response->headers->setCookie(new Cookie('lastCheckSubscriptionDate', date('dmY'), time() + 60 * 60 * 24));
 
             return $this->getPluginInformationFromApi();
         } catch (ShopSecretException $e) {
@@ -221,7 +220,11 @@ class SubscriptionService
      */
     private function generateApiShopSecret()
     {
-        $token = unserialize(Shopware()->BackendSession()->offsetGet('store_token'));
+        $allowedClassList = [
+            AccessTokenStruct::class,
+        ];
+
+        $token = unserialize(Shopware()->BackendSession()->offsetGet('store_token'), ['allowed_classes' => $allowedClassList]);
 
         if ($token === null) {
             $token = Shopware()->BackendSession()->accessToken;

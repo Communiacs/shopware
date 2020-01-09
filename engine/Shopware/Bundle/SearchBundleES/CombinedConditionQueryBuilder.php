@@ -24,8 +24,8 @@
 
 namespace Shopware\Bundle\SearchBundleES;
 
-use ONGR\ElasticsearchDSL\Query\BoolQuery;
-use ONGR\ElasticsearchDSL\Search;
+use ONGR\ElasticsearchDSL\Query\Compound\BoolQuery;
+use Shopware\Bundle\ESIndexingBundle\EsSearch;
 use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundle\CriteriaPartInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
@@ -48,7 +48,7 @@ class CombinedConditionQueryBuilder
      */
     public function build(array $conditions, Criteria $criteria, ShopContextInterface $context)
     {
-        $search = new Search();
+        $search = new EsSearch();
 
         foreach ($conditions as $condition) {
             $handler = $this->getHandler($condition);
@@ -65,8 +65,11 @@ class CombinedConditionQueryBuilder
         if ($search->getPostFilters()) {
             $query->add($search->getPostFilters());
         }
-        if ($search->getFilters()) {
-            $query->add($search->getFilters());
+
+        if ($search->getQueries()->getQueries(BoolQuery::FILTER)) {
+            foreach ($search->getQueries()->getQueries(BoolQuery::FILTER) as $filter) {
+                $query->add($filter, BoolQuery::FILTER);
+            }
         }
         if ($search->getQueries()) {
             $query->add($search->getQueries());

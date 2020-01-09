@@ -28,7 +28,9 @@
 class Shopware_Plugins_Frontend_InputFilter_Bootstrap extends Shopware_Components_Plugin_Bootstrap
 {
     public $sqlRegex = 's_core_|s_order_|s_user|benchmark.*\(|(?:insert|replace).+into|update.+set|(?:delete|select).+from|(?:alter|rename|create|drop|truncate).+(?:database|table|procedure)|union.+select|prepare.+from.+execute|select.+into\s+(outfile|dumpfile)';
+
     public $xssRegex = 'javascript:|src\s*=|\bon[a-z]+\s*=|style\s*=|\bdata-\w+(?!\.)\b\s?=?';
+
     public $rfiRegex = '\.\./|\\0';
 
     /**
@@ -63,6 +65,7 @@ class Shopware_Plugins_Frontend_InputFilter_Bootstrap extends Shopware_Component
      */
     public function onRouteShutdown(Enlight_Controller_EventArgs $args)
     {
+        /** @var Enlight_Controller_Request_RequestHttp $request */
         $request = $args->getRequest();
         $config = $this->Config();
 
@@ -135,7 +138,8 @@ class Shopware_Plugins_Frontend_InputFilter_Bootstrap extends Shopware_Component
         ];
 
         $route = strtolower(
-            implode('/',
+            implode(
+                '/',
                 [$request->getModuleName(), $request->getControllerName(), $request->getActionName()]
             )
         );
@@ -156,6 +160,10 @@ class Shopware_Plugins_Frontend_InputFilter_Bootstrap extends Shopware_Component
         }
 
         unset($process);
+        $request->query->replace($_GET);
+        $request->request->replace($_POST);
+        $request->cookies->replace($_COOKIE);
+        $request->server->replace($_SERVER);
         $request->setParams($userParams);
     }
 

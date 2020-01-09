@@ -27,13 +27,11 @@ use Shopware\Models\Shop\DetachedShop;
 use Shopware\Models\Shop\Repository;
 use Shopware\Models\Shop\Shop;
 use Shopware\Models\Shop\Template;
+use Symfony\Component\HttpFoundation\Cookie;
 
 /**
  * Shopware Router Plugin
  *
- * @category   Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  * @license    http://shopware.de/license
  */
 class Shopware_Plugins_Core_Router_Bootstrap extends Shopware_Components_Plugin_Bootstrap
@@ -103,7 +101,7 @@ class Shopware_Plugins_Core_Router_Bootstrap extends Shopware_Components_Plugin_
         }
 
         $this->validateShop($shop);
-        $shop->registerResources();
+        $this->get('shopware.components.shop_registration_service')->registerShop($shop);
     }
 
     /**
@@ -114,9 +112,9 @@ class Shopware_Plugins_Core_Router_Bootstrap extends Shopware_Components_Plugin_
         $request = $args->getRequest();
         $response = $args->getResponse();
 
-        if (Shopware()->Container()->initialized('Shop')) {
+        if (Shopware()->Container()->initialized('shop')) {
             /** @var DetachedShop $shop */
-            $shop = $this->get('Shop');
+            $shop = $this->get('shop');
 
             if ($request->getHttpHost() !== $shop->getHost()) {
                 if ($request->isSecure()) {
@@ -135,7 +133,11 @@ class Shopware_Plugins_Core_Router_Bootstrap extends Shopware_Components_Plugin_
 
             if (isset($newPath)) {
                 // reset the cookie so only one valid cookie will be set IE11 fix
-                $response->setCookie('session-' . $shop->getId(), '', 1);
+                $basePath = $shop->getBasePath();
+                if ($basePath === null || $basePath === '') {
+                    $basePath = '/';
+                }
+                $response->headers->setCookie(new Cookie('session-' . $shop->getId(), '', 1, $basePath));
                 $response->setRedirect($newPath, 301);
             } else {
                 $this->upgradeShop($request, $response);
@@ -180,7 +182,7 @@ class Shopware_Plugins_Core_Router_Bootstrap extends Shopware_Components_Plugin_
     protected function upgradeShop($request, $response)
     {
         /** @var DetachedShop $shop */
-        $shop = $this->get('Shop');
+        $shop = $this->get('shop');
 
         $cookieKey = null;
         $cookieValue = null;
@@ -229,7 +231,9 @@ class Shopware_Plugins_Core_Router_Bootstrap extends Shopware_Components_Plugin_
                 // If shop is main, remove the cookie
                 $cookieTime = $newShop->getMain() === null ? time() - 3600 : 0;
 
-                $response->setCookie($cookieKey, $cookieValue, $cookieTime, $cookiePath);
+                $response->headers->setCookie(new Cookie($cookieKey, $cookieValue, $cookieTime, $cookiePath));
+
+                $this->refreshCart($newShop);
 
                 return;
             }
@@ -238,8 +242,9 @@ class Shopware_Plugins_Core_Router_Bootstrap extends Shopware_Components_Plugin_
         //currency switch
         if ($cookieKey === 'currency') {
             $path = rtrim($shop->getBasePath(), '/') . '/';
-            $response->setCookie($cookieKey, $cookieValue, 0, $path);
-            $url = sprintf('%s://%s%s',
+            $response->headers->setCookie(new Cookie($cookieKey, $cookieValue, 0, $path));
+            $url = sprintf(
+                '%s://%s%s',
                 $request->getScheme(),
                 $request->getHttpHost(),
                 $request->getRequestUri()
@@ -279,7 +284,7 @@ class Shopware_Plugins_Core_Router_Bootstrap extends Shopware_Components_Plugin_
             $template = $session->template;
             $template = $repository->findOneBy(['template' => $template]);
 
-            $this->get('Template')->setTemplateDir([]);
+            $this->get('template')->setTemplateDir([]);
 
             if ($template !== null) {
                 $shop->setTemplate($template);
@@ -291,10 +296,10 @@ class Shopware_Plugins_Core_Router_Bootstrap extends Shopware_Components_Plugin_
         }
 
         // Save upgrades
-        $shop->registerResources();
+        $this->get('shopware.components.shop_registration_service')->registerShop($shop);
 
         if ($request->isSecure()) {
-            $template = $this->get('Template');
+            $template = $this->get('template');
             $template->setCompileId($template->getCompileId() . '_secure');
         }
     }
@@ -398,16 +403,14 @@ class Shopware_Plugins_Core_Router_Bootstrap extends Shopware_Components_Plugin_
      */
     protected function shouldRedirect(Request $request, Shop $shop)
     {
-        return
-            //for example: template preview, direct shop selection via url
+        return //for example: template preview, direct shop selection via url
             (
                 $request->isGet()
                 && $request->getQuery('__shop') !== null
                 && $request->getQuery('__shop') != $shop->getId()
             )
-            ||
             //for example: shop language switch
-            (
+            || (
                 $request->isPost()
                 && $request->getPost('__shop') !== null
                 && $request->getPost('__redirect') !== null
@@ -511,5 +514,30 @@ class Shopware_Plugins_Core_Router_Bootstrap extends Shopware_Components_Plugin_
         if (!$mainShop->getDocumentTemplate()) {
             throw new \RuntimeException(sprintf("Shop '%s (id: %s)' has no document template.", $shop->getName(), $shop->getId()));
         }
+    }
+
+    private function refreshCart(Shop $shop): void
+    {
+        $this->get('shopware.components.shop_registration_service')->registerShop($shop);
+
+        /** @var Shopware_Components_Modules $modules */
+        $modules = $this->get('modules');
+
+        if (empty($this->get('session')->get('sUserId'))) {
+            $modules->System()->sUSERGROUP = $shop->getCustomerGroup()->getKey();
+            $modules->System()->sUSERGROUPDATA = $shop->getCustomerGroup()->toArray();
+            $modules->System()->sCurrency = $shop->getCurrency()->toArray();
+        }
+
+        $this->get('shopware_storefront.context_service')->initializeContext();
+
+        /** @var \Shopware\Bundle\StoreFrontBundle\Struct\ShopContext $shopContext */
+        $shopContext = $this->get('shopware_storefront.context_service')->getShopContext();
+
+        $modules->Basket()->sRefreshBasket();
+        $modules->Admin()->sGetPremiumShippingcosts($shopContext->getCountry() ? $shopContext->getCountry()->jsonSerialize() : null);
+
+        $amount = $modules->Basket()->sGetAmount();
+        $this->get('session')->offsetSet('sBasketAmount', empty($amount) ? 0 : array_shift($amount));
     }
 }

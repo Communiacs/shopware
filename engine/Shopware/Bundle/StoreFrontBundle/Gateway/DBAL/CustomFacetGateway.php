@@ -83,11 +83,13 @@ class CustomFacetGateway implements CustomFacetGatewayInterface
     {
         $mapping = $this->getCategoryMapping($categoryIds);
 
+        /** @var int[] $ids */
         $ids = array_merge(...array_values($mapping));
 
         if (empty($ids)) {
             return [];
         }
+
         $facets = $this->getList($ids, $context);
 
         $categoryFacets = [];

@@ -28,10 +28,6 @@ use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
 
 /**
- * @category   Shopware
- *
- * @copyright  Copyright (c) shopware AG (http://www.shopware.de)
- *
  * @ORM\Entity()
  * @ORM\Table(name="s_emotion_element_value")
  */
@@ -115,7 +111,7 @@ class Data extends ModelEntity
     private $fieldId;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="value", type="text", nullable=true)
      */
@@ -194,7 +190,7 @@ class Data extends ModelEntity
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getValue()
     {

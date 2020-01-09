@@ -52,7 +52,7 @@ class CommentConfirm extends ModelEntity
     private $creationDate;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="type", type="string", length=255, nullable=true)
      */
@@ -78,8 +78,6 @@ class CommentConfirm extends ModelEntity
     }
 
     /**
-     * Get id
-     *
      * @return int
      */
     public function getId()
@@ -88,8 +86,6 @@ class CommentConfirm extends ModelEntity
     }
 
     /**
-     * Set hash
-     *
      * @param string $hash
      */
     public function setHash($hash)
@@ -98,8 +94,6 @@ class CommentConfirm extends ModelEntity
     }
 
     /**
-     * Get hash
-     *
      * @return string
      */
     public function getHash()
@@ -108,8 +102,6 @@ class CommentConfirm extends ModelEntity
     }
 
     /**
-     * Set data
-     *
      * @param string $data
      */
     public function setData($data)
@@ -118,8 +110,6 @@ class CommentConfirm extends ModelEntity
     }
 
     /**
-     * Get data
-     *
      * @return string
      */
     public function getData()
@@ -128,8 +118,6 @@ class CommentConfirm extends ModelEntity
     }
 
     /**
-     * Set CreationDate
-     *
      * @param \DateTimeInterface|string $creationDate
      */
     public function setCreationDate($creationDate)
@@ -141,8 +129,6 @@ class CommentConfirm extends ModelEntity
     }
 
     /**
-     * Get CreationDate
-     *
      * @return \DateTimeInterface
      */
     public function getCreationDate()
@@ -159,7 +145,7 @@ class CommentConfirm extends ModelEntity
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getType()
     {

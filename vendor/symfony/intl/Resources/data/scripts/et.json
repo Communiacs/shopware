@@ -1,5 +1,5 @@
 {
-    "Version": "2.1.48.42",
+    "Version": "36",
     "Names": {
         "Afak": "afaka",
         "Aghb": "albaani",
@@ -174,7 +174,6 @@
         "Zsye": "emoji",
         "Zsym": "sümbolid",
         "Zxxx": "kirjakeeleta",
-        "Zyyy": "üldine",
-        "Zzzz": "määramata kiri"
+        "Zyyy": "üldine"
     }
 }

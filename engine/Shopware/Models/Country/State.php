@@ -49,7 +49,7 @@ class State extends ModelEntity
     /**
      * INVERSE SIDE
      *
-     * @var CountryStateAttribute
+     * @var CountryStateAttribute|null
      *
      * @ORM\OneToOne(targetEntity="Shopware\Models\Attribute\CountryState", mappedBy="countryState", orphanRemoval=true, cascade={"persist"})
      */
@@ -65,43 +65,41 @@ class State extends ModelEntity
     private $id;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="countryID", type="integer", nullable=true)
      */
     private $countryId;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="position", type="integer", nullable=true)
      */
     private $position;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="name", type="string", length=255, nullable=true)
      */
     private $name;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="shortcode", type="string", length=255, nullable=true)
      */
     private $shortCode;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="active", type="integer", nullable=true)
      */
     private $active;
 
     /**
-     * Get id
-     *
      * @return int
      */
     public function getId()
@@ -110,8 +108,6 @@ class State extends ModelEntity
     }
 
     /**
-     * Set name
-     *
      * @param string $name
      *
      * @return State
@@ -124,9 +120,7 @@ class State extends ModelEntity
     }
 
     /**
-     * Get name
-     *
-     * @return string
+     * @return string|null
      */
     public function getName()
     {
@@ -134,8 +128,6 @@ class State extends ModelEntity
     }
 
     /**
-     * Set shortCode
-     *
      * @param string $shortCode
      *
      * @return State
@@ -148,9 +140,7 @@ class State extends ModelEntity
     }
 
     /**
-     * Get shortCode
-     *
-     * @return string
+     * @return string|null
      */
     public function getShortCode()
     {
@@ -158,8 +148,6 @@ class State extends ModelEntity
     }
 
     /**
-     * Set active
-     *
      * @param int $active
      *
      * @return State
@@ -172,9 +160,7 @@ class State extends ModelEntity
     }
 
     /**
-     * Get active
-     *
-     * @return int
+     * @return int|null
      */
     public function getActive()
     {
@@ -182,7 +168,7 @@ class State extends ModelEntity
     }
 
     /**
-     * @return int
+     * @return int|null
      */
     public function getPosition()
     {
@@ -201,7 +187,7 @@ class State extends ModelEntity
      * OWNING SIDE
      * of the association between states and country
      *
-     * @return Country
+     * @return Country|null
      */
     public function getCountry()
     {
@@ -209,7 +195,7 @@ class State extends ModelEntity
     }
 
     /**
-     * @param Country|array|null $country
+     * @param Country|array $country
      *
      * @return State
      */
@@ -221,7 +207,7 @@ class State extends ModelEntity
     }
 
     /**
-     * @return CountryStateAttribute
+     * @return CountryStateAttribute|null
      */
     public function getAttribute()
     {

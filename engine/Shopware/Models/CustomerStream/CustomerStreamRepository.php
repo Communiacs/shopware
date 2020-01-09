@@ -103,7 +103,7 @@ class CustomerStreamRepository implements CustomerStreamRepositoryInterface
         $query = $this->connection->createQueryBuilder();
         $query->select([
             'stream_id',
-            'COUNT(customer_id) as customer_count',
+            'COUNT(DISTINCT customer_id) as customer_count',
             'SUM(IF(campaign.id IS NULL, 0, 1)) as newsletter_count',
         ]);
 
@@ -124,14 +124,14 @@ class CustomerStreamRepository implements CustomerStreamRepositoryInterface
     {
         $now = new DateTime();
 
-        return (int) $this->connection->fetchColumn('
-            SELECT COUNT(customers.id)
-            FROM s_user customers
-            WHERE customers.id NOT IN (
-                SELECT search_index.id 
-                FROM s_customer_search_index search_index
-                WHERE search_index.index_time >= :indexTime
-            )',
+        return (int) $this->connection->fetchColumn(
+            'SELECT COUNT(customers.id)
+             FROM s_user customers
+             WHERE customers.id NOT IN (
+                 SELECT search_index.id 
+                 FROM s_customer_search_index search_index
+                 WHERE search_index.index_time >= :indexTime
+             )',
             [':indexTime' => $now->format('Y-m-d')]
         );
     }
@@ -159,7 +159,8 @@ class CustomerStreamRepository implements CustomerStreamRepositoryInterface
             $query->andWhere('user.id > :lastId');
             $query->setParameter(':lastId', $offset);
         } else {
-            $query->andWhere('user.id NOT IN (
+            $query->andWhere(
+                'user.id NOT IN (
                 SELECT search_index.id 
                 FROM s_customer_search_index search_index
                 WHERE search_index.index_time >= :indexTime)'
@@ -251,13 +252,17 @@ class CustomerStreamRepository implements CustomerStreamRepositoryInterface
 
             $chart[$format] = array_merge(['yearMonth' => $format], $default);
 
+            if (array_key_exists($format, $amount)) {
+                $chart[$format]['unassigned'] = (float) $amount[$format];
+            }
+
+            if (!isset($streamAmount[$format])) {
+                continue;
+            }
+
             foreach ($streamAmount[$format] as $row) {
                 $stream = 'stream_' . $row['stream'];
                 $chart[$format][$stream] += (float) $row['invoice_amount_sum'];
-            }
-
-            if (array_key_exists($format, $amount)) {
-                $chart[$format]['unassigned'] = (float) $amount[$format];
             }
         }
 

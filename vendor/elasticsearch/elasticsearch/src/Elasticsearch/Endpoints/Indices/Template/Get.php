@@ -1,26 +1,32 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Elasticsearch\Endpoints\Indices\Template;
 
-use Elasticsearch\Common\Exceptions;
 use Elasticsearch\Endpoints\AbstractEndpoint;
+use Elasticsearch\Common\Exceptions;
 
 /**
  * Class Get
  *
  * @category Elasticsearch
  * @package  Elasticsearch\Endpoints\Indices\Template
- * @author   Zachary Tong <zachary.tong@elasticsearch.com>
+ * @author   Zachary Tong <zach@elastic.co>
  * @license  http://www.apache.org/licenses/LICENSE-2.0 Apache2
- * @link     http://elasticsearch.org
+ * @link     http://elastic.co
  */
 class Get extends AbstractEndpoint
 {
-    // The name of the template
+    /**
+     * The name of the template
+     *
+     * @var string
+     */
     private $name;
 
     /**
-     * @param $name
+     * @param string $name
      *
      * @return $this
      */
@@ -39,10 +45,10 @@ class Get extends AbstractEndpoint
      * @throws \Elasticsearch\Common\Exceptions\RuntimeException
      * @return string
      */
-    protected function getURI()
+    public function getURI()
     {
         $name = $this->name;
-        $uri = "/_template";
+        $uri   = "/_template";
 
         if (isset($name) === true) {
             $uri = "/_template/$name";
@@ -54,19 +60,20 @@ class Get extends AbstractEndpoint
     /**
      * @return string[]
      */
-    protected function getParamWhitelist()
+    public function getParamWhitelist()
     {
-        return [
+        return array(
             'flat_settings',
-            'master_timeout',
             'local',
-        ];
+            'master_timeout',
+            'include_type_name'
+        );
     }
 
     /**
      * @return string
      */
-    protected function getMethod()
+    public function getMethod()
     {
         return 'GET';
     }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Elasticsearch\ConnectionPool;
 
 use Elasticsearch\ConnectionPool\Selectors\SelectorInterface;
@@ -31,5 +33,4 @@ class SimpleConnectionPool extends AbstractConnectionPool implements ConnectionP
     public function scheduleCheck()
     {
     }
-
 }

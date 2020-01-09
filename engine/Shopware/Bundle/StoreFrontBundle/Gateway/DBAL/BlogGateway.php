@@ -28,11 +28,6 @@ use Doctrine\DBAL\Connection;
 use Shopware\Bundle\StoreFrontBundle\Gateway;
 use Shopware\Bundle\StoreFrontBundle\Struct;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class BlogGateway implements Gateway\BlogGatewayInterface
 {
     /**
@@ -75,7 +70,7 @@ class BlogGateway implements Gateway\BlogGatewayInterface
      */
     public function getList(array $blogIds, Struct\ShopContextInterface $context)
     {
-        $data = $this->getQuery($blogIds)
+        $data = $this->getQuery($blogIds, $context)
             ->execute()
             ->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -112,7 +107,7 @@ class BlogGateway implements Gateway\BlogGatewayInterface
      *
      * @return \Doctrine\DBAL\Query\QueryBuilder
      */
-    private function getQuery(array $ids)
+    private function getQuery(array $ids, Struct\ShopContextInterface $context)
     {
         $query = $this->connection->createQueryBuilder();
 
@@ -127,6 +122,8 @@ class BlogGateway implements Gateway\BlogGatewayInterface
             ->andWhere('blog.active = 1');
 
         $query->groupBy('blog.id');
+
+        $this->fieldHelper->addBlogTranslation($query, $context);
 
         $query->setParameter(':blogIds', $ids, Connection::PARAM_INT_ARRAY);
 

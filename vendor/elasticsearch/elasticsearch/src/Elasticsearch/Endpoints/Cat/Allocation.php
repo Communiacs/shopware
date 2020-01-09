@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Elasticsearch\Endpoints\Cat;
 
 use Elasticsearch\Endpoints\AbstractEndpoint;
@@ -9,17 +11,21 @@ use Elasticsearch\Endpoints\AbstractEndpoint;
  *
  * @category Elasticsearch
  * @package  Elasticsearch\Endpoints\Cat
- * @author   Zachary Tong <zachary.tong@elasticsearch.com>
+ * @author   Zachary Tong <zach@elastic.co>
  * @license  http://www.apache.org/licenses/LICENSE-2.0 Apache2
- * @link     http://elasticsearch.org
+ * @link     http://elastic.co
  */
 class Allocation extends AbstractEndpoint
 {
-    // A comma-separated list of node IDs or names to limit the returned information
+    /**
+     * A comma-separated list of node IDs or names to limit the returned information
+     *
+     * @var string
+     */
     private $node_id;
 
     /**
-     * @param $node_id
+     * @param string $node_id
      *
      * @return $this
      */
@@ -37,10 +43,10 @@ class Allocation extends AbstractEndpoint
     /**
      * @return string
      */
-    protected function getURI()
+    public function getURI()
     {
         $node_id = $this->node_id;
-        $uri = "/_cat/allocation";
+        $uri   = "/_cat/allocation";
 
         if (isset($node_id) === true) {
             $uri = "/_cat/allocation/$node_id";
@@ -52,22 +58,24 @@ class Allocation extends AbstractEndpoint
     /**
      * @return string[]
      */
-    protected function getParamWhitelist()
+    public function getParamWhitelist()
     {
-        return [
+        return array(
             'bytes',
             'local',
             'master_timeout',
             'h',
             'help',
             'v',
-        ];
+            's',
+            'format',
+        );
     }
 
     /**
      * @return string
      */
-    protected function getMethod()
+    public function getMethod()
     {
         return 'GET';
     }

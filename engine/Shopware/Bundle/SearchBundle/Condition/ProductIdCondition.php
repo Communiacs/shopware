@@ -26,13 +26,10 @@ namespace Shopware\Bundle\SearchBundle\Condition;
 
 use Shopware\Bundle\SearchBundle\ConditionInterface;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.com)
- */
 class ProductIdCondition implements ConditionInterface, \JsonSerializable
 {
+    private const NAME = 'productids';
+
     /**
      * @var int[]
      */
@@ -51,7 +48,7 @@ class ProductIdCondition implements ConditionInterface, \JsonSerializable
      */
     public function getName()
     {
-        return 'productids';
+        return self::NAME;
     }
 
     /**

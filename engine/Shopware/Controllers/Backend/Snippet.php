@@ -24,11 +24,6 @@
 
 use Shopware\Models\Snippet\Snippet;
 
-/**
- * Shopware Backend Controller for the snippet module
- *
- * Controller that provides CRUD-Actions for the Snippet-Model
- */
 class Shopware_Controllers_Backend_Snippet extends Shopware_Controllers_Backend_ExtJs
 {
     /**
@@ -401,7 +396,7 @@ class Shopware_Controllers_Backend_Snippet extends Shopware_Controllers_Backend_
             return;
         }
 
-        $destPath = Shopware()->DocPath('media_' . 'temp');
+        $destPath = Shopware()->DocPath('media_temp');
         if (!is_dir($destPath)) {
             // Try to create directory with write permissions
             mkdir($destPath, 0777, true);
@@ -591,8 +586,8 @@ class Shopware_Controllers_Backend_Snippet extends Shopware_Controllers_Backend_
             } elseif ($format === 'csvexcel') {
                 $encoding = 'iso-8859-15';
             }
-            $this->Response()->setHeader('Content-Type', 'text/x-comma-separated-values;charset=' . $encoding);
-            $this->Response()->setHeader('Content-Disposition', 'attachment; filename="export.csv"');
+            $this->Response()->headers->set('content-type', 'text/x-comma-separated-values;charset=' . $encoding);
+            $this->Response()->headers->set('content-disposition', 'attachment; filename="export.csv"');
 
             foreach ($result as $row) {
                 foreach ($row as $key => $elem) {
@@ -605,26 +600,27 @@ class Shopware_Controllers_Backend_Snippet extends Shopware_Controllers_Backend_
         }
 
         if ($format === 'sql') {
-            $this->Response()->setHeader('Content-type: text/plain', '');
-            $this->Response()->setHeader('Content-Disposition', 'attachment; filename="export.sql"');
+            $this->Response()->headers->set('content-type: text/plain', '');
+            $this->Response()->headers->set('content-disposition', 'attachment; filename="export.sql"');
 
             $sql = 'SELECT * FROM s_core_snippets ORDER BY namespace';
             $result = Shopware()->Db()->query($sql);
             $rows = null;
 
-            echo  "REPLACE INTO `s_core_snippets` (`namespace`, `name`, `value`, `localeID`, `shopID`,`created`, `updated`, `dirty`) VALUES \r\n";
+            echo "REPLACE INTO `s_core_snippets` (`namespace`, `name`, `value`, `localeID`, `shopID`,`created`, `updated`, `dirty`) VALUES \r\n";
             foreach ($result->fetchAll() as $row) {
                 $value = Shopware()->Db()->quote($row['value']);
                 $value = str_replace("\n", '\\n', $value);
 
-                $rows[] = sprintf("(%s, %s, %s, '%s', '%s', '%s', NOW(), %d)",
-                      Shopware()->Db()->quote($row['namespace']),
-                      Shopware()->Db()->quote($row['name']),
-                      $value,
-                      (int) $row['localeID'],
-                      (int) $row['shopID'],
-                      $row['created'],
-                      $row['dirty']
+                $rows[] = sprintf(
+                    "(%s, %s, %s, '%s', '%s', '%s', NOW(), %d)",
+                    Shopware()->Db()->quote($row['namespace']),
+                    Shopware()->Db()->quote($row['name']),
+                    $value,
+                    (int) $row['localeID'],
+                    (int) $row['shopID'],
+                    $row['created'],
+                    $row['dirty']
                 );
             }
             echo implode(",\r\n", $rows) . ';';
@@ -854,6 +850,8 @@ class Shopware_Controllers_Backend_Snippet extends Shopware_Controllers_Backend_
     }
 
     /**
+     * @deprecated since 5.6, will be removed in 5.7
+     *
      * Helper method to prefix properties
      *
      * @param array  $properties
@@ -863,6 +861,8 @@ class Shopware_Controllers_Backend_Snippet extends Shopware_Controllers_Backend_
      */
     protected function prefixProperties($properties = [], $prefix = '')
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be removed with 5.7. Will be removed without replacement.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         foreach ($properties as $key => $property) {
             if (isset($property['property'])) {
                 $properties[$key]['property'] = $prefix . '.' . $property['property'];
@@ -895,14 +895,17 @@ class Shopware_Controllers_Backend_Snippet extends Shopware_Controllers_Backend_
         foreach ($keys as $key) {
             if ($line[$key] !== null) {
                 if (strpos($line[$key], "\r") !== false || strpos($line[$key], "\n") !== false || strpos(
-                    $line[$key], $settings['fieldmark']
+                    $line[$key],
+                    $settings['fieldmark']
                 ) !== false || strpos($line[$key], $settings['separator']) !== false
                 ) {
                     $csv .= $settings['fieldmark'] . str_replace(
-                        $settings['fieldmark'], $settings['escaped_fieldmark'], $line[$key]
+                        $settings['fieldmark'],
+                        $settings['escaped_fieldmark'],
+                        $line[$key]
                     ) . $settings['fieldmark'];
                 } else {
-                    $csv .= "'" . $line[$key];
+                    $csv .= '"' . $line[$key] . '"';
                 }
             }
             if ($lastKey != $key) {

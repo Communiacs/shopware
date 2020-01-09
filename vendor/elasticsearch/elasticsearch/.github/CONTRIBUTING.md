@@ -6,7 +6,7 @@ The process for contributing to any of the Elasticsearch repositories is similar
 
 1. Sign the contributor license agreement
 
-    Please make sure you have signed the [Contributor License Agreement](http://www.elasticsearch.org/contributor-agreement/). We are not asking you to assign copyright to us, but to give us the right to distribute your code without restriction. We ask this of all contributors in order to assure our users of the origin and continuing existence of the code. You only need to sign the CLA once.
+    Please make sure you have signed the [Contributor License Agreement](https://www.elastic.co/contributor-agreement/). We are not asking you to assign copyright to us, but to give us the right to distribute your code without restriction. We ask this of all contributors in order to assure our users of the origin and continuing existence of the code. You only need to sign the CLA once.
 
 2. Set up your fork for development
 
@@ -22,9 +22,8 @@ The process for contributing to any of the Elasticsearch repositories is similar
             -Des.index.store.type=memory -Des.discovery.zen.ping.multicast.enabled=false \
             -Des.node.bench=true -Des.script.disable_dynamic=false
 
-4. Run the unit and yaml integration tests to ensure your changes do not break existing code.  The exported `TEST_BUILD_REF` should match the branch of Elasticsearch that is running on your machine (since tests are specific to the server version):
+4. Run the unit and yaml integration tests to ensure your changes do not break existing code. The `util/RestSpecRunner.php` script will automatically checkout the tests for the exact same build as is the Elasticsearch you are running on your machine (since tests are specific to the server version):
 
-        $> export TEST_BUILD_REF='origin/1.x'
         $> export ES_TEST_HOST='http://localhost:9200'
 
     Then proceed to initialize the REST yaml tests and run the package. **WARNING: the unit tests will clear your cluster

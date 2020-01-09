@@ -22,6 +22,8 @@
  * our trademarks remain entirely with us.
  */
 
+use Symfony\Component\HttpFoundation\Cookie;
+
 /**
  * Shopware Statistics Plugin
  */
@@ -106,7 +108,7 @@ ShopWiki;Bot;WebAlta;;abachobot;architext;ask jeeves;frooglebot;googlebot;lycos;
             return false;
         }
         $result = false;
-        $bots = preg_replace('/[^a-z;]/', '', strtolower(Shopware()->Config()->botBlackList));
+        $bots = preg_replace('/[^a-z;]/', '', strtolower($this->Config()->get('botBlackList')));
         $bots = explode(';', $bots);
         if (!empty($userAgent) && str_replace($bots, '', $userAgent) != $userAgent) {
             $result = true;
@@ -171,8 +173,8 @@ ShopWiki;Bot;WebAlta;;abachobot;architext;ask jeeves;frooglebot;googlebot;lycos;
         ) {
             return false;
         }
-        if (!empty(Shopware()->Config()->blockIp)
-            && strpos(Shopware()->Config()->blockIp, $request->getClientIp()) !== false
+        if (!empty($this->Config()->get('blockIp'))
+            && strpos($this->Config()->get('blockIp'), $request->getClientIp()) !== false
         ) {
             return false;
         }
@@ -362,7 +364,13 @@ ShopWiki;Bot;WebAlta;;abachobot;architext;ask jeeves;frooglebot;googlebot;lycos;
                     } else {
                         $valid = 0;
                     }
-                    $response->setCookie('partner', $row['idcode'], $valid, '/');
+                    $basePath = $request->getBasePath();
+                    if ($basePath === null || $basePath === '') {
+                        $basePath = '/';
+                    }
+                    $response->headers->setCookie(
+                        new Cookie('partner', $row['idcode'], $valid, $basePath)
+                    );
                 }
                 Shopware()->Session()->sPartner = $partner;
             }

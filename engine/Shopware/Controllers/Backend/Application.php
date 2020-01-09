@@ -55,12 +55,8 @@ use Shopware\Components\Model\QueryBuilder;
  *  - The backend controller supports additional configuration for the listing or detail actions.
  *  - For example you can limit the sortable fields by using the $sortFields property
  *  - Or you can limit the filterable fields by using the $filterFields property.
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
-class Shopware_Controllers_Backend_Application extends Shopware_Controllers_Backend_ExtJs
+abstract class Shopware_Controllers_Backend_Application extends Shopware_Controllers_Backend_ExtJs
 {
     /**
      * Contains the repository class of the configured
@@ -857,7 +853,9 @@ class Shopware_Controllers_Backend_Application extends Shopware_Controllers_Back
                     $data[$mapping['fieldName']] = $associationModel;
 
                     //remove the foreign key data.
-                    unset($data[$field]);
+                    if ($field !== $mapping['fieldName']) {
+                        unset($data[$field]);
+                    }
                 }
             } elseif ($mapping['type'] === ClassMetadataInfo::MANY_TO_MANY) {
                 /**
@@ -1127,11 +1125,11 @@ class Shopware_Controllers_Backend_Application extends Shopware_Controllers_Back
             case 'datetime':
                 //validates the date value. If the value is no date value, return
                 $date = date_parse($value);
-                if (!checkdate($date['month'], $date['day'], $date['year'])) {
+
+                if ($date['error_count'] > 0 || !checkdate($date['month'], $date['day'], $date['year'])) {
                     $value = '%' . $value . '%';
                     break;
                 }
-
                 $date = new DateTime($value);
                 $value = $date->format('Y-m-d');
                 if (!$this->isSearchExpression($expression)) {

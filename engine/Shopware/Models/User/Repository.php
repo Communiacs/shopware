@@ -109,15 +109,14 @@ class Repository extends ModelRepository
         /** @var QueryBuilder $builder */
         $builder = $this->getEntityManager()->createQueryBuilder();
         $builder->select([
-                'user.id as id',
-                'user.username as username',
-                'user.lastLogin as lastLogin',
-                'user.name as name',
-                'role.name as groupname',
-                'user.active as active',
-                'user.email as email',
-            ]
-        );
+            'user.id as id',
+            'user.username as username',
+            'user.lastLogin as lastLogin',
+            'user.name as name',
+            'role.name as groupname',
+            'user.active as active',
+            'user.email as email',
+        ]);
         $builder->from(User::class, 'user');
         $builder->join('user.role', 'role');
         if (!empty($filter)) {
@@ -224,9 +223,11 @@ class Repository extends ModelRepository
     {
         $builder = $this->getEntityManager()->createQueryBuilder();
 
-        $builder->select(['resources', 'privileges'])
-                ->from(Resource::class, 'resources')
-                ->leftJoin('resources.privileges', 'privileges');
+        $builder->select(['resources', 'privileges', 'requirements'])
+                ->from('Shopware\Models\User\Resource', 'resources')
+                ->leftJoin('resources.privileges', 'privileges')
+                ->leftJoin('privileges.requirements', 'requirements')
+                ->orderBy('resources.name');
 
         if (!empty($filter)) {
             $builder->where('resources.name LIKE ?1')

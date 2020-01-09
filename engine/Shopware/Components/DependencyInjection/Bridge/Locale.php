@@ -26,11 +26,6 @@ namespace Shopware\Components\DependencyInjection\Bridge;
 
 use Shopware\Components\DependencyInjection\Container;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class Locale
 {
     /**
@@ -39,8 +34,8 @@ class Locale
     public function factory(Container $container)
     {
         $locale = 'de_DE';
-        if ($container->has('Shop')) {
-            $locale = $container->get('Shop')->getLocale()->getLocale();
+        if ($container->has('shop')) {
+            $locale = $container->get('shop')->getLocale()->getLocale();
         }
 
         return new \Zend_Locale($locale);

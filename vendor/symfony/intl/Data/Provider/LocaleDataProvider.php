@@ -12,14 +12,13 @@
 namespace Symfony\Component\Intl\Data\Provider;
 
 use Symfony\Component\Intl\Data\Bundle\Reader\BundleEntryReaderInterface;
-use Symfony\Component\Intl\Locale;
 
 /**
  * Data provider for locale-related ICU data.
  *
  * @author Bernhard Schussek <bschussek@gmail.com>
  *
- * @internal
+ * @internal to be removed in 5.0.
  */
 class LocaleDataProvider
 {
@@ -29,10 +28,9 @@ class LocaleDataProvider
     /**
      * Creates a data provider that reads locale-related data from .res files.
      *
-     * @param string                     $path   The path to the directory containing the .res files
-     * @param BundleEntryReaderInterface $reader The reader for reading the .res files
+     * @param string $path The path to the directory containing the .res files
      */
-    public function __construct($path, BundleEntryReaderInterface $reader)
+    public function __construct(string $path, BundleEntryReaderInterface $reader)
     {
         $this->path = $path;
         $this->reader = $reader;
@@ -57,7 +55,7 @@ class LocaleDataProvider
     public function getName($locale, $displayLocale = null)
     {
         if (null === $displayLocale) {
-            $displayLocale = Locale::getDefault();
+            $displayLocale = \Locale::getDefault();
         }
 
         return $this->reader->readEntry($this->path, $displayLocale, ['Names', $locale]);
@@ -66,7 +64,7 @@ class LocaleDataProvider
     public function getNames($displayLocale = null)
     {
         if (null === $displayLocale) {
-            $displayLocale = Locale::getDefault();
+            $displayLocale = \Locale::getDefault();
         }
 
         $names = $this->reader->readEntry($this->path, $displayLocale, ['Names']);

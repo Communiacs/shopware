@@ -22,9 +22,6 @@
  * our trademarks remain entirely with us.
  */
 
-/**
- * Shopware Application
- */
 class Shopware_Controllers_Widgets_Checkout extends Enlight_Controller_Action
 {
     /**
@@ -46,7 +43,7 @@ class Shopware_Controllers_Widgets_Checkout extends Enlight_Controller_Action
     {
         $this->module = Shopware()->Modules()->Basket();
         $this->session = Shopware()->Session();
-        $this->Response()->setHeader('x-robots', 'noindex');
+        $this->Response()->setHeader('x-robots-tag', 'noindex');
     }
 
     public function infoAction()

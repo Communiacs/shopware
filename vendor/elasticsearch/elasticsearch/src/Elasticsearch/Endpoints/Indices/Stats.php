@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Elasticsearch\Endpoints\Indices;
 
 use Elasticsearch\Endpoints\AbstractEndpoint;
@@ -9,17 +11,21 @@ use Elasticsearch\Endpoints\AbstractEndpoint;
  *
  * @category Elasticsearch
  * @package  Elasticsearch\Endpoints\Indices
- * @author   Zachary Tong <zachary.tong@elasticsearch.com>
+ * @author   Zachary Tong <zach@elastic.co>
  * @license  http://www.apache.org/licenses/LICENSE-2.0 Apache2
- * @link     http://elasticsearch.org
+ * @link     http://elastic.co
  */
 class Stats extends AbstractEndpoint
 {
-    // Limit the information returned the specific metrics.
+    /**
+     * Limit the information returned the specific metrics.
+     *
+     * @var string
+     */
     private $metric;
 
     /**
-     * @param $metric
+     * @param string|string[] $metric
      *
      * @return $this
      */
@@ -41,11 +47,11 @@ class Stats extends AbstractEndpoint
     /**
      * @return string
      */
-    protected function getURI()
+    public function getURI()
     {
         $index = $this->index;
         $metric = $this->metric;
-        $uri = "/_stats";
+        $uri   = "/_stats";
 
         if (isset($index) === true && isset($metric) === true) {
             $uri = "/$index/_stats/$metric";
@@ -61,9 +67,9 @@ class Stats extends AbstractEndpoint
     /**
      * @return string[]
      */
-    protected function getParamWhitelist()
+    public function getParamWhitelist()
     {
-        return [
+        return array(
             'completion_fields',
             'fielddata_fields',
             'fields',
@@ -72,13 +78,14 @@ class Stats extends AbstractEndpoint
             'level',
             'types',
             'metric',
-        ];
+            'include_segment_file_sizes'
+        );
     }
 
     /**
      * @return string
      */
-    protected function getMethod()
+    public function getMethod()
     {
         return 'GET';
     }

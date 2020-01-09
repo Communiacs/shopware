@@ -24,18 +24,7 @@
 
 namespace Shopware\Bundle\SearchBundle\Sorting;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class PriceSorting extends Sorting
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function getName()
-    {
-        return 'prices';
-    }
+    protected const NAME = 'prices';
 }

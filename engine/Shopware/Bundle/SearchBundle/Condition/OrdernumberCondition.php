@@ -26,13 +26,10 @@ namespace Shopware\Bundle\SearchBundle\Condition;
 
 use Shopware\Bundle\SearchBundle\ConditionInterface;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.com)
- */
 class OrdernumberCondition implements ConditionInterface, \JsonSerializable
 {
+    private const NAME = 'ordernumber';
+
     /**
      * @var string[]
      */
@@ -51,7 +48,7 @@ class OrdernumberCondition implements ConditionInterface, \JsonSerializable
      */
     public function getName()
     {
-        return 'ordernumber';
+        return self::NAME;
     }
 
     /**

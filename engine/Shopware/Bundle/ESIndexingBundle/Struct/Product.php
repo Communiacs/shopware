@@ -29,9 +29,6 @@ use Shopware\Bundle\StoreFrontBundle\Struct\ListProduct;
 use Shopware\Bundle\StoreFrontBundle\Struct\Product\Price;
 use Shopware\Bundle\StoreFrontBundle\Struct\Property\Option;
 
-/**
- * Class Product
- */
 class Product extends ListProduct
 {
     /**
@@ -100,6 +97,11 @@ class Product extends ListProduct
     protected $filterConfiguration = [];
 
     /**
+     * @var array<int, int>
+     */
+    protected $manualSorting = [];
+
+    /**
      * @return Product
      */
     public static function createFromListProduct(ListProduct $listProduct)
@@ -109,6 +111,7 @@ class Product extends ListProduct
             $listProduct->getVariantId(),
             $listProduct->getNumber()
         );
+
         foreach ($listProduct as $key => $value) {
             $product->$key = $value;
         }
@@ -238,7 +241,7 @@ class Product extends ListProduct
         return $this->visibility;
     }
 
-    public function setAvailableCombinations(array $combinations)
+    public function setAvailableCombinations(array $combinations = null)
     {
         $this->availableCombinations = $combinations;
     }
@@ -249,9 +252,9 @@ class Product extends ListProduct
     }
 
     /**
-     * @param Group[] $fullConfiguration
+     * @param Group[]|null $fullConfiguration
      */
-    public function setFullConfiguration(array $fullConfiguration)
+    public function setFullConfiguration(array $fullConfiguration = null)
     {
         $this->fullConfiguration = $fullConfiguration;
     }
@@ -298,5 +301,35 @@ class Product extends ListProduct
     public function setAvailability($availability)
     {
         $this->availability = $availability;
+    }
+
+    public function getManualSorting(): array
+    {
+        return $this->manualSorting;
+    }
+
+    /**
+     * @param array<int, int> $manualSorting
+     */
+    public function setManualSorting(array $manualSorting): void
+    {
+        $this->manualSorting = $manualSorting;
+    }
+
+    public function jsonSerialize(): array
+    {
+        $data = parent::jsonSerialize();
+        unset(
+            $data['fullConfiguration'],
+            $data['releaseDate'],
+            $data['cheapestPrice'],
+            $data['priceRules'],
+            $data['prices'],
+            $data['allowBuyInListing'],
+            $data['displayFromPrice'],
+            $data['cover']
+        );
+
+        return $data;
     }
 }

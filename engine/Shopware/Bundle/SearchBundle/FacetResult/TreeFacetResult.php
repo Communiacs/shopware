@@ -29,13 +29,10 @@ use Shopware\Bundle\SearchBundle\TemplateSwitchable;
 use Shopware\Bundle\StoreFrontBundle\Struct\Attribute;
 use Shopware\Bundle\StoreFrontBundle\Struct\Extendable;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class TreeFacetResult extends Extendable implements FacetResultInterface, TemplateSwitchable
 {
+    private const TEMPLATE = 'frontend/listing/filter/facet-value-tree.tpl';
+
     /**
      * @var string
      */
@@ -82,7 +79,7 @@ class TreeFacetResult extends Extendable implements FacetResultInterface, Templa
         $label,
         $values,
         $attributes = [],
-        $template = 'frontend/listing/filter/facet-value-tree.tpl'
+        $template = self::TEMPLATE
     ) {
         $this->facetName = $facetName;
         $this->fieldName = $fieldName;

@@ -13,14 +13,13 @@ namespace Symfony\Component\Intl\Data\Provider;
 
 use Symfony\Component\Intl\Data\Bundle\Reader\BundleEntryReaderInterface;
 use Symfony\Component\Intl\Exception\MissingResourceException;
-use Symfony\Component\Intl\Locale;
 
 /**
  * Data provider for currency-related data.
  *
  * @author Bernhard Schussek <bschussek@gmail.com>
  *
- * @internal
+ * @internal to be removed in 5.0.
  */
 class CurrencyDataProvider
 {
@@ -36,10 +35,9 @@ class CurrencyDataProvider
      * Creates a data provider that reads currency-related data from a
      * resource bundle.
      *
-     * @param string                     $path   The path to the resource bundle
-     * @param BundleEntryReaderInterface $reader The reader for reading the resource bundle
+     * @param string $path The path to the resource bundle
      */
-    public function __construct($path, BundleEntryReaderInterface $reader)
+    public function __construct(string $path, BundleEntryReaderInterface $reader)
     {
         $this->path = $path;
         $this->reader = $reader;
@@ -53,7 +51,7 @@ class CurrencyDataProvider
     public function getSymbol($currency, $displayLocale = null)
     {
         if (null === $displayLocale) {
-            $displayLocale = Locale::getDefault();
+            $displayLocale = \Locale::getDefault();
         }
 
         return $this->reader->readEntry($this->path, $displayLocale, ['Names', $currency, static::INDEX_SYMBOL]);
@@ -62,7 +60,7 @@ class CurrencyDataProvider
     public function getName($currency, $displayLocale = null)
     {
         if (null === $displayLocale) {
-            $displayLocale = Locale::getDefault();
+            $displayLocale = \Locale::getDefault();
         }
 
         return $this->reader->readEntry($this->path, $displayLocale, ['Names', $currency, static::INDEX_NAME]);
@@ -71,7 +69,7 @@ class CurrencyDataProvider
     public function getNames($displayLocale = null)
     {
         if (null === $displayLocale) {
-            $displayLocale = Locale::getDefault();
+            $displayLocale = \Locale::getDefault();
         }
 
         // ====================================================================

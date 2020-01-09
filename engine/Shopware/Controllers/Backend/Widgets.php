@@ -27,9 +27,6 @@ use Shopware\Models\User\User;
 use Shopware\Models\Widget\View;
 use Shopware\Models\Widget\Widget;
 
-/**
- * Backend widget controller
- */
 class Shopware_Controllers_Backend_Widgets extends Shopware_Controllers_Backend_ExtJs
 {
     /**
@@ -62,14 +59,16 @@ class Shopware_Controllers_Backend_Widgets extends Shopware_Controllers_Backend_
 
         $data = $builder->getQuery()->getArrayResult();
 
+        $snippets = $this->get('snippets')->getNamespace('backend/widget/labels');
         $widgets = [];
+
         foreach ($data as &$widgetData) {
             if (!$this->_isAllowed($widgetData['name'], 'widgets')) {
                 continue;
             }
 
-            $widgetData['label'] = Shopware()->Container()->get('snippets')->getNamespace('backend/widget/labels')
-                ->get($widgetData['name'], $widgetData['label']);
+            // fallback: translation -> name
+            $widgetData['label'] = $snippets->get($widgetData['name'], $widgetData['name']);
 
             $widgets[] = $widgetData;
         }
@@ -300,7 +299,8 @@ class Shopware_Controllers_Backend_Widgets extends Shopware_Controllers_Backend_
         ";
 
         $fetchConversion = Shopware()->Container()->get('db')->fetchRow(
-            $sql, [
+            $sql,
+            [
                 'startDate' => $startDate->format('Y-m-d H:i:s'),
             ]
         );
@@ -406,7 +406,7 @@ class Shopware_Controllers_Backend_Widgets extends Shopware_Controllers_Backend_
     public function getShopwareNewsAction()
     {
         /** @var Shopware_Components_Auth $auth */
-        $auth = Shopware()->Container()->get('Auth');
+        $auth = Shopware()->Container()->get('auth');
         $user = $auth->getIdentity();
         $result = $this->fetchRssFeedData($user->locale);
 
@@ -453,11 +453,10 @@ class Shopware_Controllers_Backend_Widgets extends Shopware_Controllers_Backend_
             }
 
             $order['amount'] = $amount;
-            if (strlen($order['customer']) > 25) {
-                $order['customer'] = substr($order['customer'], 0, 25) . '..';
+            if (mb_strlen($order['customer']) > 25) {
+                $order['customer'] = mb_substr($order['customer'], 0, 25) . '..';
             }
-            unset($order['firstname']);
-            unset($order['lastname']);
+            unset($order['firstname'], $order['lastname']);
         }
 
         $this->View()->assign(
@@ -523,6 +522,20 @@ class Shopware_Controllers_Backend_Widgets extends Shopware_Controllers_Backend_
             );
         }
         $this->View()->assign(['success' => true, 'message' => 'Successfully saved.']);
+    }
+
+    public function getUnverifiedRatingsAction(): void
+    {
+        $qb = $this->getModelManager()->getConnection()->createQueryBuilder();
+        $qb->from('s_articles_vote', 'vote')
+            ->addSelect('vote.*')
+            ->addSelect('product.name as productTitle')
+            ->innerJoin('vote', 's_articles', 'product', 'product.id = vote.articleID')
+            ->where('vote.active = 0')
+            ->orderBy('vote.datum', 'ASC')
+            ->setMaxResults(10);
+
+        $this->View()->assign(['success' => true, 'data' => $qb->execute()->fetchAll()]);
     }
 
     /**

@@ -226,6 +226,7 @@ Ext.define('Shopware.apps.Shipping.view.main.List', {
             case 3:
                 return '{s name=grid_dispatch_type_discount}Discount rule{/s}';
             case 2:
+            case 4:
                 return '{s name=grid_dispatch_type_surcharge}Surcharge rule{/s}';
             case 1:
                 return '{s name=grid_dispatch_type_alternative}Alternate shipping type{/s}';
@@ -277,17 +278,19 @@ Ext.define('Shopware.apps.Shipping.view.main.List', {
      * @param [object] record - current record
      */
     nameColumn : function (value, metaData, record) {
-        return Ext.String.format('{literal}<strong style="font-weight: 700">{0}</strong>{/literal}', record.get('name'));
+        // Show the translated name in the list
+        return Ext.String.format('{literal}<strong style="font-weight: 700">{0}</strong>{/literal}', record.get('translatedName'));
     },
 
     /**
      * Formats the comment column
      *
-     * @param [string] value - Description for the dispatch
+     * @param [string] value - Comment for the dispatch
      * @param [object] metaData - Meta data for this column
      * @param [object] record - current record
      */
     commentColumn : function (value, metaData, record) {
+        // Show the comment in the overview
         return record.get('comment');
     },
     /**

@@ -27,14 +27,10 @@ namespace Shopware\Bundle\SearchBundle\Condition;
 use Assert\Assertion;
 use Shopware\Bundle\SearchBundle\ConditionInterface;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class VoteAverageCondition implements ConditionInterface, \JsonSerializable
 {
     const STATE_INCLUDES_VOTE_TABLE = 'vote';
+    private const NAME = 'vote_average';
 
     /**
      * @var float
@@ -55,7 +51,7 @@ class VoteAverageCondition implements ConditionInterface, \JsonSerializable
      */
     public function getName()
     {
-        return 'vote_average';
+        return self::NAME;
     }
 
     /**

@@ -363,6 +363,8 @@
                 me.$el.parents('form').submit();
             }
 
+            me.$el.parent().find('input.flatpickr-input').blur();
+
             $.publish('plugin/swDatePicker/onPickerClose', [ me ]);
         },
 
@@ -522,7 +524,7 @@
 
             dateFormat = dateFormat || me.opts.dateFormat;
 
-            var formattedDate = me.flatpickr.formatDate(dateFormat, date);
+            var formattedDate = me.flatpickr.formatDate(date, dateFormat);
 
             $.publish('plugin/swDatePicker/onFormatDate', [ me, formattedDate, dateFormat, date ]);
 

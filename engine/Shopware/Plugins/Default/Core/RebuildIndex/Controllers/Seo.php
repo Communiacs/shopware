@@ -22,30 +22,33 @@
  * our trademarks remain entirely with us.
  */
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class Shopware_Controllers_Backend_Seo extends Shopware_Controllers_Backend_ExtJs
 {
     /**
+     * @deprecated in 5.6, will be private in the future
+     *
      * Helper function to get the new seo index component with auto completion
      *
      * @return Shopware_Components_SeoIndex
      */
     public function SeoIndex()
     {
-        return Shopware()->Container()->get('SeoIndex');
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be private with 5.7.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
+        return Shopware()->Container()->get('seoindex');
     }
 
     /**
+     * @deprecated in 5.6, will be private in the future
+     *
      * Helper function to get the sRewriteTable class with auto completion.
      *
      * @return sRewriteTable
      */
     public function RewriteTable()
     {
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be private with 5.7.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+
         return Shopware()->Modules()->RewriteTable();
     }
 
@@ -93,6 +96,7 @@ class Shopware_Controllers_Backend_Seo extends Shopware_Controllers_Backend_ExtJ
             'static' => $static,
             'content' => $content,
             'supplier' => $supplier,
+            'contentType' => $this->SeoIndex()->countContentTypes(),
         ];
 
         $counts = $this->get('events')->filter(
@@ -268,6 +272,24 @@ class Shopware_Controllers_Backend_Seo extends Shopware_Controllers_Backend_ExtJ
         // Make sure a template is available
         $this->RewriteTable()->baseSetup();
         $this->RewriteTable()->createManufacturerUrls($context, $offset, $limit);
+
+        $this->View()->assign([
+            'success' => true,
+        ]);
+    }
+
+    public function seoContentTypeAction(): void
+    {
+        @set_time_limit(1200);
+        $shopId = (int) $this->Request()->getParam('shopId', 1);
+
+        // Create shop
+        $this->SeoIndex()->registerShop($shopId);
+        $context = $this->get('shopware_storefront.context_service')->createShopContext($shopId);
+
+        // Make sure a template is available
+        $this->RewriteTable()->baseSetup();
+        $this->RewriteTable()->createContentTypeUrls($context);
 
         $this->View()->assign([
             'success' => true,

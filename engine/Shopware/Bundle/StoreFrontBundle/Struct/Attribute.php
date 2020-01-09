@@ -24,12 +24,7 @@
 
 namespace Shopware\Bundle\StoreFrontBundle\Struct;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
-class Attribute extends Struct implements \JsonSerializable
+class Attribute extends Struct implements \JsonSerializable, \ArrayAccess
 {
     /**
      * Internal storage which contains all struct data.
@@ -39,14 +34,12 @@ class Attribute extends Struct implements \JsonSerializable
     protected $storage = [];
 
     /**
-     * @param array $data
-     *
-     * @throws \Exception
+     * @throws \InvalidArgumentException
      */
-    public function __construct($data = [])
+    public function __construct(array $data = [])
     {
         if (!$this->isValid($data)) {
-            throw new \Exception('Class values should be serializable');
+            throw new \InvalidArgumentException('Class values should be serializable');
         }
         $this->storage = $data;
     }
@@ -70,12 +63,12 @@ class Attribute extends Struct implements \JsonSerializable
      *
      * @param string $name
      *
-     * @throws \Exception
+     * @throws \InvalidArgumentException
      */
     public function set($name, $value)
     {
         if (!$this->isValid($value)) {
-            throw new \Exception('Class values should be serializable');
+            throw new \InvalidArgumentException('Class values should be serializable');
         }
 
         $this->storage[$name] = $value;
@@ -110,26 +103,57 @@ class Attribute extends Struct implements \JsonSerializable
     }
 
     /**
-     * @return bool
+     * {@inheritdoc}
      */
-    private function isValid($value)
+    public function offsetExists($offset)
     {
-        if (is_scalar($value)) {
-            return true;
+        return $this->exists($offset);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function offsetGet($offset)
+    {
+        return $this->get($offset);
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * @throws \InvalidArgumentException
+     */
+    public function offsetSet($offset, $value)
+    {
+        $this->set($offset, $value);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function offsetUnset($offset)
+    {
+        if ($this->exists($offset)) {
+            unset($this->storage[$offset]);
         }
-        if ($value instanceof \JsonSerializable) {
-            return true;
-        }
-        if (!is_array($value)) {
+    }
+
+    private function isValid($value): bool
+    {
+        if ($value instanceof \JsonSerializable || is_scalar($value) || $value === null) {
             return true;
         }
 
-        foreach ($value as $val) {
-            if (!$this->isValid($val)) {
-                return false;
+        if (is_array($value)) {
+            foreach ($value as $val) {
+                if (!$this->isValid($val)) {
+                    return false;
+                }
             }
+
+            return true;
         }
 
-        return true;
+        return false;
     }
 }

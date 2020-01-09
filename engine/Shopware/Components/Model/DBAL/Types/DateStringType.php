@@ -29,13 +29,7 @@ use Doctrine\DBAL\Types\ConversionException;
 use Doctrine\DBAL\Types\Type;
 
 /**
- * Type that maps an SQL DATE to a PHP Date object.
- *
- * @licence   This code was originally released under the MIT license
- *
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
+ * @deprecated in 5.6, will be removed with 5.7. Please insert only DateTime attributes into models. Please use `Doctrine\DBAL\Types\DateType` instead.
  */
 class DateStringType extends Type
 {
@@ -53,6 +47,7 @@ class DateStringType extends Type
     {
         // FIX START
         if (!$value instanceof \DateTimeInterface && !empty($value)) {
+            trigger_error('Deprecated the implicit conversion of strings to DateTime objects in Doctrine entities, it will be removed in Shopware 5.7. Relying on this conversion will throw a deprecation warning till then, please only insert DateTime objects.', E_USER_DEPRECATED);
             $value = new \DateTime($value);
         } elseif (empty($value)) {
             $value = null;

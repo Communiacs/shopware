@@ -27,11 +27,6 @@ namespace Shopware\Bundle\SearchBundleDBAL\SearchTerm;
 use Doctrine\DBAL\Connection;
 use Shopware\Bundle\SearchBundleDBAL\KeywordFinderInterface;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class KeywordFinder implements KeywordFinderInterface
 {
     /**
@@ -40,6 +35,7 @@ class KeywordFinder implements KeywordFinderInterface
      * @var int
      */
     protected $maxKeywords = 5;
+
     /**
      * @var \Shopware_Components_Config
      */

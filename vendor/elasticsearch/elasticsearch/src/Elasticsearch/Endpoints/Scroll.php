@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Elasticsearch\Endpoints;
 
 use Elasticsearch\Common\Exceptions;
@@ -9,13 +11,12 @@ use Elasticsearch\Common\Exceptions;
  *
  * @category Elasticsearch
  * @package  Elasticsearch\Endpoints
- * @author   Zachary Tong <zachary.tong@elasticsearch.com>
+ * @author   Zachary Tong <zach@elastic.co>
  * @license  http://www.apache.org/licenses/LICENSE-2.0 Apache2
- * @link     http://elasticsearch.org
+ * @link     http://elastic.co
  */
 class Scroll extends AbstractEndpoint
 {
-    private $clear = false;
 
     /**
      * @param array $body
@@ -34,15 +35,32 @@ class Scroll extends AbstractEndpoint
         return $this;
     }
 
-    public function setClearScroll($clear)
+    /**
+     * @return array
+     */
+    public function getBody()
     {
-        $this->clear = $clear;
+        return $this->body;
+    }
+
+    /**
+     * @param string $scroll
+     *
+     * @return $this
+     */
+    public function setScroll($scroll)
+    {
+        if (isset($scroll) !== true) {
+            return $this;
+        }
+
+        $this->body['scroll'] = $scroll;
 
         return $this;
     }
 
     /**
-     * @param $scroll_id
+     * @param string $scroll_id
      *
      * @return $this
      */
@@ -52,49 +70,36 @@ class Scroll extends AbstractEndpoint
             return $this;
         }
 
-        $this->body = $scroll_id;
+        $this->body['scroll_id'] = $scroll_id;
 
         return $this;
     }
 
     /**
-     * @return array
-     */
-    protected function getBody()
-    {
-        return $this->body;
-    }
-
-    /**
      * @return string
      */
-    protected function getURI()
+    public function getURI()
     {
-        $uri = "/_search/scroll";
-
+        $uri   = "/_search/scroll";
         return $uri;
     }
 
     /**
      * @return string[]
      */
-    protected function getParamWhitelist()
+    public function getParamWhitelist()
     {
-        return [
+        return array(
             'scroll',
-            'scroll_id',
-        ];
+            'rest_total_hits_as_int'
+        );
     }
 
     /**
      * @return string
      */
-    protected function getMethod()
+    public function getMethod()
     {
-        if ($this->clear == true) {
-            return 'DELETE';
-        }
-
         return 'GET';
     }
 }

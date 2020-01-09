@@ -28,11 +28,6 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Query\QueryBuilder;
 
-/**
- * @category Shopware
- *
- * @copyright Copyright (c) shopware AG (http://www.shopware.de)
- */
 class ConfigWriter
 {
     /**
@@ -57,10 +52,10 @@ class ConfigWriter
         $result = $query->execute()->fetch(\PDO::FETCH_ASSOC);
 
         if ($result['configured']) {
-            return unserialize($result['configured']);
+            return unserialize($result['configured'], ['allowed_classes' => false]);
         }
 
-        return unserialize($result['value']);
+        return unserialize($result['value'], ['allowed_classes' => false]);
     }
 
     /**
