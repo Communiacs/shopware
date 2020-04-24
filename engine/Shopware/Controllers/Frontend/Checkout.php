@@ -172,6 +172,9 @@ class Shopware_Controllers_Frontend_Checkout extends Enlight_Controller_Action i
         $this->View()->assign('sInquiryLink', $this->getInquiryLink());
 
         $this->View()->assign('sTargetAction', 'cart');
+
+        $this->View()->assign('sBasketInfo', $this->session->offsetGet('sErrorMessages'));
+        $this->session->offsetUnset('sErrorMessages');
     }
 
     /**
@@ -280,10 +283,13 @@ class Shopware_Controllers_Frontend_Checkout extends Enlight_Controller_Action i
             $this->View()->assign('sVoucherError', $voucherErrors);
         }
 
+        $activeBillingAddressId = null;
         /** @var array<array<array>> $activeBillingAddressId */
         if (empty($activeBillingAddressId = $this->session->offsetGet('checkoutBillingAddressId'))) {
             $activeBillingAddressId = $userData['additional']['user']['default_billing_address_id'];
         }
+
+        $activeShippingAddressId = null;
         /** @var array<array<array>> $activeShippingAddressId */
         if (empty($activeShippingAddressId = $this->session->offsetGet('checkoutShippingAddressId'))) {
             $activeShippingAddressId = $userData['additional']['user']['default_shipping_address_id'];
@@ -565,6 +571,8 @@ class Shopware_Controllers_Frontend_Checkout extends Enlight_Controller_Action i
             if (Shopware()->Config()->get('alsoBoughtShow', true)) {
                 $this->View()->assign('sCrossBoughtToo', $this->getBoughtToo($productId));
             }
+        } else {
+            $this->session->offsetSet('sErrorMessages', $this->container->get('snippets')->getNamespace('frontend/basket/internalMessages')->get('WrongArticleNumberMessage', 'Please enter a valid article number'));
         }
 
         if ($this->Request()->getParam('isXHR') || !empty($this->Request()->callback)) {
@@ -1710,6 +1718,7 @@ class Shopware_Controllers_Frontend_Checkout extends Enlight_Controller_Action i
         $accountMode = (int) $this->View()->sUserData['additional']['user']['accountmode'];
         $view->assign('sDispatchNoOrder', ($accountMode === 0 && $this->getDispatchNoOrder()));
         $view->assign('showShippingCalculation', (bool) $this->Request()->getParam('openShippingCalculations'));
+        $view->assign('sMinimumSurcharge', $this->getMinimumCharge());
     }
 
     /**

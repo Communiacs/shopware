@@ -126,6 +126,11 @@ class sBasket implements \Enlight_Hook
     private $proportionalTaxCalculation;
 
     /**
+     * @var StoreFrontBundle\Gateway\DBAL\FieldHelper
+     */
+    private $fieldHelper;
+
+    /**
      * @throws \Exception
      */
     public function __construct(
@@ -166,6 +171,8 @@ class sBasket implements \Enlight_Hook
         }
 
         $this->proportionalTaxCalculation = $this->config->get('proportionalTaxCalculation');
+
+        $this->fieldHelper = Shopware()->Container()->get('shopware_storefront.field_helper_dbal');
     }
 
     /**
@@ -969,7 +976,37 @@ SQL;
             ]
         );
 
-        return (bool) $this->db->query($sql, $params);
+        $params = $this->eventManager->filter(
+            'Shopware_Modules_Basket_AddVoucher_FilterSqlParams',
+            $params,
+            [
+                'subject' => $this,
+                'voucher' => $voucherDetails,
+                'vouchername' => $voucherName,
+                'shippingfree' => $freeShipping,
+                'tax' => $tax,
+            ]
+        );
+
+        $isInserted = (bool) $this->db->query($sql, $params);
+
+        if ($isInserted) {
+            $insertId = $this->db->lastInsertId('s_order_basket');
+
+            $this->eventManager->notify(
+                'Shopware_Modules_Basket_AddVoucher_Inserted',
+                [
+                    'subject' => $this,
+                    'basketId' => $insertId,
+                    'voucher' => $voucherDetails,
+                    'vouchername' => $voucherName,
+                    'shippingfree' => $freeShipping,
+                    'tax' => $tax,
+                ]
+            );
+        }
+
+        return $isInserted;
     }
 
     /**
@@ -1225,7 +1262,7 @@ SQL;
         );
 
         if ($notifyUntilBeforeAdd) {
-            return;
+            return null;
         }
 
         if ($this->proportionalTaxCalculation && !$this->session->get('taxFree')) {
@@ -1242,10 +1279,12 @@ SQL;
                 )
             );
 
-            return;
+            return null;
         }
 
         $this->db->insert('s_order_basket', $params);
+
+        return null;
     }
 
     /**
@@ -1615,7 +1654,7 @@ SQL;
      * @throws Enlight_Exception
      * @throws Zend_Db_Adapter_Exception
      *
-     * @return bool
+     * @return bool|null
      */
     public function updateCartItems(array $cartItems)
     {
@@ -1748,6 +1787,8 @@ SQL;
         if ($errors) {
             return false;
         }
+
+        return null;
     }
 
     /**
@@ -1775,7 +1816,7 @@ SQL;
      * Used on sAdmin tests and SwagBonusSystem
      * See @ticket PT-1845
      *
-     * @return void|false False on no session, null otherwise
+     * @return false|null False on no session, null otherwise
      */
     public function sDeleteBasket()
     {
@@ -1793,6 +1834,8 @@ SQL;
             'subject' => $this,
             'sessionId' => $this->session->get('sessionId'),
         ]);
+
+        return null;
     }
 
     /**
@@ -2608,6 +2651,7 @@ SQL;
             // Get additional basket meta data for each product
             if ($getProducts[$key]['modus'] == 0) {
                 $getProducts[$key]['additional_details'] = $additionalDetails[$getProducts[$key]['ordernumber']];
+                $getProducts[$key]['shippingtime'] = $additionalDetails[$getProducts[$key]['ordernumber']]['shippingtime'];
             }
 
             $getUnitData = [];
@@ -2783,6 +2827,8 @@ SQL;
      */
     private function loadBasketProducts()
     {
+        $attrs = $this->fieldHelper->getTableFields('s_order_basket_attributes', 's_order_basket_attributes');
+
         $sql = "
         SELECT
             s_order_basket.*,
@@ -2808,7 +2854,8 @@ SQL;
             s_order_basket_attributes.attribute3 as ob_attr3,
             s_order_basket_attributes.attribute4 as ob_attr4,
             s_order_basket_attributes.attribute5 as ob_attr5,
-            s_order_basket_attributes.attribute6 as ob_attr6
+            s_order_basket_attributes.attribute6 as ob_attr6,
+           " . implode(',', $attrs) . '
         FROM s_order_basket
         LEFT JOIN s_articles_details AS ad ON ad.ordernumber = s_order_basket.ordernumber
         LEFT JOIN s_articles a ON (a.id = ad.articleID)
@@ -2816,7 +2863,7 @@ SQL;
         LEFT JOIN s_order_basket_attributes ON s_order_basket.id = s_order_basket_attributes.basketID
         WHERE sessionID=?
         ORDER BY id ASC, datum DESC
-        ";
+        ';
         $sql = $this->eventManager->filter(
             'Shopware_Modules_Basket_GetBasket_FilterSQL',
             $sql,
@@ -2852,7 +2899,7 @@ SELECT s_order_basket.id,
        IFNULL(catRo.id, 0) as hasCategory,
        s_articles_details.ordernumber
 FROM s_articles, s_order_basket, s_articles_details
-LEFT JOIN s_articles_avoid_customergroups avoid 
+LEFT JOIN s_articles_avoid_customergroups avoid
   ON avoid.articleID = s_articles_details.articleID
 LEFT JOIN s_articles_categories_ro catRo ON(catRo.articleID = s_articles_details.articleID AND catRo.categoryID = :mainCategoryId)
 WHERE s_order_basket.articleID = s_articles.id

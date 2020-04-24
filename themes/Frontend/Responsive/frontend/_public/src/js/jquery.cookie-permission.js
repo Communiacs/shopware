@@ -1,4 +1,4 @@
-;(function($, window) {
+(function($, window) {
     'use strict';
 
     var $body = $('body');
@@ -314,14 +314,8 @@
             document.cookie = 'allowCookie=1; path=' + this.getBasePath() + ';expires=' + d.toGMTString() + ';';
 
             this.hideElement();
-            this.applyActiveToPreferences();
-            
-            $.publish('plugin/swCookiePermission/onAcceptButtonClick', [this, event]);
-        },
 
-        applyActiveToPreferences: function () {
-            var cookieConsentPlugin = $(this.opts.cookieConsentManagerSelector).data('plugin_swCookieConsentManager');
-            cookieConsentPlugin.buildCookiePreferences(true);
+            $.publish('plugin/swCookiePermission/onAcceptButtonClick', [this, event]);
         },
 
         /**
@@ -336,7 +330,7 @@
             document.cookie = 'cookieDeclined=1; path=' + this.getBasePath() + ';';
 
             this.hideElement();
-            
+
             $.publish('plugin/swCookiePermission/onDeclineButtonClick', [this, event]);
         },
 

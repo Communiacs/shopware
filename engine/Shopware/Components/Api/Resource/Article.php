@@ -518,7 +518,7 @@ class Article extends Resource implements BatchInterface
         /** @var \Shopware\Components\Thumbnail\Manager $generator */
         $generator = $this->getContainer()->get('thumbnail_manager');
 
-        /** @var \Shopware\Bundle\MediaBundle\MediaService $mediaService */
+        /** @var \Shopware\Bundle\MediaBundle\MediaServiceInterface $mediaService */
         $mediaService = Shopware()->Container()->get('shopware_media.media_service');
 
         /** @var Image $image */
@@ -908,7 +908,10 @@ class Article extends Resource implements BatchInterface
             $query->execute();
 
             $sql = 'DELETE FROM s_article_configurator_option_relations WHERE article_id = ?';
-            Shopware()->Db()->query($sql, [$detail['id']]);
+            $this->getManager()->getConnection()->executeQuery($sql, [$detail['id']]);
+
+            $sql = 'DELETE FROM s_articles_prices WHERE articledetailsID = ?';
+            $this->getManager()->getConnection()->executeQuery($sql, [$detail['id']]);
 
             $query = $this->getRepository()->getRemoveVariantTranslationsQuery($detail['id']);
             $query->execute();
