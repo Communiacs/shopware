@@ -201,9 +201,9 @@ abstract class NumberFormatter
      * @see https://php.net/round
      */
     private static $phpRoundingMap = [
-        self::ROUND_HALFDOWN => \PHP_ROUND_HALF_DOWN,
-        self::ROUND_HALFEVEN => \PHP_ROUND_HALF_EVEN,
-        self::ROUND_HALFUP => \PHP_ROUND_HALF_UP,
+        self::ROUND_HALFDOWN => PHP_ROUND_HALF_DOWN,
+        self::ROUND_HALFEVEN => PHP_ROUND_HALF_EVEN,
+        self::ROUND_HALFUP => PHP_ROUND_HALF_UP,
     ];
 
     /**
@@ -357,13 +357,13 @@ abstract class NumberFormatter
 
         // The original NumberFormatter does not support this format type
         if (self::TYPE_CURRENCY === $type) {
-            trigger_error(__METHOD__.'(): Unsupported format type '.$type, \E_USER_WARNING);
+            trigger_error(__METHOD__.'(): Unsupported format type '.$type, E_USER_WARNING);
 
             return false;
         }
 
         if (self::CURRENCY === $this->style) {
-            throw new NotImplementedException(sprintf('%s() method does not support the formatting of currencies (instance with CURRENCY style). %s', __METHOD__, NotImplementedException::INTL_INSTALL_MESSAGE));
+            throw new NotImplementedException(sprintf('"%s()" method does not support the formatting of currencies (instance with CURRENCY style). "%s".', __METHOD__, NotImplementedException::INTL_INSTALL_MESSAGE));
         }
 
         // Only the default type is supported.
@@ -513,7 +513,7 @@ abstract class NumberFormatter
         $type = (int) $type;
 
         if (self::TYPE_DEFAULT === $type || self::TYPE_CURRENCY === $type) {
-            trigger_error(__METHOD__.'(): Unsupported format type '.$type, \E_USER_WARNING);
+            trigger_error(__METHOD__.'(): Unsupported format type '.$type, E_USER_WARNING);
 
             return false;
         }
