@@ -6,6 +6,7 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
+    'Composer\\InstalledVersions' => $vendorDir . '/composer/InstalledVersions.php',
     'Gaufrette\\Adapter' => $vendorDir . '/knplabs/gaufrette/src/Gaufrette/Adapter.php',
     'Gaufrette\\Adapter\\AclAwareAmazonS3' => $vendorDir . '/knplabs/gaufrette/src/Gaufrette/Adapter/AclAwareAmazonS3.php',
     'Gaufrette\\Adapter\\AmazonS3' => $vendorDir . '/knplabs/gaufrette/src/Gaufrette/Adapter/AmazonS3.php',
@@ -85,7 +86,6 @@ return array(
     'Psr\\Log\\LoggerInterface' => $vendorDir . '/psr/log/Psr/Log/LoggerInterface.php',
     'Psr\\Log\\LoggerTrait' => $vendorDir . '/psr/log/Psr/Log/LoggerTrait.php',
     'Psr\\Log\\NullLogger' => $vendorDir . '/psr/log/Psr/Log/NullLogger.php',
-    'Psr\\Log\\Test\\DummyTest' => $vendorDir . '/psr/log/Psr/Log/Test/LoggerInterfaceTest.php',
     'Psr\\Log\\Test\\LoggerInterfaceTest' => $vendorDir . '/psr/log/Psr/Log/Test/LoggerInterfaceTest.php',
     'Psr\\Log\\Test\\TestLogger' => $vendorDir . '/psr/log/Psr/Log/Test/TestLogger.php',
     'Ramsey\\Uuid\\BinaryUtils' => $vendorDir . '/ramsey/uuid/src/BinaryUtils.php',
@@ -208,9 +208,6 @@ return array(
     'Shopware\\Recovery\\Update\\Struct\\Struct' => $baseDir . '/../update/src/Struct/Struct.php',
     'Shopware\\Recovery\\Update\\Struct\\Version' => $baseDir . '/../update/src/Struct/Version.php',
     'Shopware\\Recovery\\Update\\Utils' => $baseDir . '/../update/src/Utils.php',
-    'SlimFlashTest' => $vendorDir . '/slim/slim/tests/Middleware/FlashTest.php',
-    'SlimHttpUtilTest' => $vendorDir . '/slim/slim/tests/Http/UtilTest.php',
-    'SlimTest' => $vendorDir . '/slim/slim/tests/SlimTest.php',
     'Slim\\Environment' => $vendorDir . '/slim/slim/Slim/Environment.php',
     'Slim\\Exception\\Pass' => $vendorDir . '/slim/slim/Slim/Exception/Pass.php',
     'Slim\\Exception\\Stop' => $vendorDir . '/slim/slim/Slim/Exception/Stop.php',

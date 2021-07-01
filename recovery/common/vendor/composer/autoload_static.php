@@ -101,6 +101,7 @@ class ComposerStaticInitShopwareRecovery
     );
 
     public static $classMap = array (
+        'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
         'Gaufrette\\Adapter' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter.php',
         'Gaufrette\\Adapter\\AclAwareAmazonS3' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/AclAwareAmazonS3.php',
         'Gaufrette\\Adapter\\AmazonS3' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/AmazonS3.php',
@@ -180,7 +181,6 @@ class ComposerStaticInitShopwareRecovery
         'Psr\\Log\\LoggerInterface' => __DIR__ . '/..' . '/psr/log/Psr/Log/LoggerInterface.php',
         'Psr\\Log\\LoggerTrait' => __DIR__ . '/..' . '/psr/log/Psr/Log/LoggerTrait.php',
         'Psr\\Log\\NullLogger' => __DIR__ . '/..' . '/psr/log/Psr/Log/NullLogger.php',
-        'Psr\\Log\\Test\\DummyTest' => __DIR__ . '/..' . '/psr/log/Psr/Log/Test/LoggerInterfaceTest.php',
         'Psr\\Log\\Test\\LoggerInterfaceTest' => __DIR__ . '/..' . '/psr/log/Psr/Log/Test/LoggerInterfaceTest.php',
         'Psr\\Log\\Test\\TestLogger' => __DIR__ . '/..' . '/psr/log/Psr/Log/Test/TestLogger.php',
         'Ramsey\\Uuid\\BinaryUtils' => __DIR__ . '/..' . '/ramsey/uuid/src/BinaryUtils.php',
@@ -303,9 +303,6 @@ class ComposerStaticInitShopwareRecovery
         'Shopware\\Recovery\\Update\\Struct\\Struct' => __DIR__ . '/../..' . '/../update/src/Struct/Struct.php',
         'Shopware\\Recovery\\Update\\Struct\\Version' => __DIR__ . '/../..' . '/../update/src/Struct/Version.php',
         'Shopware\\Recovery\\Update\\Utils' => __DIR__ . '/../..' . '/../update/src/Utils.php',
-        'SlimFlashTest' => __DIR__ . '/..' . '/slim/slim/tests/Middleware/FlashTest.php',
-        'SlimHttpUtilTest' => __DIR__ . '/..' . '/slim/slim/tests/Http/UtilTest.php',
-        'SlimTest' => __DIR__ . '/..' . '/slim/slim/tests/SlimTest.php',
         'Slim\\Environment' => __DIR__ . '/..' . '/slim/slim/Slim/Environment.php',
         'Slim\\Exception\\Pass' => __DIR__ . '/..' . '/slim/slim/Slim/Exception/Pass.php',
         'Slim\\Exception\\Stop' => __DIR__ . '/..' . '/slim/slim/Slim/Exception/Stop.php',

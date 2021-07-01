@@ -181,7 +181,7 @@ final class Versions
   'symfony/yaml' => 'v3.4.43@e7fa05917ae931332a42d65b577ece4d497aad81',
   'theseer/tokenizer' => '1.2.0@75a63c33a8577608444246075ea0af0d052e452a',
   'webmozart/assert' => '1.9.1@bafc69caeb4d49c39fd0779086c03a3738cbb389',
-  'shopware/shopware' => 'dev-version/5.6.0@b3cab16a94fb1d368b8f56dbcfcaa6fe63979830',
+  'shopware/shopware' => 'dev-version/5.6.0@a4f71c8bd91aa60a6795287ef71a8e22a9f9c5d2',
 );
 
     private function __construct()
