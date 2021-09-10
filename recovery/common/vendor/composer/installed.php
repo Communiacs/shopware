@@ -1,137 +1,143 @@
-<?php return array (
-  'root' => 
-  array (
-    'pretty_version' => 'dev-version/5.6.0',
-    'version' => 'dev-version/5.6.0',
-    'aliases' => 
-    array (
+<?php return array(
+    'root' => array(
+        'pretty_version' => 'dev-version/5.6.0',
+        'version' => 'dev-version/5.6.0',
+        'type' => 'library',
+        'install_path' => __DIR__ . '/../../',
+        'aliases' => array(),
+        'reference' => 'a4f71c8bd91aa60a6795287ef71a8e22a9f9c5d2',
+        'name' => '__root__',
+        'dev' => false,
     ),
-    'reference' => 'a4f71c8bd91aa60a6795287ef71a8e22a9f9c5d2',
-    'name' => '__root__',
-  ),
-  'versions' => 
-  array (
-    '__root__' => 
-    array (
-      'pretty_version' => 'dev-version/5.6.0',
-      'version' => 'dev-version/5.6.0',
-      'aliases' => 
-      array (
-      ),
-      'reference' => 'a4f71c8bd91aa60a6795287ef71a8e22a9f9c5d2',
+    'versions' => array(
+        '__root__' => array(
+            'pretty_version' => 'dev-version/5.6.0',
+            'version' => 'dev-version/5.6.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../../',
+            'aliases' => array(),
+            'reference' => 'a4f71c8bd91aa60a6795287ef71a8e22a9f9c5d2',
+            'dev_requirement' => false,
+        ),
+        'knplabs/gaufrette' => array(
+            'pretty_version' => 'v0.8.1',
+            'version' => '0.8.1.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../knplabs/gaufrette',
+            'aliases' => array(),
+            'reference' => '80cc42e1c5f008a8fc9d02e856c60140c7d1ea19',
+            'dev_requirement' => false,
+        ),
+        'paragonie/random_compat' => array(
+            'pretty_version' => 'v2.0.11',
+            'version' => '2.0.11.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../paragonie/random_compat',
+            'aliases' => array(),
+            'reference' => '5da4d3c796c275c55f057af5a643ae297d96b4d8',
+            'dev_requirement' => false,
+        ),
+        'pimple/pimple' => array(
+            'pretty_version' => 'v3.2.3',
+            'version' => '3.2.3.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../pimple/pimple',
+            'aliases' => array(),
+            'reference' => '9e403941ef9d65d20cba7d54e29fe906db42cf32',
+            'dev_requirement' => false,
+        ),
+        'psr/container' => array(
+            'pretty_version' => '1.1.1',
+            'version' => '1.1.1.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../psr/container',
+            'aliases' => array(),
+            'reference' => '8622567409010282b7aeebe4bb841fe98b58dcaf',
+            'dev_requirement' => false,
+        ),
+        'psr/log-implementation' => array(
+            'dev_requirement' => false,
+            'provided' => array(
+                0 => '1.0',
+            ),
+        ),
+        'ramsey/uuid' => array(
+            'pretty_version' => '3.5.2',
+            'version' => '3.5.2.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../ramsey/uuid',
+            'aliases' => array(),
+            'reference' => '5677cfe02397dd6b58c861870dfaa5d9007d3954',
+            'dev_requirement' => false,
+        ),
+        'rhumsaa/uuid' => array(
+            'dev_requirement' => false,
+            'replaced' => array(
+                0 => '3.5.2',
+            ),
+        ),
+        'slim/slim' => array(
+            'pretty_version' => '2.6.3',
+            'version' => '2.6.3.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../slim/slim',
+            'aliases' => array(),
+            'reference' => '9224ed81ac1c412881e8d762755e3d76ebf580c0',
+            'dev_requirement' => false,
+        ),
+        'symfony/console' => array(
+            'pretty_version' => 'v4.4.13',
+            'version' => '4.4.13.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../symfony/console',
+            'aliases' => array(),
+            'reference' => 'b39fd99b9297b67fb7633b7d8083957a97e1e727',
+            'dev_requirement' => false,
+        ),
+        'symfony/finder' => array(
+            'pretty_version' => 'v4.4.13',
+            'version' => '4.4.13.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../symfony/finder',
+            'aliases' => array(),
+            'reference' => '2a78590b2c7e3de5c429628457c47541c58db9c7',
+            'dev_requirement' => false,
+        ),
+        'symfony/polyfill-mbstring' => array(
+            'pretty_version' => 'v1.22.1',
+            'version' => '1.22.1.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../symfony/polyfill-mbstring',
+            'aliases' => array(),
+            'reference' => '5232de97ee3b75b0360528dae24e73db49566ab1',
+            'dev_requirement' => false,
+        ),
+        'symfony/polyfill-php73' => array(
+            'pretty_version' => 'v1.22.1',
+            'version' => '1.22.1.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../symfony/polyfill-php73',
+            'aliases' => array(),
+            'reference' => 'a678b42e92f86eca04b7fa4c0f6f19d097fb69e2',
+            'dev_requirement' => false,
+        ),
+        'symfony/polyfill-php80' => array(
+            'pretty_version' => 'v1.22.1',
+            'version' => '1.22.1.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../symfony/polyfill-php80',
+            'aliases' => array(),
+            'reference' => 'dc3063ba22c2a1fd2f45ed856374d79114998f91',
+            'dev_requirement' => false,
+        ),
+        'symfony/service-contracts' => array(
+            'pretty_version' => 'v2.4.0',
+            'version' => '2.4.0.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../symfony/service-contracts',
+            'aliases' => array(),
+            'reference' => 'f040a30e04b57fbcc9c6cbcf4dbaa96bd318b9bb',
+            'dev_requirement' => false,
+        ),
     ),
-    'knplabs/gaufrette' => 
-    array (
-      'pretty_version' => 'v0.8.1',
-      'version' => '0.8.1.0',
-      'aliases' => 
-      array (
-      ),
-      'reference' => '80cc42e1c5f008a8fc9d02e856c60140c7d1ea19',
-    ),
-    'paragonie/random_compat' => 
-    array (
-      'pretty_version' => 'v2.0.11',
-      'version' => '2.0.11.0',
-      'aliases' => 
-      array (
-      ),
-      'reference' => '5da4d3c796c275c55f057af5a643ae297d96b4d8',
-    ),
-    'pimple/pimple' => 
-    array (
-      'pretty_version' => 'v3.2.3',
-      'version' => '3.2.3.0',
-      'aliases' => 
-      array (
-      ),
-      'reference' => '9e403941ef9d65d20cba7d54e29fe906db42cf32',
-    ),
-    'psr/container' => 
-    array (
-      'pretty_version' => '1.0.0',
-      'version' => '1.0.0.0',
-      'aliases' => 
-      array (
-      ),
-      'reference' => 'b7ce3b176482dbbc1245ebf52b181af44c2cf55f',
-    ),
-    'psr/log' => 
-    array (
-      'pretty_version' => '1.1.0',
-      'version' => '1.1.0.0',
-      'aliases' => 
-      array (
-      ),
-      'reference' => '6c001f1daafa3a3ac1d8ff69ee4db8e799a654dd',
-    ),
-    'psr/log-implementation' => 
-    array (
-      'provided' => 
-      array (
-        0 => '1.0',
-      ),
-    ),
-    'ramsey/uuid' => 
-    array (
-      'pretty_version' => '3.5.2',
-      'version' => '3.5.2.0',
-      'aliases' => 
-      array (
-      ),
-      'reference' => '5677cfe02397dd6b58c861870dfaa5d9007d3954',
-    ),
-    'rhumsaa/uuid' => 
-    array (
-      'replaced' => 
-      array (
-        0 => '3.5.2',
-      ),
-    ),
-    'slim/slim' => 
-    array (
-      'pretty_version' => '2.6.3',
-      'version' => '2.6.3.0',
-      'aliases' => 
-      array (
-      ),
-      'reference' => '9224ed81ac1c412881e8d762755e3d76ebf580c0',
-    ),
-    'symfony/console' => 
-    array (
-      'pretty_version' => 'v3.4.22',
-      'version' => '3.4.22.0',
-      'aliases' => 
-      array (
-      ),
-      'reference' => '069bf3f0e8f871a2169a06e43d9f3f03f355e9be',
-    ),
-    'symfony/debug' => 
-    array (
-      'pretty_version' => 'v4.2.8',
-      'version' => '4.2.8.0',
-      'aliases' => 
-      array (
-      ),
-      'reference' => '2d279b6bb1d582dd5740d4d3251ae8c18812ed37',
-    ),
-    'symfony/finder' => 
-    array (
-      'pretty_version' => 'v3.4.22',
-      'version' => '3.4.22.0',
-      'aliases' => 
-      array (
-      ),
-      'reference' => '7c0c627220308928e958a87c293108e5891cde1d',
-    ),
-    'symfony/polyfill-mbstring' => 
-    array (
-      'pretty_version' => 'v1.11.0',
-      'version' => '1.11.0.0',
-      'aliases' => 
-      array (
-      ),
-      'reference' => 'fe5e94c604826c35a32fa832f35bd036b6799609',
-    ),
-  ),
 );

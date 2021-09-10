@@ -34,13 +34,13 @@ use Symfony\Component\Validator\ConstraintValidator;
 
 class CustomerEmailValidator extends ConstraintValidator
 {
-    const SNIPPET_MAIL_FAILURE = [
+    public const SNIPPET_MAIL_FAILURE = [
         'namespace' => 'frontend/account/internalMessages',
         'name' => 'MailFailure',
         'default' => 'Please enter a valid mail address',
     ];
 
-    const SNIPPET_MAIL_DUPLICATE = [
+    public const SNIPPET_MAIL_DUPLICATE = [
         'namespace' => 'frontend/account/internalMessages',
         'name' => 'MailFailureAlreadyRegistered',
         'default' => 'This mail address is already registered',
@@ -125,7 +125,7 @@ class CustomerEmailValidator extends ConstraintValidator
     private function isExistingEmail($value, Shop $shop, $customerId = null)
     {
         $builder = $this->connection->createQueryBuilder();
-        $builder->select(1);
+        $builder->select('1');
         $builder->from('s_user');
         $builder->andWhere('email = :email');
         $builder->andWhere('accountmode != ' . Customer::ACCOUNT_MODE_FAST_LOGIN);

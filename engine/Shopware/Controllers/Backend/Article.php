@@ -173,7 +173,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
      */
     public function preDispatch()
     {
-        if (!in_array($this->Request()->getActionName(), ['index', 'load', 'validateNumber', 'getEsdDownload'])) {
+        if (!\in_array($this->Request()->getActionName(), ['index', 'load', 'validateNumber', 'getEsdDownload'])) {
             $this->Front()->Plugins()->Json()->setRenderer();
         }
     }
@@ -661,7 +661,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
 
         $this->View()->assign([
             'data' => array_values($options),
-            'total' => count($options),
+            'total' => \count($options),
             'success' => true,
         ]);
     }
@@ -678,7 +678,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
             return $this->View()->assign(['success' => false, 'message' => 'No property value provided!']);
         }
 
-        $entityManager = Shopware()->Container()->get('models');
+        $entityManager = Shopware()->Container()->get(\Shopware\Components\Model\ModelManager::class);
         $group = $entityManager->find(\Shopware\Models\Property\Option::class, $groupId);
 
         if (!$group) {
@@ -890,7 +890,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
     {
         trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be private with 5.8.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
 
-        $result = $this->get('models')->getRepository(Article::class)
+        $result = $this->get(\Shopware\Components\Model\ModelManager::class)->getRepository(Article::class)
             ->getArticleRelatedProductStreamsQuery($articleId)
             ->getArrayResult();
 
@@ -941,10 +941,10 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
         trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be private with 5.8.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
 
         /** @var MediaServiceInterface $mediaService */
-        $mediaService = Shopware()->Container()->get('shopware_media.media_service');
+        $mediaService = Shopware()->Container()->get(\Shopware\Bundle\MediaBundle\MediaServiceInterface::class);
 
         /** @var Manager $thumbnailManager */
-        $thumbnailManager = Shopware()->Container()->get('thumbnail_manager');
+        $thumbnailManager = Shopware()->Container()->get(\Shopware\Components\Thumbnail\Manager::class);
 
         $builder = Shopware()->Models()->createQueryBuilder();
         $builder->select(['images', 'media', 'imageMapping', 'mappingRule', 'ruleOption'])
@@ -1445,7 +1445,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
             ->getQuery()
             ->getArrayResult();
 
-        if (count($boundedProducts) > 0) {
+        if (\count($boundedProducts) > 0) {
             $products = [];
             foreach ($boundedProducts as $boundedProduct) {
                 $products[] = $boundedProduct['number'] . ' - ' . $boundedProduct['additionalText'];
@@ -1530,7 +1530,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
             ->getQuery()
             ->getArrayResult();
 
-        if (count($boundedProducts) > 0) {
+        if (\count($boundedProducts) > 0) {
             $articles = [];
             foreach ($boundedProducts as $boundedProduct) {
                 $articles[] = $boundedProduct['number'] . ' - ' . $boundedProduct['additionalText'];
@@ -1790,7 +1790,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
 
         $query = $this->getRepository()->getUnusedSerialsByEsdQuery($esdId);
         $serials = $query->execute();
-        $totalCount = count($serials);
+        $totalCount = \count($serials);
 
         foreach ($serials as $serial) {
             $this->getManager()->remove($serial);
@@ -1902,7 +1902,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
     public function getEsdFilesAction()
     {
         $filesystem = $this->container->get('shopware.filesystem.private');
-        $contents = $filesystem->listContents($this->container->get('config')->offsetGet('esdKey'));
+        $contents = $filesystem->listContents($this->container->get(\Shopware_Components_Config::class)->offsetGet('esdKey'));
 
         $result = [];
         foreach ($contents as $file) {
@@ -1915,7 +1915,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
 
         $this->View()->assign([
             'data' => $result,
-            'total' => count($result),
+            'total' => \count($result),
             'success' => true,
         ]);
     }
@@ -1946,13 +1946,13 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
             ]
         );
 
-        if (in_array($extension, $blacklist, true)) {
+        if (\in_array($extension, $blacklist, true)) {
             $e = new MediaFileExtensionIsBlacklistedException($extension);
             $this->View()->assign([
                 'success' => false,
                 'message' => $e->getMessage(),
                 'exception' => [
-                    '_class' => get_class($e),
+                    '_class' => \get_class($e),
                     'extension' => $extension,
                 ],
             ]);
@@ -1961,13 +1961,13 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
         }
 
         $filesystem = $this->container->get('shopware.filesystem.private');
-        $destinationPath = $this->container->get('config')->offsetGet('esdKey') . '/' . ltrim($file->getClientOriginalName(), '.');
+        $destinationPath = $this->container->get(\Shopware_Components_Config::class)->offsetGet('esdKey') . '/' . ltrim($file->getClientOriginalName(), '.');
 
         if ($overwriteMode === 'rename') {
             $counter = 1;
             do {
                 $newFilename = pathinfo(ltrim($file->getClientOriginalName()), PATHINFO_FILENAME) . '-' . $counter . '.' . pathinfo($destinationPath, PATHINFO_EXTENSION);
-                $destinationPath = $this->container->get('config')->offsetGet('esdKey') . '/' . ltrim($newFilename, '.');
+                $destinationPath = $this->container->get(\Shopware_Components_Config::class)->offsetGet('esdKey') . '/' . ltrim($newFilename, '.');
                 ++$counter;
             } while ($filesystem->has($destinationPath));
 
@@ -2004,7 +2004,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
     public function getEsdDownloadAction()
     {
         $filesystem = $this->container->get('shopware.filesystem.private');
-        $path = $this->container->get('config')->offsetGet('esdKey') . '/' . $this->Request()->getParam('filename');
+        $path = $this->container->get(\Shopware_Components_Config::class)->offsetGet('esdKey') . '/' . $this->Request()->getParam('filename');
 
         if ($filesystem->has($path) === false) {
             $this->Front()->Plugins()->Json()->setRenderer();
@@ -2077,7 +2077,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
 
         $this->View()->assign([
             'data' => $result,
-            'total' => count($result),
+            'total' => \count($result),
             'success' => true,
         ]);
     }
@@ -2128,7 +2128,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
             }
             $number = $this->interpretNumberSyntax($product, $detail, $commands, $counter);
             ++$counter;
-            if (strlen($number) === 0) {
+            if ($number === '') {
                 continue;
             }
             $detail->setNumber($number);
@@ -2182,7 +2182,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
 
         $this->View()->assign([
             'data' => $result,
-            'total' => count($result),
+            'total' => \count($result),
             'success' => true,
         ]);
     }
@@ -2199,7 +2199,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
             ->getValidateNumberQuery($this->Request()->value, $this->Request()->param)
             ->getArrayResult();
 
-        if (empty($exist) && strlen($this->Request()->value) > 0) {
+        if (empty($exist) && $this->Request()->value !== '') {
             echo 'true';
         } else {
             return;
@@ -2222,7 +2222,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
             throw new Exception('Invalid shop provided.');
         }
 
-        $this->get('shopware.components.shop_registration_service')->registerShop($shop);
+        $this->get(\Shopware\Components\ShopRegistrationServiceInterface::class)->registerShop($shop);
 
         Shopware()->Session()->Admin = true;
 
@@ -2245,7 +2245,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
     protected function getTranslationComponent()
     {
         if ($this->translation === null) {
-            $this->translation = $this->container->get('translation');
+            $this->translation = $this->container->get(\Shopware_Components_Translation::class);
         }
 
         return $this->translation;
@@ -2978,7 +2978,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
             $detailIds[] = $detail['id'];
         }
 
-        if (count($detailIds) === 0) {
+        if (\count($detailIds) === 0) {
             return;
         }
 
@@ -3337,7 +3337,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
         $ids = [];
         /** @var Option $oldOption */
         foreach ($oldOptions as $oldOption) {
-            if (!array_key_exists($oldOption->getId(), $selectedOptions)) {
+            if (!\array_key_exists($oldOption->getId(), $selectedOptions)) {
                 $details = $this->getRepository()
                     ->getArticleDetailByConfiguratorOptionIdQuery($article->getId(), $oldOption->getId())
                     ->setHydrationMode(\Doctrine\ORM\AbstractQuery::HYDRATE_OBJECT)
@@ -3406,7 +3406,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
 
         $abortVariant = false;
         foreach ($dependencies as $dependency) {
-            if (in_array($dependency['parentId'], $optionIds) && in_array($dependency['childId'], $optionIds)) {
+            if (\in_array($dependency['parentId'], $optionIds) && \in_array($dependency['childId'], $optionIds)) {
                 $abortVariant = true;
             }
         }
@@ -3752,7 +3752,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
                     ->getQuery()
                     ->getArrayResult();
 
-                if (count($products) <= 1) {
+                if (\count($products) <= 1) {
                     $set = Shopware()->Models()->find(Set::class, $article->getConfiguratorSet()->getId());
                     Shopware()->Models()->remove($set);
                 }
@@ -3956,7 +3956,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
             }
 
             /** @var \Shopware\Models\ProductStream\ProductStream $relatedProductStream */
-            $relatedProductStream = $this->get('models')->getRepository(\Shopware\Models\ProductStream\ProductStream::class)
+            $relatedProductStream = $this->get(\Shopware\Components\Model\ModelManager::class)->getRepository(\Shopware\Models\ProductStream\ProductStream::class)
                 ->find($relatedProductStreamData['id']);
 
             $relatedStreams[] = $relatedProductStream;
@@ -4107,7 +4107,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
      */
     protected function prepareDownloadAssociatedData($data)
     {
-        $mediaService = Shopware()->Container()->get('shopware_media.media_service');
+        $mediaService = Shopware()->Container()->get(\Shopware\Bundle\MediaBundle\MediaServiceInterface::class);
         foreach ($data['downloads'] as &$downloadData) {
             $downloadData['file'] = $mediaService->normalize($downloadData['file']);
         }
@@ -4226,7 +4226,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
         $query->execute();
 
         $sql = 'DELETE FROM s_articles_translations WHERE articleID = ?';
-        $this->container->get('dbal_connection')->executeQuery($sql, [$article->getId()]);
+        $this->container->get(\Doctrine\DBAL\Connection::class)->executeQuery($sql, [$article->getId()]);
     }
 
     /**
@@ -4237,8 +4237,8 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
      */
     protected function increaseAutoNumber($autoNumber, $number)
     {
-        if (strlen($number) > 2) {
-            $number = substr($number, strlen(Shopware()->Config()->backendAutoOrderNumberPrefix));
+        if (\strlen($number) > 2) {
+            $number = substr($number, \strlen(Shopware()->Config()->backendAutoOrderNumberPrefix));
         }
         if ($number == $autoNumber) {
             $sql = "UPDATE s_order_number SET number = ? WHERE name = 'articleordernumber'";
@@ -4319,7 +4319,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
      */
     protected function recursiveInterpreter($cursor, $index, $commands)
     {
-        if (!is_object($cursor)) {
+        if (!\is_object($cursor)) {
             return '';
         }
 
@@ -4345,7 +4345,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
             return implode('.', $results);
 
         // If the result of the current command on the cursor is an object
-        } elseif (is_object($result)) {
+        } elseif (\is_object($result)) {
             // We have to execute the next command on the result
             return $this->recursiveInterpreter($result, $index, $commands);
 
@@ -4474,8 +4474,14 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
         $translatedFields = [];
         foreach ($newTranslations as $values) {
             $data = $values['objectdata'];
-            foreach (unserialize($data, ['allowed_classes' => false]) as $field => $translation) {
-                if (!array_key_exists($field, $translatedFields)) {
+            $unserialized = @unserialize($data, ['allowed_classes' => false]);
+
+            if ($unserialized === false) {
+                $unserialized = [];
+            }
+
+            foreach ($unserialized as $field => $translation) {
+                if (!\array_key_exists($field, $translatedFields)) {
                     $translatedFields[$field] = true;
                 }
             }
@@ -4483,7 +4489,11 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
 
         // Save the old product translation as new variant translations
         foreach ($oldTranslations as $language => $values) {
-            $data = unserialize($values['objectdata'], ['allowed_classes' => false]);
+            $data = @unserialize($values['objectdata'], ['allowed_classes' => false]);
+            if ($data === false) {
+                $data = [];
+            }
+
             $newData = array_intersect_key($data, $translatedFields);
             $this->getTranslationComponent()->write(
                 $language,
@@ -4495,12 +4505,20 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
 
         // Save the new mainDetail translations as product translations
         foreach ($newTranslations as $language => $values) {
-            $data = unserialize($values['objectdata'], ['allowed_classes' => false]);
+            $data = @unserialize($values['objectdata'], ['allowed_classes' => false]);
+            if ($data === false) {
+                $data = [];
+            }
+
             $newData = array_intersect_key($data, $translatedFields);
             // We need to check and include old translations, as an product
             // translation is a superset of a variant translation
             if ($oldValues = $oldTranslations[$language]) {
-                $oldData = unserialize($oldValues['objectdata'], ['allowed_classes' => false]);
+                $oldData = @unserialize($oldValues['objectdata'], ['allowed_classes' => false]);
+                if ($oldData === false) {
+                    $oldData = [];
+                }
+
                 $newData = array_merge($oldData, $newData);
             }
             $this->getTranslationComponent()->write(
@@ -4567,13 +4585,13 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
     private function getAdditionalTexts($products)
     {
         /** @var Repository $shopRepo */
-        $shopRepo = $this->get('models')->getRepository(\Shopware\Models\Shop\Shop::class);
+        $shopRepo = $this->get(\Shopware\Components\Model\ModelManager::class)->getRepository(\Shopware\Models\Shop\Shop::class);
 
         /** @var Shop $shop */
         $shop = $shopRepo->getActiveDefault();
 
         /** @var ContextServiceInterface $contextService */
-        $contextService = $this->get('shopware_storefront.context_service');
+        $contextService = $this->get(\Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface::class);
 
         $context = $contextService->createShopContext(
             $shop->getId(),
@@ -4582,7 +4600,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
         );
 
         /** @var AdditionalTextServiceInterface $service */
-        $service = $this->get('shopware_storefront.additional_text_service');
+        $service = $this->get(\Shopware\Bundle\StoreFrontBundle\Service\AdditionalTextServiceInterface::class);
 
         return $service->buildAdditionalTextLists($products, $context);
     }

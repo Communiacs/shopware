@@ -26,7 +26,7 @@ class PhpBundleReader implements BundleReaderInterface
     /**
      * {@inheritdoc}
      */
-    public function read($path, $locale)
+    public function read(string $path, string $locale)
     {
         $fileName = $path.'/'.$locale.'.php';
 
@@ -35,12 +35,8 @@ class PhpBundleReader implements BundleReaderInterface
             throw new ResourceBundleNotFoundException(sprintf('The resource bundle "%s" does not exist.', $fileName));
         }
 
-        if (!file_exists($fileName)) {
-            throw new ResourceBundleNotFoundException(sprintf('The resource bundle "%s/%s.php" does not exist.', $path, $locale));
-        }
-
         if (!is_file($fileName)) {
-            throw new RuntimeException(sprintf('The resource bundle "%s/%s.php" is not a file.', $path, $locale));
+            throw new ResourceBundleNotFoundException(sprintf('The resource bundle "%s" does not exist.', $fileName));
         }
 
         return include $fileName;

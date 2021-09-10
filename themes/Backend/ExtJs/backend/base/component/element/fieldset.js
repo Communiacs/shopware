@@ -26,11 +26,14 @@
  * @version    $Id$
  * @author shopware AG
  */
-//{namespace name=backend/config/view/main}
+//{namespace name="backend/config/view/main"}
 //{block name="backend/base/component/element/fieldset"}
 Ext.define('Shopware.apps.Base.view.element.Fieldset', {
     extend: 'Ext.panel.Panel',
-    alias: 'widget.base-element-fieldset',
+    alias: [
+        'widget.base-element-fieldset',
+        'widget.config-element-fieldset'
+    ],
 
     bodyPadding: 10,
     border: false,

@@ -241,12 +241,12 @@ class sOrder implements \Enlight_Hook
         $this->db = Shopware()->Db();
         $this->eventManager = Shopware()->Events();
         $this->config = Shopware()->Config();
-        $this->numberRangeIncrementer = $container->get('shopware.number_range_incrementer');
+        $this->numberRangeIncrementer = $container->get(\Shopware\Components\NumberRangeIncrementerInterface::class);
 
-        $this->contextService = $contextService ?: $container->get('shopware_storefront.context_service');
-        $this->attributeLoader = $container->get('shopware_attribute.data_loader');
-        $this->attributePersister = $container->get('shopware_attribute.data_persister');
-        $this->modelManager = $container->get('models');
+        $this->contextService = $contextService ?: Shopware()->Container()->get(\Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface::class);
+        $this->attributeLoader = Shopware()->Container()->get(\Shopware\Bundle\AttributeBundle\Service\DataLoader::class);
+        $this->attributePersister = Shopware()->Container()->get(\Shopware\Bundle\AttributeBundle\Service\DataPersister::class);
+        $this->modelManager = $container->get(\Shopware\Components\Model\ModelManager::class);
     }
 
     /**
@@ -303,7 +303,7 @@ class sOrder implements \Enlight_Hook
 
         $availableSerials = $this->getAvailableSerialsOfEsd($esdProduct['id']);
 
-        if ((count($availableSerials) <= $this->config->get('esdMinSerials')) || count($availableSerials) <= $quantity) {
+        if ((\count($availableSerials) <= $this->config->get('esdMinSerials')) || \count($availableSerials) <= $quantity) {
             // Not enough serial numbers anymore, inform merchant
             $context = [
                 'sArticleName' => $basketRow['articlename'],
@@ -322,7 +322,7 @@ class sOrder implements \Enlight_Hook
         }
 
         // Check if enough serials are available, if not, an email has been sent, and we can return
-        if (count($availableSerials) < $quantity) {
+        if (\count($availableSerials) < $quantity) {
             return $basketRow;
         }
 
@@ -486,7 +486,7 @@ class sOrder implements \Enlight_Hook
                 $basketRow['taxID'] = '0';
             }
             if (!$basketRow['releasedate']) {
-                $basketRow['releasedate'] = '0000-00-00';
+                $basketRow['releasedate'] = null;
             }
 
             $data = [
@@ -510,11 +510,7 @@ class sOrder implements \Enlight_Hook
                 $this->db->insert('s_order_details', $data);
                 $orderDetailId = $this->db->lastInsertId();
             } catch (Exception $e) {
-                throw new Enlight_Exception(
-                    sprintf('##sOrder-sTemporaryOrder-Position-#02:%s', $e->getMessage()),
-                    0,
-                    $e
-                );
+                throw new Enlight_Exception(sprintf('##sOrder-sTemporaryOrder-Position-#02:%s', $e->getMessage()), 0, $e);
             }
 
             // Create order detail attributes
@@ -586,11 +582,10 @@ class sOrder implements \Enlight_Hook
             $this->sUserData['additional']['user']['affiliate']
         );
 
-        $ip = Shopware()->Container()->get('shopware.components.privacy.ip_anonymizer')
+        $ip = Shopware()->Container()->get(\Shopware\Components\Privacy\IpAnonymizerInterface::class)
             ->anonymize(
                 (string) Shopware()->Container()->get('request_stack')->getCurrentRequest()->getClientIp()
             );
-
         $orderParams = [
             'ordernumber' => $orderNumber,
             'userID' => $this->sUserData['additional']['user']['id'],
@@ -634,18 +629,11 @@ class sOrder implements \Enlight_Hook
             $this->db->commit();
         } catch (Exception $e) {
             $this->db->rollBack();
-            throw new Enlight_Exception(
-                sprintf('Shopware Order Fatal-Error %s :%s', $_SERVER['HTTP_HOST'], $e->getMessage()),
-                0,
-                $e
-            );
+            throw new Enlight_Exception(sprintf('Shopware Order Fatal-Error %s :%s', $_SERVER['HTTP_HOST'], $e->getMessage()), 0, $e);
         }
 
         if (!$affectedRows || !$orderID) {
-            throw new Enlight_Exception(
-                sprintf('Shopware Order Fatal-Error %s : No rows affected or no order id created.', $_SERVER['HTTP_HOST']),
-                0
-            );
+            throw new Enlight_Exception(sprintf('Shopware Order Fatal-Error %s : No rows affected or no order id created.', $_SERVER['HTTP_HOST']), 0);
         }
 
         try {
@@ -750,11 +738,7 @@ class sOrder implements \Enlight_Hook
                 $this->db->executeUpdate($sql);
                 $orderdetailsID = $this->db->lastInsertId();
             } catch (Exception $e) {
-                throw new Enlight_Exception(sprintf(
-                    'Shopware Order Fatal-Error %s :%s',
-                    $_SERVER['HTTP_HOST'],
-                    $e->getMessage()
-                ), 0, $e);
+                throw new Enlight_Exception(sprintf('Shopware Order Fatal-Error %s :%s', $_SERVER['HTTP_HOST'], $e->getMessage()), 0, $e);
             }
 
             $this->sBasketData['content'][$key]['orderDetailId'] = $orderdetailsID;
@@ -1108,7 +1092,7 @@ class sOrder implements \Enlight_Hook
 
         $attributes = $this->attributeLoader->load('s_user_addresses_attributes', $billingAddressId);
 
-        if (!is_array($attributes)) {
+        if (!\is_array($attributes)) {
             $attributes = [];
         }
 
@@ -1325,7 +1309,7 @@ class sOrder implements \Enlight_Hook
         $shopId = is_numeric($order['language']) ? $order['language'] : $order['subshopID'];
         // The (sub-)shop might be inactive by now, so that's why we use `getById` instead of `getActiveById`
         $shop = $repository->getById($shopId);
-        Shopware()->Container()->get('shopware.components.shop_registration_service')->registerShop($shop);
+        Shopware()->Container()->get(\Shopware\Components\ShopRegistrationServiceInterface::class)->registerShop($shop);
 
         $dispatch = Shopware()->Modules()->Admin()->sGetDispatchTranslation($dispatch);
         $payment = Shopware()->Modules()->Admin()->sGetPaymentTranslation(['id' => $order['paymentID']]);
@@ -1798,7 +1782,7 @@ EOT;
      */
     private function isTransactionExist($transactionId)
     {
-        if (strlen($transactionId) <= 3) {
+        if (\strlen($transactionId) <= 3) {
             return false;
         }
 
@@ -1989,15 +1973,15 @@ EOT;
 
     /**
      * Helper function to recursively apply html_entity_decode() to the given data.
-     *
-     * @param array|string $data
-     *
-     * @return array|string
      */
-    private function htmlEntityDecodeRecursive($data)
+    private function htmlEntityDecodeRecursive(?array $data): ?array
     {
-        $func = function ($item) use (&$func) {
-            return is_array($item) ? array_map($func, $item) : call_user_func('html_entity_decode', $item);
+        if ($data === null) {
+            return null;
+        }
+
+        $func = static function ($item) use (&$func) {
+            return \is_array($item) ? array_map($func, $item) : html_entity_decode($item);
         };
 
         return array_map($func, $data);
@@ -2083,7 +2067,7 @@ EOT;
      * @param string $orderNumber
      * @param string $email
      */
-    private function logOrderMailException(\Exception $e, $orderNumber, $email)
+    private function logOrderMailException(Exception $e, $orderNumber, $email)
     {
         $message = sprintf(
             'Could not send order mail for ordernumber %s to address %s',

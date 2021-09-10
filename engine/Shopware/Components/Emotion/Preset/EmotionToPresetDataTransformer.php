@@ -32,7 +32,9 @@ use Shopware\Models\Emotion\Emotion;
 
 class EmotionToPresetDataTransformer implements EmotionToPresetDataTransformerInterface
 {
-    /** @var ModelManager */
+    /**
+     * @var ModelManager
+     */
     private $modelManager;
 
     public function __construct(ModelManager $modelManager)
@@ -203,7 +205,7 @@ class EmotionToPresetDataTransformer implements EmotionToPresetDataTransformerIn
         /** @var array $element */
         foreach ($elements as $element) {
             $pluginId = $element['component']['pluginId'];
-            if ($pluginId && !in_array($pluginId, $pluginIds, false)) {
+            if ($pluginId && !\in_array($pluginId, $pluginIds, false)) {
                 $pluginIds[] = $pluginId;
             }
         }
@@ -252,7 +254,7 @@ class EmotionToPresetDataTransformer implements EmotionToPresetDataTransformerIn
                 unset($translations[$key]);
                 continue;
             }
-            if ($translation['objecttype'] === 'emotionElement' && array_key_exists($translation['objectkey'], $elementIds)) {
+            if ($translation['objecttype'] === 'emotionElement' && \array_key_exists($translation['objectkey'], $elementIds)) {
                 $translation['objectkey'] = 'elementIndex-' . $elementIds[$translation['objectkey']];
                 continue;
             }

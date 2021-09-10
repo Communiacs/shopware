@@ -84,9 +84,8 @@ abstract class AbstractExtension implements FormExtensionInterface
             $this->initTypeExtensions();
         }
 
-        return isset($this->typeExtensions[$name])
-            ? $this->typeExtensions[$name]
-            : [];
+        return $this->typeExtensions[$name]
+            ?? [];
     }
 
     /**
@@ -176,9 +175,21 @@ abstract class AbstractExtension implements FormExtensionInterface
                 throw new UnexpectedTypeException($extension, 'Symfony\Component\Form\FormTypeExtensionInterface');
             }
 
-            $type = $extension->getExtendedType();
+            if (method_exists($extension, 'getExtendedTypes')) {
+                $extendedTypes = [];
 
-            $this->typeExtensions[$type][] = $extension;
+                foreach ($extension::getExtendedTypes() as $extendedType) {
+                    $extendedTypes[] = $extendedType;
+                }
+            } else {
+                @trigger_error(sprintf('Not implementing the "%s::getExtendedTypes()" method in "%s" is deprecated since Symfony 4.2.', FormTypeExtensionInterface::class, \get_class($extension)), \E_USER_DEPRECATED);
+
+                $extendedTypes = [$extension->getExtendedType()];
+            }
+
+            foreach ($extendedTypes as $extendedType) {
+                $this->typeExtensions[$extendedType][] = $extension;
+            }
         }
     }
 

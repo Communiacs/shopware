@@ -26,8 +26,9 @@ namespace Shopware\Bundle\SitemapBundle\ConfigHandler;
 
 interface ConfigHandlerInterface
 {
-    /**
-     * @return array
-     */
-    public function getSitemapConfig();
+    public function getSitemapConfig(): array;
+
+    public function saveCustomUrls(array $customUrls): void;
+
+    public function saveExcludedUrls(array $excludedUrls): void;
 }

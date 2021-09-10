@@ -37,11 +37,7 @@ class FormBuilder extends FormConfigBuilder implements \IteratorAggregate, FormB
      */
     private $unresolvedChildren = [];
 
-    /**
-     * @param string      $name
-     * @param string|null $dataClass
-     */
-    public function __construct($name, $dataClass, EventDispatcherInterface $dispatcher, FormFactoryInterface $factory, array $options = [])
+    public function __construct(?string $name, ?string $dataClass, EventDispatcherInterface $dispatcher, FormFactoryInterface $factory, array $options = [])
     {
         parent::__construct($name, $dataClass, $dispatcher, $options);
 
@@ -70,8 +66,8 @@ class FormBuilder extends FormConfigBuilder implements \IteratorAggregate, FormB
             throw new UnexpectedTypeException($child, 'string or Symfony\Component\Form\FormBuilderInterface');
         }
 
-        if (null !== $type && !\is_string($type) && !$type instanceof FormTypeInterface) {
-            throw new UnexpectedTypeException($type, 'string or Symfony\Component\Form\FormTypeInterface');
+        if (null !== $type && !\is_string($type)) {
+            throw new UnexpectedTypeException($type, 'string or null');
         }
 
         // Add to "children" to maintain order
@@ -162,7 +158,7 @@ class FormBuilder extends FormConfigBuilder implements \IteratorAggregate, FormB
     }
 
     /**
-     * {@inheritdoc}
+     * @return int
      */
     public function count()
     {
@@ -228,15 +224,11 @@ class FormBuilder extends FormConfigBuilder implements \IteratorAggregate, FormB
     }
 
     /**
-     * Converts an unresolved child into a {@link FormBuilder} instance.
-     *
-     * @param string $name The name of the unresolved child
-     *
-     * @return self The created instance
+     * Converts an unresolved child into a {@link FormBuilderInterface} instance.
      */
-    private function resolveChild($name)
+    private function resolveChild(string $name): FormBuilderInterface
     {
-        list($type, $options) = $this->unresolvedChildren[$name];
+        [$type, $options] = $this->unresolvedChildren[$name];
 
         unset($this->unresolvedChildren[$name]);
 

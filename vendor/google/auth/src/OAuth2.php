@@ -428,7 +428,6 @@ class OAuth2 implements FetchAuthTokenInterface
 
         $assertion = [
             'iss' => $this->getIssuer(),
-            'aud' => $this->getAudience(),
             'exp' => ($now + $this->getExpiry()),
             'iat' => ($now - $opts['skew']),
         ];
@@ -437,9 +436,18 @@ class OAuth2 implements FetchAuthTokenInterface
                 throw new \DomainException($k . ' should not be null');
             }
         }
+        if (!(is_null($this->getAudience()))) {
+            $assertion['aud'] = $this->getAudience();
+        }
+
         if (!(is_null($this->getScope()))) {
             $assertion['scope'] = $this->getScope();
         }
+
+        if (empty($assertion['scope']) && empty($assertion['aud'])) {
+            throw new \DomainException('one of scope or aud should not be null');
+        }
+
         if (!(is_null($this->getSub()))) {
             $assertion['sub'] = $this->getSub();
         }
@@ -1303,18 +1311,36 @@ class OAuth2 implements FetchAuthTokenInterface
     /**
      * The expiration of the last received token.
      *
-     * @return array
+     * @return array|null
      */
     public function getLastReceivedToken()
     {
         if ($token = $this->getAccessToken()) {
-            return [
+            // the bare necessity of an auth token
+            $authToken = [
                 'access_token' => $token,
                 'expires_at' => $this->getExpiresAt(),
             ];
+        } elseif ($idToken = $this->getIdToken()) {
+            $authToken = [
+                'id_token' => $idToken,
+                'expires_at' => $this->getExpiresAt(),
+            ];
+        } else {
+            return null;
         }
 
-        return null;
+        if ($expiresIn = $this->getExpiresIn()) {
+            $authToken['expires_in'] = $expiresIn;
+        }
+        if ($issuedAt = $this->getIssuedAt()) {
+            $authToken['issued_at'] = $issuedAt;
+        }
+        if ($refreshToken = $this->getRefreshToken()) {
+            $authToken['refresh_token'] = $refreshToken;
+        }
+
+        return $authToken;
     }
 
     /**

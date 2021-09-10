@@ -24,11 +24,18 @@
 
 use Doctrine\DBAL\Connection;
 use Shopware\Components\CSRFWhitelistAware;
+use Shopware\Components\Model\ModelManager;
 use Shopware\Components\Model\QueryBuilder;
 use Shopware\Components\StateTranslatorService;
+use Shopware\Models\Blog\Blog;
+use Shopware\Models\Category\Category;
+use Shopware\Models\Category\Repository;
 use Shopware\Models\Document\Document;
+use Shopware\Models\Emotion\Emotion;
 use Shopware\Models\Shop\Locale;
+use Shopware\Models\Site\Site;
 use Shopware\Models\Tax\Tax;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Backend Controller for the Shopware global configured stores.
@@ -57,7 +64,7 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
     public function init()
     {
         if (!$this->Request()->getActionName()
-            || in_array($this->Request()->getActionName(), ['index', 'load'])
+            || \in_array($this->Request()->getActionName(), ['index', 'load'])
         ) {
             $this->View()->addTemplateDir('.');
             $this->Front()->Plugins()->ScriptRenderer()->setRender();
@@ -137,7 +144,7 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
         /** @var \Shopware\Models\Payment\Repository $repository */
         $repository = Shopware()->Models()->getRepository(\Shopware\Models\Payment\Payment::class);
         $filter = $this->Request()->getParam('filter', []);
-        $hasActiveFilter = in_array('active', array_column($filter, 'property'), true);
+        $hasActiveFilter = \in_array('active', array_column($filter, 'property'), true);
 
         if (!$hasActiveFilter) {
             $filter[] = [
@@ -161,7 +168,7 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
 
         // Translate payments
         /** @var \Shopware_Components_Translation $translationComponent */
-        $translationComponent = $this->get('translation');
+        $translationComponent = $this->get(\Shopware_Components_Translation::class);
         $data = $translationComponent->translatePaymentMethods($data);
 
         // Return the data and total count
@@ -246,8 +253,8 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
      */
     public function getCategoriesAction()
     {
-        /** @var \Shopware\Models\Category\Repository $repository */
-        $repository = Shopware()->Models()->getRepository(\Shopware\Models\Category\Category::class);
+        /** @var Repository $repository */
+        $repository = Shopware()->Models()->getRepository(Category::class);
 
         $query = $repository->getListQuery(
             $this->Request()->getParam('filter', []),
@@ -298,7 +305,7 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
 
         // Translate dispatch methods
         /** @var \Shopware_Components_Translation $translationComponent */
-        $translationComponent = $this->get('translation');
+        $translationComponent = $this->get(\Shopware_Components_Translation::class);
         $data = $translationComponent->translateDispatchMethods($data);
 
         // Return the data and total count
@@ -540,7 +547,7 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
                 );
                 $builder->setParameter(':free', $filter['value']);
             } else {
-                $repository->addFilter($builder, $filter);
+                $repository->addFilter($builder, [$filter]);
             }
         }
 
@@ -583,7 +590,7 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
      */
     public function getVariantsAction()
     {
-        $builder = Shopware()->Container()->get('dbal_connection')->createQueryBuilder();
+        $builder = Shopware()->Container()->get(\Doctrine\DBAL\Connection::class)->createQueryBuilder();
 
         $fields = [
             'details.id',
@@ -780,7 +787,7 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
                 'template' => $template->getTemplate(),
             ];
 
-            $data = $this->get('theme_service')->translateTheme(
+            $data = $this->get(\Shopware\Components\Theme\Service::class)->translateTheme(
                 $template,
                 $data
             );
@@ -823,7 +830,7 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
 
     public function getLocalesAction()
     {
-        $repository = $this->get('models')->getRepository(Locale::class);
+        $repository = $this->get(ModelManager::class)->getRepository(Locale::class);
 
         $builder = $repository->createQueryBuilder('l');
         $builder->select([
@@ -836,7 +843,7 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
         $builder->addFilter((array) $this->Request()->getParam('filter', []));
 
         $sort = $this->Request()->getParam('sort', []);
-        if (is_array($sort) && count($sort) === 0) {
+        if (\is_array($sort) && \count($sort) === 0) {
             $builder->addOrderBy('l.language');
             $builder->addOrderBy('l.territory');
         }
@@ -847,7 +854,7 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
 
         $query = $builder->getQuery();
 
-        $total = $this->get('models')->getQueryCount($query);
+        $total = $this->get(ModelManager::class)->getQueryCount($query);
         $data = $query->getArrayResult();
 
         $data = $this->getSnippetsForLocales($data);
@@ -921,7 +928,7 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
         $blacklist = ['prehashed', 'legacybackendmd5'];
 
         foreach ($hashes as $hash) {
-            if (in_array(strtolower($hash->getName()), $blacklist)) {
+            if (\in_array(strtolower($hash->getName()), $blacklist)) {
                 continue;
             }
 
@@ -930,7 +937,7 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
             ];
         }
 
-        $totalResult = count($hashes);
+        $totalResult = \count($hashes);
 
         $this->View()->assign([
             'success' => true,
@@ -956,7 +963,7 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
             ];
         }
 
-        $totalResult = count($availableCaptchas);
+        $totalResult = \count($availableCaptchas);
 
         $this->View()->assign([
             'success' => true,
@@ -1019,7 +1026,7 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
         $email = $this->Request()->getParam('value');
 
         /** @var \Shopware\Components\Validator\EmailValidatorInterface $emailValidator */
-        $emailValidator = $this->container->get('validator.email');
+        $emailValidator = $this->container->get(\Shopware\Components\Validator\EmailValidator::class);
         if ($emailValidator->isValid($email)) {
             $this->Response()->setContent(1);
         } else {
@@ -1036,7 +1043,7 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
         if (!empty($whitelist)) {
             $whitelist = json_decode($whitelist, true);
             $value = array_filter($value, function ($key) use ($whitelist) {
-                return in_array($key, $whitelist, true);
+                return \in_array($key, $whitelist, true);
             });
         }
 
@@ -1070,7 +1077,7 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
      */
     public function getDocTypesAction()
     {
-        $modelManager = $this->container->get('models');
+        $modelManager = $this->container->get(ModelManager::class);
         $repository = $modelManager
             ->getRepository(Document::class);
 
@@ -1088,8 +1095,69 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
 
         // translate the document names
         /** @var \Shopware_Components_Translation $translationComponent */
-        $translationComponent = $this->get('translation');
+        $translationComponent = $this->get(\Shopware_Components_Translation::class);
         $data = $translationComponent->translateDocuments($data);
+
+        $this->View()->assign(['success' => true, 'data' => $data, 'total' => $total]);
+    }
+
+    public function getLandingPagesAction(Request $request): void
+    {
+        $modelManager = $this->container->get(ModelManager::class);
+        $emotionRepository = $modelManager->getRepository(Emotion::class);
+
+        $builder = $emotionRepository->createQueryBuilder('emotion');
+
+        $builder->select('emotion')
+            ->where('emotion.isLandingPage = 1')
+            ->addFilter((array) $request->get('filter', []))
+            ->addOrderBy((array) $request->get('sort', []))
+            ->setFirstResult((int) $request->get('start', 0))
+            ->setMaxResults((int) $request->get('limit', 250));
+
+        $query = $builder->getQuery();
+        $total = $modelManager->getQueryCount($query);
+        $data = $query->getArrayResult();
+
+        $this->View()->assign(['success' => true, 'data' => $data, 'total' => $total]);
+    }
+
+    public function getBlogsAction(Request $request): void
+    {
+        $modelManager = $this->container->get(ModelManager::class);
+        $emotionRepository = $modelManager->getRepository(Blog::class);
+
+        $builder = $emotionRepository->createQueryBuilder('blog');
+
+        $builder->select('blog')
+            ->addFilter((array) $request->get('filter', []))
+            ->addOrderBy((array) $request->get('sort', []))
+            ->setFirstResult((int) $request->get('start', 0))
+            ->setMaxResults((int) $request->get('limit', 250));
+
+        $query = $builder->getQuery();
+        $total = $modelManager->getQueryCount($query);
+        $data = $query->getArrayResult();
+
+        $this->View()->assign(['success' => true, 'data' => $data, 'total' => $total]);
+    }
+
+    public function getStaticsAction(Request $request): void
+    {
+        $modelManager = $this->container->get(ModelManager::class);
+        $emotionRepository = $modelManager->getRepository(Site::class);
+
+        $builder = $emotionRepository->createQueryBuilder('site');
+
+        $builder->select('site')
+            ->addFilter((array) $request->get('filter', []))
+            ->addOrderBy((array) $request->get('sort', []))
+            ->setFirstResult((int) $request->get('start', 0))
+            ->setMaxResults((int) $request->get('limit', 250));
+
+        $query = $builder->getQuery();
+        $total = $modelManager->getQueryCount($query);
+        $data = $query->getArrayResult();
 
         $this->View()->assign(['success' => true, 'data' => $data, 'total' => $total]);
     }
@@ -1106,7 +1174,7 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
         }
 
         foreach ($properties as $key => $property) {
-            if (array_key_exists($property['property'], $fields)) {
+            if (\array_key_exists($property['property'], $fields)) {
                 $property['property'] = $fields[$property['property']];
             }
             $properties[$key] = $property;
@@ -1130,7 +1198,7 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
                 $asPos = strpos($field, $asStr, 1);
 
                 if ($asPos) {
-                    $fieldName = substr($field, $asPos + strlen($asStr));
+                    $fieldName = substr($field, $asPos + \strlen($asStr));
                 } else {
                     $fieldName = substr($field, $dotPos + 1);
                 }
@@ -1169,7 +1237,7 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
             return $data;
         }
 
-        $builder = Shopware()->Container()->get('dbal_connection')->createQueryBuilder();
+        $builder = Shopware()->Container()->get(\Doctrine\DBAL\Connection::class)->createQueryBuilder();
 
         $builder->select([
             'details.id',
@@ -1227,7 +1295,7 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
      */
     private function getAvailableSalutationKeys()
     {
-        $builder = Shopware()->Container()->get('models')->createQueryBuilder();
+        $builder = Shopware()->Container()->get(ModelManager::class)->createQueryBuilder();
         $builder->select(['element', 'values'])
             ->from(\Shopware\Models\Config\Element::class, 'element')
             ->leftJoin('element.values', 'values')

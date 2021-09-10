@@ -175,7 +175,7 @@ class ProductHydrator extends Hydrator
         $product->setAllowsNotification((bool) ($data['__product_notification']));
         $product->setKeywords($data['__product_keywords']);
         $product->setTemplate($data['__product_template']);
-        $product->setHasConfigurator(($data['__product_configurator_set_id'] > 0));
+        $product->setHasConfigurator($data['__product_configurator_set_id'] > 0);
         $product->setHasEsd((bool) $data['__product_has_esd']);
         $product->setIsPriceGroupActive((bool) $data['__product_pricegroupActive']);
         $product->setSales((int) $data['__topSeller_sales']);
@@ -220,7 +220,7 @@ class ProductHydrator extends Hydrator
         $product->setHasAvailableVariant($data['__product_has_available_variants'] > 0);
 
         $product->setFallbackPriceCount($data['__product_fallback_price_count']);
-        if (array_key_exists('__product_custom_price_count', $data)) {
+        if (\array_key_exists('__product_custom_price_count', $data)) {
             $product->setCustomerPriceCount($data['__product_custom_price_count']);
         } else {
             $product->setCustomerPriceCount($data['__product_fallback_price_count']);

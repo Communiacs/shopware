@@ -22,6 +22,8 @@
  * our trademarks remain entirely with us.
  */
 
+use Symfony\Component\HttpFoundation\Session\Session;
+
 /**
  * Shopware default auth adapter
  *
@@ -58,7 +60,7 @@ class Shopware_Components_Auth_Adapter_Default extends Enlight_Components_Auth_A
      *
      * @var array
      */
-    protected $conditions = ['active=1', 'lockeduntil <= NOW()'];
+    protected $conditions = ['active=1', '(lockeduntil <= NOW() OR lockeduntil IS NULL)'];
 
     /**
      * Column that holds the expire date
@@ -89,17 +91,24 @@ class Shopware_Components_Auth_Adapter_Default extends Enlight_Components_Auth_A
     protected $expiry = 21600;
 
     /**
+     * @var Session
+     */
+    private $session;
+
+    /**
      * Set some properties only available at runtime
      */
-    public function __construct()
+    public function __construct(Session $session)
     {
+        $this->session = $session;
+
         parent::__construct();
         // Add conditions to user queries
         foreach ($this->conditions as $condition) {
             $this->addCondition($condition);
         }
 
-        $this->setSessionId(Enlight_Components_Session::getId());
+        $this->setSessionId($session->getId());
     }
 
     /**
@@ -132,13 +141,9 @@ class Shopware_Components_Auth_Adapter_Default extends Enlight_Components_Auth_A
                 );
             }
 
-            Enlight_Components_Session::regenerateId();
+            $this->session->migrate(true);
 
-            // Close and restart session to make sure the db session handler writes updates.
-            session_write_close();
-            session_start();
-
-            $this->setSessionId(Enlight_Components_Session::getId());
+            $this->setSessionId($this->session->getId());
 
             $this->updateExpiry();
             $this->updateSessionId();

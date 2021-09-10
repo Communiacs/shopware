@@ -63,9 +63,9 @@ class sArticlesComparisons implements \Enlight_Hook
         $this->systemModule = $articleModule->sSYSTEM;
 
         $this->db = $container->get('db');
-        $this->config = $container->get('config');
+        $this->config = $container->get(\Shopware_Components_Config::class);
         $this->session = $container->get('session');
-        $this->contextService = $container->get('shopware_storefront.context_service');
+        $this->contextService = $container->get(\Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface::class);
     }
 
     /**
@@ -175,7 +175,7 @@ class sArticlesComparisons implements \Enlight_Hook
             [$this->session->offsetGet('sessionId')]
         );
 
-        if (!count($checkForProduct)) {
+        if (!\count($checkForProduct)) {
             return [];
         }
 
@@ -211,7 +211,7 @@ class sArticlesComparisons implements \Enlight_Hook
             [$this->session->offsetGet('sessionId')]
         );
 
-        if (!count($checkForProduct)) {
+        if (!\count($checkForProduct)) {
             return [];
         }
 
@@ -274,7 +274,7 @@ class sArticlesComparisons implements \Enlight_Hook
             ]);
 
             foreach ($productProperties as $productProperty) {
-                if (!array_key_exists($productProperty['id'], $properties)) {
+                if (!\array_key_exists($productProperty['id'], $properties)) {
                     //the key is not part of the array so add it to the end
                     $properties[$productProperty['id']] = $this->extractPropertyTranslation($productProperty);
                 }
@@ -297,7 +297,7 @@ class sArticlesComparisons implements \Enlight_Hook
         foreach ($articles as $productKey => $product) {
             $productProperties = [];
             foreach ($properties as $propertyKey => $property) {
-                if (array_key_exists($propertyKey, $product['sProperties'])) {
+                if (\is_array($product['sProperties']) && \array_key_exists($propertyKey, $product['sProperties'])) {
                     $productProperties[$propertyKey] = $product['sProperties'][$propertyKey];
                 } else {
                     $productProperties[$propertyKey] = null;
@@ -317,14 +317,23 @@ class sArticlesComparisons implements \Enlight_Hook
     private function extractPropertyTranslation($articleProperty)
     {
         if ($articleProperty['translation']) {
-            $translation = unserialize($articleProperty['translation'], ['allowed_classes' => false]);
+            $translation = @unserialize($articleProperty['translation'], ['allowed_classes' => false]);
+
+            if ($translation === false) {
+                $translation = [];
+            }
             if ($this->containsTranslation($translation)) {
                 return (string) $translation['optionName'];
             }
         }
 
         if ($articleProperty['translationFallback']) {
-            $translation = unserialize($articleProperty['translationFallback'], ['allowed_classes' => false]);
+            $translation = @unserialize($articleProperty['translationFallback'], ['allowed_classes' => false]);
+
+            if ($translation === false) {
+                $translation = [];
+            }
+
             if ($this->containsTranslation($translation)) {
                 return (string) $translation['optionName'];
             }
@@ -340,6 +349,6 @@ class sArticlesComparisons implements \Enlight_Hook
      */
     private function containsTranslation($translation)
     {
-        return is_array($translation) && isset($translation['optionName']) && $translation['optionName'];
+        return \is_array($translation) && isset($translation['optionName']) && $translation['optionName'];
     }
 }

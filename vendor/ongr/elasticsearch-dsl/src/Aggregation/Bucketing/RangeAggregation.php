@@ -60,7 +60,7 @@ class RangeAggregation extends AbstractAggregation
      *
      * @param bool $keyed
      *
-     * @return RangeAggregation
+     * @return $this
      */
     public function setKeyed($keyed)
     {
@@ -90,7 +90,7 @@ class RangeAggregation extends AbstractAggregation
             }
         );
 
-        if ($this->keyed && !empty($key)) {
+        if (!empty($key)) {
             $range['key'] = $key;
         }
 

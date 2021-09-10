@@ -59,42 +59,42 @@ class Media extends ModelEntity
     /**
      * Flag for an image media
      */
-    const TYPE_IMAGE = 'IMAGE';
+    public const TYPE_IMAGE = 'IMAGE';
 
     /**
      * Flag for a vector media
      */
-    const TYPE_VECTOR = 'VECTOR';
+    public const TYPE_VECTOR = 'VECTOR';
 
     /**
      * Flag for a video media
      */
-    const TYPE_VIDEO = 'VIDEO';
+    public const TYPE_VIDEO = 'VIDEO';
 
     /**
      * Flag for a music media
      */
-    const TYPE_MUSIC = 'MUSIC';
+    public const TYPE_MUSIC = 'MUSIC';
 
     /**
      * Flag for an archive media
      */
-    const TYPE_ARCHIVE = 'ARCHIVE';
+    public const TYPE_ARCHIVE = 'ARCHIVE';
 
     /**
      * Flag for a pdf media
      */
-    const TYPE_PDF = 'PDF';
+    public const TYPE_PDF = 'PDF';
 
     /**
      * Flag for a 3D model media
      */
-    const TYPE_MODEL = 'MODEL';
+    public const TYPE_MODEL = 'MODEL';
 
     /**
      * Flag for an unknown media
      */
-    const TYPE_UNKNOWN = 'UNKNOWN';
+    public const TYPE_UNKNOWN = 'UNKNOWN';
 
     /**
      * INVERSE SIDE
@@ -683,7 +683,7 @@ class Media extends ModelEntity
 
         // Name changed? Then rename the file and set the new path
         if ($isNameChanged) {
-            $mediaService = Shopware()->Container()->get('shopware_media.media_service');
+            $mediaService = Shopware()->Container()->get(\Shopware\Bundle\MediaBundle\MediaServiceInterface::class);
             $newName = $this->getFileName();
             $newPath = $this->getUploadDir() . $newName;
 
@@ -714,7 +714,7 @@ class Media extends ModelEntity
      */
     public function onRemove()
     {
-        $mediaService = Shopware()->Container()->get('shopware_media.media_service');
+        $mediaService = Shopware()->Container()->get(\Shopware\Bundle\MediaBundle\MediaServiceInterface::class);
         //check if file exist and remove it
         if ($mediaService->has($this->path)) {
             $mediaService->delete($this->path);
@@ -794,7 +794,7 @@ class Media extends ModelEntity
             return;
         }
 
-        $mediaService = Shopware()->Container()->get('shopware_media.media_service');
+        $mediaService = Shopware()->Container()->get(\Shopware\Bundle\MediaBundle\MediaServiceInterface::class);
 
         foreach ($thumbnailSizes as $size) {
             if (strpos($size, 'x') === false) {
@@ -845,7 +845,7 @@ class Media extends ModelEntity
     public function loadThumbnails($highDpi = false)
     {
         $thumbnails = $this->getThumbnailFilePaths($highDpi);
-        $mediaService = Shopware()->Container()->get('shopware_media.media_service');
+        $mediaService = Shopware()->Container()->get(\Shopware\Bundle\MediaBundle\MediaServiceInterface::class);
 
         if (!$mediaService->has($this->getPath())) {
             return $thumbnails;
@@ -884,7 +884,7 @@ class Media extends ModelEntity
 
         // Concat default sizes
         foreach ($this->defaultThumbnails as $size) {
-            if (count($size) === 1) {
+            if (\count($size) === 1) {
                 $sizes[] = $size . 'x' . $size;
             } else {
                 $sizes[] = $size[0] . 'x' . $size[1];
@@ -1046,8 +1046,12 @@ class Media extends ModelEntity
      */
     private function uploadFile()
     {
-        $mediaService = Shopware()->Container()->get('shopware_media.media_service');
-        $projectDir = Shopware()->Container()->getParameter('shopware.app.rootdir');
+        $mediaService = Shopware()->Container()->get(\Shopware\Bundle\MediaBundle\MediaServiceInterface::class);
+        $projectDir = Shopware()->Container()->getParameter('shopware.app.rootDir');
+
+        if (!\is_string($projectDir)) {
+            throw new \RuntimeException('Parameter shopware.app.rootDir has to be an string');
+        }
 
         // Move the file to the upload directory
         if ($this->file !== null) {
@@ -1086,7 +1090,7 @@ class Media extends ModelEntity
         }
 
         /** @var \Shopware\Components\Thumbnail\Manager $generator */
-        $generator = Shopware()->Container()->get('thumbnail_manager');
+        $generator = Shopware()->Container()->get(\Shopware\Components\Thumbnail\Manager::class);
 
         $generator->createMediaThumbnail($this, $this->defaultThumbnails, true);
     }
@@ -1103,10 +1107,10 @@ class Media extends ModelEntity
             return;
         }
 
-        $mediaService = Shopware()->Container()->get('shopware_media.media_service');
+        $mediaService = Shopware()->Container()->get(\Shopware\Bundle\MediaBundle\MediaServiceInterface::class);
 
         foreach ($this->defaultThumbnails as $size) {
-            if (count($size) === 1) {
+            if (\count($size) === 1) {
                 $sizeString = $size . 'x' . $size;
             } else {
                 $sizeString = $size[0] . 'x' . $size[1];
@@ -1139,7 +1143,11 @@ class Media extends ModelEntity
     private function getUploadDir()
     {
         // The absolute directory path where uploaded documents should be saved
-        $projectDir = Shopware()->Container()->getParameter('shopware.app.rootdir');
+        $projectDir = Shopware()->Container()->getParameter('shopware.app.rootDir');
+
+        if (!\is_string($projectDir)) {
+            throw new \RuntimeException('Parameter shopware.app.rootDir has to be an string');
+        }
 
         return $projectDir . 'media' . DIRECTORY_SEPARATOR . strtolower($this->type) . DIRECTORY_SEPARATOR;
     }
@@ -1151,7 +1159,7 @@ class Media extends ModelEntity
      */
     private function getThumbnailDir()
     {
-        $mediaService = Shopware()->Container()->get('shopware_media.media_service');
+        $mediaService = Shopware()->Container()->get(\Shopware\Bundle\MediaBundle\MediaServiceInterface::class);
         $path = $this->getUploadDir() . 'thumbnail' . DIRECTORY_SEPARATOR;
         $path = $mediaService->normalize($path);
 
@@ -1172,7 +1180,7 @@ class Media extends ModelEntity
         }
 
         /** @var \Shopware\Components\Thumbnail\Manager $manager */
-        $manager = Shopware()->Container()->get('thumbnail_manager');
+        $manager = Shopware()->Container()->get(\Shopware\Components\Thumbnail\Manager::class);
 
         $newSize = [
             'width' => $width,
@@ -1232,13 +1240,13 @@ class Media extends ModelEntity
 
         // Validate extension
         // #1 - whitelist
-        $mappingService = Shopware()->Container()->get('shopware_media.extension_mapping');
+        $mappingService = Shopware()->Container()->get(\Shopware\Bundle\MediaBundle\MediaExtensionMappingServiceInterface::class);
         if (!$mappingService->isAllowed($extension)) {
             throw new MediaFileExtensionNotAllowedException($extension);
         }
 
         // #2 - blacklist
-        if (in_array($extension, \Shopware_Controllers_Backend_MediaManager::$fileUploadBlacklist, true)) {
+        if (\in_array($extension, \Shopware_Controllers_Backend_MediaManager::$fileUploadBlacklist, true)) {
             throw new MediaFileExtensionIsBlacklistedException($extension);
         }
 
@@ -1256,7 +1264,11 @@ class Media extends ModelEntity
         $this->name = $this->removeSpecialCharacters($name);
         $this->extension = str_replace('jpeg', 'jpg', $extension);
 
-        $projectDir = Shopware()->Container()->getParameter('shopware.app.rootdir');
+        $projectDir = Shopware()->Container()->getParameter('shopware.app.rootDir');
+        if (!\is_string($projectDir)) {
+            throw new \RuntimeException('Parameter shopware.app.rootDir has to be an string');
+        }
+
         $this->path = str_replace($projectDir, '', $this->getUploadDir() . $this->getFileName());
 
         if (DIRECTORY_SEPARATOR !== '/') {
@@ -1287,7 +1299,7 @@ class Media extends ModelEntity
     private function getAllThumbnailSizes()
     {
         /** @var Connection $connection */
-        $connection = Shopware()->Container()->get('dbal_connection');
+        $connection = Shopware()->Container()->get(\Doctrine\DBAL\Connection::class);
         $joinedSizes = $connection
             ->query('SELECT DISTINCT thumbnail_size FROM s_media_album_settings WHERE thumbnail_size != ""')
             ->fetchAll(\PDO::FETCH_COLUMN);

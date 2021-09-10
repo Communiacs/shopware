@@ -163,8 +163,8 @@ class RegisterService implements RegisterServiceInterface
 
         if (!$customerConfirmed) {
             // Reset login information if Double-Opt-In is active
-            $customer->setFirstLogin('0000-00-00');
-            $customer->setLastLogin('0000-00-00');
+            $customer->setFirstLogin(null);
+            $customer->setLastLogin(null);
             $customer->setDoubleOptinEmailSentDate(new \DateTime());
         }
 
@@ -274,9 +274,9 @@ class RegisterService implements RegisterServiceInterface
         );
 
         if (((int) $customer->getAccountMode()) === 1) {
-            $mail = $container->get('templatemail')->createMail('sOPTINREGISTERACCOUNTLESS', $context);
+            $mail = $container->get(\Shopware_Components_TemplateMail::class)->createMail('sOPTINREGISTERACCOUNTLESS', $context);
         } else {
-            $mail = $container->get('templatemail')->createMail('sOPTINREGISTER', $context);
+            $mail = $container->get(\Shopware_Components_TemplateMail::class)->createMail('sOPTINREGISTER', $context);
         }
         $mail->addTo($customer->getEmail());
         $mail->send();
@@ -286,7 +286,7 @@ class RegisterService implements RegisterServiceInterface
     {
         /** @var Request|null $request */
         $request = Shopware()->Container()->get('front')->Request();
-        $fromCheckout = ($request && $request->getParam('sTarget') === 'checkout');
+        $fromCheckout = $request && $request->getParam('sTarget') === 'checkout';
 
         $sql = "INSERT INTO `s_core_optin` (`type`, `datum`, `hash`, `data`)
                 VALUES ('swRegister', ?, ?, ?)";

@@ -27,7 +27,7 @@
 
                                             {if $image.thumbnails[0]}
                                                 <a href="{$detailLink}" title="{$sBasketItem.articlename|strip_tags|escape}" class="table--media-link"
-                                                    {if {config name=detailmodal} && {controllerAction|lower} === 'confirm'}
+                                                    {if {config name="detailmodal"} && {controllerAction|lower} === 'confirm'}
                                                    data-modalbox="true"
                                                    data-content="{url controller="detail" action="productQuickView" ordernumber="{$sBasketItem.ordernumber}" fullPath}"
                                                    data-mode="ajax"
@@ -63,7 +63,7 @@
                     {block name='frontend_checkout_cart_item_details_title'}
 
                         <a class="content--title" href="{$detailLink}" title="{$sBasketItem.articlename|strip_tags|escape}"
-                            {if {config name=detailmodal} && {controllerAction|lower} === 'confirm'}
+                            {if {config name="detailmodal"} && {controllerAction|lower} === 'confirm'}
                                data-modalbox="true"
                                data-content="{url controller="detail" action="productQuickView" ordernumber="{$sBasketItem.ordernumber}" fullPath}"
                                data-mode="ajax"
@@ -85,7 +85,7 @@
 
                     {* Product delivery information *}
                     {block name='frontend_checkout_cart_item_delivery_informations'}
-                        {if {config name=BasketShippingInfo} && $sBasketItem.shippinginfo}
+                        {if {config name="BasketShippingInfo"} && $sBasketItem.shippinginfo}
                             {include file="frontend/plugins/index/delivery_informations.tpl" sArticle=$sBasketItem}
                         {/if}
                     {/block}
@@ -93,9 +93,9 @@
                     {* Additional product information *}
                     {block name='frontend_checkout_cart_item_details_inline'}
                         {block name='frontend_checkout_cart_item_details_essential_features'}
-                            {if {config name=alwaysShowMainFeatures}}
+                            {if {config name="alwaysShowMainFeatures"}}
                                 <div class="product--essential-features">
-                                    {include file="string:{config name=mainfeatures}"}
+                                    {include file="string:{config name="mainfeatures"}"}
                                 </div>
                             {/if}
                         {/block}
@@ -171,11 +171,13 @@
         <div class="panel--td column--actions">
             <form action="{url action='deleteArticle' sDelete=$sBasketItem.id sTargetAction=$sTargetAction}"
                   method="post">
-                {s name="CartItemLinkDelete" assign="snippetCartItemLinkDelete"}{/s}
-                <button type="submit" class="btn is--small column--actions-link"
-                        title="{$snippetCartItemLinkDelete|escape}">
-                    <i class="icon--cross"></i>
-                </button>
+                {block name='frontend_checkout_cart_item_delete_article_form_submit'}   
+                    {s name="CartItemLinkDelete" assign="snippetCartItemLinkDelete"}{/s}
+                    <button type="submit" class="btn is--small column--actions-link"
+                            title="{$snippetCartItemLinkDelete|escape}">
+                        <i class="icon--cross"></i>
+                    </button>
+                {/block}
             </form>
         </div>
     {/block}

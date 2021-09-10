@@ -181,7 +181,7 @@ class PropertyFacetHandler implements PartialFacetHandlerInterface
                     $listItem = new MediaListItem(
                         $option->getId(),
                         $option->getName(),
-                        in_array(
+                        \in_array(
                             $option->getId(),
                             $actives
                         ),
@@ -189,8 +189,8 @@ class PropertyFacetHandler implements PartialFacetHandlerInterface
                         $option->getAttributes()
                     );
 
-                    $isActive = ($isActive || $listItem->isActive());
-                    $useMedia = ($useMedia || $listItem->getMedia() !== null);
+                    $isActive = $isActive || $listItem->isActive();
+                    $useMedia = $useMedia || $listItem->getMedia() !== null;
 
                     $items[] = $listItem;
                 }

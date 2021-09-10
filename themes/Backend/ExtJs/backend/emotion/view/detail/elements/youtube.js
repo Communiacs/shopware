@@ -27,7 +27,7 @@
  * @author      shopware AG
  */
 
-//{namespace name=backend/emotion/view/detail}
+//{namespace name="backend/emotion/view/detail"}
 //{block name="backend/emotion/view/detail/elements/youtube"}
 Ext.define('Shopware.apps.Emotion.view.detail.elements.Youtube', {
 
@@ -47,7 +47,6 @@ Ext.define('Shopware.apps.Emotion.view.detail.elements.Youtube', {
             videoID = me.getConfigValue('video_id');
 
         if (Ext.isDefined(videoID)) {
-            videoID = Ext.util.Format.htmlEncode(videoID);
             teaserImage = Ext.String.format('https://img.youtube.com/vi/[0]/0.jpg', videoID);
             style = Ext.String.format('background-image: url([0]);', teaserImage);
 

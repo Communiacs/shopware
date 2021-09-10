@@ -101,7 +101,7 @@ class Shopware_Plugins_Core_PostFilter_Bootstrap extends Shopware_Components_Plu
                 return $source;
             }
         }
-        if (!in_array($request->getModuleName(), ['frontend', 'widgets'], true)) {
+        if (!\in_array($request->getModuleName(), ['frontend', 'widgets'], true)) {
             return $args->getReturn();
         }
         $source = $this->filterUrls($source);
@@ -175,7 +175,7 @@ class Shopware_Plugins_Core_PostFilter_Bootstrap extends Shopware_Components_Plu
         if (!empty($this->backLinkWhiteList)) {
             if ($src[1] === 'a' && preg_match('#^https?://#', $src[3])) {
                 $host = @parse_url($src[3], PHP_URL_HOST);
-                if (!strstr($src[0], 'rel=') && !in_array($host, $this->backLinkWhiteList)) {
+                if (!strstr($src[0], 'rel=') && !\in_array($host, $this->backLinkWhiteList)) {
                     $src[0] = rtrim($src[0], '>') . ' rel="nofollow noopener">';
                 }
             }
@@ -208,11 +208,9 @@ class Shopware_Plugins_Core_PostFilter_Bootstrap extends Shopware_Components_Plu
         }
 
         // Check if the current link is a canonical link
-        $isCanonical = (
-            strpos($src[0], 'rel="canonical"') !== false
+        $isCanonical = strpos($src[0], 'rel="canonical"') !== false
             || strpos($src[0], 'rel="prev"') !== false
-            || strpos($src[0], 'rel="next"') !== false
-        );
+            || strpos($src[0], 'rel="next"') !== false;
 
         if ($this->useSecure && !$isCanonical && $src[1] !== 'a') {
             $link = str_replace('http://' . $this->basePath, 'https://' . $this->basePath, $link);
@@ -245,7 +243,7 @@ class Shopware_Plugins_Core_PostFilter_Bootstrap extends Shopware_Components_Plu
     protected function filterUrls($source)
     {
         /** @var \Shopware\Components\Routing\RouterInterface $router */
-        $router = $this->get('router');
+        $router = $this->get(\Shopware\Components\Routing\RouterInterface::class);
         $baseFile = preg_quote($router->getContext()->getBaseFile(), '#');
         $regex = '#<(a|form|iframe|link|img)[^<>]*(href|src|action)="(' . $baseFile . '[^"]*)".*>#Umsi';
         if (preg_match_all($regex, $source, $matches) > 0) {
@@ -289,7 +287,7 @@ class Shopware_Plugins_Core_PostFilter_Bootstrap extends Shopware_Components_Plu
             $shop = $shop->getMain();
         }
 
-        $shopHosts = $this->get('dbal_connection')->fetchAssoc(
+        $shopHosts = $this->get(\Doctrine\DBAL\Connection::class)->fetchAssoc(
             'SELECT host, hosts FROM s_core_shops WHERE id = :id',
             [':id' => $shop->getId()]
         );

@@ -24,7 +24,6 @@
 
 use Doctrine\ORM\AbstractQuery;
 use Shopware\Bundle\AttributeBundle\Service\CrudServiceInterface;
-use Shopware\Bundle\MediaBundle\MediaServiceInterface;
 use Shopware\Bundle\StoreFrontBundle;
 use Shopware\Bundle\StoreFrontBundle\Service\AdditionalTextServiceInterface;
 use Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface;
@@ -138,12 +137,12 @@ class sExport implements \Enlight_Hook
     ) {
         $container = Shopware()->Container();
 
-        $this->contextService = $contextService ?: $container->get('shopware_storefront.context_service');
-        $this->additionalTextService = $container->get('shopware_storefront.additional_text_service');
+        $this->contextService = $contextService ?: $container->get(\Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface::class);
+        $this->additionalTextService = $container->get(\Shopware\Bundle\StoreFrontBundle\Service\AdditionalTextServiceInterface::class);
         $this->db = $db ?: $container->get('db');
-        $this->config = $config ?: $container->get('config');
-        $this->configuratorService = $configuratorService ?: $container->get('shopware_storefront.configurator_service');
-        $this->cdnConfig = $container->getParameter('shopware.cdn');
+        $this->config = $config ?: $container->get(\Shopware_Components_Config::class);
+        $this->configuratorService = $configuratorService ?: $container->get(\Shopware\Bundle\StoreFrontBundle\Service\ConfiguratorServiceInterface::class);
+        $this->cdnConfig = (array) $container->getParameter('shopware.cdn');
     }
 
     /**
@@ -163,7 +162,7 @@ class sExport implements \Enlight_Hook
         }
         if (is_numeric($currency)) {
             $sql = 'id=' . $currency;
-        } elseif (is_string($currency)) {
+        } elseif (\is_string($currency)) {
             $sql = 'currency=' . $this->db->quote(trim($currency));
         } else {
             return false;
@@ -194,9 +193,9 @@ class sExport implements \Enlight_Hook
         if (isset($cache[$customerGroup])) {
             return $cache[$customerGroup];
         }
-        if (is_int($customerGroup)) {
+        if (\is_int($customerGroup)) {
             $sql = 'id=' . $customerGroup;
-        } elseif (is_string($customerGroup)) {
+        } elseif (\is_string($customerGroup)) {
             $sql = 'groupkey=' . $this->db->quote(trim($customerGroup));
         } else {
             return false;
@@ -234,7 +233,7 @@ class sExport implements \Enlight_Hook
 
         if (empty($this->sSettings)) {
             header('HTTP/1.0 404 Not Found');
-            die('Item Export not found');
+            exit('Item Export not found');
         }
 
         $this->sSettings['dec_separator'] = ',';
@@ -311,7 +310,7 @@ class sExport implements \Enlight_Hook
         /** @var Currency $currency */
         $currency = $repository->find($this->sCurrency['id']);
         $shop->setCurrency($currency);
-        Shopware()->Container()->get('shopware.components.shop_registration_service')->registerShop($shop);
+        Shopware()->Container()->get(\Shopware\Components\ShopRegistrationServiceInterface::class)->registerShop($shop);
 
         if ($this->sCustomergroup !== false) {
             Shopware()->Container()->get('session')->offsetSet('sUserGroup', $this->sCustomergroup['groupkey']);
@@ -461,7 +460,7 @@ class sExport implements \Enlight_Hook
             case 'hex':
                 // Escape every character into hex
                 $return = '';
-                for ($x = 0; $x < strlen($string); ++$x) {
+                for ($x = 0; $x < \strlen($string); ++$x) {
                     $return .= '%' . bin2hex($string[$x]);
                 }
 
@@ -469,7 +468,7 @@ class sExport implements \Enlight_Hook
 
             case 'hexentity':
                 $return = '';
-                for ($x = 0; $x < strlen($string); ++$x) {
+                for ($x = 0; $x < \strlen($string); ++$x) {
                     $return .= '&#x' . bin2hex($string[$x]) . ';';
                 }
 
@@ -477,8 +476,8 @@ class sExport implements \Enlight_Hook
 
             case 'decentity':
                 $return = '';
-                for ($x = 0; $x < strlen($string); ++$x) {
-                    $return .= '&#' . ord($string[$x]) . ';';
+                for ($x = 0; $x < \strlen($string); ++$x) {
+                    $return .= '&#' . \ord($string[$x]) . ';';
                 }
 
                 return $return;
@@ -494,8 +493,8 @@ class sExport implements \Enlight_Hook
             case 'nonstd':
                 // Escape non-standard chars, such as ms document quotes
                 $_res = '';
-                for ($_i = 0, $_len = strlen($string); $_i < $_len; ++$_i) {
-                    $_ord = ord(substr($string, $_i, 1));
+                for ($_i = 0, $_len = \strlen($string); $_i < $_len; ++$_i) {
+                    $_ord = \ord(substr($string, $_i, 1));
                     // Non-standard char, escape it
                     if ($_ord >= 126) {
                         $_res .= '&#' . $_ord . ';';
@@ -531,11 +530,11 @@ class sExport implements \Enlight_Hook
             return '';
         }
 
-        /** @var MediaServiceInterface $mediaService */
-        $mediaService = Shopware()->Container()->get('shopware_media.media_service');
+        /** @var \Shopware\Bundle\MediaBundle\MediaServiceInterface $mediaService */
+        $mediaService = Shopware()->Container()->get(\Shopware\Bundle\MediaBundle\MediaServiceInterface::class);
 
         /** @var Manager $thumbnailManager */
-        $thumbnailManager = Shopware()->Container()->get('thumbnail_manager');
+        $thumbnailManager = Shopware()->Container()->get(\Shopware\Components\Thumbnail\Manager::class);
 
         // If no imageSize was set, return the full image
         if ($imageSize === null) {
@@ -596,8 +595,8 @@ class sExport implements \Enlight_Hook
         if (empty($articleId) || empty($orderNumber)) {
             return '';
         }
-        $imageData = Shopware()->Modules()->sArticles()->sGetArticlePictures($articleId, false, null, $orderNumber);
-        $cover = Shopware()->Modules()->sArticles()->sGetArticlePictures($articleId, true, null, $orderNumber);
+        $imageData = Shopware()->Modules()->Articles()->sGetArticlePictures($articleId, false, null, $orderNumber);
+        $cover = Shopware()->Modules()->Articles()->sGetArticlePictures($articleId, true, null, $orderNumber);
         $returnData[] = $cover['src'][$imageSize];
         foreach ($imageData as $image) {
             $returnData[] = $image['src'][$imageSize];
@@ -646,7 +645,7 @@ class sExport implements \Enlight_Hook
                     'metaTitle' => 'metaTitle',
                 ];
 
-                $attributes = Shopware()->Container()->get('shopware_attribute.crud_service')->getList('s_articles_attributes');
+                $attributes = Shopware()->Container()->get(\Shopware\Bundle\AttributeBundle\Service\CrudService::class)->getList('s_articles_attributes');
                 foreach ($attributes as $attribute) {
                     if ($attribute->isIdentifier()) {
                         continue;
@@ -693,7 +692,7 @@ class sExport implements \Enlight_Hook
         $fieldmark = '"';
         $elements = explode($separator, $line);
         $tmp_elements = [];
-        $amountOfElements = count($elements);
+        $amountOfElements = \count($elements);
 
         for ($i = 0; $i < $amountOfElements; ++$i) {
             $nquotes = substr_count($elements[$i], $fieldmark);
@@ -909,7 +908,7 @@ class sExport implements \Enlight_Hook
                 IF(a.changetime!='0000-00-00 00:00:00',a.changetime,'') as `changed`,
                 IF(a.datum!='0000-00-00',a.datum,'') as `added`,
                 IF(d.releasedate!='0000-00-00',d.releasedate,'') as `releasedate`,
-                a.active as active,
+                IF(v.active IS NOT NULL,IF(a.active=0,0,v.active),a.active) as active,
 
                 d.id as `articledetailsID`,
                 IF(v.ordernumber IS NOT NULL,v.ordernumber,d.ordernumber) as ordernumber,
@@ -925,7 +924,6 @@ class sExport implements \Enlight_Hook
                 COALESCE(sai.impressions, 0) as impressions,
                 d.sales,
 
-                IF(v.active IS NOT NULL,IF(a.active=0,0,v.active),a.active) as active,
                 IF(v.instock IS NOT NULL,v.instock,d.instock) as instock,
                 (
                    SELECT AVG(av.points)
@@ -983,6 +981,9 @@ class sExport implements \Enlight_Hook
             AND customergroupID = {$this->db->quote($this->sSettings['customergroupID'])}
             AND discountstart=1
 
+            LEFT JOIN s_articles_avoid_customergroups avoid
+            ON avoid.articleID = a.id AND avoid.customergroupID = {$this->db->quote($this->sSettings['customergroupID'])}
+
             LEFT JOIN s_articles_esd e ON e.articledetailsID=d.id
 
             LEFT JOIN (
@@ -1021,6 +1022,7 @@ class sExport implements \Enlight_Hook
             AND a.mode = 0
             AND d.kind != 3
             AND ba.articleID IS NULL
+            AND avoid.articleID IS NULL
             $sql_add_where
 
             $sql_add_group_by
@@ -1156,7 +1158,7 @@ class sExport implements \Enlight_Hook
 
                             $product = $this->additionalTextService->buildAdditionalText($product, $context);
 
-                            if (array_key_exists($orderNumber, $row['group_additionaltext'])) {
+                            if (\array_key_exists($orderNumber, $row['group_additionaltext'])) {
                                 $row['group_additionaltext'][$orderNumber] = $product->getAdditional();
                             }
                             if ($orderNumber == $row['ordernumber']) {
@@ -1188,7 +1190,7 @@ class sExport implements \Enlight_Hook
             }
             $rows[] = $row;
 
-            if ($rowIndex == $count || count($rows) >= 50) {
+            if ($rowIndex == $count || \count($rows) >= 50) {
                 @set_time_limit(30);
 
                 $rows = Shopware()->Container()->get('events')->filter(
@@ -1224,7 +1226,7 @@ class sExport implements \Enlight_Hook
         }
 
         $productCategoryId = $this->sSYSTEM->sMODULES['sCategories']->sGetCategoryIdByArticleId($articleID, $categoryID);
-        $breadcrumb = array_reverse(Shopware()->Modules()->sCategories()->sGetCategoriesByParent($productCategoryId));
+        $breadcrumb = array_reverse(Shopware()->Modules()->Categories()->sGetCategoriesByParent($productCategoryId));
         $breadcrumbs = [];
 
         foreach ($breadcrumb as $breadcrumbObj) {
@@ -1250,7 +1252,7 @@ class sExport implements \Enlight_Hook
         }
         if (is_numeric($country)) {
             $sql = 'c.id=' . $country;
-        } elseif (is_string($country)) {
+        } elseif (\is_string($country)) {
             $sql = 'c.countryiso=' . $this->db->quote($country);
         } else {
             return false;
@@ -1282,7 +1284,7 @@ class sExport implements \Enlight_Hook
         }
         if (is_numeric($payment)) {
             $sql = 'id=' . $payment;
-        } elseif (is_string($payment)) {
+        } elseif (\is_string($payment)) {
             $sql = 'name=' . $this->db->quote($payment);
         } else {
             return false;
@@ -1321,7 +1323,7 @@ class sExport implements \Enlight_Hook
             $sql_order = '';
         } elseif (is_numeric($dispatch)) {
             $sql_order = 'IF(sd.id=' . (int) $dispatch . ',0,1),';
-        } elseif (is_string($dispatch)) {
+        } elseif (\is_string($dispatch)) {
             $sql_order = 'IF(name=' . $this->db->quote($dispatch) . ',0,1),';
         } else {
             $sql_order = '';
@@ -1331,7 +1333,7 @@ class sExport implements \Enlight_Hook
             $sql_where = '';
         } elseif (is_numeric($country)) {
             $sql_where = 'c.id=' . $country;
-        } elseif (is_string($country)) {
+        } elseif (\is_string($country)) {
             $sql_where = 'c.countryiso=' . $this->db->quote($country);
         } else {
             $sql_where = '';
@@ -1487,7 +1489,7 @@ class sExport implements \Enlight_Hook
      */
     public function sGetArticleShippingcost($article, $payment, $country, $dispatch = null)
     {
-        if (empty($article) || !is_array($article)) {
+        if (empty($article) || !\is_array($article)) {
             return false;
         }
         $country = $this->sGetCountry($country);
@@ -1518,7 +1520,7 @@ class sExport implements \Enlight_Hook
             $sql_order = '';
         } elseif (is_numeric($dispatch)) {
             $sql_order = 'IF(d.id=' . (int) $dispatch . ',0,1),';
-        } elseif (is_string($dispatch)) {
+        } elseif (\is_string($dispatch)) {
             $sql_order = 'IF(d.name=' . $this->db->quote($dispatch) . ',0,1),';
         } else {
             $sql_order = '';
@@ -1849,7 +1851,7 @@ class sExport implements \Enlight_Hook
             $sql = 's.`default`=1';
         } elseif (is_numeric($id)) {
             $sql = 's.id=' . $id;
-        } elseif (is_string($id)) {
+        } elseif (\is_string($id)) {
             $sql = 's.name=' . $this->db->quote(trim($id));
         }
 

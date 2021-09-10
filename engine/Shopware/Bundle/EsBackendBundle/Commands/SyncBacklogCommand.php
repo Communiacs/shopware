@@ -71,7 +71,7 @@ class SyncBacklogCommand extends ShopwareCommand
         if (empty($backlogs)) {
             $output->writeln('Backlog empty');
 
-            return null;
+            return 0;
         }
 
         $registry = $this->container->get('shopware_attribute.repository_registry');
@@ -106,7 +106,7 @@ class SyncBacklogCommand extends ShopwareCommand
 
     private function indexArticle($id)
     {
-        $query = $this->container->get('dbal_connection')->createQueryBuilder();
+        $query = $this->container->get(\Doctrine\DBAL\Connection::class)->createQueryBuilder();
         $query = $query
             ->select(['products.id', 'products.ordernumber'])
             ->from('s_articles_details', 'products')
@@ -121,7 +121,7 @@ class SyncBacklogCommand extends ShopwareCommand
 
         $query = new LastIdQuery($query);
 
-        $repository = $this->container->get('shopware_attribute.product_repository');
+        $repository = $this->container->get(\Shopware\Bundle\AttributeBundle\Repository\ProductRepository::class);
 
         $index = $this->getIndexName($repository->getDomainName());
 
@@ -132,7 +132,7 @@ class SyncBacklogCommand extends ShopwareCommand
 
     private function getIndexName($domainName)
     {
-        $client = $this->container->get('shopware_elastic_search.client');
+        $client = $this->container->get(\Elasticsearch\Client::class);
         $indexConfig = $this->indexFactory->createIndexConfiguration($domainName);
 
         $exist = $client->indices()->getAlias(['name' => $indexConfig->getAlias()]);

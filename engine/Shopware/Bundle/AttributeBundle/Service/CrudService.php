@@ -201,16 +201,16 @@ class CrudService implements CrudServiceInterface
 
         usort($items, function (ConfigurationStruct $a, ConfigurationStruct $b) {
             if ($a->getPosition() === null && $b->getPosition() !== null) {
-                return true;
+                return 1;
             }
             if ($b->getPosition() === null && $a->getPosition() !== null) {
-                return false;
+                return -1;
             }
             if ($a->getPosition() == $b->getPosition()) {
                 return strnatcasecmp($a->getColumnName(), $b->getColumnName());
             }
 
-            return $a->getPosition() > $b->getPosition();
+            return $a->getPosition() <=> $b->getPosition();
         });
 
         return $items;
@@ -227,7 +227,7 @@ class CrudService implements CrudServiceInterface
             $model = $this->entityManager->find('Shopware\Models\Attribute\Configuration', $id);
         }
 
-        if (isset($data['arrayStore']) && is_array($data['arrayStore'])) {
+        if (isset($data['arrayStore']) && \is_array($data['arrayStore'])) {
             $data['arrayStore'] = json_encode($data['arrayStore']);
         }
 
@@ -297,7 +297,7 @@ class CrudService implements CrudServiceInterface
         ]);
 
         $configId = null;
-        if (array_key_exists('id', $data)) {
+        if (\array_key_exists('id', $data)) {
             $configId = $data['id'];
         }
 

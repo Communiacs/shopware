@@ -1,6 +1,16 @@
 CHANGELOG
 =========
 
+5.3
+---
+
+ * Add `Currencies::getCashFractionDigits()` and `Currencies::getCashRoundingIncrement()`
+
+5.0.0
+-----
+
+ * removed `ResourceBundle` namespace
+
 4.4.0
 -----
 

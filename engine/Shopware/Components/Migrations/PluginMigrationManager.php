@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /**
@@ -115,7 +116,7 @@ ENGINE=InnoDB
         $migrations = array_reverse($migrations);
 
         if ($limit !== null) {
-            return array_slice($migrations, 0, $limit, true);
+            return \array_slice($migrations, 0, $limit, true);
         }
 
         return $migrations;
@@ -134,7 +135,7 @@ ENGINE=InnoDB
 
         $migrations = $this->getMigrationsForDowngrade($currentVersion);
 
-        $this->log(sprintf('Found %s migrations to apply', count($migrations)));
+        $this->log(sprintf('Found %s migrations to apply', \count($migrations)));
 
         foreach ($migrations as $migration) {
             $this->log(sprintf('Revert MigrationNumber: %s - %s', $migration->getVersion(), $migration->getLabel()));
@@ -227,11 +228,7 @@ ENGINE=InnoDB
         } catch (\Exception $e) {
             $this->markMigrationAsFailed($migration, $e);
 
-            throw new \RuntimeException(sprintf(
-                'Could not revert migration (%s). Error: %s ',
-                get_class($migration),
-                $e->getMessage()
-            ));
+            throw new \RuntimeException(sprintf('Could not revert migration (%s). Error: %s ', \get_class($migration), $e->getMessage()));
         }
 
         $this->removeMigration($migration);

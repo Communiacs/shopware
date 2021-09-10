@@ -25,7 +25,11 @@
 namespace Shopware\Bundle\SitemapBundle\Commands;
 
 use Shopware\Bundle\SitemapBundle\Exception\AlreadyLockedException;
+use Shopware\Bundle\SitemapBundle\Service\SitemapExporter;
+use Shopware\Bundle\SitemapBundle\Service\SitemapLock;
 use Shopware\Commands\ShopwareCommand;
+use Shopware\Components\Model\ModelManager;
+use Shopware\Models\Shop\Repository;
 use Shopware\Models\Shop\Shop;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -61,8 +65,8 @@ class SitemapGenerateCommand extends ShopwareCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        /** @var \Shopware\Models\Shop\Repository $repository */
-        $repository = $this->container->get('models')->getRepository(Shop::class);
+        /** @var Repository $repository */
+        $repository = $this->container->get(ModelManager::class)->getRepository(Shop::class);
 
         $shops = null;
         $shopId = $input->getOption('shopId');
@@ -81,13 +85,13 @@ class SitemapGenerateCommand extends ShopwareCommand
             $shops = $repository->getActiveShopsFixed();
         }
 
-        $sitemapExporter = $this->container->get('shopware_bundle_sitemap.service.sitemap_exporter');
+        $sitemapExporter = $this->container->get(SitemapExporter::class);
         foreach ($shops as $shop) {
             $output->writeln(sprintf('Generating sitemaps for shop #%d (%s)...', $shop->getId(), $shop->getName()));
 
             if ($input->getOption('force')) {
                 $this->container
-                    ->get('shopware_bundle_sitemap.service.sitemap_lock')
+                    ->get(SitemapLock::class)
                     ->unLock($shop);
             }
 
@@ -98,7 +102,7 @@ class SitemapGenerateCommand extends ShopwareCommand
             }
         }
 
-        $output->writeln('done!');
+        $output->writeln('Done!');
 
         return 0;
     }

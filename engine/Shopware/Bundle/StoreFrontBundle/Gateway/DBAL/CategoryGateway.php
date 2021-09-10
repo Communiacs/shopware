@@ -24,6 +24,7 @@
 
 namespace Shopware\Bundle\StoreFrontBundle\Gateway\DBAL;
 
+use Assert\Assertion;
 use Doctrine\DBAL\Driver\ResultStatement;
 use PDO;
 use Shopware\Bundle\StoreFrontBundle\Gateway;
@@ -62,17 +63,7 @@ class CategoryGateway implements Gateway\CategoryGatewayInterface
      */
     public function get($id, Struct\ShopContextInterface $context)
     {
-        /*
-         * @deprecated since 5.5, will be removed in Shopware 5.7
-         *
-         * Allowing an array as a parameter is supported in 5.5/5.6 for legacy reasons.
-         * The check below will be removed in Shopware 5.7
-         */
-        if (is_array($id)) {
-            trigger_error(sprintf('Calling %s:%s with an array of Ids is deprecated since Shopware 5.5 and will crash with 5.7. Use a single int Id instead.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
-
-            $id = $id[0];
-        }
+        Assertion::integer($id);
         $categories = $this->getList([$id], $context);
 
         return array_shift($categories);
@@ -129,10 +120,10 @@ class CategoryGateway implements Gateway\CategoryGatewayInterface
         //use php usort instead of running mysql order by to prevent file-sort and temporary table statement
         usort($data, function ($a, $b) {
             if ($a['__category_position'] === $b['__category_position']) {
-                return $a['__category_id'] > $b['__category_id'];
+                return $a['__category_id'] > $b['__category_id'] ? 1 : 0;
             }
 
-            return $a['__category_position'] > $b['__category_position'];
+            return $a['__category_position'] > $b['__category_position'] ? 1 : 0;
         });
 
         $categories = [];
@@ -206,7 +197,10 @@ class CategoryGateway implements Gateway\CategoryGatewayInterface
             return $category;
         }
 
-        $translation = unserialize($category['__category_translation'], ['allowed_classes' => false]);
+        $translation = @unserialize($category['__category_translation'], ['allowed_classes' => false]);
+        if ($translation === false) {
+            $translation = [];
+        }
 
         if (!empty($translation['imagePath'])) {
             $category['mediaTranslation'] = $this->mediaService->get($translation['imagePath'], $context);

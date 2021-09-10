@@ -25,6 +25,7 @@
 use Shopware\Bundle\AccountBundle\Form\Account\AddressFormType;
 use Shopware\Bundle\AccountBundle\Form\Account\PersonalFormType;
 use Shopware\Bundle\AccountBundle\Service\RegisterServiceInterface;
+use Shopware\Bundle\StoreFrontBundle\Gateway\CountryGatewayInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\Attribute;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 use Shopware\Components\Captcha\Exception\CaptchaNotFoundException;
@@ -94,13 +95,13 @@ class Shopware_Controllers_Frontend_Register extends Enlight_Controller_Action
         }
 
         /** @var ShopContextInterface $context */
-        $context = $this->get('shopware_storefront.context_service')->getShopContext();
+        $context = $this->get(\Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface::class)->getShopContext();
 
         /** @var Enlight_Components_Session_Namespace $session */
         $session = $this->get('session');
 
         /** @var RegisterServiceInterface $registerService */
-        $registerService = $this->get('shopware_account.register_service');
+        $registerService = $this->get(\Shopware\Bundle\AccountBundle\Service\RegisterServiceInterface::class);
 
         $data = $this->getPostData();
 
@@ -123,14 +124,20 @@ class Shopware_Controllers_Frontend_Register extends Enlight_Controller_Action
             /** @var Address $billing */
             $billing = $billingForm->getData();
 
-            $country = $this->get('shopware_storefront.country_gateway')->getCountry($billing->getCountry()->getId(), $context);
+            $billingCountry = $billing->getCountry();
+
+            if ($billingCountry === null) {
+                throw new RuntimeException('Billing address needs a country');
+            }
+
+            $country = $this->get(CountryGatewayInterface::class)->getCountry($billingCountry->getId(), $context);
 
             if (!$country->allowShipping()) {
                 $errors['billing']['country'] = $this->get('snippets')->getNamespace('frontend/register/index')->get('CountryNotAvailableForShipping');
             }
         }
 
-        $validCaptcha = $this->validateCaptcha($this->get('config')->get('registerCaptcha'), $this->request);
+        $validCaptcha = $this->validateCaptcha($this->get(\Shopware_Components_Config::class)->get('registerCaptcha'), $this->request);
         if (!$validCaptcha) {
             $errors['captcha'] = [
                 $this->get('snippets')
@@ -139,12 +146,10 @@ class Shopware_Controllers_Frontend_Register extends Enlight_Controller_Action
             ];
         }
 
-        $errors['occurred'] = (
-            !empty($errors['personal'])
+        $errors['occurred'] = !empty($errors['personal'])
             || !empty($errors['shipping'])
             || !empty($errors['billing'])
-            || !empty($errors['captcha'])
-        );
+            || !empty($errors['captcha']);
 
         if ($errors['occurred']) {
             $this->handleRegisterError($data, $errors);
@@ -158,7 +163,7 @@ class Shopware_Controllers_Frontend_Register extends Enlight_Controller_Action
         /** @var Address $billing */
         $billing = $billingForm->getData();
 
-        $config = $this->container->get('config');
+        $config = $this->container->get(\Shopware_Components_Config::class);
 
         $accountMode = (int) $customer->getAccountMode();
         $doubleOptinWithAccount = ($accountMode === 0) && $config->get('optinregister');
@@ -241,10 +246,10 @@ class Shopware_Controllers_Frontend_Register extends Enlight_Controller_Action
     public function confirmValidationAction()
     {
         /** @var \Doctrine\DBAL\Connection $connection */
-        $connection = $this->container->get('dbal_connection');
+        $connection = $this->container->get(\Doctrine\DBAL\Connection::class);
 
         /** @var \Shopware\Components\Model\ModelManager $modelManager */
-        $modelManager = $this->container->get('models');
+        $modelManager = $this->container->get(\Shopware\Components\Model\ModelManager::class);
 
         $hash = $this->Request()->get('sConfirmation');
 
@@ -405,7 +410,7 @@ class Shopware_Controllers_Frontend_Register extends Enlight_Controller_Action
 
     private function getFormErrors(FormInterface $form): array
     {
-        if ($form->isValid()) {
+        if ($form->isSubmitted() && $form->isValid()) {
             return [];
         }
         $errors = [
@@ -423,7 +428,7 @@ class Shopware_Controllers_Frontend_Register extends Enlight_Controller_Action
 
     private function isShippingProvided(array $data): bool
     {
-        return array_key_exists('shippingAddress', $data['register']['billing']);
+        return \array_key_exists('shippingAddress', $data['register']['billing']);
     }
 
     private function getPostData(): array
@@ -450,7 +455,7 @@ class Shopware_Controllers_Frontend_Register extends Enlight_Controller_Action
     private function getCustomerGroupKey(): ?string
     {
         $customerGroupKey = $this->request->getParam('sValidation');
-        $customerGroupId = $this->get('dbal_connection')->fetchColumn(
+        $customerGroupId = $this->get(\Doctrine\DBAL\Connection::class)->fetchColumn(
             'SELECT id FROM s_core_customergroups WHERE `groupkey` = ?',
             [$customerGroupKey]
         );
@@ -465,7 +470,7 @@ class Shopware_Controllers_Frontend_Register extends Enlight_Controller_Action
         );
 
         if ($event) {
-            return $this->get('config')->get('defaultCustomerGroup', 'EK');
+            return $this->get(\Shopware_Components_Config::class)->get('defaultCustomerGroup', 'EK');
         }
 
         return $customerGroupKey;
@@ -494,16 +499,23 @@ class Shopware_Controllers_Frontend_Register extends Enlight_Controller_Action
 
     private function writeSession(array $data, Customer $customer): void
     {
+        $shippingCountry = $customer->getDefaultShippingAddress()->getCountry();
+
+        if ($shippingCountry === null) {
+            throw new RuntimeException('Invalid customer shipping address');
+        }
+
         /** @var Enlight_Components_Session_Namespace $session */
         $session = $this->get('session');
         $session->offsetSet('sRegister', $data['register']);
         $session->offsetSet('sOneTimeAccount', false);
         $session->offsetSet('sRegisterFinished', true);
+        $session->offsetSet('sCountry', $shippingCountry->getId());
+        $session->offsetSet('sArea', $shippingCountry->getArea() !== null ? $shippingCountry->getArea()->getId() : 0);
 
         if ($customer->getAccountMode() === Customer::ACCOUNT_MODE_FAST_LOGIN) {
             $session->offsetSet('sOneTimeAccount', true);
         }
-        $session->offsetSet('sCountry', $customer->getDefaultBillingAddress()->getCountry()->getId());
     }
 
     private function loginCustomer(Customer $customer): void
@@ -555,6 +567,18 @@ class Shopware_Controllers_Frontend_Register extends Enlight_Controller_Action
         $form->submit($data);
 
         return $form;
+    }
+
+    /**
+     * @return array
+     */
+    private function getCountries()
+    {
+        $context = $this->get(\Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface::class)->getShopContext();
+        $service = $this->get(\Shopware\Bundle\StoreFrontBundle\Service\LocationServiceInterface::class);
+        $countries = $service->getCountries($context);
+
+        return $this->get(\Shopware\Components\Compatibility\LegacyStructConverter::class)->convertCountryStructList($countries);
     }
 
     private function sendRegistrationMail(Customer $customer): void

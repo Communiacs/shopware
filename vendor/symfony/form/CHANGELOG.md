@@ -1,6 +1,140 @@
 CHANGELOG
 =========
 
+4.4.0
+-----
+
+ * add new `WeekType`
+ * using different values for the "model_timezone" and "view_timezone" options of the `TimeType` without configuring a
+   reference date is deprecated
+ * preferred choices are repeated in the list of all choices
+ * deprecated using `int` or `float` as data for the `NumberType` when the `input` option is set to `string`
+ * The type guesser guesses the HTML accept attribute when a mime type is configured in the File or Image constraint.
+ * Overriding the methods `FormIntegrationTestCase::setUp()`, `TypeTestCase::setUp()` and `TypeTestCase::tearDown()` without the `void` return-type is deprecated.
+ * marked all dispatched event classes as `@final`
+ * Added the `validate` option to `SubmitType` to toggle the browser built-in form validation.
+ * Added the `alpha3` option to `LanguageType` and `CountryType` to use alpha3 instead of alpha2 codes
+
+4.3.0
+-----
+
+ * added a `symbol` option to the `PercentType` that allows to disable or customize the output of the percent character
+ * Using the `format` option of `DateType` and `DateTimeType` when the `html5` option is enabled is deprecated.
+ * Using names for buttons that do not start with a letter, a digit, or an underscore is deprecated and will lead to an
+   exception in 5.0.
+ * Using names for buttons that do not contain only letters, digits, underscores, hyphens, and colons is deprecated and
+   will lead to an exception in 5.0.
+ * added `html5` option to `NumberType` that allows to render `type="number"` input fields
+ * deprecated using the `date_format`, `date_widget`, and `time_widget` options of the `DateTimeType` when the `widget`
+   option is set to `single_text`
+ * added `block_prefix` option to `BaseType`.
+ * added `help_html` option to display the `help` text as HTML.
+ * `FormError` doesn't implement `Serializable` anymore
+ * `FormDataCollector` has been marked as `final`
+ * added `label_translation_parameters`, `attr_translation_parameters`, `help_translation_parameters` options
+   to `FormType` to pass translation parameters to form labels, attributes (`placeholder` and `title`) and help text respectively.
+   The passed parameters will replace placeholders in translation messages.
+
+   ```php
+   class OrderType extends AbstractType
+   {
+       public function buildForm(FormBuilderInterface $builder, array $options)
+       {
+           $builder->add('comment', TextType::class, [
+               'label' => 'Comment to the order to %company%',
+               'label_translation_parameters' => [
+                   '%company%' => 'Acme',
+               ],
+               'help' => 'The address of the %company% is %address%',
+               'help_translation_parameters' => [
+                   '%company%' => 'Acme Ltd.',
+                   '%address%' => '4 Form street, Symfonyville',
+               ],
+           ])
+       }
+   }
+   ```
+ * added the `input_format` option to `DateType`, `DateTimeType`, and `TimeType` to specify the input format when setting
+   the `input` option to `string`
+ * dispatch `PreSubmitEvent` on `form.pre_submit`
+ * dispatch `SubmitEvent` on `form.submit`
+ * dispatch `PostSubmitEvent` on `form.post_submit`
+ * dispatch `PreSetDataEvent` on `form.pre_set_data`
+ * dispatch `PostSetDataEvent` on `form.post_set_data`
+ * added an `input` option to `NumberType`
+ * removed default option grouping in `TimezoneType`, use `group_by` instead
+
+4.2.0
+-----
+
+ * The `getExtendedType()` method of the `FormTypeExtensionInterface` is deprecated and will be removed in 5.0. Type
+   extensions must implement the static `getExtendedTypes()` method instead and return an iterable of extended types.
+
+   Before:
+
+   ```php
+   class FooTypeExtension extends AbstractTypeExtension
+   {
+       public function getExtendedType()
+       {
+           return FormType::class;
+       }
+
+       // ...
+   }
+   ```
+
+   After:
+
+   ```php
+   class FooTypeExtension extends AbstractTypeExtension
+   {
+       public static function getExtendedTypes(): iterable
+       {
+           return [FormType::class];
+       }
+
+       // ...
+   }
+   ```
+ * deprecated the `$scale` argument of the `IntegerToLocalizedStringTransformer`
+ * added `Symfony\Component\Form\ClearableErrorsInterface`
+ * deprecated calling `FormRenderer::searchAndRenderBlock` for fields which were already rendered
+ * added a cause when a CSRF error has occurred
+ * deprecated the `scale` option of the `IntegerType`
+ * removed restriction on allowed HTTP methods
+ * deprecated the `regions` option of the `TimezoneType`
+
+4.1.0
+-----
+
+ * added `input=datetime_immutable` to `DateType`, `TimeType`, `DateTimeType`
+ * added `rounding_mode` option to `MoneyType`
+ * added `choice_translation_locale` option to `CountryType`, `LanguageType`, `LocaleType` and `CurrencyType`
+ * deprecated the `ChoiceLoaderInterface` implementation in `CountryType`, `LanguageType`, `LocaleType` and `CurrencyType`
+ * added `input=datetime_immutable` to DateType, TimeType, DateTimeType
+ * added `rounding_mode` option to MoneyType
+
+4.0.0
+-----
+
+ * using the `choices` option in `CountryType`, `CurrencyType`, `LanguageType`,
+   `LocaleType`, and `TimezoneType` when the `choice_loader` option is not `null`
+   is not supported anymore and the configured choices will be ignored
+ * callable strings that are passed to the options of the `ChoiceType` are
+   treated as property paths
+ * the `choices_as_values` option of the `ChoiceType` has been removed
+ * removed the support for caching loaded choice lists in `LazyChoiceList`,
+   cache the choice list in the used `ChoiceLoaderInterface` implementation
+   instead
+ * removed the support for objects implementing both `\Traversable` and `\ArrayAccess` in `ResizeFormListener::preSubmit()`
+ * removed the ability to use `FormDataCollector` without the `symfony/var-dumper` component
+ * removed passing a `ValueExporter` instance to the `FormDataExtractor::__construct()` method
+ * removed passing guesser services ids as the fourth argument of `DependencyInjectionExtension::__construct()`
+ * removed the ability to validate an unsubmitted form.
+ * removed `ChoiceLoaderInterface` implementation in `TimezoneType`
+ * added the `false_values` option to the `CheckboxType` which allows to configure custom values which will be treated as `false` during submission
+
 3.4.0
 -----
 

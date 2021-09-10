@@ -26,6 +26,9 @@ use Shopware\Components\DependencyInjection\Bridge\Db;
 use Shopware\Components\DependencyInjection\Container;
 use Shopware\Components\Session\PdoSessionHandler;
 use Shopware\Models\Shop\Locale;
+use Symfony\Component\HttpFoundation\Session\Attribute\NamespacedAttributeBag;
+use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
+use Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage;
 
 /**
  * Shopware Auth Plugin
@@ -251,10 +254,7 @@ class Shopware_Plugins_Backend_Auth_Bootstrap extends Shopware_Components_Plugin
             }
 
             if (!$this->isAllowed($test)) {
-                throw new Enlight_Controller_Exception(
-                    $test['errorMessage'] ?: 'Permission denied',
-                    401
-                );
+                throw new Enlight_Controller_Exception($test['errorMessage'] ?: 'Permission denied', 401);
             }
 
             return $auth;
@@ -283,7 +283,7 @@ class Shopware_Plugins_Backend_Auth_Bootstrap extends Shopware_Components_Plugin
         }
 
         /** @var Enlight_Template_Manager $engine */
-        $engine = $container->get('template');
+        $engine = $container->get(\Enlight_Template_Manager::class);
         $engine->unregisterPlugin(
             Smarty::PLUGIN_FUNCTION,
             'acl_is_allowed'
@@ -340,7 +340,7 @@ class Shopware_Plugins_Backend_Auth_Bootstrap extends Shopware_Components_Plugin
         );
 
         // if default shop locale is allowed, use it, otherwise use the first allowed locale
-        return in_array($defaultShopLocale, $backendLocales) ? $defaultShopLocale : array_shift($backendLocales);
+        return \in_array($defaultShopLocale, $backendLocales) ? $defaultShopLocale : array_shift($backendLocales);
     }
 
     /**
@@ -365,15 +365,41 @@ class Shopware_Plugins_Backend_Auth_Bootstrap extends Shopware_Components_Plugin
      */
     public function onInitResourceBackendSession(Enlight_Event_EventArgs $args)
     {
-        $options = $this->getSessionOptions();
+        // If another session is already started, save and close it before starting the backend session below.
+        // We need to do this, because the other session would use the session id of the backend session and thus write
+        // its data into the wrong session.
+        Enlight_Components_Session_Namespace::ensureFrontendSessionClosed(Shopware()->Container());
+        // Ensure no session is active before starting the backend session below. We need to do this because there could
+        // be another session with inconsistent/invalid state in the container.
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+            // The empty session id signals to `Enlight_Components_Session_Namespace::start()` that the session cookie
+            // should be used as session id.
+            session_id('');
+        }
+
+        $sessionOptions = $this->getSessionOptions();
         $saveHandler = $this->createSaveHandler(Shopware()->Container());
-        if ($saveHandler) {
+        $storage = new NativeSessionStorage($sessionOptions);
+
+        if (!empty($sessionOptions['unitTestEnabled'])) {
+            $storage = new MockArraySessionStorage();
+        } elseif ($saveHandler) {
             session_set_save_handler($saveHandler);
         }
 
-        Enlight_Components_Session::start($options);
+        if (isset($sessionOptions['save_path'])) {
+            ini_set('session.save_path', $sessionOptions['save_path']);
+        }
 
-        return new Enlight_Components_Session_Namespace('ShopwareBackend');
+        if (isset($sessionOptions['save_handler'])) {
+            ini_set('session.save_handler', $sessionOptions['save_handler']);
+        }
+
+        $session = new Enlight_Components_Session_Namespace($storage, new NamespacedAttributeBag('ShopwareBackend'));
+        $session->start();
+
+        return $session;
     }
 
     /**
@@ -388,11 +414,12 @@ class Shopware_Plugins_Backend_Auth_Bootstrap extends Shopware_Components_Plugin
      */
     public function onInitResourceAuth(Enlight_Event_EventArgs $args)
     {
-        Shopware()->Container()->load('backendsession');
+        /** @var Enlight_Components_Session_Namespace $session */
+        $session = Shopware()->Container()->get('backendsession');
 
         $resource = Shopware_Components_Auth::getInstance();
-        $adapter = new Shopware_Components_Auth_Adapter_Default();
-        $storage = new Zend_Auth_Storage_Session('Shopware', 'Auth');
+        $adapter = new Shopware_Components_Auth_Adapter_Default($session);
+        $storage = new Zend_Auth_Storage_Session($session);
         $resource->setBaseAdapter($adapter);
         $resource->addAdapter($adapter);
         $resource->setStorage($storage);
@@ -422,15 +449,17 @@ class Shopware_Plugins_Backend_Auth_Bootstrap extends Shopware_Components_Plugin
     protected function initLocale()
     {
         $container = $this->Application()->Container();
+        /** @var string $revision */
+        $revision = $container->getParameter('shopware.release.revision');
 
         $locale = $this->getCurrentLocale();
         $container->get('locale')->setLocale($locale->toString());
         $container->get('snippets')->setLocale($locale);
-        $template = $container->get('template');
+        $template = $container->get(\Enlight_Template_Manager::class);
         $baseHash = $this->request->getScheme() . '://'
                   . $this->request->getHttpHost()
                   . $this->request->getBaseUrl() . '?'
-                  . $container->getParameter('shopware.release.revision');
+                  . $revision;
         $baseHash = substr(sha1($baseHash), 0, 5);
         $template->setCompileId('backend_' . $locale->toString() . '_' . $baseHash);
 
@@ -448,12 +477,9 @@ class Shopware_Plugins_Backend_Auth_Bootstrap extends Shopware_Components_Plugin
      */
     protected function getCurrentLocale()
     {
-        $options = $this->getSessionOptions();
-        $modelManager = $this->get('models');
+        $modelManager = $this->get(\Shopware\Components\Model\ModelManager::class);
 
-        Enlight_Components_Session::setOptions($options);
-
-        if (Enlight_Components_Session::sessionExists()) {
+        if (Shopware()->Container()->initialized('backendsession')) {
             $auth = $this->get('auth');
             if ($auth->hasIdentity()) {
                 $user = $auth->getIdentity();
@@ -483,6 +509,7 @@ class Shopware_Plugins_Backend_Auth_Bootstrap extends Shopware_Components_Plugin
      */
     private function getSessionOptions()
     {
+        /** @var array<string, string> $options */
         $options = Shopware()->Container()->getParameter('shopware.backendsession');
 
         if ($this->request !== null && !isset($options['cookie_path'])) {
@@ -508,11 +535,13 @@ class Shopware_Plugins_Backend_Auth_Bootstrap extends Shopware_Components_Plugin
      */
     private function createSaveHandler(Container $container)
     {
+        /** @var array<string, string> $sessionOptions */
         $sessionOptions = $container->getParameter('shopware.backendsession');
         if (isset($sessionOptions['save_handler']) && $sessionOptions['save_handler'] !== 'db') {
             return null;
         }
 
+        /** @var array<string, string> $dbOptions */
         $dbOptions = $container->getParameter('shopware.db');
         $conn = Db::createPDO($dbOptions);
 

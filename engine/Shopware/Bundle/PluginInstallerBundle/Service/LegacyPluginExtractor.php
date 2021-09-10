@@ -82,11 +82,11 @@ class LegacyPluginExtractor
         $segments = $archive->statIndex(0);
         $segments = array_filter(explode('/', $segments['name']));
 
-        if (!in_array($segments[0], ['Frontend', 'Backend', 'Core'])) {
+        if (!\in_array($segments[0], ['Frontend', 'Backend', 'Core'])) {
             throw new \RuntimeException('Uploaded zip archive contains no plugin namespace directory');
         }
 
-        if (count($segments) <= 1) {
+        if (\count($segments) <= 1) {
             $segments = $archive->statIndex(1);
             $segments = array_filter(explode('/', $segments['name']));
         }
@@ -100,11 +100,11 @@ class LegacyPluginExtractor
      */
     private function clearOpcodeCache()
     {
-        if (function_exists('opcache_reset')) {
+        if (\function_exists('opcache_reset')) {
             opcache_reset();
         }
 
-        if (function_exists('apcu_clear_cache')) {
+        if (\function_exists('apcu_clear_cache')) {
             apcu_clear_cache();
         }
     }
@@ -116,13 +116,7 @@ class LegacyPluginExtractor
     private function assertPrefix($filename, $prefix)
     {
         if (strpos($filename, $prefix) !== 0) {
-            throw new \RuntimeException(
-                sprintf(
-                    'Detected invalid file/directory %s in the plugin zip: %s',
-                    $filename,
-                    $prefix
-                )
-            );
+            throw new \RuntimeException(sprintf('Detected invalid file/directory %s in the plugin zip: %s', $filename, $prefix));
         }
     }
 

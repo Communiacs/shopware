@@ -141,13 +141,13 @@ ShopWiki;Bot;WebAlta;;abachobot;architext;ask jeeves;frooglebot;googlebot;lycos;
     /**
      * @param Enlight_Controller_Request_Request $request
      */
-    public function refreshBasket($request)
+    public function refreshBasket(Enlight_Controller_Request_RequestHttp $request)
     {
         $currentController = $request->getParam('requestController', $request->getControllerName());
-        $sessionId = (string) Enlight_Components_Session::getId();
+        $sessionId = (string) $request->getSession()->getId();
 
         if (!empty($currentController) && !empty($sessionId)) {
-            $userId = (int) Shopware()->Session()->sUserId;
+            $userId = (int) $request->getSession()->get('sUserId');
             $userAgent = (string) $request->getServer('HTTP_USER_AGENT');
             $sql = '
                 UPDATE s_order_basket
@@ -209,7 +209,7 @@ ShopWiki;Bot;WebAlta;;abachobot;architext;ask jeeves;frooglebot;googlebot;lycos;
         INSERT INTO s_statistics_currentusers (remoteaddr, page, `time`, userID, deviceType)
         VALUES (?, ?, NOW(), ?, ?)';
 
-        $ip = $this->get('shopware.components.privacy.ip_anonymizer')->anonymize($request->getClientIp());
+        $ip = $this->get(\Shopware\Components\Privacy\IpAnonymizerInterface::class)->anonymize($request->getClientIp());
 
         Shopware()->Db()->query($sql, [
             $ip,
@@ -398,7 +398,7 @@ ShopWiki;Bot;WebAlta;;abachobot;architext;ask jeeves;frooglebot;googlebot;lycos;
 
         // Count the views of this blog item
         $visitedBlogItems = $session->get('visitedBlogItems');
-        if (in_array($blogArticleId, $visitedBlogItems, true)) {
+        if (\in_array($blogArticleId, $visitedBlogItems, true)) {
             return;
         }
         // Use plain sql, because the http cache should no be cleared

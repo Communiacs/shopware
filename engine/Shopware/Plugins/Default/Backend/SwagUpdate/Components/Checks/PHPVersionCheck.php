@@ -30,7 +30,7 @@ use ShopwarePlugins\SwagUpdate\Components\Validation;
 
 class PHPVersionCheck implements CheckInterface
 {
-    const CHECK_TYPE = 'phpversion';
+    public const CHECK_TYPE = 'phpversion';
 
     /**
      * @var SnippetNamespace
@@ -57,7 +57,7 @@ class PHPVersionCheck implements CheckInterface
     {
         $minPHPVersion = $requirement['value'];
 
-        $validVersion = (version_compare(PHP_VERSION, $minPHPVersion) >= 0);
+        $validVersion = version_compare(PHP_VERSION, $minPHPVersion) >= 0;
 
         $successMessage = $this->namespace->get('controller/check_phpversion_success', 'Min PHP Version: %s, your version %s');
         $failMessage = $this->namespace->get('controller/check_phpversion_failure', 'Min PHP Version: %s, your version %s');

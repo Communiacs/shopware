@@ -30,6 +30,7 @@ use Shopware\Components\Form;
 use Shopware\Components\Model;
 use Shopware\Components\Theme;
 use Shopware\Models\Shop;
+use Shopware\Models\Shop\Template;
 use Shopware\Models\Shop\TemplateConfig\Set;
 
 /**
@@ -182,10 +183,7 @@ class Configurator
         // Iterates all configurations sets of the file system
         foreach ($collection as $item) {
             if (!$item instanceof ConfigSet) {
-                throw new \Exception(sprintf(
-                    "Theme %s adds a configuration set which isn't an instance of Shopware\Components\Theme\ConfigSet.",
-                    $theme->getTemplate()
-                ));
+                throw new \Exception(sprintf("Theme %s adds a configuration set which isn't an instance of Shopware\Components\Theme\ConfigSet.", $theme->getTemplate()));
             }
 
             $item->validate();
@@ -261,14 +259,14 @@ class Configurator
 
         /** @var Shop\TemplateConfig\Layout $layout */
         foreach ($containers as $layout) {
-            if (!in_array($layout->getName(), $structure['containers'])) {
+            if (!\in_array($layout->getName(), $structure['containers'])) {
                 $this->entityManager->remove($layout);
             }
         }
 
         /** @var Shop\TemplateConfig\Element $layout */
         foreach ($fields as $layout) {
-            if (!in_array($layout->getName(), $structure['fields'])) {
+            if (!\in_array($layout->getName(), $structure['fields'])) {
                 $this->entityManager->remove($layout);
             }
         }
@@ -290,7 +288,7 @@ class Configurator
             'elements',
             'layouts',
         ])
-            ->from('Shopware\Models\Shop\Template', 'template')
+            ->from(Template::class, 'template')
             ->leftJoin('template.elements', 'elements')
             ->leftJoin('template.layouts', 'layouts')
             ->where('template.template = :name')

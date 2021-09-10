@@ -12,7 +12,6 @@
 namespace Symfony\Component\Form\Extension\Core\DataTransformer;
 
 use Symfony\Component\Form\Exception\TransformationFailedException;
-use Symfony\Component\Form\Exception\UnexpectedTypeException;
 
 /**
  * Transforms between a normalized time and a localized time string/array.
@@ -25,16 +24,15 @@ class DateTimeToArrayTransformer extends BaseDateTimeTransformer
     private $pad;
 
     private $fields;
+    private $referenceDate;
 
     /**
      * @param string $inputTimezone  The input timezone
      * @param string $outputTimezone The output timezone
      * @param array  $fields         The date fields
      * @param bool   $pad            Whether to use padding
-     *
-     * @throws UnexpectedTypeException if a timezone is not a string
      */
-    public function __construct($inputTimezone = null, $outputTimezone = null, array $fields = null, $pad = false)
+    public function __construct(string $inputTimezone = null, string $outputTimezone = null, array $fields = null, bool $pad = false, \DateTimeInterface $referenceDate = null)
     {
         parent::__construct($inputTimezone, $outputTimezone);
 
@@ -43,7 +41,8 @@ class DateTimeToArrayTransformer extends BaseDateTimeTransformer
         }
 
         $this->fields = $fields;
-        $this->pad = (bool) $pad;
+        $this->pad = $pad;
+        $this->referenceDate = $referenceDate ?? new \DateTimeImmutable('1970-01-01 00:00:00');
     }
 
     /**
@@ -168,12 +167,12 @@ class DateTimeToArrayTransformer extends BaseDateTimeTransformer
         try {
             $dateTime = new \DateTime(sprintf(
                 '%s-%s-%s %s:%s:%s',
-                empty($value['year']) ? '1970' : $value['year'],
-                empty($value['month']) ? '1' : $value['month'],
-                empty($value['day']) ? '1' : $value['day'],
-                empty($value['hour']) ? '0' : $value['hour'],
-                empty($value['minute']) ? '0' : $value['minute'],
-                empty($value['second']) ? '0' : $value['second']
+                empty($value['year']) ? $this->referenceDate->format('Y') : $value['year'],
+                empty($value['month']) ? $this->referenceDate->format('m') : $value['month'],
+                empty($value['day']) ? $this->referenceDate->format('d') : $value['day'],
+                $value['hour'] ?? $this->referenceDate->format('H'),
+                $value['minute'] ?? $this->referenceDate->format('i'),
+                $value['second'] ?? $this->referenceDate->format('s')
                 ),
                 new \DateTimeZone($this->outputTimezone)
             );

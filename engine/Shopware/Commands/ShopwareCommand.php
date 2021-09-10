@@ -160,7 +160,7 @@ abstract class ShopwareCommand extends Command implements ContainerAwareInterfac
             $queryBuilder = $queryBuilder->andWhere($queryBuilder->expr()->like("$alias.$property", ":$parameterAlias"))
                 ->setParameter($parameterAlias, $likePattern);
 
-            return is_callable($conditionCallback) ? call_user_func($conditionCallback, $queryBuilder, $alias) : $queryBuilder;
+            return \is_callable($conditionCallback) ? \call_user_func($conditionCallback, $queryBuilder, $alias) : $queryBuilder;
         };
 
         return $this->queryProperty($modelClass, $property, $checkForPrefix);
@@ -179,7 +179,7 @@ abstract class ShopwareCommand extends Command implements ContainerAwareInterfac
 
         /* @var ModelManager $em */
         try {
-            $em = $this->getContainer()->get('models');
+            $em = $this->getContainer()->get(\Shopware\Components\Model\ModelManager::class);
         } catch (\Exception $e) {
             return [];
         }
@@ -188,8 +188,8 @@ abstract class ShopwareCommand extends Command implements ContainerAwareInterfac
         $repository = $em->getRepository($modelClass);
         $queryBuilder = $repository->createQueryBuilder($alias);
 
-        if (is_callable($conditionCallback)) {
-            $queryBuilder = call_user_func($conditionCallback, $queryBuilder, $alias);
+        if (\is_callable($conditionCallback)) {
+            $queryBuilder = \call_user_func($conditionCallback, $queryBuilder, $alias);
         }
 
         $result = $queryBuilder->select(["$alias.$property"])

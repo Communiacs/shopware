@@ -59,7 +59,7 @@ class PluginConfigSetCommand extends ShopwareCommand implements CompletionAwareI
     {
         if ($argumentName === 'plugin') {
             /** @var ModelRepository $repository */
-            $repository = $this->getContainer()->get('models')->getRepository(Plugin::class);
+            $repository = $this->getContainer()->get(\Shopware\Components\Model\ModelManager::class)->getRepository(Plugin::class);
             $queryBuilder = $repository->createQueryBuilder('plugin');
             $result = $queryBuilder->andWhere($queryBuilder->expr()->eq('plugin.capabilityEnable', 'true'))
                 ->select(['plugin.name'])
@@ -70,7 +70,7 @@ class PluginConfigSetCommand extends ShopwareCommand implements CompletionAwareI
         } elseif ($argumentName === 'key') {
             $pluginName = $context->getWordAtIndex($context->getWordIndex() - 1);
             /** @var InstallerService $pluginManager */
-            $pluginManager = $this->container->get('shopware_plugininstaller.plugin_manager');
+            $pluginManager = $this->container->get(\Shopware\Bundle\PluginInstallerBundle\Service\InstallerService::class);
             try {
                 $plugin = $pluginManager->getPluginByName($pluginName);
             } catch (\Exception $e) {
@@ -78,7 +78,7 @@ class PluginConfigSetCommand extends ShopwareCommand implements CompletionAwareI
             }
 
             /** @var Repository $shopRepository */
-            $shopRepository = $this->getContainer()->get('models')->getRepository(Shop::class);
+            $shopRepository = $this->getContainer()->get(\Shopware\Components\Model\ModelManager::class)->getRepository(Shop::class);
 
             $shops = $shopRepository->findAll();
 
@@ -162,7 +162,7 @@ class PluginConfigSetCommand extends ShopwareCommand implements CompletionAwareI
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         /** @var InstallerService $pluginManager */
-        $pluginManager = $this->container->get('shopware_plugininstaller.plugin_manager');
+        $pluginManager = $this->container->get(\Shopware\Bundle\PluginInstallerBundle\Service\InstallerService::class);
         $pluginName = $input->getArgument('plugin');
 
         try {
@@ -174,7 +174,7 @@ class PluginConfigSetCommand extends ShopwareCommand implements CompletionAwareI
         }
 
         /** @var ModelManager $em */
-        $em = $this->container->get('models');
+        $em = $this->container->get(\Shopware\Components\Model\ModelManager::class);
 
         $shopId = null;
 
@@ -188,7 +188,7 @@ class PluginConfigSetCommand extends ShopwareCommand implements CompletionAwareI
 
         if ($shopId) {
             /** @var Shop|null $shop */
-            $shop = $em->getRepository(Shop::class)->find($input->getOption('shop'));
+            $shop = $em->getRepository(Shop::class)->find($shopId);
 
             if (!$shop) {
                 $output->writeln(sprintf('Could not find shop with id %s.', $shopId));
@@ -203,7 +203,7 @@ class PluginConfigSetCommand extends ShopwareCommand implements CompletionAwareI
         $rawValue = $input->getArgument('value');
         $value = $this->castValue($rawValue);
 
-        if (preg_match('/^\[(.+,?)*\]$/', $value, $matches) && count($matches) == 2) {
+        if (preg_match('/^\[(.+,?)*\]$/', $value, $matches) && \count($matches) == 2) {
             $value = explode(',', $matches[1]);
             $value = array_map(function ($val) {
                 return $this->castValue($val);

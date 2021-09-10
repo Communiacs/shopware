@@ -98,9 +98,12 @@ class ShipmentsProvider implements BenchmarkProviderInterface
             $matches[$matchedName] = ['name' => $matchedName] + $prices;
         }
 
+        $minPrices = array_column($others, 'minPrice');
+        $maxPrices = array_column($others, 'maxPrice');
+
         $matches['others']['name'] = 'others';
-        $matches['others']['minPrice'] = (float) min(array_column($others, 'minPrice'));
-        $matches['others']['maxPrice'] = (float) max(array_column($others, 'maxPrice'));
+        $matches['others']['minPrice'] = (float) empty($minPrices) ? 0.0 : min($minPrices);
+        $matches['others']['maxPrice'] = (float) empty($maxPrices) ? 0.0 : max($maxPrices);
 
         return array_values($matches);
     }
@@ -177,7 +180,7 @@ class ShipmentsProvider implements BenchmarkProviderInterface
     private function getShipmentIds()
     {
         $shopId = $this->shopContext->getShop()->getId();
-        if (array_key_exists($shopId, $this->shipmentIds)) {
+        if (\array_key_exists($shopId, $this->shipmentIds)) {
             return $this->shipmentIds[$shopId];
         }
 
@@ -204,7 +207,7 @@ class ShipmentsProvider implements BenchmarkProviderInterface
         foreach ($forbiddenCategoriesByDispatchId as $dispatchId => $forbiddenCategories) {
             $availableCategoryIds = array_combine($categoryIds, $categoryIds);
             foreach ($forbiddenCategories as $forbiddenCategory) {
-                if (array_key_exists($forbiddenCategory, $availableCategoryIds)) {
+                if (\array_key_exists($forbiddenCategory, $availableCategoryIds)) {
                     unset($availableCategoryIds[$forbiddenCategory]);
                 }
             }

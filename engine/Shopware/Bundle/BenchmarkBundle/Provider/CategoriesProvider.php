@@ -109,12 +109,13 @@ class CategoriesProvider implements BenchmarkProviderInterface
             ->fetchColumn();
     }
 
-    /**
-     * @return int
-     */
-    private function getMaxProductsPerCategory()
+    private function getMaxProductsPerCategory(): int
     {
         $counts = $this->getProductsInCategoriesCounts();
+
+        if (\count($counts) === 0) {
+            return 0;
+        }
 
         return (int) max($counts);
     }
@@ -180,7 +181,7 @@ class CategoriesProvider implements BenchmarkProviderInterface
     private function getCategoryIds()
     {
         $shopId = $this->shopContext->getShop()->getId();
-        if (array_key_exists($shopId, $this->categoryIds)) {
+        if (\array_key_exists($shopId, $this->categoryIds)) {
             return $this->categoryIds[$shopId];
         }
 

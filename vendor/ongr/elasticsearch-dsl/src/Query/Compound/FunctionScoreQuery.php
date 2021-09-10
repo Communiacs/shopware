@@ -44,23 +44,39 @@ class FunctionScoreQuery implements BuilderInterface
     }
 
     /**
+     * Returns the query instance.
+     *
+     * @return BuilderInterface object
+     */
+    public function getQuery()
+    {
+        return $this->query;
+    }
+
+    /**
      * Creates field_value_factor function.
      *
      * @param string           $field
      * @param float            $factor
      * @param string           $modifier
      * @param BuilderInterface $query
-     *
+     * @param mixed            $missing
      * @return $this
      */
-    public function addFieldValueFactorFunction($field, $factor, $modifier = 'none', BuilderInterface $query = null)
-    {
+    public function addFieldValueFactorFunction(
+        $field,
+        $factor,
+        $modifier = 'none',
+        BuilderInterface $query = null,
+        $missing = null
+    ) {
         $function = [
-            'field_value_factor' => [
+            'field_value_factor' => array_filter([
                 'field' => $field,
                 'factor' => $factor,
                 'modifier' => $modifier,
-            ],
+                'missing' => $missing
+            ]),
         ];
 
         $this->applyFilter($function, $query);
@@ -165,7 +181,7 @@ class FunctionScoreQuery implements BuilderInterface
     /**
      * Adds script score function.
      *
-     * @param string           $inline
+     * @param string           $source
      * @param array            $params
      * @param array            $options
      * @param BuilderInterface $query
@@ -173,7 +189,7 @@ class FunctionScoreQuery implements BuilderInterface
      * @return $this
      */
     public function addScriptScoreFunction(
-        $inline,
+        $source,
         array $params = [],
         array $options = [],
         BuilderInterface $query = null
@@ -185,7 +201,7 @@ class FunctionScoreQuery implements BuilderInterface
                         array_merge(
                             [
                                 'lang' => 'painless',
-                                'inline' => $inline,
+                                'source' => $source,
                                 'params' => $params
                             ],
                             $options

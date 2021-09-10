@@ -115,7 +115,7 @@ class ShopIndexer implements ShopIndexerInterface
         $lastBacklogId = $this->backlogReader->getLastBacklogId();
 
         foreach ($this->mappings as $mapping) {
-            if (!empty($indexNames) && !in_array($mapping->getType(), $indexNames)) {
+            if (!empty($indexNames) && !\in_array($mapping->getType(), $indexNames)) {
                 continue;
             }
 
@@ -182,18 +182,8 @@ class ShopIndexer implements ShopIndexerInterface
     {
         $arguments = [
             'index' => $index->getName(),
-            'type' => $mapping->getType(),
             'body' => $mapping->get($index->getShop()),
         ];
-
-        if (version_compare($this->esVersion, '7', '>=')) {
-            $arguments = array_merge(
-                $arguments,
-                [
-                    'include_type_name' => true,
-                ]
-            );
-        }
 
         $this->client->indices()->putMapping(
             $arguments

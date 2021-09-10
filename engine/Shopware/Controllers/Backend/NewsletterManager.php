@@ -30,7 +30,7 @@ class Shopware_Controllers_Backend_NewsletterManager extends Shopware_Controller
     /**
      * @deprecated in 5.6, will be private in 5.8
      *
-     * Helper Method to get access to the campagins repository.
+     * Helper Method to get access to the campaigns repository.
      *
      * @return Shopware\Models\Newsletter\Repository
      */
@@ -60,7 +60,7 @@ class Shopware_Controllers_Backend_NewsletterManager extends Shopware_Controller
         $this->View()->assign([
             'success' => true,
             'data' => $groups,
-            'total' => count($groups),
+            'total' => \count($groups),
         ]);
     }
 
@@ -111,7 +111,7 @@ class Shopware_Controllers_Backend_NewsletterManager extends Shopware_Controller
             $direction = $sort[1]['direction'];
 
             // Whitelist for valid fields
-            if (!in_array($field, ['name', 'number', 'internalId'], true) || !in_array($direction, ['ASC', 'DESC'], true)) {
+            if (!\in_array($field, ['name', 'number', 'internalId'], true) || !\in_array($direction, ['ASC', 'DESC'], true)) {
                 $field = 'name';
                 $direction = 'DESC';
             }
@@ -143,7 +143,7 @@ class Shopware_Controllers_Backend_NewsletterManager extends Shopware_Controller
             ORDER BY :field :direction LIMIT :limit OFFSET :offset';
 
         /** @var \Doctrine\DBAL\Connection $db */
-        $db = $this->get('dbal_connection');
+        $db = $this->get(\Doctrine\DBAL\Connection::class);
 
         try {
             $query = $db->prepare($sql);
@@ -699,7 +699,7 @@ class Shopware_Controllers_Backend_NewsletterManager extends Shopware_Controller
             return;
         }
 
-        $modelManager = $this->get('models');
+        $modelManager = $this->get(\Shopware\Components\Model\ModelManager::class);
         $model = $modelManager->find(\Shopware\Models\Newsletter\Newsletter::class, $id);
 
         if ($model instanceof Shopware\Models\Newsletter\Newsletter) {

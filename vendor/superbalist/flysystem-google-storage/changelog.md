@@ -1,5 +1,32 @@
 # Changelog
 
+## 7.2.2 - 2019-10-10
+
+* Generate rfc 3986 compliant urls
+* Add support for temporary URLs (Signed)
+
+## 7.2.1 - 2019-02-21
+
+* Fix bug where recursive delete would not delete directories (Issue #96)
+
+## 7.2.0 - 2019-02-07
+
+* Delete now recursivley deletes all objects inside the directory before deleting the directory itself
+
+## 7.1.0 - 2018-09-20
+
+* Allow the use of any 1.* google/cloud-storage version
+
+## 7.0.0 - 2018-02-07
+
+* Move from google/cloud to google/cloud-storage package to simplify updating dependencies
+
+## 6.0.0 - 2018-01-08
+
+* Bump supported google/cloud versions
+* fix: remove bucket name prepending when using a custom storage uri
+* simplify google/cloud composer version pinning
+
 ## 5.0.3 - 2017-07-18
 
 * Allow for google/cloud ^0.31.0|^0.32.0|^0.33.0|^0.34.0|^0.35.0

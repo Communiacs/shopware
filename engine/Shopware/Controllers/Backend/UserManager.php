@@ -35,7 +35,7 @@ class Shopware_Controllers_Backend_UserManager extends Shopware_Controllers_Back
     /**
      * @var \Shopware\Models\User\Repository
      */
-    protected $userRepository = null;
+    protected $userRepository;
 
     /**
      * @var ModelManager
@@ -355,7 +355,7 @@ class Shopware_Controllers_Backend_UserManager extends Shopware_Controllers_Back
         $userId = (int) $this->Request()->getParam('userId');
 
         try {
-            $connection = $this->container->get('dbal_connection');
+            $connection = $this->container->get(\Doctrine\DBAL\Connection::class);
             $connection->executeQuery('UPDATE s_core_auth SET lockedUntil = NOW(), failedLogins = 0 WHERE id = ?', [$userId]);
         } catch (Exception $e) {
             $this->View()->assign('success', false);
@@ -375,7 +375,7 @@ class Shopware_Controllers_Backend_UserManager extends Shopware_Controllers_Back
     {
         // Get posted user
         $userID = $this->Request()->getParam('id');
-        $getCurrentIdentity = $this->get('Auth')->getIdentity();
+        $getCurrentIdentity = $this->get('auth')->getIdentity();
 
         // Backend users shall not delete their current login
         if ($userID == $getCurrentIdentity->id) {
@@ -438,7 +438,7 @@ class Shopware_Controllers_Backend_UserManager extends Shopware_Controllers_Back
         $this->View()->assign([
             'success' => true,
             'data' => $data,
-            'count' => count($data),
+            'count' => \count($data),
         ]);
     }
 
@@ -688,7 +688,7 @@ class Shopware_Controllers_Backend_UserManager extends Shopware_Controllers_Back
      */
     private function isPasswordConfirmProtectedAction($name)
     {
-        return in_array(strtolower($name), $this->getPasswordConfirmProtectedActions(), true);
+        return \in_array(strtolower($name), $this->getPasswordConfirmProtectedActions(), true);
     }
 
     /**
@@ -767,13 +767,13 @@ class Shopware_Controllers_Backend_UserManager extends Shopware_Controllers_Back
         ];
 
         if ($role) {
-            if (array_key_exists($resource->getId(), $resourceAdmins) || $role->getAdmin() === 1) {
+            if (\array_key_exists($resource->getId(), $resourceAdmins) || $role->getAdmin() === 1) {
                 $resourceNode['checked'] = true;
                 $resourceNode['expanded'] = true;
             }
         }
 
-        if (count($resource->getPrivileges()) > 0) {
+        if (\count($resource->getPrivileges()) > 0) {
             $children = [];
             foreach ($resource->getPrivileges() as $privilege) {
                 $children[] = $this->getPrivilegeNode($resourceNode, $privilege, $role);
@@ -812,7 +812,7 @@ class Shopware_Controllers_Backend_UserManager extends Shopware_Controllers_Back
             'requirements' => [],
         ];
 
-        if (count($privilege->getRequirements()) > 0) {
+        if (\count($privilege->getRequirements()) > 0) {
             $requirements = [];
             foreach ($privilege->getRequirements() as $requirement) {
                 $requirements[] = $requirement->getId();

@@ -152,7 +152,7 @@ abstract class StoreCommand extends ShopwareCommand
 
         $output->writeln(sprintf('Connect to Store with username: %s...', $username));
 
-        return $this->container->get('shopware_plugininstaller.store_client')->getAccessToken(
+        return $this->container->get(\Shopware\Bundle\PluginInstallerBundle\StoreClient::class)->getAccessToken(
             $username,
             $password
         );
@@ -222,11 +222,14 @@ abstract class StoreCommand extends ShopwareCommand
         }), 'name');
     }
 
-    /**
-     * @return string
-     */
-    protected function getInstalledShopwareVersion()
+    protected function getInstalledShopwareVersion(): string
     {
-        return $this->container->getParameter('shopware.release.version');
+        $shopwareVersion = $this->container->getParameter('shopware.release.version');
+
+        if (!\is_string($shopwareVersion)) {
+            throw new \RuntimeException('Parameter shopware.release.version has to be an string');
+        }
+
+        return $shopwareVersion;
     }
 }

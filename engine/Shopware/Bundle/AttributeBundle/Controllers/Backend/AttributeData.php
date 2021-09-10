@@ -31,7 +31,7 @@ class Shopware_Controllers_Backend_AttributeData extends Shopware_Controllers_Ba
     public function loadDataAction()
     {
         /** @var DataLoaderInterface $dataLoader */
-        $dataLoader = $this->get('shopware_attribute.data_loader');
+        $dataLoader = $this->get(DataLoaderInterface::class);
 
         try {
             $data = $dataLoader->load(
@@ -60,7 +60,7 @@ class Shopware_Controllers_Backend_AttributeData extends Shopware_Controllers_Ba
     public function saveDataAction()
     {
         /** @var \Shopware\Bundle\AttributeBundle\Service\DataPersisterInterface $dataPersister */
-        $dataPersister = $this->get('shopware_attribute.data_persister');
+        $dataPersister = $this->get(\Shopware\Bundle\AttributeBundle\Service\DataPersisterInterface::class);
 
         $data = [];
         foreach ($this->Request()->getParams() as $key => $value) {
@@ -85,7 +85,7 @@ class Shopware_Controllers_Backend_AttributeData extends Shopware_Controllers_Ba
     public function listAction()
     {
         /** @var CrudServiceInterface $crudService */
-        $crudService = $this->get('shopware_attribute.crud_service');
+        $crudService = $this->get(CrudServiceInterface::class);
         $columns = $crudService->getList(
             $this->Request()->getParam('table')
         );
@@ -97,7 +97,7 @@ class Shopware_Controllers_Backend_AttributeData extends Shopware_Controllers_Ba
         if ($this->Request()->has('columns')) {
             $whitelist = json_decode($this->Request()->getParam('columns', []), true);
             $columns = array_filter($columns, function (ConfigurationStruct $column) use ($whitelist) {
-                return in_array($column->getColumnName(), $whitelist);
+                return \in_array($column->getColumnName(), $whitelist);
             });
         }
 

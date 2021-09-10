@@ -67,7 +67,7 @@ class MigrateArticleAttributeTranslationsCommand extends ShopwareCommand
     {
         $io = new SymfonyStyle($input, $output);
 
-        $this->connection = $this->container->get('dbal_connection');
+        $this->connection = $this->container->get(\Doctrine\DBAL\Connection::class);
         $this->updateStatement = $this->connection->prepare('UPDATE s_core_translations SET objectdata=:data WHERE id=:id');
         $this->columns = $this->getColumns();
 
@@ -109,7 +109,7 @@ EOL
             }
 
             $this->migrateTranslations($rows);
-            $progressBar->advance(count($rows));
+            $progressBar->advance(\count($rows));
 
             $lastId = array_pop($rows)['id'];
         } while (!empty($rows));
@@ -155,16 +155,16 @@ EOL
      */
     private function filter($data, array $columns)
     {
-        if (!is_array($data)) {
+        if (!\is_array($data)) {
             return null;
         }
 
         $updated = false;
         foreach ($columns as $key => $column) {
-            if (array_key_exists($key, $data)) {
+            if (\array_key_exists($key, $data)) {
                 $newKey = CrudServiceInterface::EXT_JS_PREFIX . $column;
 
-                if (!array_key_exists($newKey, $data)) {
+                if (!\array_key_exists($newKey, $data)) {
                     $data[$newKey] = $data[$key];
                     $updated = true;
                 }

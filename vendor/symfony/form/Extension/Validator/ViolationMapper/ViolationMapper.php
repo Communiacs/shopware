@@ -11,12 +11,14 @@
 
 namespace Symfony\Component\Form\Extension\Validator\ViolationMapper;
 
+use Symfony\Component\Form\FileUploadError;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\Util\InheritDataAwareIterator;
 use Symfony\Component\PropertyAccess\PropertyPathBuilder;
 use Symfony\Component\PropertyAccess\PropertyPathIterator;
 use Symfony\Component\PropertyAccess\PropertyPathIteratorInterface;
+use Symfony\Component\Validator\Constraints\File;
 use Symfony\Component\Validator\ConstraintViolation;
 
 /**
@@ -124,6 +126,23 @@ class ViolationMapper implements ViolationMapperInterface
 
         // Only add the error if the form is synchronized
         if ($this->acceptsErrors($scope)) {
+            if ($violation->getConstraint() instanceof File && (string) \UPLOAD_ERR_INI_SIZE === $violation->getCode()) {
+                $errorsTarget = $scope;
+
+                while (null !== $errorsTarget->getParent() && $errorsTarget->getConfig()->getErrorBubbling()) {
+                    $errorsTarget = $errorsTarget->getParent();
+                }
+
+                $errors = $errorsTarget->getErrors();
+                $errorsTarget->clearErrors();
+
+                foreach ($errors as $error) {
+                    if (!$error instanceof FileUploadError) {
+                        $errorsTarget->addError($error);
+                    }
+                }
+            }
+
             $scope->addError(new FormError(
                 $violation->getMessage(),
                 $violation->getMessageTemplate(),
@@ -140,13 +159,8 @@ class ViolationMapper implements ViolationMapperInterface
      *
      * If a matching child is found, it is returned. Otherwise
      * null is returned.
-     *
-     * @param FormInterface                 $form The form to search
-     * @param PropertyPathIteratorInterface $it   The iterator at its current position
-     *
-     * @return FormInterface|null The found match or null
      */
-    private function matchChild(FormInterface $form, PropertyPathIteratorInterface $it)
+    private function matchChild(FormInterface $form, PropertyPathIteratorInterface $it): ?FormInterface
     {
         $target = null;
         $chunk = '';
@@ -211,13 +225,8 @@ class ViolationMapper implements ViolationMapperInterface
 
     /**
      * Reconstructs a property path from a violation path and a form tree.
-     *
-     * @param ViolationPath $violationPath The violation path
-     * @param FormInterface $origin        The root form of the tree
-     *
-     * @return RelativePath The reconstructed path
      */
-    private function reconstructPath(ViolationPath $violationPath, FormInterface $origin)
+    private function reconstructPath(ViolationPath $violationPath, FormInterface $origin): ?RelativePath
     {
         $propertyPathBuilder = new PropertyPathBuilder($violationPath);
         $it = $violationPath->getIterator();
@@ -241,13 +250,6 @@ class ViolationMapper implements ViolationMapperInterface
                 // Form inherits its parent data
                 // Cut the piece out of the property path and proceed
                 $propertyPathBuilder->remove($i);
-            } elseif (!$scope->getConfig()->getMapped()) {
-                // Form is not mapped
-                // Set the form as new origin and strip everything
-                // we have so far in the path
-                $origin = $scope;
-                $propertyPathBuilder->remove(0, $i + 1);
-                $i = 0;
             } else {
                 /* @var \Symfony\Component\PropertyAccess\PropertyPathInterface $propertyPath */
                 $propertyPath = $scope->getPropertyPath();
@@ -268,10 +270,7 @@ class ViolationMapper implements ViolationMapperInterface
         return null !== $finalPath ? new RelativePath($origin, $finalPath) : null;
     }
 
-    /**
-     * @return bool
-     */
-    private function acceptsErrors(FormInterface $form)
+    private function acceptsErrors(FormInterface $form): bool
     {
         return $this->allowNonSynchronized || $form->isSynchronized();
     }

@@ -39,7 +39,7 @@ class DateTimeToLocalizedStringTransformer extends BaseDateTimeTransformer
      *
      * @throws UnexpectedTypeException If a format is not supported or if a timezone is not a string
      */
-    public function __construct($inputTimezone = null, $outputTimezone = null, $dateFormat = null, $timeFormat = null, $calendar = \IntlDateFormatter::GREGORIAN, $pattern = null)
+    public function __construct(string $inputTimezone = null, string $outputTimezone = null, int $dateFormat = null, int $timeFormat = null, int $calendar = \IntlDateFormatter::GREGORIAN, string $pattern = null)
     {
         parent::__construct($inputTimezone, $outputTimezone);
 
@@ -130,6 +130,10 @@ class DateTimeToLocalizedStringTransformer extends BaseDateTimeTransformer
         } elseif ($timestamp > 253402214400) {
             // This timestamp represents UTC midnight of 9999-12-31 to prevent 5+ digit years
             throw new TransformationFailedException('Years beyond 9999 are not supported.');
+        } elseif (false === $timestamp) {
+            // the value couldn't be parsed but the Intl extension didn't report an error code, this
+            // could be the case when the Intl polyfill is used which always returns 0 as the error code
+            throw new TransformationFailedException(sprintf('"%s" could not be parsed as a date.', $value));
         }
 
         try {
@@ -172,7 +176,7 @@ class DateTimeToLocalizedStringTransformer extends BaseDateTimeTransformer
         $calendar = $this->calendar;
         $pattern = $this->pattern;
 
-        $intlDateFormatter = new \IntlDateFormatter(\Locale::getDefault(), $dateFormat, $timeFormat, $timezone, $calendar, $pattern);
+        $intlDateFormatter = new \IntlDateFormatter(\Locale::getDefault(), $dateFormat, $timeFormat, $timezone, $calendar, $pattern ?? '');
 
         // new \intlDateFormatter may return null instead of false in case of failure, see https://bugs.php.net/66323
         if (!$intlDateFormatter) {

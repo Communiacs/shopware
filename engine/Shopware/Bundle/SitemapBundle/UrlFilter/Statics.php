@@ -24,6 +24,8 @@
 
 namespace Shopware\Bundle\SitemapBundle\UrlFilter;
 
+use Shopware\Models\Site\Site;
+
 class Statics extends Base
 {
     /**
@@ -31,6 +33,6 @@ class Statics extends Base
      */
     public function supports($resourceName)
     {
-        return $resourceName === \Shopware\Models\Site\Site::class;
+        return $resourceName === Site::class;
     }
 }

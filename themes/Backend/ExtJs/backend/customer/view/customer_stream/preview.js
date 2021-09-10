@@ -27,7 +27,7 @@
  * @author shopware AG
  */
 
-// {namespace name=backend/customer/view/main}
+// {namespace name="backend/customer/view/main"}
 
 /**
  * Shopware UI - Customer list backend module
@@ -225,7 +225,7 @@ Ext.define('Shopware.apps.Customer.view.customer_stream.Preview', {
                     company = '<br>' + record.get('company') + '';
                 }
 
-                var mail = Ext.String.format('<a href="mailto:[0]" data-qtip="[0]">[0]</a>', Ext.util.Format.htmlEncode(record.get('email')));
+                var mail = Ext.String.format('<a href="mailto:[0]" data-qtip="[0]">[0]</a>', record.get('email'));
 
                 return name + age + company + '<br>' + mail;
             }

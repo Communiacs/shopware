@@ -32,9 +32,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class ListProductFeedCommand extends ShopwareCommand
 {
-    const METHOD_LIVE = 0;
+    public const METHOD_LIVE = 0;
 
-    const METHOD_ONLY_CRON = -1;
+    public const METHOD_ONLY_CRON = -1;
 
     /**
      * {@inheritdoc}
@@ -52,7 +52,7 @@ class ListProductFeedCommand extends ShopwareCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $productFeedRepository = $this->container->get('models')->getRepository('Shopware\Models\ProductFeed\ProductFeed');
+        $productFeedRepository = $this->container->get(\Shopware\Components\Model\ModelManager::class)->getRepository('Shopware\Models\ProductFeed\ProductFeed');
         $productFeeds = $productFeedRepository->findAll();
 
         $rows = [];

@@ -32,19 +32,19 @@ abstract class Enlight_Components_Test_TestCase extends PHPUnit\Framework\TestCa
 {
     /**
      * Sets up the fixture, for example, open a network connection.
-     * @before
      */
-    protected function setupEnlightTestCase(): void
+    protected function setUp(): void
     {
+        parent::setUp();
+
         // Clear entitymanager to prevent weird 'model shop not persisted' errors.
         Shopware()->Models()->clear();
     }
 
     /**
      * Performs operation returned by getSetUpOperation().
-     * @after
      */
-    protected function teardownEnlightTestCase(): void
+    protected function tearDown(): void
     {
         set_time_limit(0);
         ini_restore('memory_limit');
@@ -54,12 +54,11 @@ abstract class Enlight_Components_Test_TestCase extends PHPUnit\Framework\TestCa
      * Allows to set a shopware config
      *
      * @param string $name
-     * @param mixed  $value
      */
     protected function setConfig($name, $value)
     {
         Shopware()->Container()->get('config_writer')->save($name, $value);
-        Shopware()->Container()->get('cache')->clean();
-        Shopware()->Container()->get('config')->setShop(Shopware()->Shop());
+        Shopware()->Container()->get(\Zend_Cache_Core::class)->clean();
+        Shopware()->Container()->get(\Shopware_Components_Config::class)->setShop(Shopware()->Shop());
     }
 }

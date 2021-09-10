@@ -32,7 +32,7 @@ use Shopware\Components\License\Service\LocalLicenseUnpackService;
 
 class PluginLicenceService
 {
-    const TYPE_UNLICENSED = 99;
+    public const TYPE_UNLICENSED = 99;
 
     /**
      * @var Connection
@@ -153,7 +153,7 @@ class PluginLicenceService
         $expirations = [];
         foreach ($licenses as $license) {
             if (!empty($license['license'])) {
-                $info = $this->unpackService->readLicenseInfo(($license['license']));
+                $info = $this->unpackService->readLicenseInfo($license['license']);
                 if (!$info) {
                     continue;
                 }

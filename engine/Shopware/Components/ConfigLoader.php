@@ -93,16 +93,14 @@ class ConfigLoader
     {
         $suffix = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
-        if (!in_array($suffix, ['php', 'inc'])) {
+        if (!\in_array($suffix, ['php', 'inc'])) {
             throw new \Exception(sprintf('Invalid configuration file provided; unknown config type "%s"', $suffix));
         }
 
         $config = include $file;
 
-        if (!is_array($config)) {
-            throw new \Exception(
-                'Invalid configuration file provided; PHP file does not return an array value'
-            );
+        if (!\is_array($config)) {
+            throw new \Exception('Invalid configuration file provided; PHP file does not return an array value');
         }
 
         $config = array_change_key_case($config, CASE_LOWER);

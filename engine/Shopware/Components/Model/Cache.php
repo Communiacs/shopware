@@ -50,7 +50,7 @@ class Cache extends \Doctrine\Common\Cache\CacheProvider
      */
     private $tags;
 
-    public function __construct(\Zend_Cache_Core $cache, string $prefix = 'Shopware_Modules', array $tags)
+    public function __construct(\Zend_Cache_Core $cache, string $prefix, array $tags)
     {
         if (\count($tags) === 0) {
             throw new \InvalidArgumentException('This Adapter requires at least one tag to work correctly');
@@ -82,7 +82,7 @@ class Cache extends \Doctrine\Common\Cache\CacheProvider
      */
     protected function doContains($id)
     {
-        return is_int($this->cache->test($this->prefix . md5($id)));
+        return \is_int($this->cache->test($this->prefix . md5($id)));
     }
 
     /**

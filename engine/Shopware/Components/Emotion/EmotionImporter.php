@@ -59,7 +59,7 @@ class EmotionImporter implements EmotionImporterInterface
      */
     public function import($filePath)
     {
-        $extractPath = dirname($filePath) . '/' . pathinfo($filePath, PATHINFO_FILENAME);
+        $extractPath = \dirname($filePath) . '/' . pathinfo($filePath, PATHINFO_FILENAME);
         $emotionData = $this->extractEmotionArchive($filePath, $extractPath);
 
         if (!$emotionData['presetData']) {
@@ -95,7 +95,7 @@ class EmotionImporter implements EmotionImporterInterface
      */
     public function cleanupImport($filePath, $presetId = null)
     {
-        $extractPath = dirname($filePath) . '/' . basename($filePath);
+        $extractPath = \dirname($filePath) . '/' . basename($filePath);
 
         $this->filesystem->remove($extractPath);
 
@@ -171,9 +171,7 @@ class EmotionImporter implements EmotionImporterInterface
         }
 
         if ($missingPlugins) {
-            throw new EmotionImportException(
-                sprintf('The following plugins are required to use this shopping world: <br>%s', implode('<br>', $missingPlugins))
-            );
+            throw new EmotionImportException(sprintf('The following plugins are required to use this shopping world: <br>%s', implode('<br>', $missingPlugins)));
         }
     }
 

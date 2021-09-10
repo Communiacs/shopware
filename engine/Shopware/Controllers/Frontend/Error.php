@@ -127,12 +127,11 @@ class Shopware_Controllers_Frontend_Error extends Enlight_Controller_Action impl
                 $this->forward('genericError', null, null, ['code' => $targetErrorCode]);
                 break;
             default:
-
                 // Try to load the emotion landingpage, render default error in case it is unavailable
                 try {
                     $result = $this->get('shopware.emotion.emotion_landingpage_loader')->load(
                         $targetEmotionId,
-                        $this->get('shopware_storefront.context_service')->getShopContext()
+                        $this->get(\Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface::class)->getShopContext()
                     );
 
                     $this->View()->loadTemplate('frontend/campaign/index.tpl');
@@ -165,8 +164,13 @@ class Shopware_Controllers_Frontend_Error extends Enlight_Controller_Action impl
          * If the system is configured to display the exception data, we need
          * to pass it to the template
         */
-        if ($this->Front()->getParam('showException') || $this->Request()->getModuleName() === 'backend') {
-            $path = Shopware()->Container()->getParameter('kernel.root_dir') . '/';
+        if ($this->Front()->getParam('showException')) {
+            $rootDir = Shopware()->Container()->getParameter('shopware.app.rootDir');
+            if (!\is_string($rootDir)) {
+                throw new \RuntimeException('Parameter shopware.app.rootDir has to be an string');
+            }
+
+            $path = $rootDir . '/';
 
             /** @var \Exception $exception */
             $exception = $error->exception;
@@ -218,7 +222,7 @@ class Shopware_Controllers_Frontend_Error extends Enlight_Controller_Action impl
      */
     private function enableBackendTheme()
     {
-        $directory = Shopware()->Container()->get('theme_path_resolver')->getExtJsThemeDirectory();
+        $directory = Shopware()->Container()->get(\Shopware\Components\Theme\PathResolver::class)->getExtJsThemeDirectory();
         Shopware()->Container()->get('template')->setTemplateDir([
             'backend' => $directory,
             'include_dir' => '.',

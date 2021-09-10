@@ -151,10 +151,10 @@ class CSRFTokenValidator implements SubscriberInterface
      */
     private function checkRequest(Request $request)
     {
-        $context = $this->container->get('shopware_storefront.context_service')->getShopContext();
+        $context = $this->container->get(\Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface::class)->getShopContext();
         $name = '__csrf_token-' . $context->getShop()->getId();
 
-        if ($context->getShop()->getParentId() && $this->container->get('config')->get('shareSessionBetweenLanguageShops')) {
+        if ($context->getShop()->getParentId() && $this->container->get(\Shopware_Components_Config::class)->get('shareSessionBetweenLanguageShops')) {
             $name = '__csrf_token-' . $context->getShop()->getParentId();
         }
 
@@ -182,7 +182,7 @@ class CSRFTokenValidator implements SubscriberInterface
         $whitelistedActions = $controller->getWhitelistedCSRFActions();
         $whitelistedActions = array_map('strtolower', $whitelistedActions);
 
-        return in_array($calledAction, $whitelistedActions);
+        return \in_array($calledAction, $whitelistedActions);
     }
 
     /**
@@ -202,6 +202,6 @@ class CSRFTokenValidator implements SubscriberInterface
         $protectedActions = $controller->getCSRFProtectedActions();
         $protectedActions = array_map('strtolower', $protectedActions);
 
-        return in_array($calledAction, $protectedActions);
+        return \in_array($calledAction, $protectedActions);
     }
 }

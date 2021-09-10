@@ -68,7 +68,7 @@ trait DynamicConditionParserTrait
             return strtolower($column->getName());
         }, $columns);
 
-        if (!array_key_exists(strtolower($field), $names)) {
+        if (!\array_key_exists(strtolower($field), $names)) {
             throw new \InvalidArgumentException(sprintf('Invalid column name "%s" specified.', $field), 1);
         }
 
@@ -94,10 +94,7 @@ trait DynamicConditionParserTrait
          * When an operator is not specified, by default, return all results that are not null
          */
         if (empty($operator)) {
-            throw new \InvalidArgumentException(
-                sprintf('Must specify an operator, please use one of: %s', implode(', ', $validOperators)),
-                3
-            );
+            throw new \InvalidArgumentException(sprintf('Must specify an operator, please use one of: %s', implode(', ', $validOperators)), 3);
         }
 
         //Identify each field placeholder value with table alias and a hash of condition properties
@@ -147,7 +144,7 @@ trait DynamicConditionParserTrait
                 $query->andWhere($query->expr()->notIn($field, $boundParamName));
                 $query->setParameter(
                     $boundParamName,
-                    !is_array($value) ? [(string) $value] : $value,
+                    !\is_array($value) ? [(string) $value] : $value,
                     Connection::PARAM_STR_ARRAY
                 );
                 break;
@@ -156,7 +153,7 @@ trait DynamicConditionParserTrait
                 $query->andWhere($query->expr()->in($field, $boundParamName));
                 $query->setParameter(
                     $boundParamName,
-                    !is_array($value) ? [(string) $value] : $value,
+                    !\is_array($value) ? [(string) $value] : $value,
                     Connection::PARAM_STR_ARRAY
                 );
                 break;
@@ -193,10 +190,7 @@ trait DynamicConditionParserTrait
                 break;
 
             default:
-                throw new \InvalidArgumentException(
-                    sprintf('Invalid operator specified, please use one of: %s', implode(', ', $validOperators)),
-                    3
-                );
+                throw new \InvalidArgumentException(sprintf('Invalid operator specified, please use one of: %s', implode(', ', $validOperators)), 3);
         }
     }
 }

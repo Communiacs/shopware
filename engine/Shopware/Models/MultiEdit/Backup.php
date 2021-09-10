@@ -96,7 +96,7 @@ class Backup extends ModelEntity
     private $hash;
 
     /**
-     * @param \DateTimeInterface $date
+     * @param \DateTimeInterface|null $date
      */
     public function setDate($date)
     {
@@ -104,7 +104,7 @@ class Backup extends ModelEntity
     }
 
     /**
-     * @return \DateTimeInterface
+     * @return \DateTimeInterface|null
      */
     public function getDate()
     {

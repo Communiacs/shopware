@@ -28,7 +28,7 @@ function smarty_function_flink($params, $template)
     $file = $params['file'];
 
     $request = Shopware()->Front()->Request();
-    $docPath = Shopware()->Container()->getParameter('shopware.app.rootdir');
+    $docPath = Shopware()->Container()->getParameter('shopware.app.rootDir');
 
     // Check if we got an URI or a local link
     if (!empty($file) && strpos($file, '/') !== 0 && strpos($file, '://') === false) {
@@ -56,7 +56,7 @@ function smarty_function_flink($params, $template)
 
         // Some cleanup code
         if (strpos($file, $docPath) === 0) {
-            $file = substr($file, strlen($docPath));
+            $file = substr($file, \strlen($docPath));
         }
 
         // Make sure we have the right separator for the web context

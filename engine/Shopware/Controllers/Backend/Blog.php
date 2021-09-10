@@ -193,7 +193,7 @@ class Shopware_Controllers_Backend_Blog extends Shopware_Controllers_Backend_Ext
             $data[$key]['allowDrag'] = true;
         }
 
-        $this->View()->assign(['success' => true, 'data' => $data, 'total' => count($data)]);
+        $this->View()->assign(['success' => true, 'data' => $data, 'total' => \count($data)]);
     }
 
     /**
@@ -254,7 +254,7 @@ class Shopware_Controllers_Backend_Blog extends Shopware_Controllers_Backend_Ext
     {
         /** @var array $filter */
         $filter = $this->Request()->getParam('filter', []);
-        $mediaService = Shopware()->Container()->get('shopware_media.media_service');
+        $mediaService = Shopware()->Container()->get(\Shopware\Bundle\MediaBundle\MediaServiceInterface::class);
 
         $data = $this->getRepository()
             ->getBackendDetailQuery($filter)
@@ -317,7 +317,7 @@ class Shopware_Controllers_Backend_Blog extends Shopware_Controllers_Backend_Ext
             }
         }
 
-        $this->View()->assign(['success' => true, 'data' => $data, 'total' => count($data)]);
+        $this->View()->assign(['success' => true, 'data' => $data, 'total' => \count($data)]);
     }
 
     /**
@@ -338,7 +338,7 @@ class Shopware_Controllers_Backend_Blog extends Shopware_Controllers_Backend_Ext
             $data[] = ['id' => $id, 'name' => $path];
         }
 
-        $this->View()->assign(['success' => true, 'data' => $data, 'total' => count($data)]);
+        $this->View()->assign(['success' => true, 'data' => $data, 'total' => \count($data)]);
     }
 
     /**

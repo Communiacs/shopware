@@ -76,6 +76,16 @@ class OrderedHashMapIterator implements \Iterator
         $this->managedCursors[$this->cursorId] = &$this->cursor;
     }
 
+    public function __sleep()
+    {
+        throw new \BadMethodCallException('Cannot serialize '.__CLASS__);
+    }
+
+    public function __wakeup()
+    {
+        throw new \BadMethodCallException('Cannot unserialize '.__CLASS__);
+    }
+
     /**
      * Removes the iterator's cursors from the managed cursors of the
      * corresponding {@link OrderedHashMap} instance.
@@ -128,7 +138,7 @@ class OrderedHashMapIterator implements \Iterator
     /**
      * {@inheritdoc}
      */
-    public function valid()
+    public function valid(): bool
     {
         return null !== $this->key;
     }

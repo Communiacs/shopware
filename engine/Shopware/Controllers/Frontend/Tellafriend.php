@@ -23,6 +23,7 @@
  */
 
 use Shopware\Components\Random;
+use Shopware\Components\Validator\EmailValidator;
 
 class Shopware_Controllers_Frontend_Tellafriend extends Enlight_Controller_Action
 {
@@ -35,13 +36,10 @@ class Shopware_Controllers_Frontend_Tellafriend extends Enlight_Controller_Actio
 
     public function preDispatch()
     {
-        $config = $this->container->get('config');
+        $config = $this->container->get(\Shopware_Components_Config::class);
 
         if (!$config->get('showTellAFriend')) {
-            throw new Enlight_Controller_Exception(
-                'Tell a friend is not activated for the current shop',
-                404
-            );
+            throw new Enlight_Controller_Exception('Tell a friend is not activated for the current shop', 404);
         }
     }
 
@@ -81,11 +79,11 @@ class Shopware_Controllers_Frontend_Tellafriend extends Enlight_Controller_Actio
                 $variables['sError'] = true;
             }
 
-            if (preg_match('/;/', $this->Request()->getPost('sRecipient')) || strlen($this->Request()->getPost('sRecipient')) >= 50) {
+            if (preg_match('/;/', $this->Request()->getPost('sRecipient')) || \strlen($this->Request()->getPost('sRecipient')) >= 50) {
                 $variables['sError'] = true;
             }
 
-            $validator = $this->container->get('validator.email');
+            $validator = $this->container->get(EmailValidator::class);
             if (!$validator->isValid($this->Request()->getPost('sRecipient'))) {
                 $variables['sError'] = true;
             }

@@ -35,7 +35,7 @@ class Shopware_Controllers_Backend_FirstRunWizardPluginManager extends Shopware_
     public function getIntegratedPluginsAction()
     {
         /** @var FirstRunWizardPluginStoreService $firstRunWizardPluginStore */
-        $firstRunWizardPluginStore = $this->container->get('first_run_wizard_plugin_store');
+        $firstRunWizardPluginStore = $this->container->get(FirstRunWizardPluginStoreService::class);
 
         $isoFromRequest = $this->Request()->get('iso');
 
@@ -67,7 +67,7 @@ class Shopware_Controllers_Backend_FirstRunWizardPluginManager extends Shopware_
     public function getRecommendedPluginsAction()
     {
         /** @var FirstRunWizardPluginStoreService $firstRunWizardPluginStore */
-        $firstRunWizardPluginStore = $this->container->get('first_run_wizard_plugin_store');
+        $firstRunWizardPluginStore = $this->container->get(FirstRunWizardPluginStoreService::class);
 
         try {
             /** @var PluginStruct[] $plugins */
@@ -93,7 +93,7 @@ class Shopware_Controllers_Backend_FirstRunWizardPluginManager extends Shopware_
     public function getDemoDataPluginsAction()
     {
         /** @var FirstRunWizardPluginStoreService $firstRunWizardPluginStore */
-        $firstRunWizardPluginStore = $this->container->get('first_run_wizard_plugin_store');
+        $firstRunWizardPluginStore = $this->container->get(FirstRunWizardPluginStoreService::class);
 
         try {
             /** @var PluginStruct[] $plugins */
@@ -121,7 +121,7 @@ class Shopware_Controllers_Backend_FirstRunWizardPluginManager extends Shopware_
         $localization = $this->Request()->get('localeId');
 
         /** @var FirstRunWizardPluginStoreService $firstRunWizardPluginStore */
-        $firstRunWizardPluginStore = $this->container->get('first_run_wizard_plugin_store');
+        $firstRunWizardPluginStore = $this->container->get(FirstRunWizardPluginStoreService::class);
 
         try {
             /** @var PluginStruct[] $plugins */
@@ -147,7 +147,7 @@ class Shopware_Controllers_Backend_FirstRunWizardPluginManager extends Shopware_
     public function getLocalizationsAction()
     {
         /** @var FirstRunWizardPluginStoreService $firstRunWizardPluginStore */
-        $firstRunWizardPluginStore = $this->container->get('first_run_wizard_plugin_store');
+        $firstRunWizardPluginStore = $this->container->get(FirstRunWizardPluginStoreService::class);
 
         try {
             /** @var LocaleStruct[] $localizations */
@@ -173,7 +173,7 @@ class Shopware_Controllers_Backend_FirstRunWizardPluginManager extends Shopware_
     public function getIntegratedPluginsCountriesAction()
     {
         /** @var FirstRunWizardPluginStoreService $firstRunWizardPluginStore */
-        $firstRunWizardPluginStore = $this->container->get('first_run_wizard_plugin_store');
+        $firstRunWizardPluginStore = $this->container->get(FirstRunWizardPluginStoreService::class);
 
         try {
             $countries = $firstRunWizardPluginStore->getIntegratedPluginsCountries($this->getCurrentLocale());
@@ -198,7 +198,7 @@ class Shopware_Controllers_Backend_FirstRunWizardPluginManager extends Shopware_
     public function getAvailableLocalizationsAction()
     {
         /** @var FirstRunWizardPluginStoreService $firstRunWizardPluginStore */
-        $firstRunWizardPluginStore = $this->container->get('first_run_wizard_plugin_store');
+        $firstRunWizardPluginStore = $this->container->get(FirstRunWizardPluginStoreService::class);
 
         try {
             /** @var LocaleStruct[] $localizations */
@@ -213,7 +213,7 @@ class Shopware_Controllers_Backend_FirstRunWizardPluginManager extends Shopware_
         }
 
         /** @var \Shopware\Bundle\PluginInstallerBundle\StoreClient $storeClient */
-        $storeClient = $this->container->get('shopware_plugininstaller.store_client');
+        $storeClient = $this->container->get(\Shopware\Bundle\PluginInstallerBundle\StoreClient::class);
         $storeClient->doTrackEvent('First Run Wizard started');
 
         $this->View()->assign([
@@ -247,12 +247,15 @@ class Shopware_Controllers_Backend_FirstRunWizardPluginManager extends Shopware_
         ]);
     }
 
-    /**
-     * @return string
-     */
-    private function getVersion()
+    private function getVersion(): string
     {
-        return $this->container->getParameter('shopware.release.version');
+        $version = $this->container->getParameter('shopware.release.version');
+
+        if (!\is_string($version)) {
+            throw new \RuntimeException('Parameter shopware.release.version has to be an string');
+        }
+
+        return $version;
     }
 
     /**
@@ -282,12 +285,12 @@ class Shopware_Controllers_Backend_FirstRunWizardPluginManager extends Shopware_
         $locale = $user->locale;
         $localeCode = $locale->getLocale();
 
-        if (array_key_exists($localeCode, $locales)) {
+        if (\array_key_exists($localeCode, $locales)) {
             return $locales[$localeCode];
         }
 
         // Fallback to english locale when available
-        if (array_key_exists('en_GB', $locales)) {
+        if (\array_key_exists('en_GB', $locales)) {
             return $locales['en_GB'];
         }
 

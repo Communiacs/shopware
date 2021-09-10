@@ -27,7 +27,7 @@
  * @author shopware AG
  */
 
-//{namespace name=backend/performance/main}
+//{namespace name="backend/performance/main"}
 
 //{block name="backend/performance/view/tabs/settings/main"}
 Ext.define('Shopware.apps.Performance.view.tabs.settings.Main', {
@@ -36,18 +36,18 @@ Ext.define('Shopware.apps.Performance.view.tabs.settings.Main', {
      * Define that the additional information is an Ext.panel.Panel extension
      * @string
      */
-    extend:'Ext.panel.Panel',
+    extend: 'Ext.panel.Panel',
 
     /**
      * List of short aliases for class names. Most useful for defining xtypes for widgets.
      * @string
      */
-    alias:'widget.performance-tabs-settings-main',
+    alias: 'widget.performance-tabs-settings-main',
 
     // Title of the panel shown in the tab
-    title: '{s name=tabs/settings/title}Settings{/s}',
+    title: '{s name="tabs/settings/title"}Settings{/s}',
 
-    // Define the layout of the panel to be a border layut
+    // Define the layout of the panel to be a border layout
     layout: 'border',
 
     /**
@@ -60,7 +60,7 @@ Ext.define('Shopware.apps.Performance.view.tabs.settings.Main', {
      *
      * @return void
      */
-    initComponent:function () {
+    initComponent: function () {
         var me = this;
 
         me.items = me.createItems();
@@ -116,7 +116,7 @@ Ext.define('Shopware.apps.Performance.view.tabs.settings.Main', {
      */
     getButtons: function() {
         return ['->', {
-            text: '{s name=settings/buttons/save}Save{/s}',
+            text: '{s name="settings/buttons/save"}Save{/s}',
             action: 'save-settings',
             cls: 'primary'
         }];

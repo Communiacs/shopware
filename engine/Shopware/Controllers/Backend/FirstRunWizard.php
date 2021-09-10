@@ -26,6 +26,8 @@ use Shopware\Bundle\PluginInstallerBundle\Service\AccountManagerService;
 use Shopware\Bundle\PluginInstallerBundle\Struct\AccessTokenStruct;
 use Shopware\Bundle\PluginInstallerBundle\Struct\LocaleStruct;
 use Shopware\Models\Document\Element;
+use Shopware\Models\Shop\Shop;
+use Shopware\Models\Shop\Template;
 
 class Shopware_Controllers_Backend_FirstRunWizard extends Shopware_Controllers_Backend_ExtJs implements \Shopware\Components\CSRFWhitelistAware
 {
@@ -46,10 +48,10 @@ class Shopware_Controllers_Backend_FirstRunWizard extends Shopware_Controllers_B
     {
         $value = (bool) $this->Request()->getParam('value');
         $element = Shopware()->Models()
-            ->getRepository('Shopware\Models\Config\Element')
+            ->getRepository(\Shopware\Models\Config\Element::class)
             ->findOneBy(['name' => 'firstRunWizardEnabled']);
 
-        $defaultShop = Shopware()->Models()->getRepository('Shopware\Models\Shop\Shop')->getDefault();
+        $defaultShop = Shopware()->Models()->getRepository(Shop::class)->getDefault();
 
         $requestElements = [
             [
@@ -66,7 +68,7 @@ class Shopware_Controllers_Backend_FirstRunWizard extends Shopware_Controllers_B
         ];
 
         /** @var \Shopware\Bundle\PluginInstallerBundle\StoreClient $storeClient */
-        $storeClient = $this->container->get('shopware_plugininstaller.store_client');
+        $storeClient = $this->container->get(\Shopware\Bundle\PluginInstallerBundle\StoreClient::class);
         $storeClient->doTrackEvent('First Run Wizard completed');
 
         $this->Request()->setParam('elements', $requestElements);
@@ -80,7 +82,7 @@ class Shopware_Controllers_Backend_FirstRunWizard extends Shopware_Controllers_B
     public function saveConfigurationAction()
     {
         $values = $this->Request()->getParams();
-        $defaultShop = Shopware()->Models()->getRepository('Shopware\Models\Shop\Shop')->getDefault();
+        $defaultShop = Shopware()->Models()->getRepository(Shop::class)->getDefault();
 
         if (strpos($values['desktopLogo'], 'media/') === 0) {
             $values['tabletLandscapeLogo'] = $values['desktopLogo'];
@@ -106,19 +108,19 @@ class Shopware_Controllers_Backend_FirstRunWizard extends Shopware_Controllers_B
             return [
                 'elementName' => $configKey,
                 'shopId' => $defaultShop->getId(),
-                'value' => array_key_exists($configKey, $values) ? $values[$configKey] : '',
+                'value' => \array_key_exists($configKey, $values) ? $values[$configKey] : '',
             ];
         }, $themeConfigKeys);
 
-        $theme = $this->container->get('models')
-            ->getRepository('Shopware\Models\Shop\Template')
+        $theme = $this->container->get(\Shopware\Components\Model\ModelManager::class)
+            ->getRepository(Template::class)
             ->findOneBy(['template' => 'Responsive']);
 
         $themeConfigValues = array_filter($themeConfigValues, function ($config) {
             return !empty($config['value']);
         });
 
-        $this->container->get('theme_service')->saveConfig($theme, $themeConfigValues);
+        $this->container->get(\Shopware\Components\Theme\Service::class)->saveConfig($theme, $themeConfigValues);
         $this->container->get('theme_timestamp_persistor')->updateTimestamp($defaultShop->getId(), time());
 
         /**
@@ -139,7 +141,7 @@ class Shopware_Controllers_Backend_FirstRunWizard extends Shopware_Controllers_B
 
         foreach ($shopConfigValues as $configName => $configValue) {
             $element = Shopware()->Models()
-                ->getRepository('Shopware\Models\Config\Element')
+                ->getRepository(\Shopware\Models\Config\Element::class)
                 ->findOneBy(['name' => $configName]);
 
             if ($configName === 'emailheaderhtml') {
@@ -207,7 +209,7 @@ class Shopware_Controllers_Backend_FirstRunWizard extends Shopware_Controllers_B
             }
         }
 
-        if (count($persistElements)) {
+        if (\count($persistElements)) {
             Shopware()->Models()->flush($persistElements);
         }
 
@@ -219,11 +221,11 @@ class Shopware_Controllers_Backend_FirstRunWizard extends Shopware_Controllers_B
      */
     public function loadConfigurationAction()
     {
-        $defaultShop = $this->container->get('models')
-            ->getRepository('Shopware\Models\Shop\Shop')
+        $defaultShop = $this->container->get(\Shopware\Components\Model\ModelManager::class)
+            ->getRepository(Shop::class)
             ->getDefault();
-        $theme = $this->container->get('models')
-            ->getRepository('Shopware\Models\Shop\Template')
+        $theme = $this->container->get(\Shopware\Components\Model\ModelManager::class)
+            ->getRepository(Template::class)
             ->findOneBy(['template' => 'Responsive']);
 
         /**
@@ -235,7 +237,7 @@ class Shopware_Controllers_Backend_FirstRunWizard extends Shopware_Controllers_B
             'brand-secondary',
         ];
 
-        $themeConfigData = $this->container->get('theme_service')->getConfig(
+        $themeConfigData = $this->container->get(\Shopware\Components\Theme\Service::class)->getConfig(
             $theme,
             $defaultShop,
             $themeConfigKeys
@@ -265,7 +267,7 @@ class Shopware_Controllers_Backend_FirstRunWizard extends Shopware_Controllers_B
             'company',
         ];
 
-        $builder = $this->container->get('models')->createQueryBuilder();
+        $builder = $this->container->get(\Shopware\Components\Model\ModelManager::class)->createQueryBuilder();
         $builder->select([
             'elements',
             'values',
@@ -357,7 +359,7 @@ class Shopware_Controllers_Backend_FirstRunWizard extends Shopware_Controllers_B
         $this->View()->assign([
             'success' => true,
             'data' => $data,
-            'total' => count($data),
+            'total' => \count($data),
         ]);
     }
 
@@ -435,7 +437,7 @@ class Shopware_Controllers_Backend_FirstRunWizard extends Shopware_Controllers_B
      */
     public function registerDomainAction()
     {
-        $shop = $this->container->get('models')
+        $shop = $this->container->get(\Shopware\Components\Model\ModelManager::class)
             ->getRepository('Shopware\Models\Shop\Shop')
             ->getDefault();
 
@@ -456,7 +458,7 @@ class Shopware_Controllers_Backend_FirstRunWizard extends Shopware_Controllers_B
 
         $domains = $this->getDomains($token);
 
-        if (in_array($domain, $domains)) {
+        if (\in_array($domain, $domains)) {
             $this->View()->assign([
                 'success' => true,
                 'message' => $this->get('snippets')
@@ -493,6 +495,10 @@ class Shopware_Controllers_Backend_FirstRunWizard extends Shopware_Controllers_B
         /** @var \Symfony\Component\Filesystem\Filesystem $fileSystem */
         $fileSystem = $this->container->get('file_system');
         $rootDir = $this->container->getParameter('kernel.root_dir');
+        if (!\is_string($rootDir)) {
+            throw new \RuntimeException('Parameter kernel.root_dir has to be an string');
+        }
+
         $filePath = $rootDir . DIRECTORY_SEPARATOR . $filename;
 
         try {
@@ -556,12 +562,15 @@ class Shopware_Controllers_Backend_FirstRunWizard extends Shopware_Controllers_B
         $this->View()->loadTemplate(sprintf('backend/first_run_wizard/template/%s.tpl', $view));
     }
 
-    /**
-     * @return string
-     */
-    private function getVersion()
+    private function getVersion(): string
     {
-        return $this->container->getParameter('shopware.release.version');
+        $version = $this->container->getParameter('shopware.release.version');
+
+        if (!\is_string($version)) {
+            throw new \RuntimeException('Parameter shopware.release.version has to be an string');
+        }
+
+        return $version;
     }
 
     /**
@@ -602,7 +611,7 @@ class Shopware_Controllers_Backend_FirstRunWizard extends Shopware_Controllers_B
         $locale = $user->locale;
         $localeCode = $locale->getLocale();
 
-        return array_key_exists($localeCode, $locales) ? $locales[$localeCode] : null;
+        return \array_key_exists($localeCode, $locales) ? $locales[$localeCode] : null;
     }
 
     /**

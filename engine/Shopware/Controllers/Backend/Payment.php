@@ -43,7 +43,7 @@ class Shopware_Controllers_Backend_Payment extends Shopware_Controllers_Backend_
      */
     public function preDispatch()
     {
-        if (!in_array($this->Request()->getActionName(), ['index', 'load'])) {
+        if (!\in_array($this->Request()->getActionName(), ['index', 'load'])) {
             $this->Front()->Plugins()->Json()->setRenderer(true);
         }
     }
@@ -74,7 +74,7 @@ class Shopware_Controllers_Backend_Payment extends Shopware_Controllers_Backend_
         // The standard $translationComponent->translatePayments can not be used here since the
         // description may not be overridden. The field is edible and if the translation is
         // shown in the edit field, there is a high chance of a user saving the translation as description.
-        $translator = $this->get('translation')->getObjectTranslator('config_payment');
+        $translator = $this->get(\Shopware_Components_Translation::class)->getObjectTranslator('config_payment');
         $results = array_map(function ($payment) use ($translator) {
             return $translator->translateObjectProperty($payment, 'description', 'translatedDescription', $payment['description']);
         }, $results);
@@ -313,7 +313,7 @@ class Shopware_Controllers_Backend_Payment extends Shopware_Controllers_Backend_
 
         foreach ($surcharges as $surcharge) {
             $keys = explode(':', $surcharge);
-            if (in_array($keys[0], $isoCodes)) {
+            if (\in_array($keys[0], $isoCodes)) {
                 $buffer[] = $surcharge;
             }
         }

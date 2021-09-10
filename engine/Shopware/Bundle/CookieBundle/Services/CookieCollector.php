@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 /**
  * Shopware 5
  * Copyright (c) shopware AG
@@ -148,6 +150,6 @@ class CookieCollector implements CookieCollectorInterface
             return strcmp($firstCookie->getLabel(), $secondCookie->getLabel());
         });
 
-        return new CookieCollection(\iterator_to_array($cookieIterator, false));
+        return new CookieCollection(iterator_to_array($cookieIterator, false));
     }
 }

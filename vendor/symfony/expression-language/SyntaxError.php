@@ -13,7 +13,7 @@ namespace Symfony\Component\ExpressionLanguage;
 
 class SyntaxError extends \LogicException
 {
-    public function __construct($message, $cursor = 0, $expression = '', $subject = null, array $proposals = null)
+    public function __construct(string $message, int $cursor = 0, string $expression = '', string $subject = null, array $proposals = null)
     {
         $message = sprintf('%s around position %d', rtrim($message, '.'), $cursor);
         if ($expression) {
@@ -22,7 +22,7 @@ class SyntaxError extends \LogicException
         $message .= '.';
 
         if (null !== $subject && null !== $proposals) {
-            $minScore = INF;
+            $minScore = \INF;
             foreach ($proposals as $proposal) {
                 $distance = levenshtein($subject, $proposal);
                 if ($distance < $minScore) {

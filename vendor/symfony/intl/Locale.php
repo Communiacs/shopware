@@ -60,15 +60,14 @@ final class Locale extends \Locale
      * the default fallback locale configured with {@link setDefaultFallback()}.
      * The default fallback locale has no fallback.
      *
-     * @param string $locale The ICU locale code to find the fallback for
-     *
      * @return string|null The ICU locale code of the fallback locale, or null
      *                     if no fallback exists
      */
     public static function getFallback(string $locale): ?string
     {
         if (\function_exists('locale_parse')) {
-            $localeSubTags = locale_parse($locale);
+            $localeSubTags = locale_parse($locale) ?? ['language' => $locale];
+
             if (1 === \count($localeSubTags)) {
                 if ('root' !== self::$defaultFallback && self::$defaultFallback === $localeSubTags['language']) {
                     return 'root';

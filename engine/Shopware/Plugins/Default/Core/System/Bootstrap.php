@@ -53,10 +53,8 @@ class Shopware_Plugins_Core_System_Bootstrap extends Shopware_Components_Plugin_
     /**
      * Listener method of the Enlight_Controller_Front_DispatchLoopShutdown event.
      * If the request is from a Bot, discard the session
-     *
-     * @param Enlight_Controller_EventArgs $args
      */
-    public function onDispatchLoopShutdown(\Enlight_Controller_EventArgs $args)
+    public function onDispatchLoopShutdown(Enlight_Controller_EventArgs $args)
     {
         if (PHP_SAPI === 'cli') {
             return;
@@ -70,7 +68,7 @@ class Shopware_Plugins_Core_System_Bootstrap extends Shopware_Components_Plugin_
         /** @var Shopware_Plugins_Frontend_Statistics_Bootstrap $plugin */
         $plugin = Shopware()->Plugins()->Frontend()->Statistics();
         if ($plugin->checkIsBot($args->getRequest()->getHeader('USER_AGENT'))) {
-            Enlight_Components_Session::destroy(true, false);
+            $this->get('session')->invalidate();
         }
     }
 
@@ -111,6 +109,9 @@ class Shopware_Plugins_Core_System_Bootstrap extends Shopware_Components_Plugin_
             $system->sUSERGROUP = $shop->getCustomerGroup()->getKey();
             $system->sUSERGROUPDATA = $shop->getCustomerGroup()->toArray();
             $config->defaultCustomerGroup = $system->sUSERGROUP;
+
+            $config['sCURRENCY'] = $system->sCurrency['currency'];
+            $config['sCURRENCYHTML'] = $system->sCurrency['symbol'];
         }
 
         if (Shopware()->Container()->initialized('session')) {
@@ -139,9 +140,6 @@ class Shopware_Plugins_Core_System_Bootstrap extends Shopware_Components_Plugin_
         $system->sPathBanner = $sPathBase . $config->banner . '/';
         $system->sPathStart = $sPathBase . $config->baseFile;
 
-        $config['sCURRENCY'] = $system->sCurrency['currency'];
-        $config['sCURRENCYHTML'] = $system->sCurrency['symbol'];
-
         return $system;
     }
 
@@ -153,7 +151,7 @@ class Shopware_Plugins_Core_System_Bootstrap extends Shopware_Components_Plugin_
     public static function onInitResourceModules(Enlight_Event_EventArgs $args)
     {
         $modules = new Shopware_Components_Modules();
-        Shopware()->Container()->set('Modules', $modules);
+        Shopware()->Container()->set('modules', $modules);
         $modules->setSystem(Shopware()->System());
 
         return $modules;

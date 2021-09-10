@@ -35,6 +35,14 @@ use ONGR\ElasticsearchDSL\SearchEndpoint\SuggestEndpoint;
 class Search
 {
     /**
+     * If you don’t need to track the total number of hits at all you can improve
+     * query times by setting this option to false. Defaults to true.
+     *
+     * @var bool
+     */
+    private $trackTotalHits;
+
+    /**
      * To retrieve hits from a certain offset. Defaults to 0.
      *
      * @var int
@@ -163,9 +171,25 @@ class Search
     private $endpoints = [];
 
     /**
-     * Initializes serializer.
+     * Constructor to initialize static properties
      */
     public function __construct()
+    {
+        $this->initializeSerializer();
+    }
+
+    /**
+     * Wakeup method to initialize static properties
+     */
+    public function __wakeup()
+    {
+        $this->initializeSerializer();
+    }
+
+    /**
+     * Initializes the serializer
+     */
+    private function initializeSerializer()
     {
         if (static::$serializer === null) {
             static::$serializer = new OrderedSerializer(
@@ -223,7 +247,7 @@ class Search
     /**
      * Returns queries inside BoolQuery instance.
      *
-     * @return BuilderInterface
+     * @return BoolQuery
      */
     public function getQueries()
     {
@@ -251,12 +275,16 @@ class Search
      *
      * @param string $endpointName
      * @param array  $parameters
+     *
+     * @return $this
      */
     public function setEndpointParameters($endpointName, array $parameters)
     {
         /** @var AbstractSearchEndpoint $endpoint */
         $endpoint = $this->getEndpoint($endpointName);
         $endpoint->setParameters($parameters);
+
+        return $this;
     }
 
     /**
@@ -283,7 +311,7 @@ class Search
     /**
      * Returns queries inside BoolFilter instance.
      *
-     * @return BuilderInterface
+     * @return BoolQuery
      */
     public function getPostFilters()
     {
@@ -412,7 +440,7 @@ class Search
     *
     * @return $this
     */
-    public function addSuggest(BuilderInterface $suggest)
+    public function addSuggest(NamedBuilderInterface $suggest)
     {
         $this->getEndpoint(SuggestEndpoint::NAME)->add($suggest, $suggest->getName());
 
@@ -430,7 +458,7 @@ class Search
     }
 
     /**
-     * @return int
+     * @return null|int
      */
     public function getFrom()
     {
@@ -438,17 +466,39 @@ class Search
     }
 
     /**
-     * @param int $from
+     * @param null|int $from
+     *
      * @return $this
      */
     public function setFrom($from)
     {
         $this->from = $from;
+
         return $this;
     }
 
     /**
-     * @return int
+     * @return bool
+     */
+    public function isTrackTotalHits()
+    {
+        return $this->trackTotalHits;
+    }
+
+    /**
+     * @param bool $trackTotalHits
+     *
+     * @return $this
+     */
+    public function setTrackTotalHits(bool $trackTotalHits)
+    {
+        $this->trackTotalHits = $trackTotalHits;
+
+        return $this;
+    }
+
+    /**
+     * @return null|int
      */
     public function getSize()
     {
@@ -456,12 +506,14 @@ class Search
     }
 
     /**
-     * @param int $size
+     * @param null|int $size
+     *
      * @return $this
      */
     public function setSize($size)
     {
         $this->size = $size;
+
         return $this;
     }
 
@@ -475,11 +527,13 @@ class Search
 
     /**
      * @param bool $source
+     *
      * @return $this
      */
     public function setSource($source)
     {
         $this->source = $source;
+
         return $this;
     }
 
@@ -493,11 +547,13 @@ class Search
 
     /**
      * @param array $storedFields
+     *
      * @return $this
      */
     public function setStoredFields($storedFields)
     {
         $this->storedFields = $storedFields;
+
         return $this;
     }
 
@@ -511,11 +567,13 @@ class Search
 
     /**
      * @param array $scriptFields
+     *
      * @return $this
      */
     public function setScriptFields($scriptFields)
     {
         $this->scriptFields = $scriptFields;
+
         return $this;
     }
 
@@ -529,11 +587,13 @@ class Search
 
     /**
      * @param array $docValueFields
+     *
      * @return $this
      */
     public function setDocValueFields($docValueFields)
     {
         $this->docValueFields = $docValueFields;
+
         return $this;
     }
 
@@ -547,11 +607,13 @@ class Search
 
     /**
      * @param bool $explain
+     *
      * @return $this
      */
     public function setExplain($explain)
     {
         $this->explain = $explain;
+
         return $this;
     }
 
@@ -565,11 +627,13 @@ class Search
 
     /**
      * @param bool $version
+     *
      * @return $this
      */
     public function setVersion($version)
     {
         $this->version = $version;
+
         return $this;
     }
 
@@ -583,11 +647,13 @@ class Search
 
     /**
      * @param array $indicesBoost
+     *
      * @return $this
      */
     public function setIndicesBoost($indicesBoost)
     {
         $this->indicesBoost = $indicesBoost;
+
         return $this;
     }
 
@@ -601,11 +667,13 @@ class Search
 
     /**
      * @param int $minScore
+     *
      * @return $this
      */
     public function setMinScore($minScore)
     {
         $this->minScore = $minScore;
+
         return $this;
     }
 
@@ -619,11 +687,13 @@ class Search
 
     /**
      * @param array $searchAfter
+     *
      * @return $this
      */
     public function setSearchAfter($searchAfter)
     {
         $this->searchAfter = $searchAfter;
+
         return $this;
     }
 
@@ -637,6 +707,7 @@ class Search
 
     /**
      * @param string $scroll
+     *
      * @return $this
      */
     public function setScroll($scroll = '5m')
@@ -719,6 +790,7 @@ class Search
             'indicesBoost' => 'indices_boost',
             'minScore' => 'min_score',
             'searchAfter' => 'search_after',
+            'trackTotalHits' => 'track_total_hits',
         ];
 
         foreach ($params as $field => $param) {

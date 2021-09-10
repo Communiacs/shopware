@@ -293,7 +293,9 @@ class Shopware_Components_Config implements ArrayAccess
                 'fallbackShop',
                 'fallbackShop.element_id = e.id AND fallbackShop.shop_id = :fallbackShopId'
             )
-            ->leftJoin('e', 's_core_config_forms', 'forms', 'forms.id = e.form_id');
+            ->leftJoin('e', 's_core_config_forms', 'forms', 'forms.id = e.form_id')
+            // Prefer core configs over plugin, plugin config without namespace is deprecated and will be removed with 5.9
+            ->orderBy('forms.plugin_id', 'DESC');
 
         $builder->setParameters([
             'fallbackShopId' => 1, // Shop parent id

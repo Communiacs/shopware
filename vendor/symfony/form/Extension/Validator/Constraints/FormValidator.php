@@ -84,14 +84,15 @@ class FormValidator extends ConstraintValidator
 
                     foreach ($form->all() as $field) {
                         if ($field->isSubmitted()) {
-                            // remember to validate this field is one group only
+                            // remember to validate this field in one group only
                             // otherwise resolving the groups would reuse the same
                             // sequence recursively, thus some fields could fail
                             // in different steps without breaking early enough
                             $this->resolvedGroups[$field] = (array) $group;
                             $fieldFormConstraint = new Form();
+                            $fieldFormConstraint->groups = $group;
                             $this->context->setNode($this->context->getValue(), $field, $this->context->getMetadata(), $this->context->getPropertyPath());
-                            $validator->atPath(sprintf('children[%s]', $field->getName()))->validate($field, $fieldFormConstraint);
+                            $validator->atPath(sprintf('children[%s]', $field->getName()))->validate($field, $fieldFormConstraint, $group);
                         }
                     }
 
@@ -104,10 +105,14 @@ class FormValidator extends ConstraintValidator
                     $validator->atPath('data')->validate($data, null, $groups);
                 }
 
+                $groupedConstraints = [];
+
                 foreach ($constraints as $constraint) {
                     // For the "Valid" constraint, validate the data in all groups
                     if ($constraint instanceof Valid) {
-                        $validator->atPath('data')->validate($data, $constraint, $groups);
+                        if (\is_object($data)) {
+                            $validator->atPath('data')->validate($data, $constraint, $groups);
+                        }
 
                         continue;
                     }
@@ -116,7 +121,7 @@ class FormValidator extends ConstraintValidator
                     // matching group
                     foreach ($groups as $group) {
                         if (\in_array($group, $constraint->groups)) {
-                            $validator->atPath('data')->validate($data, $constraint, $group);
+                            $groupedConstraints[$group][] = $constraint;
 
                             // Prevent duplicate validation
                             if (!$constraint instanceof Composite) {
@@ -126,12 +131,15 @@ class FormValidator extends ConstraintValidator
                     }
                 }
 
+                foreach ($groupedConstraints as $group => $constraint) {
+                    $validator->atPath('data')->validate($data, $constraint, $group);
+                }
+
                 foreach ($form->all() as $field) {
                     if ($field->isSubmitted()) {
                         $this->resolvedGroups[$field] = $groups;
-                        $fieldFormConstraint = new Form();
                         $this->context->setNode($this->context->getValue(), $field, $this->context->getMetadata(), $this->context->getPropertyPath());
-                        $validator->atPath(sprintf('children[%s]', $field->getName()))->validate($field, $fieldFormConstraint);
+                        $validator->atPath(sprintf('children[%s]', $field->getName()))->validate($field, $formConstraint);
                     }
                 }
             }
@@ -147,10 +155,8 @@ class FormValidator extends ConstraintValidator
             foreach ($form as $child) {
                 if (!$child->isSynchronized()) {
                     $childrenSynchronized = false;
-
-                    $fieldFormConstraint = new Form();
                     $this->context->setNode($this->context->getValue(), $child, $this->context->getMetadata(), $this->context->getPropertyPath());
-                    $validator->atPath(sprintf('children[%s]', $child->getName()))->validate($child, $fieldFormConstraint);
+                    $validator->atPath(sprintf('children[%s]', $child->getName()))->validate($child, $formConstraint);
                 }
             }
 
@@ -166,12 +172,18 @@ class FormValidator extends ConstraintValidator
                     ? (string) $form->getViewData()
                     : \gettype($form->getViewData());
 
+                $failure = $form->getTransformationFailure();
+
                 $this->context->setConstraint($formConstraint);
-                $this->context->buildViolation($config->getOption('invalid_message'))
-                    ->setParameters(array_replace(['{{ value }}' => $clientDataAsString], $config->getOption('invalid_message_parameters')))
+                $this->context->buildViolation($failure->getInvalidMessage() ?? $config->getOption('invalid_message'))
+                    ->setParameters(array_replace(
+                        ['{{ value }}' => $clientDataAsString],
+                        $config->getOption('invalid_message_parameters'),
+                        $failure->getInvalidMessageParameters()
+                    ))
                     ->setInvalidValue($form->getViewData())
                     ->setCode(Form::NOT_SYNCHRONIZED_ERROR)
-                    ->setCause($form->getTransformationFailure())
+                    ->setCause($failure)
                     ->addViolation();
             }
         }
@@ -179,7 +191,7 @@ class FormValidator extends ConstraintValidator
         // Mark the form with an error if it contains extra fields
         if (!$config->getOption('allow_extra_fields') && \count($form->getExtraData()) > 0) {
             $this->context->setConstraint($formConstraint);
-            $this->context->buildViolation($config->getOption('extra_fields_message'))
+            $this->context->buildViolation($config->getOption('extra_fields_message', ''))
                 ->setParameter('{{ extra_fields }}', '"'.implode('", "', array_keys($form->getExtraData())).'"')
                 ->setInvalidValue($form->getExtraData())
                 ->setCode(Form::NO_SUCH_FIELD_ERROR)
@@ -190,7 +202,7 @@ class FormValidator extends ConstraintValidator
     /**
      * Returns the validation groups of the given form.
      *
-     * @return string|GroupSequence|(string|GroupSequence)[] The validation groups
+     * @return string|GroupSequence|array<string|GroupSequence> The validation groups
      */
     private function getValidationGroups(FormInterface $form)
     {
@@ -229,15 +241,14 @@ class FormValidator extends ConstraintValidator
     /**
      * Post-processes the validation groups option for a given form.
      *
-     * @param string|GroupSequence|(string|GroupSequence)[]|callable $groups The validation groups
-     * @param FormInterface                                          $form   The validated form
+     * @param string|GroupSequence|array<string|GroupSequence>|callable $groups The validation groups
      *
-     * @return (string|GroupSequence)[] The validation groups
+     * @return GroupSequence|array<string|GroupSequence> The validation groups
      */
     private static function resolveValidationGroups($groups, FormInterface $form)
     {
         if (!\is_string($groups) && \is_callable($groups)) {
-            $groups = \call_user_func($groups, $form);
+            $groups = $groups($form);
         }
 
         if ($groups instanceof GroupSequence) {

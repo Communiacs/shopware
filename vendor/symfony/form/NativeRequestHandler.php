@@ -26,7 +26,7 @@ class NativeRequestHandler implements RequestHandlerInterface
     /**
      * The allowed keys of the $_FILES array.
      */
-    private static $fileKeys = [
+    private const FILE_KEYS = [
         'error',
         'name',
         'size',
@@ -36,7 +36,7 @@ class NativeRequestHandler implements RequestHandlerInterface
 
     public function __construct(ServerParams $params = null)
     {
-        $this->serverParams = $params ?: new ServerParams();
+        $this->serverParams = $params ?? new ServerParams();
     }
 
     /**
@@ -80,7 +80,7 @@ class NativeRequestHandler implements RequestHandlerInterface
                 $form->submit(null, false);
 
                 $form->addError(new FormError(
-                    \call_user_func($form->getConfig()->getOption('upload_max_size_message')),
+                    $form->getConfig()->getOption('upload_max_size_message')(),
                     null,
                     ['{{ max }}' => $this->serverParams->getNormalizedIniPostMaxSize()]
                 ));
@@ -152,7 +152,7 @@ class NativeRequestHandler implements RequestHandlerInterface
             return null;
         }
 
-        if (UPLOAD_ERR_OK === $data['error']) {
+        if (\UPLOAD_ERR_OK === $data['error']) {
             return null;
         }
 
@@ -161,10 +161,8 @@ class NativeRequestHandler implements RequestHandlerInterface
 
     /**
      * Returns the method used to submit the request to the server.
-     *
-     * @return string The request method
      */
-    private static function getRequestMethod()
+    private static function getRequestMethod(): string
     {
         $method = isset($_SERVER['REQUEST_METHOD'])
             ? strtoupper($_SERVER['REQUEST_METHOD'])
@@ -203,12 +201,12 @@ class NativeRequestHandler implements RequestHandlerInterface
         $keys = array_keys($data);
         sort($keys);
 
-        if (self::$fileKeys !== $keys || !isset($data['name']) || !\is_array($data['name'])) {
+        if (self::FILE_KEYS !== $keys || !isset($data['name']) || !\is_array($data['name'])) {
             return $data;
         }
 
         $files = $data;
-        foreach (self::$fileKeys as $k) {
+        foreach (self::FILE_KEYS as $k) {
             unset($files[$k]);
         }
 
@@ -239,8 +237,8 @@ class NativeRequestHandler implements RequestHandlerInterface
         $keys = array_keys($data);
         sort($keys);
 
-        if (self::$fileKeys === $keys) {
-            if (UPLOAD_ERR_NO_FILE === $data['error']) {
+        if (self::FILE_KEYS === $keys) {
+            if (\UPLOAD_ERR_NO_FILE === $data['error']) {
                 return null;
             }
 

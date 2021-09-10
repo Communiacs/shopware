@@ -123,7 +123,7 @@ class Shopware_Components_TemplateMail
     public function getTranslationReader()
     {
         if ($this->translationReader === null) {
-            $this->translationReader = Shopware()->Container()->get('translation');
+            $this->translationReader = Shopware()->Container()->get(\Shopware_Components_Translation::class);
         }
 
         return $this->translationReader;
@@ -144,7 +144,7 @@ class Shopware_Components_TemplateMail
     /**
      * @return \Shopware_Components_TemplateMail
      */
-    public function setStringCompiler(\Shopware_Components_StringCompiler $stringCompiler)
+    public function setStringCompiler(Shopware_Components_StringCompiler $stringCompiler)
     {
         $this->stringCompiler = $stringCompiler;
 
@@ -262,7 +262,7 @@ class Shopware_Components_TemplateMail
      *
      * @return \Enlight_Components_Mail
      */
-    public function loadValues(\Enlight_Components_Mail $mail, Mail $mailModel, $overrideConfig = [])
+    public function loadValues(Enlight_Components_Mail $mail, Mail $mailModel, $overrideConfig = [])
     {
         $stringCompiler = $this->getStringCompiler();
 
@@ -303,7 +303,7 @@ class Shopware_Components_TemplateMail
                 continue;
             }
 
-            $mediaService = Shopware()->Container()->get('shopware_media.media_service');
+            $mediaService = Shopware()->Container()->get(\Shopware\Bundle\MediaBundle\MediaServiceInterface::class);
             if (!$mediaService->has($attachment->getPath())) {
                 Shopware()->Container()->get('corelogger')->error('Could not load file: ' . $attachment->getPath());
             } else {

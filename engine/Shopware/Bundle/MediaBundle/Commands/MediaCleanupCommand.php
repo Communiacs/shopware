@@ -59,18 +59,18 @@ class MediaCleanupCommand extends ShopwareCommand
         $io->text(sprintf('%s unused item(s) found.', $total));
 
         if ($total === 0) {
-            return null;
+            return 0;
         }
 
         if ($input->getOption('delete')) {
             if ($input->isInteractive() && !$io->confirm('Are you sure you want to delete every item in the recycle bin?')) {
-                return null;
+                return 0;
             }
 
             $deleted = $this->handleCleanup($io);
             $io->success(sprintf('%d item(s) deleted.', $deleted));
 
-            return null;
+            return 0;
         }
 
         $io->success(sprintf('%d item(s) in recycle bin.', $total));
@@ -88,7 +88,7 @@ class MediaCleanupCommand extends ShopwareCommand
     private function handleCleanup(SymfonyStyle $io)
     {
         /** @var \Shopware\Components\Model\ModelManager $em */
-        $em = $this->getContainer()->get('models');
+        $em = $this->getContainer()->get(\Shopware\Components\Model\ModelManager::class);
 
         /** @var \Shopware\Models\Media\Repository $repository */
         $repository = $em->getRepository(Media::class);

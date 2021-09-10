@@ -22,6 +22,7 @@ namespace Enlight\Event;
 /**
  * @category  Enlight
  * @package   Enlight\Event
+ *
  * @copyright Copyright (c) shopware AG (http://www.shopware.de)
  */
 interface SubscriberInterface
@@ -52,7 +53,7 @@ interface SubscriberInterface
      *
      * </code>
      *
-     * @return array The event names to listen to
+     * @return array<string, string|array> The event names to listen to
      */
     public static function getSubscribedEvents();
 }

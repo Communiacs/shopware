@@ -30,6 +30,7 @@ use Shopware\Components\Model\ModelManager;
 use Shopware\Components\Random;
 use Shopware\Models\Emotion\Element;
 use Shopware\Models\Emotion\Emotion;
+use Shopware\Models\Emotion\Library\Component;
 use Shopware\Models\Emotion\Library\Field;
 use Shopware\Models\Shop\Shop;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -43,7 +44,7 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
      *
      * @var \Shopware\Models\Emotion\Repository
      */
-    public static $repository = null;
+    public static $repository;
 
     /**
      * Entity Manager
@@ -88,7 +89,7 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
         $statement = $query->execute();
         $emotions = $statement->fetchAll(PDO::FETCH_ASSOC);
 
-        $query->select('COUNT(emotions.id) as count')
+        $query->select('COUNT(DISTINCT emotions.id) as count')
             ->resetQueryPart('groupBy')
             ->resetQueryPart('orderBy')
             ->setFirstResult(0)
@@ -146,7 +147,7 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
         $repository = $this->getRepository();
 
         $query = $repository->getEmotionDetailQuery($id);
-        $mediaService = Shopware()->Container()->get('shopware_media.media_service');
+        $mediaService = Shopware()->Container()->get(\Shopware\Bundle\MediaBundle\MediaServiceInterface::class);
 
         $emotion = $query->getArrayResult();
         $emotion = $emotion[0];
@@ -173,10 +174,16 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
         $elementIds = array_column($emotion['elements'], 'id');
         $viewports = $repository->getElementsViewports($elementIds);
 
+        $snippets = $this->get('snippets')->getNamespace('backend/emotion/view/detail');
+
         foreach ($emotion['elements'] as &$element) {
             $elementQuery = $repository->getElementDataQuery($element['id'], $element['componentId']);
             $componentData = $elementQuery->getArrayResult();
             $data = [];
+
+            // translation
+            $name = str_replace(' ', '_', strtolower($element['component']['name']));
+            $element['component']['fieldLabel'] = $snippets->get($name, $element['component']['name']);
 
             foreach ($componentData as $entry) {
                 $filterResult = $this->container->get('events')->filter(
@@ -189,7 +196,7 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
 
                 switch (strtolower($entry['valueType'])) {
                     case 'json':
-                        if ($entry['value'] != '') {
+                        if ($entry['value'] !== '') {
                             $value = Zend_Json::decode($entry['value']);
                         } else {
                             $value = null;
@@ -207,12 +214,12 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
                 ) {
                     $scheme = parse_url($value, PHP_URL_SCHEME);
 
-                    if (!in_array($scheme, ['http', 'https'], true) && !is_int($value)) {
+                    if (!\in_array($scheme, ['http', 'https'], true) && !\is_int($value)) {
                         $value = $mediaService->getUrl($value);
                     }
                 }
 
-                if (in_array($entry['name'], ['selected_manufacturers', 'banner_slider'])) {
+                if (\in_array($entry['name'], ['selected_manufacturers', 'banner_slider'])) {
                     foreach ($value as $k => $v) {
                         if (isset($v['path'])) {
                             $value[$k]['path'] = $mediaService->getUrl($v['path']);
@@ -236,6 +243,7 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
                 $element['viewports'] = $viewports[$element['id']];
             }
         }
+        unset($element);
 
         if (!empty($emotion['shops'])) {
             foreach ($emotion['shops'] as &$shop) {
@@ -245,6 +253,7 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
                 }
                 $shop['seoUrl'] = $seoUrl;
             }
+            unset($shop);
         }
 
         $this->View()->assign([
@@ -446,12 +455,21 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
     {
         $builder = Shopware()->Models()->createQueryBuilder();
         $builder->select(['components', 'fields'])
-            ->from(\Shopware\Models\Emotion\Library\Component::class, 'components')
+            ->from(Component::class, 'components')
             ->leftJoin('components.fields', 'fields')
             ->orderBy('components.id', 'ASC')
             ->addOrderBy('fields.position', 'ASC');
 
         $components = $builder->getQuery()->getArrayResult();
+
+        $snippets = $this->get('snippets')->getNamespace('backend/emotion/view/detail');
+        foreach ($components as &$component) {
+            $name = str_replace(' ', '_', strtolower($component['name']));
+
+            $component['fieldLabel'] = $snippets->get($name, $component['name']);
+        }
+        unset($component); // to make shyim happy and prevent potential issues (scoped anyway)
+
         $this->View()->assign([
             'success' => true,
             'data' => $components,
@@ -703,7 +721,7 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
         if (!empty($new->getId())) {
             $this->copyEmotionTranslations($emotion->getId(), $new->getId());
             $this->copyElementTranslations($emotion, $new);
-            $persister = Shopware()->Container()->get('shopware_attribute.data_persister');
+            $persister = Shopware()->Container()->get(\Shopware\Bundle\AttributeBundle\Service\DataPersister::class);
             $persister->cloneAttribute('s_emotion_attributes', $emotion->getId(), $new->getId());
         }
 
@@ -1101,7 +1119,7 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
     private function getTranslation()
     {
         if ($this->translation === null) {
-            $this->translation = $this->container->get('translation');
+            $this->translation = $this->container->get(\Shopware_Components_Translation::class);
         }
 
         return $this->translation;
@@ -1114,7 +1132,7 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
      */
     private function findPreviewEmotion($emotionId)
     {
-        $builder = $this->container->get('models')->createQueryBuilder();
+        $builder = $this->container->get(\Shopware\Components\Model\ModelManager::class)->createQueryBuilder();
         $emotion = $builder->select('emotion')
                 ->from(Emotion::class, 'emotion')
                 ->where('emotion.previewId = :previewId')
@@ -1236,8 +1254,8 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
         $emotion->setSeoTitle($data['seoTitle']);
         $emotion->setSeoKeywords($data['seoKeywords']);
         $emotion->setSeoDescription($data['seoDescription']);
-        $emotion->setPreviewId(array_key_exists('previewId', $data) ? $data['previewId'] : null);
-        $emotion->setPreviewSecret(array_key_exists('previewSecret', $data) ? $data['previewSecret'] : null);
+        $emotion->setPreviewId(\array_key_exists('previewId', $data) ? $data['previewId'] : null);
+        $emotion->setPreviewSecret(\array_key_exists('previewSecret', $data) ? $data['previewSecret'] : null);
         $emotion->setCustomerStreamIds($data['customerStreamIds'] ?: null);
         $emotion->setReplacement($data['replacement'] ?: null);
         $emotion->setListingVisibility($data['listingVisibility']);
@@ -1257,8 +1275,8 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
     {
         foreach ($emotionElements as &$item) {
             if (!empty($item['componentId'])) {
-                /** @var \Shopware\Models\Emotion\Library\Component|null $component */
-                $component = Shopware()->Models()->find(\Shopware\Models\Emotion\Library\Component::class, $item['componentId']);
+                /** @var Component|null $component */
+                $component = Shopware()->Models()->find(Component::class, $item['componentId']);
 
                 if ($component !== null) {
                     $item['component'] = $component;
@@ -1329,11 +1347,11 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
         $valueType = strtolower($field->getValueType());
         $xType = $field->getXType();
 
-        $mediaService = Shopware()->Container()->get('shopware_media.media_service');
+        $mediaService = Shopware()->Container()->get(\Shopware\Bundle\MediaBundle\MediaServiceInterface::class);
         $mediaFields = $this->getMediaXTypes();
 
         if ($valueType === 'json') {
-            if (is_array($value)) {
+            if (\is_array($value)) {
                 foreach ($value as &$val) {
                     $val['path'] = $mediaService->normalize($val['path']);
                 }
@@ -1342,7 +1360,7 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
             $value = Zend_Json::encode($value);
         }
 
-        if (in_array($xType, $mediaFields)) {
+        if (\in_array($xType, $mediaFields)) {
             if ($mediaService->isEncoded($value)) {
                 $value = $mediaService->normalize($value);
             }
@@ -1375,7 +1393,7 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
         foreach ($result as $emotion) {
             $devices = explode(',', $emotion['device']);
             foreach ($devices as $device) {
-                if (!in_array($device, $usedDevices)) {
+                if (!\in_array($device, $usedDevices)) {
                     $usedDevices[] = $device;
                 } else {
                     return true;
@@ -1399,7 +1417,7 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
         }
 
         /** @var \Doctrine\DBAL\Query\QueryBuilder $query */
-        $query = Shopware()->Container()->get('dbal_connection')->createQueryBuilder();
+        $query = Shopware()->Container()->get(\Doctrine\DBAL\Connection::class)->createQueryBuilder();
 
         $languageIds = $query->select('id')
             ->from('s_core_shops', 'shops')
@@ -1428,7 +1446,7 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
         }
 
         /** @var \Doctrine\DBAL\Query\QueryBuilder $query */
-        $query = Shopware()->Container()->get('dbal_connection')->createQueryBuilder();
+        $query = Shopware()->Container()->get(\Doctrine\DBAL\Connection::class)->createQueryBuilder();
 
         $languageIds = $query->select('id')
             ->from('s_core_shops', 'shops')
@@ -1566,7 +1584,7 @@ EOD;
      */
     private function getSeoUrlFromRouter($emotionId, $shopId)
     {
-        $repository = Shopware()->Container()->get('models')->getRepository(Shop::class);
+        $repository = Shopware()->Container()->get(\Shopware\Components\Model\ModelManager::class)->getRepository(Shop::class);
         /** @var Shop|null $shop */
         $shop = $repository->getActiveById($shopId);
         if (empty($shop)) {
@@ -1577,7 +1595,7 @@ EOD;
             $parent = $shop->getFallback();
         }
 
-        $this->get('shopware.components.shop_registration_service')->registerShop($parent);
+        $this->get(\Shopware\Components\ShopRegistrationServiceInterface::class)->registerShop($parent);
 
         return $this->Front()->Router()->assemble([
             'controller' => 'campaign',

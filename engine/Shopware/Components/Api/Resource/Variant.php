@@ -464,7 +464,7 @@ class Variant extends Resource implements BatchInterface
      */
     protected function getArticleResource()
     {
-        return $this->getContainer()->get('shopware.api.article');
+        return $this->getContainer()->get(\Shopware\Components\Api\Resource\Article::class);
     }
 
     /**
@@ -472,7 +472,7 @@ class Variant extends Resource implements BatchInterface
      */
     protected function getMediaResource()
     {
-        return $this->getContainer()->get('shopware.api.media');
+        return $this->getContainer()->get(\Shopware\Components\Api\Resource\Media::class);
     }
 
     /**
@@ -495,7 +495,7 @@ class Variant extends Resource implements BatchInterface
             );
         }
 
-        if (isset($data['purchasePrice']) && is_string($data['purchasePrice'])) {
+        if (isset($data['purchasePrice']) && \is_string($data['purchasePrice'])) {
             $data['purchasePrice'] = (float) str_replace(',', '.', $data['purchasePrice']);
         }
 
@@ -514,7 +514,7 @@ class Variant extends Resource implements BatchInterface
         if (!empty($data['number']) && $data['number'] !== $variant->getNumber()) {
             // Number changed, hence make sure it does not already exist in another variant
             $exists = $this->getContainer()
-                ->get('dbal_connection')
+                ->get(\Doctrine\DBAL\Connection::class)
                 ->fetchColumn('SELECT id FROM s_articles_details WHERE ordernumber = ?', [$data['number']]);
             if ($exists) {
                 throw new ApiException\CustomValidationException(sprintf('A variant with the given order number "%s" already exists.', $data['number']));
@@ -575,9 +575,7 @@ class Variant extends Resource implements BatchInterface
                     $media = $this->getManager()->find(MediaModel::class, (int) $imageData['mediaId']);
 
                     if (!$media) {
-                        throw new ApiException\CustomValidationException(
-                            sprintf('Media by id %s not found', (int) $imageData['mediaId'])
-                        );
+                        throw new ApiException\CustomValidationException(sprintf('Media by id %s not found', (int) $imageData['mediaId']));
                     }
 
                     $image = $this->getArticleResource()->createNewArticleImage($article, $media);
@@ -736,7 +734,7 @@ class Variant extends Resource implements BatchInterface
 
                 $option = new Option();
                 $option->setPosition(0);
-                if (array_key_exists('position', $optionData)) {
+                if (\array_key_exists('position', $optionData)) {
                     $option->setPosition((int) $optionData['position']);
                 }
                 $option->setName($optionData['option']);
@@ -851,9 +849,7 @@ class Variant extends Resource implements BatchInterface
         );
 
         if (empty($tax)) {
-            throw new ApiException\CustomValidationException(
-                sprintf('No product tax configured for variant: %s', $variant['id'])
-            );
+            throw new ApiException\CustomValidationException(sprintf('No product tax configured for variant: %s', $variant['id']));
         }
 
         $variant['prices'] = $this->getArticleResource()->getTaxPrices(
@@ -889,13 +885,13 @@ class Variant extends Resource implements BatchInterface
      */
     private function mergePriceData(array $priceData, Tax $tax)
     {
-        if (array_key_exists('from', $priceData)) {
+        if (\array_key_exists('from', $priceData)) {
             $priceData['from'] = (int) $priceData['from'];
             if ($priceData['from'] <= 0) {
                 throw new ApiException\CustomValidationException(sprintf('Invalid Price "from" value'));
             }
         }
-        if (array_key_exists('to', $priceData)) {
+        if (\array_key_exists('to', $priceData)) {
             $priceData['to'] = (int) $priceData['to'];
             // if the "to" value isn't numeric, set the place holder "beliebig"
             if ($priceData['to'] <= 0) {
@@ -904,16 +900,16 @@ class Variant extends Resource implements BatchInterface
         }
 
         foreach (['price', 'pseudoPrice', 'percent'] as $key) {
-            if (array_key_exists($key, $priceData)) {
+            if (\array_key_exists($key, $priceData)) {
                 $priceData[$key] = (float) str_replace(',', '.', $priceData[$key]);
             }
         }
 
         if ($priceData['customerGroup']->getTaxInput()) {
-            if (array_key_exists('price', $priceData)) {
+            if (\array_key_exists('price', $priceData)) {
                 $priceData['price'] = $priceData['price'] / (100 + $tax->getTax()) * 100;
             }
-            if (array_key_exists('pseudoPrice', $priceData)) {
+            if (\array_key_exists('pseudoPrice', $priceData)) {
                 $priceData['pseudoPrice'] = $priceData['pseudoPrice'] / (100 + $tax->getTax()) * 100;
             }
         }
@@ -1003,7 +999,7 @@ class Variant extends Resource implements BatchInterface
      */
     private function prepareEsdAssociation($data, Detail $variant)
     {
-        if (is_array($data['esd'])) {
+        if (\is_array($data['esd'])) {
             $esd = $variant->getEsd();
 
             // Use already uploaded download file

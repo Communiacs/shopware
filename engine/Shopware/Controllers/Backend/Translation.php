@@ -52,7 +52,7 @@ class Shopware_Controllers_Backend_Translation extends Shopware_Controllers_Back
 
         $data = $query->getArrayResult();
         $this->View()->assign([
-            'success' => true, 'data' => $data, 'total' => count($data),
+            'success' => true, 'data' => $data, 'total' => \count($data),
         ]);
     }
 
@@ -101,7 +101,7 @@ class Shopware_Controllers_Backend_Translation extends Shopware_Controllers_Back
     protected function getTranslation()
     {
         if (!isset($this->translation)) {
-            $this->translation = $this->container->get('translation');
+            $this->translation = $this->container->get(\Shopware_Components_Translation::class);
         }
 
         return $this->translation;

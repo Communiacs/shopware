@@ -70,17 +70,17 @@ class JavascriptCollector
 
         $discardJs = [];
 
-        for ($i = count($definitions) - 1; $i >= 0; --$i) {
+        for ($i = \count($definitions) - 1; $i >= 0; --$i) {
             $definition = $definitions[$i];
 
             $theme = $definition->getTheme();
 
             // Not all definitions are associated with a specific theme (e.g. plugins)
             if ($theme) {
-                $themeClassName = get_class($theme);
+                $themeClassName = \get_class($theme);
                 $discardJs = array_merge($discardJs, $theme->getDiscardedJavascriptThemes());
 
-                if (in_array($themeClassName, $discardJs)) {
+                if (\in_array($themeClassName, $discardJs)) {
                     $definition->setFiles([]);
                 }
             }
@@ -139,9 +139,7 @@ class JavascriptCollector
 
         foreach ($collection as $file) {
             if (!file_exists($file)) {
-                throw new \Exception(
-                    sprintf('Some plugin tries to compress a javascript file, but the file %s doesn\'t exist', $file)
-                );
+                throw new \Exception(sprintf('Some plugin tries to compress a javascript file, but the file %s doesn\'t exist', $file));
             }
         }
 

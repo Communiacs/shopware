@@ -34,7 +34,7 @@ class EsBackendIndexer
     /**
      * @deprecated Use IndexNameBuilderInterface instead
      */
-    const INDEX_NAME = 'backend_index';
+    public const INDEX_NAME = 'backend_index';
 
     /**
      * @var Client
@@ -52,11 +52,6 @@ class EsBackendIndexer
     private $evaluation;
 
     /**
-     * @var string
-     */
-    private $esVersion;
-
-    /**
      * @var IndexFactoryInterface
      */
     private $indexFactory;
@@ -65,13 +60,11 @@ class EsBackendIndexer
         Client $client,
         \IteratorAggregate $repositories,
         EvaluationHelperInterface $evaluation,
-        string $esVersion,
         IndexFactoryInterface $indexFactory
     ) {
         $this->client = $client;
         $this->repositories = $repositories;
         $this->evaluation = $evaluation;
-        $this->esVersion = $esVersion;
         $this->indexFactory = $indexFactory;
     }
 
@@ -85,20 +78,6 @@ class EsBackendIndexer
             $this->populateEntity($index->getName(), $repository, $helper);
             $this->createAlias($index->getName(), $index->getAlias());
         }
-    }
-
-    /**
-     * @deprecated since 5.6, will be removed with 5.7. Use IndexFactory service instead
-     *
-     * @param string $domainName
-     *
-     * @return string
-     */
-    public static function buildAlias($domainName)
-    {
-        trigger_error(sprintf('%s:%s is deprecated since 5.6 and will be removed with 5.7, use IndexNameBuilderInterface instead', __CLASS__, __FUNCTION__), E_USER_DEPRECATED);
-
-        return Shopware()->Container()->get(IndexFactoryInterface::class)->createIndexConfiguration($domainName)->getAlias();
     }
 
     /**
@@ -126,11 +105,11 @@ class EsBackendIndexer
                     $value = $value->format('Y-m-d');
                 }
 
-                if (in_array($key, $booleanFields, true)) {
+                if (\in_array($key, $booleanFields, true)) {
                     $value = (bool) $value;
                 }
 
-                if (is_string($value)) {
+                if (\is_string($value)) {
                     $value = mb_strtolower($value);
                 }
             }
@@ -197,7 +176,7 @@ class EsBackendIndexer
         while ($ids = $iterator->fetch()) {
             $this->indexEntities($index, $repository, $ids);
 
-            $progress->advance(count($ids));
+            $progress->advance(\count($ids));
         }
 
         $this->client->indices()->refresh(['index' => $index]);
@@ -248,7 +227,7 @@ class EsBackendIndexer
         $own = $entity->getMapping();
 
         $merged = $mapping;
-        if (is_array($own)) {
+        if (\is_array($own)) {
             $merged = array_replace_recursive($mapping, $own);
         }
 
@@ -256,16 +235,8 @@ class EsBackendIndexer
             'index' => $index,
             'type' => $entity->getDomainName(),
             'body' => $merged,
+            'include_type_name' => true,
         ];
-
-        if (version_compare($this->esVersion, '7', '>=')) {
-            $arguments = array_merge(
-                $arguments,
-                [
-                    'include_type_name' => true,
-                ]
-            );
-        }
 
         $this->client->indices()->putMapping(
             $arguments

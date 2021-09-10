@@ -45,7 +45,7 @@ class Shopware_Controllers_Backend_Systeminfo extends Shopware_Controllers_Backe
      */
     public function preDispatch()
     {
-        if (!in_array($this->Request()->getActionName(), ['index', 'load', 'info'])) {
+        if (!\in_array($this->Request()->getActionName(), ['index', 'load', 'info'])) {
             $this->Front()->Plugins()->Json()->setRenderer(true);
         }
     }
@@ -138,11 +138,11 @@ class Shopware_Controllers_Backend_Systeminfo extends Shopware_Controllers_Backe
                 LIMIT 1
 SQL;
 
-            $timezone = $this->container->get('dbal_connection')
+            $timezone = $this->container->get(\Doctrine\DBAL\Connection::class)
                 ->query($sql)
-                ->fetchColumn();
+                ->fetchColumn(0);
 
-            if (in_array($timezone[0], ['-', '+'], true)) {
+            if (\in_array($timezone[0], ['-', '+'], true)) {
                 $databaseZone = new DateTimeZone($timezone);
             } else {
                 $databaseZone = timezone_open(timezone_name_from_abbr($timezone));
@@ -158,7 +158,7 @@ SQL;
         }
         if (empty($offset)) {
             $sql = 'SELECT UNIX_TIMESTAMP()-' . time();
-            $offset = $this->container->get('dbal_connection')->query($sql)->fetchColumn();
+            $offset = $this->container->get(\Doctrine\DBAL\Connection::class)->query($sql)->fetchColumn(0);
         }
 
         $this->View()->assign(['success' => true, 'offset' => $offset < 60 ? 0 : round($offset / 60)]);
@@ -173,7 +173,7 @@ SQL;
         $_COOKIE = [];
         $_REQUEST = [];
         $_SERVER['HTTP_COOKIE'] = null;
-        if (function_exists('apache_setenv')) {
+        if (\function_exists('apache_setenv')) {
             apache_setenv('HTTP_COOKIE', '');
         }
         phpinfo();
@@ -181,7 +181,7 @@ SQL;
 
     public function getOptimizersAction()
     {
-        $optimizers = $this->get('shopware_media.optimizer_service')->getOptimizers();
+        $optimizers = $this->get(\Shopware\Bundle\MediaBundle\OptimizerService::class)->getOptimizers();
         $optimizerResult = [];
 
         foreach ($optimizers as $optimizer) {
@@ -194,7 +194,7 @@ SQL;
 
         $this->View()->assign('success', true);
         $this->View()->assign('data', $optimizerResult);
-        $this->View()->assign('total', count($optimizerResult));
+        $this->View()->assign('total', \count($optimizerResult));
     }
 
     /**

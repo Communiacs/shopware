@@ -26,7 +26,6 @@ use Symfony\Component\HttpFoundation\Response;
  * The Enlight_Components_Test_Controller_TestCase extends the basic Enlight_Components_Test_TestCase
  * with controller specified functions to grant an easily access to standard controller actions.
  *
- *
  * @license    http://enlight.de/license     New BSD License
  */
 abstract class Enlight_Components_Test_Controller_TestCase extends Enlight_Components_Test_TestCase
@@ -86,11 +85,15 @@ abstract class Enlight_Components_Test_Controller_TestCase extends Enlight_Compo
 
     /**
      * Tests set up method
-     * @before
      */
-    public function setUpEnlightControllerTestCase(): void
+    public function setUp(): void
     {
-        Shopware()->Container()->reset('session');
+        parent::setUp();
+
+        if (Shopware()->Container()->initialized('session')) {
+            Shopware()->Container()->get('session')->clear();
+        }
+        Shopware_Components_Auth::resetInstance();
         Shopware()->Container()->reset('auth');
 
         $this->reset();

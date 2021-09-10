@@ -21,7 +21,7 @@
  * our trademarks remain entirely with us.
  */
 
-//{namespace name=backend/index/view/widgets}
+//{namespace name="backend/index/view/widgets"}
 
 /**
  * Shopware UI - Sales Widget
@@ -32,7 +32,7 @@
 Ext.define('Shopware.apps.Index.view.widgets.Sales', {
     extend: 'Shopware.apps.Index.view.widgets.Base',
     alias: 'widget.swag-sales-widget',
-    title: '{s name=sales/title}Turnover today / yesterday (Sample Data){/s}',
+    title: '{s name="sales/title"}Turnover today / yesterday (Sample Data){/s}',
     layout: {
         type: 'vbox',
         align: 'stretch',
@@ -44,9 +44,9 @@ Ext.define('Shopware.apps.Index.view.widgets.Sales', {
      * @object
      */
     snippets: {
-        conversation_rate: '{s name=sales/conversation_rate}Conversation rate{/s}',
+        conversation_rate: '{s name="sales/conversation_rate"}Conversation rate{/s}',
         headers: {
-            turnover: '{s name=sales/headers/turnover}Turnover{/s}',
+            turnover: '{s name="sales/headers/turnover"}Turnover{/s}',
             orders: '{s name="sales/headers/orders"}Orders{/s}',
             new_customers: '{s name="sales/headers/new_customers"}New Customers{/s}',
             visitors: '{s name="sales/headers/visitors"}Visitors{/s}'
@@ -129,20 +129,17 @@ Ext.define('Shopware.apps.Index.view.widgets.Sales', {
      * @return void
      */
     refreshView: function () {
-        var me = this,
-            reader;
+        var me = this;
 
         if (!me.turnoverStore) {
             return;
         }
 
-        reader = me.turnoverStore.getProxy().getReader();
-
         me.turnoverStore.load({
             callback: function () {
                 me.dataView.update([
                     {
-                        conversationRate: reader.jsonData.conversion
+                        conversationRate: me.readConversionRate()
                     }
                 ]);
             }
@@ -157,8 +154,7 @@ Ext.define('Shopware.apps.Index.view.widgets.Sales', {
      * @return [object] Ext.container.Container
      */
     createUpperContainer: function () {
-        var me = this,
-            reader = me.turnoverStore.getProxy().getReader();
+        var me = this;
 
         me.chart = me.createBarChart();
 
@@ -166,7 +162,7 @@ Ext.define('Shopware.apps.Index.view.widgets.Sales', {
             tpl: me.createConversationRateTemplate(),
             data: [
                 {
-                    conversationRate: reader.jsonData.conversion
+                    conversationRate: me.readConversionRate()
                 }
             ],
             columnWidth: 0.5
@@ -184,6 +180,17 @@ Ext.define('Shopware.apps.Index.view.widgets.Sales', {
                 me.dataView
             ]
         });
+    },
+    
+    /**
+     * Helper method for load and format of the conversion rate
+     *
+     * @return String
+     */
+    readConversionRate: function () {
+        var me = this,
+            reader = me.turnoverStore.getProxy().getReader();
+        return Ext.util.Format.number(reader.jsonData.conversion);
     },
 
     /**
@@ -293,6 +300,9 @@ Ext.define('Shopware.apps.Index.view.widgets.Sales', {
                         display: 'insideEnd',
                         orientation: 'horizontal',
                         field: 'turnover',
+                        renderer: function (value) { 
+                            return Ext.util.Format.currency(value);
+                        },
                         fill: '#FFFFFF',
                         font: 'bold 12px/16px Arial, sans-serif',
                         'text-anchor': 'middle'
@@ -351,25 +361,37 @@ Ext.define('Shopware.apps.Index.view.widgets.Sales', {
                 header: me.snippets.headers.turnover,
                 dataIndex: 'turnover',
                 align: 'right',
-                flex: 1
+                flex: 1,
+                renderer: function (value) {
+                    return Ext.util.Format.currency(value);
+                }
             },
             {
                 header: me.snippets.headers.orders,
                 align: 'right',
                 dataIndex: 'orders',
-                flex: 1
+                flex: 1,
+                renderer: function (value) {
+                    return Ext.util.Format.number(value, '0,000');
+                }
             },
             {
                 header: me.snippets.headers.new_customers,
                 align: 'right',
                 dataIndex: 'newCustomers',
-                flex: 1
+                flex: 1,
+                renderer: function (value) {
+                    return Ext.util.Format.number(value, '0,000');
+                }
             },
             {
                 header: me.snippets.headers.visitors,
                 align: 'right',
                 dataIndex: 'visitors',
-                flex: 1
+                flex: 1,
+                renderer: function (value) {
+                    return Ext.util.Format.number(value, '0,000');
+                }
             }
         ];
     }

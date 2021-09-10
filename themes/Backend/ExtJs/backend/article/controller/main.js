@@ -30,7 +30,7 @@
 /**
  * Shopware Controller - Article backend module
  */
-//{namespace name=backend/article/view/main}
+//{namespace name="backend/article/view/main"}
 //{block name="backend/article/controller/main"}
 Ext.define('Shopware.apps.Article.controller.Main', {
 
@@ -50,11 +50,11 @@ Ext.define('Shopware.apps.Article.controller.Main', {
 
     snippets: {
         additional: {
-            title:'{s name=detail/additional_fields/title}Additional fields{/s}'
+            title:'{s name="detail/additional_fields/title"}Additional fields{/s}'
         },
         generateNeeded: {
-            title: '{s name=detail/needGenerate/title}Duplicate article{/s}',
-            message: '{s name=detail/needGenerate/message}You have just duplicated a configurator article. The corresponding configurator variants were not duplicated for performance and stability reasons. ' +
+            title: '{s name="detail/needGenerate/title"}Duplicate article{/s}',
+            message: '{s name="detail/needGenerate/message"}You have just duplicated a configurator article. The corresponding configurator variants were not duplicated for performance and stability reasons. ' +
                      'Please go to the tab \'Variants\' and then click \'Generate variants\' to duplicate the configurator variants, too.{/s}'
         }
     },
@@ -265,6 +265,11 @@ Ext.define('Shopware.apps.Article.controller.Main', {
                 // Set the global group to active, that means the article has already configurations for the group
                 globalGroup.set('active', true);
                 globalOptions = globalGroup.getConfiguratorOptions();
+
+                // Set all options to active false, to ensure active property exists on all options
+                globalOptions.each(function (globalOption) {
+                    globalOption.set('active', false);
+                });
 
                 // If no article options exists, continue
                 if (!articleOptions) {

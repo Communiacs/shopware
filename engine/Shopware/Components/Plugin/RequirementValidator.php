@@ -94,20 +94,20 @@ class RequirementValidator
 
     private function assertShopwareVersion(array $compatibility, string $shopwareVersion): void
     {
-        if (isset($compatibility['blacklist']) && in_array($shopwareVersion, $compatibility['blacklist'])) {
+        if (isset($compatibility['blacklist']) && \in_array($shopwareVersion, $compatibility['blacklist'])) {
             throw new \Exception(sprintf($this->namespace->get('shopware_version_blacklisted'), $shopwareVersion));
         }
 
         if (isset($compatibility['minVersion'])) {
             $min = $compatibility['minVersion'];
-            if (strlen($min) > 0 && !$this->assertVersion($shopwareVersion, $min, '>=')) {
+            if ($min !== '' && !$this->assertVersion($shopwareVersion, $min, '>=')) {
                 throw new \Exception(sprintf($this->namespace->get('plugin_min_shopware_version'), $min));
             }
         }
 
         if (isset($compatibility['maxVersion'])) {
             $max = $compatibility['maxVersion'];
-            if (strlen($max) > 0 && !$this->assertVersion($shopwareVersion, $max, '<=')) {
+            if ($max !== '' && !$this->assertVersion($shopwareVersion, $max, '<=')) {
                 throw new \Exception(sprintf($this->namespace->get('plugin_max_shopware_version'), $max));
             }
         }
@@ -134,20 +134,20 @@ class RequirementValidator
                 throw new \Exception(sprintf($this->namespace->get('required_plugin_not_active'), $requiredPlugin['pluginName']));
             }
 
-            if (isset($requiredPlugin['blacklist']) && in_array($plugin->getVersion(), $requiredPlugin['blacklist'])) {
+            if (isset($requiredPlugin['blacklist']) && \in_array($plugin->getVersion(), $requiredPlugin['blacklist'])) {
                 throw new \Exception(sprintf($this->namespace->get('required_plugin_blacklisted'), $plugin->getName(), $plugin->getVersion()));
             }
 
             if (isset($requiredPlugin['minVersion'])) {
                 $min = $requiredPlugin['minVersion'];
-                if (strlen($min) > 0 && !$this->assertVersion($plugin->getVersion(), $min, '>=')) {
+                if ($min !== '' && !$this->assertVersion($plugin->getVersion(), $min, '>=')) {
                     throw new \Exception(sprintf($this->namespace->get('plugin_version_required'), $min, $plugin->getName()));
                 }
             }
 
             if (isset($requiredPlugin['maxVersion'])) {
                 $max = $requiredPlugin['maxVersion'];
-                if (strlen($max) > 0 && !$this->assertVersion($plugin->getVersion(), $max, '<=')) {
+                if ($max !== '' && !$this->assertVersion($plugin->getVersion(), $max, '<=')) {
                     throw new \Exception(sprintf($this->namespace->get('plugin_version_max'), $plugin->getName(), $max));
                 }
             }

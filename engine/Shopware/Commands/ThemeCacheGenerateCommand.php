@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Shopware 5
  * Copyright (c) shopware AG
@@ -43,10 +44,14 @@ class ThemeCacheGenerateCommand extends ShopwareCommand implements CompletionAwa
     public function completeOptionValues($optionName, CompletionContext $context)
     {
         if ($optionName === 'shopId') {
-            $shopIdKeys = array_map(function ($key) { return $key + 1; }, array_keys($context->getWords(), '--shopId'));
-            $selectedShopIds = array_intersect_key($context->getWords(), array_combine($shopIdKeys, array_pad([], count($shopIdKeys), 0)));
+            $shopIdKeys = array_map(static function ($key) {
+                return $key + 1;
+            }, array_keys($context->getWords(), '--shopId'));
+            $combinedArray = array_combine($shopIdKeys, array_pad([], \count($shopIdKeys), 0));
+            \assert(\is_array($combinedArray), 'Arrays could not be combined');
+            $selectedShopIds = array_intersect_key($context->getWords(), $combinedArray);
 
-            return array_diff($this->completeShopIds($context->getCurrentWord()), array_map('intval', $selectedShopIds));
+            return array_diff($this->completeShopIds($context->getCurrentWord()), array_map('\intval', $selectedShopIds));
         }
 
         return [];
@@ -79,7 +84,7 @@ class ThemeCacheGenerateCommand extends ShopwareCommand implements CompletionAwa
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         /** @var Repository $repository */
-        $repository = $this->container->get('models')->getRepository(Shop::class);
+        $repository = $this->container->get(\Shopware\Components\Model\ModelManager::class)->getRepository(Shop::class);
 
         $shopIds = $input->getOption('shopId');
         $current = (bool) $input->getOption('current');
@@ -89,14 +94,14 @@ class ThemeCacheGenerateCommand extends ShopwareCommand implements CompletionAwa
 
         if (!empty($shopIds)) {
             $shopsWithThemes = array_filter($shopsWithThemes, function (Shop $shop) use ($shopIds) {
-                return in_array($shop->getId(), $shopIds);
+                return \in_array($shop->getId(), $shopIds);
             });
         }
 
         if (empty($shopsWithThemes)) {
             $output->writeln('No theme shops found');
 
-            return null;
+            return 0;
         }
 
         /** @var Compiler $compiler */
@@ -119,7 +124,7 @@ class ThemeCacheGenerateCommand extends ShopwareCommand implements CompletionAwa
         }
 
         /** @var CacheManager $cacheManager */
-        $cacheManager = $this->container->get('shopware.cache_manager');
+        $cacheManager = $this->container->get(\Shopware\Components\CacheManager::class);
         $output->writeln('Clearing HTTP cache ...');
         $cacheManager->clearHttpCache();
 

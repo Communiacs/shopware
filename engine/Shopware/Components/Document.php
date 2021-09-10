@@ -22,6 +22,9 @@
  * our trademarks remain entirely with us.
  */
 
+use Mpdf\Mpdf;
+use Shopware\Bundle\OrderBundle\Service\OrderListProductServiceInterface;
+use Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface;
 use Shopware\Components\NumberRangeIncrementerInterface;
 
 /**
@@ -261,7 +264,7 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
 
         /* @var \Shopware\Models\Shop\Template $template */
         if (!empty($this->_subshop['doc_template_id'])) {
-            $template = Shopware()->Container()->get('models')->find(\Shopware\Models\Shop\Template::class, $this->_subshop['doc_template_id']);
+            $template = Shopware()->Container()->get(\Shopware\Components\Model\ModelManager::class)->find(\Shopware\Models\Shop\Template::class, $this->_subshop['doc_template_id']);
 
             $inheritance = Shopware()->Container()->get('theme_inheritance')->getTemplateDirectories($template);
             $this->_template->setTemplateDir($inheritance);
@@ -297,14 +300,14 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
                 ]
             );
             if ($this->_preview == true || !$this->_documentHash) {
-                $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+                $mpdf = new Mpdf($mpdfConfig);
                 $mpdf->WriteHTML($html);
                 $mpdf->Output();
                 exit;
             }
 
             $tmpFile = tempnam(sys_get_temp_dir(), 'document');
-            $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+            $mpdf = new Mpdf($mpdfConfig);
             $mpdf->WriteHTML($html);
             $mpdf->Output($tmpFile, 'F');
 
@@ -422,7 +425,7 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
             return [];
         }
 
-        $service = Shopware()->Container()->get('shopware_attribute.data_loader');
+        $service = Shopware()->Container()->get(\Shopware\Bundle\AttributeBundle\Service\DataLoader::class);
 
         return $service->load('s_user_attributes', $userID);
     }
@@ -492,12 +495,23 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
 
         $positions = $order->positions->getArrayCopy();
 
-        $articleModule = Shopware()->Modules()->Articles();
-        foreach ($positions as &$position) {
-            if ($position['modus'] == 0) {
-                $position['meta'] = $articleModule->sGetPromotionById('fix', 0, $position['articleordernumber']);
+        $numbers = [];
+        foreach ($positions as $product) {
+            if (empty($product['modus'])) {
+                $numbers[] = $product['articleordernumber'];
             }
         }
+
+        $container = Shopware()->Container();
+        /** @var ContextServiceInterface $context */
+        $context = $container->get('shopware_storefront.context_service');
+        $additionalDetails = $container->get(OrderListProductServiceInterface::class)->getList($numbers, $context->getShopContext());
+        foreach ($positions as &$product) {
+            if (empty($product['modus'])) {
+                $product['meta'] = $additionalDetails[$product['articleordernumber']];
+            }
+        }
+        unset($product);
 
         if ($this->_config['_previewForcePagebreak']) {
             $positions = array_merge($positions, $positions);
@@ -585,7 +599,7 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
      */
     protected function initTemplateEngine()
     {
-        $frontendThemeDirectory = Shopware()->Container()->get('theme_path_resolver')->getFrontendThemeDirectory();
+        $frontendThemeDirectory = Shopware()->Container()->get(\Shopware\Components\Theme\PathResolver::class)->getFrontendThemeDirectory();
 
         $this->_template = clone Shopware()->Template();
         $this->_view = $this->_template->createData();
@@ -606,7 +620,7 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
      */
     protected function setTranslationComponent()
     {
-        $this->translationComponent = Shopware()->Container()->get('translation');
+        $this->translationComponent = Shopware()->Container()->get(\Shopware_Components_Translation::class);
     }
 
     /**
@@ -625,7 +639,7 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
             $shop->setCurrency($repository->find($this->_order->order->currencyID));
         }
 
-        Shopware()->Container()->get('shopware.components.shop_registration_service')->registerResources($shop);
+        Shopware()->Container()->get(\Shopware\Components\ShopRegistrationServiceInterface::class)->registerResources($shop);
     }
 
     /**
@@ -753,14 +767,14 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
                     $numberrange = $this->_document['numbers'];
                 } else {
                     // The typID is indexed with base 0, so we need increase the typID
-                    if (!in_array($typID, ['1', '2', '3'])) {
+                    if (!\in_array($typID, ['1', '2', '3'])) {
                         $typID = $typID + 1;
                     }
                     $numberrange = 'doc_' . $typID;
                 }
 
                 /** @var NumberRangeIncrementerInterface $incrementer */
-                $incrementer = Shopware()->Container()->get('shopware.number_range_incrementer');
+                $incrementer = Shopware()->Container()->get(\Shopware\Components\NumberRangeIncrementerInterface::class);
 
                 // Get the next number and save it in the document
                 $nextNumber = $incrementer->increment($numberrange);

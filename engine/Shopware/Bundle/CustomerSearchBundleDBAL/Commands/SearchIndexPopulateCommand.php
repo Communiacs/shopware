@@ -53,15 +53,15 @@ class SearchIndexPopulateCommand extends ShopwareCommand
         $helper = new ConsoleProgressHelper($output);
         $helper->start($query->fetchCount(), 'Start indexing stream search data');
 
-        $this->container->get('dbal_connection')->transactional(
+        $this->container->get(\Doctrine\DBAL\Connection::class)->transactional(
             function () use ($helper, $query) {
-                $this->container->get('dbal_connection')->executeUpdate('DELETE FROM s_customer_search_index');
+                $this->container->get(\Doctrine\DBAL\Connection::class)->executeUpdate('DELETE FROM s_customer_search_index');
 
-                $indexer = $this->container->get('customer_search.dbal.indexing.indexer');
+                $indexer = $this->container->get(\Shopware\Bundle\CustomerSearchBundleDBAL\Indexing\SearchIndexerInterface::class);
 
                 while ($ids = $query->fetch()) {
                     $indexer->populate($ids);
-                    $helper->advance(count($ids));
+                    $helper->advance(\count($ids));
                 }
             }
         );
@@ -73,7 +73,7 @@ class SearchIndexPopulateCommand extends ShopwareCommand
 
     private function createQuery()
     {
-        $query = $this->container->get('dbal_connection')->createQueryBuilder();
+        $query = $this->container->get(\Doctrine\DBAL\Connection::class)->createQueryBuilder();
         $query->select(['id', 'id']);
         $query->from('s_user', 'u');
         $query->where('u.id > :lastId');

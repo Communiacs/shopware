@@ -23,7 +23,7 @@ class JsonBundleWriter implements BundleWriterInterface
     /**
      * {@inheritdoc}
      */
-    public function write($path, $locale, $data)
+    public function write(string $path, string $locale, $data)
     {
         if ($data instanceof \Traversable) {
             $data = iterator_to_array($data);
@@ -35,7 +35,7 @@ class JsonBundleWriter implements BundleWriterInterface
             }
         });
 
-        $contents = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)."\n";
+        $contents = json_encode($data, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_UNICODE)."\n";
 
         file_put_contents($path.'/'.$locale.'.json', $contents);
     }

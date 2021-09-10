@@ -80,7 +80,7 @@ class Shopware_Components_Check_File
         foreach ($md5Sums as $row) {
             list($expectedMd5Sum, $file) = explode('  ', trim($row));
 
-            if (in_array($file, $this->skipList)) {
+            if (\in_array($file, $this->skipList)) {
                 continue;
             }
 
@@ -89,7 +89,7 @@ class Shopware_Components_Check_File
             $md5SumMatch = false;
             if ($fileAvailable) {
                 $md5Sum = md5_file($baseDir . $file);
-                $md5SumMatch = ($md5Sum === $expectedMd5Sum);
+                $md5SumMatch = $md5Sum === $expectedMd5Sum;
             }
 
             if ($md5SumMatch) {

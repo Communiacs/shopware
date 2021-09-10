@@ -35,7 +35,7 @@ use Shopware\Bundle\StoreFrontBundle\Struct\Shop;
 
 class ProductMapping implements MappingInterface
 {
-    const TYPE = 'product';
+    public const TYPE = 'product';
 
     /**
      * @var bool
@@ -157,6 +157,7 @@ class ProductMapping implements MappingInterface
                 'isPriceGroupActive' => ['type' => 'boolean'],
                 'shippingFree' => ['type' => 'boolean'],
                 'highlight' => ['type' => 'boolean'],
+                'hasStock' => ['type' => 'boolean'],
                 'customerPriceCount' => ['type' => 'long'],
                 'fallbackPriceCount' => ['type' => 'long'],
 

@@ -22,8 +22,11 @@
  * our trademarks remain entirely with us.
  */
 
+use Doctrine\DBAL\Query\QueryBuilder;
 use Shopware\Components\CSRFWhitelistAware;
-use Shopware\Models\Analytics\Repository;
+use Shopware\Components\Model\ModelManager;
+use Shopware\Models\Analytics\Repository as AnalyticsRepository;
+use Shopware\Models\Shop\Repository as ShopRepository;
 use Shopware\Models\Shop\Shop;
 
 class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backend_ExtJs implements CSRFWhitelistAware
@@ -39,17 +42,17 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
     /**
      * Entity Manager
      *
-     * @var \Shopware\Components\Model\ModelManager
+     * @var ModelManager
      */
     protected $manager;
 
     /**
-     * @var \Shopware\Models\Shop\Repository
+     * @var ShopRepository
      */
     protected $shopRepository;
 
     /**
-     * @var Repository|null
+     * @var AnalyticsRepository|null
      */
     protected $repository;
 
@@ -117,7 +120,7 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
      * @deprecated since 5.6 will be private in 5.8
      * Helper Method to get access to the shop repository.
      *
-     * @return Shopware\Models\Shop\Repository
+     * @return ShopRepository
      */
     public function getShopRepository()
     {
@@ -131,17 +134,17 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
     }
 
     /**
-     * @deprecated since 5.6, will be private in 5.8
+     * @return AnalyticsRepository
      *
-     * @return Repository
+     * @deprecated since 5.6, will be private in 5.8
      */
     public function getRepository()
     {
         trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be private with 5.8.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
 
         if (!$this->repository) {
-            $this->repository = new Repository(
-                $this->get('models')->getConnection(),
+            $this->repository = new AnalyticsRepository(
+                $this->get(ModelManager::class)->getConnection(),
                 $this->get('events')
             );
         }
@@ -203,7 +206,7 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
         // Sets the correct limit
         $limit = 25;
         if (strtolower($this->format) === 'csv') {
-            $limit = count($data);
+            $limit = \count($data);
         }
 
         $values = array_values($data);
@@ -213,7 +216,7 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
             $this->Request()->getParam('limit', $limit)
         );
 
-        $this->send($splice, count($data));
+        $this->send($splice, \count($data));
     }
 
     public function getRatingAction()
@@ -283,13 +286,13 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
             (int) $this->Request()->getParam('limit', 25)
         );
 
-        $this->send($splice, count($data));
+        $this->send($splice, \count($data));
     }
 
     public function getReferrerRevenueAction()
     {
         $shop = $this->getManager()->getRepository(Shop::class)->getActiveDefault();
-        $this->get('shopware.components.shop_registration_service')->registerShop($shop);
+        $this->get(\Shopware\Components\ShopRegistrationServiceInterface::class)->registerShop($shop);
 
         $result = $this->getRepository()->getReferrerRevenue(
             $shop,
@@ -303,7 +306,7 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
             $url = parse_url($row['referrer']);
             $host = $url['host'];
 
-            if (!array_key_exists($host, $referrer)) {
+            if (!\array_key_exists($host, $referrer)) {
                 $referrer[$host] = [
                     'host' => $host,
                     'orderCount' => 0,
@@ -318,7 +321,7 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
                 ];
             }
 
-            if (!in_array($row['userID'], $customers)) {
+            if (!\in_array($row['userID'], $customers)) {
                 if (strtotime($row['orderTime']) - strtotime($row['firstLogin']) < 60 * 60 * 24) {
                     $referrer[$host]['turnoverNewCustomer'] += $row['turnover'];
                     ++$referrer[$host]['newCustomers'];
@@ -353,8 +356,8 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
         }
 
         // Sort the multidimensional array
-        usort($referrer, function ($a, $b) {
-            return $a['turnover'] < $b['turnover'];
+        usort($referrer, static function ($a, $b) {
+            return $a['turnover'] <=> $b['turnover'];
         });
 
         $this->send(
@@ -416,7 +419,7 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
             $host = parse_url($row['referrer']);
             $host = str_replace('www.', '', $host['host']);
 
-            if (!array_key_exists($host, $referrer)) {
+            if (!\array_key_exists($host, $referrer)) {
                 $referrer[$host] = [
                     'count' => 0,
                     'referrer' => $host,
@@ -471,7 +474,7 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
                     break;
             }
 
-            if ($row['isNewCustomerOrder'] && !in_array($row['userId'], $users[$week])) {
+            if ($row['isNewCustomerOrder'] && !\in_array($row['userId'], $users[$week])) {
                 ++$customers[$week]['registration'];
             }
 
@@ -504,7 +507,7 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
         foreach ($result->getData() as $row) {
             $age = floor((time() - strtotime($row['birthday'])) / (60 * 60 * 24 * 365));
 
-            if (!array_key_exists("$age", $ages)) {
+            if (!\array_key_exists("$age", $ages)) {
                 $ages["$age"] = [
                     'age' => $age,
                     'count' => 0,
@@ -513,11 +516,11 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
 
             if (!empty($shopIds)) {
                 foreach ($shopIds as $shopId) {
-                    if (!array_key_exists($shopId, $subShopCounts)) {
+                    if (!\array_key_exists($shopId, $subShopCounts)) {
                         $subShopCounts[$shopId] = 0;
                     }
 
-                    if (!array_key_exists('count' . $shopId, $ages["$age"])) {
+                    if (!\array_key_exists('count' . $shopId, $ages["$age"])) {
                         $ages["$age"]['count' . $shopId] = 0;
                     }
 
@@ -786,7 +789,7 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
             $ref = str_replace('+', ' ', $ref);
             $ref = trim(preg_replace('/\s\s+/', ' ', $ref));
 
-            if (!array_key_exists($ref, $keywords)) {
+            if (!\array_key_exists($ref, $keywords)) {
                 $keywords[$ref] = [
                     'keyword' => $ref,
                     'count' => 0,
@@ -798,7 +801,7 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
 
         $keywords = array_values($keywords);
 
-        $this->send($keywords, count($keywords));
+        $this->send($keywords, \count($keywords));
     }
 
     public function getSearchUrlsAction()
@@ -849,9 +852,9 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
         $ids = $this->getSelectedShopIds();
         $fields = [];
         foreach (array_keys($data) as $key) {
-            if (in_array($key, $this->shopFields)) {
+            if (\in_array($key, $this->shopFields)) {
                 foreach ($ids as $id) {
-                    if (array_key_exists($key . $id, $data)) {
+                    if (\array_key_exists($key . $id, $data)) {
                         $fields[$key . $id] = $id;
                     }
                 }
@@ -865,7 +868,7 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
     {
         $fields = [];
         foreach (array_keys($data) as $key) {
-            if (in_array($key, $this->dateFields)) {
+            if (\in_array($key, $this->dateFields)) {
                 $fields[] = $key;
             }
         }
@@ -896,7 +899,7 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
     /**
      * Internal helper function to get access to the entity manager.
      *
-     * @return \Shopware\Components\Model\ModelManager
+     * @return ModelManager
      */
     private function getManager()
     {
@@ -909,10 +912,8 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
 
     /**
      * Returns the query builder to fetch all available stores
-     *
-     * @return \Doctrine\DBAL\Query\QueryBuilder
      */
-    private function getShopsQueryBuilder()
+    private function getShopsQueryBuilder(): QueryBuilder
     {
         $builder = $this->getManager()->getDBALQueryBuilder();
         $builder->select([
@@ -946,6 +947,7 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
 
             if (!empty($shopIds)) {
                 foreach ($shopIds as $shopId) {
+                    $row['orderCount' . $shopId] = (int) $row['orderCount' . $shopId];
                     $row['turnover' . $shopId] = (float) $row['turnover' . $shopId];
                 }
             }
@@ -959,7 +961,7 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
         if ($fields = $this->getDateFields($data[0])) {
             foreach ($data as &$row) {
                 foreach ($fields as $field) {
-                    if (array_key_exists($field, $row)) {
+                    if (\array_key_exists($field, $row)) {
                         $row[$field] = date('Y-m-d H:i:s', $row[$field]);
                     }
                 }
@@ -970,7 +972,7 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
             $shopNames = $this->getShopNames();
 
             foreach ($fields as $field => $shopId) {
-                $suffix = substr($field, 0, strlen($fields) - strlen($shopId));
+                $suffix = substr($field, 0, \strlen($fields) - \strlen($shopId));
                 $data = $this->switchArrayKeys($data, $shopNames[$shopId] . ' (' . $suffix . ')', $field);
             }
         }
@@ -981,7 +983,7 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
     private function switchArrayKeys($array, $newKey, $oldKey)
     {
         foreach ($array as $key => $value) {
-            if (is_array($value)) {
+            if (\is_array($value)) {
                 $array[$key] = $this->switchArrayKeys($value, $newKey, $oldKey);
             } else {
                 $array[$newKey] = $array[$oldKey];
@@ -992,7 +994,7 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
         return $array;
     }
 
-    private function getShopNames()
+    private function getShopNames(): array
     {
         $builder = $this->getManager()->getDBALQueryBuilder();
         $builder->select(['s.id', 's.name'])
@@ -1005,10 +1007,10 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
         return $statement->fetchAll(PDO::FETCH_KEY_PAIR);
     }
 
-    private function getCsvFileName()
+    private function getCsvFileName(): string
     {
         $name = $this->Request()->getActionName();
-        if (strpos($name, 'get') == 0) {
+        if (strpos($name, 'get') === 0) {
             $name = substr($name, 3);
         }
 
@@ -1018,7 +1020,7 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
     private function underscoreToCamelCase($str)
     {
         $str[0] = strtolower($str[0]);
-        $func = function ($c) {
+        $func = static function ($c) {
             return '_' . strtolower($c[1]);
         };
 
@@ -1125,8 +1127,8 @@ class Shopware_Controllers_Backend_Analytics extends Shopware_Controllers_Backen
      */
     private function insertArrayAtPosition($insertValue, $array, $position)
     {
-        return array_slice($array, 0, $position, true) +
+        return \array_slice($array, 0, $position, true) +
                 $insertValue +
-                array_slice($array, $position, count($array), true);
+                \array_slice($array, $position, \count($array), true);
     }
 }

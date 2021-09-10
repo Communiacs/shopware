@@ -49,8 +49,9 @@ class DeviceConfiguration implements DeviceConfigurationInterface
     public function getListingEmotions($categoryId, $pageIndex)
     {
         $emotions = $this->get($categoryId);
+        $showListing = array_column($emotions, 'showListing');
 
-        if (max(array_column($emotions, 'showListing')) > 0) {
+        if (!empty($showListing) && max($showListing) > 0) {
             return $emotions;
         }
 
@@ -301,7 +302,7 @@ class DeviceConfiguration implements DeviceConfigurationInterface
     private function getEmotionsByVisibility(array $emotions, array $visibility)
     {
         return array_filter($emotions, function ($emotion) use ($visibility) {
-            return in_array($emotion['listing_visibility'], $visibility);
+            return \in_array($emotion['listing_visibility'], $visibility);
         });
     }
 }

@@ -17,6 +17,8 @@ namespace Symfony\Component\Intl\DateFormatter\DateFormat;
  * @author Igor Wiedler <igor@wiedler.ch>
  *
  * @internal
+ *
+ * @deprecated since Symfony 5.3, use symfony/polyfill-intl-icu ^1.21 instead
  */
 class Hour2400Transformer extends HourTransformer
 {
@@ -33,8 +35,6 @@ class Hour2400Transformer extends HourTransformer
      */
     public function normalizeHour(int $hour, string $marker = null): int
     {
-        $marker = (string) $marker;
-
         if ('AM' === $marker) {
             $hour = 0;
         } elseif ('PM' === $marker) {

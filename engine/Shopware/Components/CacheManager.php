@@ -36,6 +36,7 @@ use Shopware\Components\Theme\PathResolver;
 use Shopware_Components_Config;
 use SplFileInfo;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Finder\Finder;
 use Zend_Cache;
 use Zend_Cache_Backend_Apcu;
 use Zend_Cache_Backend_Redis;
@@ -269,7 +270,7 @@ class CacheManager
         }
 
         // Clear the APCu cache because this may cause problems when attributes are removed
-        if (function_exists('apcu_clear_cache')) {
+        if (\function_exists('apcu_clear_cache')) {
             apcu_clear_cache();
         }
 
@@ -282,7 +283,7 @@ class CacheManager
 
     public function clearOpCache()
     {
-        if (extension_loaded('Zend OPcache') && ini_get('opcache.enable')) {
+        if (\extension_loaded('Zend OPcache') && ini_get('opcache.enable')) {
             opcache_reset();
         }
     }
@@ -344,7 +345,7 @@ class CacheManager
 
         $info['name'] = 'Shopware configuration';
 
-        $backend = get_class($backendCache);
+        $backend = \get_class($backendCache);
         $backend = str_replace('Zend_Cache_Backend_', '', $backend);
 
         $info['backend'] = $backend;
@@ -413,7 +414,7 @@ class CacheManager
     public function getOpCacheCacheInfo()
     {
         $info = [];
-        if (extension_loaded('Zend OPcache') && ini_get('opcache.enable')) {
+        if (\extension_loaded('Zend OPcache') && ini_get('opcache.enable')) {
             $status = opcache_get_status(false);
             $info['files'] = $status['opcache_statistics']['num_cached_scripts'];
             $info['size'] = $this->encodeSize($status['memory_usage']['used_memory']);
@@ -554,7 +555,7 @@ class CacheManager
     public function encodeSize($bytes)
     {
         $types = ['B', 'KB', 'MB', 'GB', 'TB'];
-        for ($i = 0; $bytes >= 1024 && $i < (count($types) - 1); ++$i) {
+        for ($i = 0; $bytes >= 1024 && $i < (\count($types) - 1); ++$i) {
             $bytes /= 1024;
         }
 
@@ -570,6 +571,21 @@ class CacheManager
             return;
         }
 
-        (new Filesystem())->remove($dir);
+        $fileSystem = new Filesystem();
+        $finder = new Finder();
+
+        $tempFileExtension = 'sw_bak';
+        $tempFileName = sprintf('%s_%s.%s', $dir, uniqid(), $tempFileExtension);
+
+        // Move the existing cache to a temporary new location prior to deletion, so it won't be written to in the meantime
+        $fileSystem->rename($dir, $tempFileName);
+
+        $finder->directories()
+            ->in(\dirname($dir, 1))
+            ->name(sprintf('*.%s', $tempFileExtension));
+
+        if ($finder->hasResults()) {
+            $fileSystem->remove($finder);
+        }
     }
 }

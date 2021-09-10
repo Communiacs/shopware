@@ -194,14 +194,10 @@ EOD;
     public function generateTheme(array $data, Template $parent = null)
     {
         if (!is_writable($this->pathResolver->getFrontendThemeDirectory())) {
-            throw new \Exception(
-                sprintf('Theme directory %s isn\'t writable', $this->pathResolver->getFrontendThemeDirectory())
-            );
+            throw new \Exception(sprintf('Theme directory %s isn\'t writable', $this->pathResolver->getFrontendThemeDirectory()));
         }
         if (!isset($data['template']) || empty($data['template'])) {
-            throw new \Exception(
-                'Passed data array contains no valid theme name under the array key "template".'
-            );
+            throw new \Exception('Passed data array contains no valid theme name under the array key "template".');
         }
 
         // Ensure that the first character is upper case.
@@ -339,7 +335,7 @@ EOD;
     private function generateStructure($directory, $baseDir)
     {
         foreach ($directory as $key => $value) {
-            if (is_array($value)) {
+            if (\is_array($value)) {
                 $this->fileSystem->mkdir($baseDir . DIRECTORY_SEPARATOR . $key);
 
                 $this->generateStructure($value, $baseDir . DIRECTORY_SEPARATOR . $key);

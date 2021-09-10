@@ -37,7 +37,7 @@ class ListProduct extends BaseProduct
     /**
      * State for a calculated product price.
      */
-    const STATE_PRICE_CALCULATED = 'price_calculated';
+    public const STATE_PRICE_CALCULATED = 'price_calculated';
 
     /**
      * Contains the product name.
@@ -405,7 +405,7 @@ class ListProduct extends BaseProduct
      */
     public function hasState($state)
     {
-        return in_array($state, $this->states);
+        return \in_array($state, $this->states);
     }
 
     /**
@@ -1163,7 +1163,7 @@ class ListProduct extends BaseProduct
     public function setMainVariantId($mainVariantId)
     {
         $this->mainVariantId = $mainVariantId;
-        $this->isMainVariant = ($this->variantId == $this->mainVariantId);
+        $this->isMainVariant = $this->variantId == $this->mainVariantId;
     }
 
     /**

@@ -11,52 +11,39 @@
 
 namespace Symfony\Component\Cache\Adapter;
 
-use Predis;
 use Predis\Connection\Aggregate\ClusterInterface;
+use Predis\Connection\Aggregate\PredisCluster;
+use Predis\Connection\Aggregate\ReplicationInterface;
 use Predis\Response\Status;
-use Symfony\Component\Cache\CacheItem;
+use Symfony\Component\Cache\Exception\InvalidArgumentException;
 use Symfony\Component\Cache\Exception\LogicException;
+use Symfony\Component\Cache\Marshaller\DeflateMarshaller;
 use Symfony\Component\Cache\Marshaller\MarshallerInterface;
+use Symfony\Component\Cache\Marshaller\TagAwareMarshaller;
 use Symfony\Component\Cache\Traits\RedisTrait;
 
 /**
- * Stores tag id <> cache id relationship as a Redis Set, lookup on invalidation using sPOP.
+ * Stores tag id <> cache id relationship as a Redis Set.
  *
  * Set (tag relation info) is stored without expiry (non-volatile), while cache always gets an expiry (volatile) even
  * if not set by caller. Thus if you configure redis with the right eviction policy you can be safe this tag <> cache
  * relationship survives eviction (cache cleanup when Redis runs out of memory).
  *
- * Requirements:
- *  - Server: Redis 3.2+
- *  - Client: PHP Redis 3.1.3+ OR Predis
- *  - Redis Server(s) configured with any `volatile-*` eviction policy, OR `noeviction` if it will NEVER fill up memory
+ * Redis server 2.8+ with any `volatile-*` eviction policy, OR `noeviction` if you're sure memory will NEVER fill up
  *
  * Design limitations:
- *  - Max 2 billion cache keys per cache tag
- *    E.g. If you use a "all" items tag for expiry instead of clear(), that limits you to 2 billion cache items as well
+ *  - Max 4 billion cache keys per cache tag as limited by Redis Set datatype.
+ *    E.g. If you use a "all" items tag for expiry instead of clear(), that limits you to 4 billion cache items also.
  *
  * @see https://redis.io/topics/lru-cache#eviction-policies Documentation for Redis eviction policies.
  * @see https://redis.io/topics/data-types#sets Documentation for Redis Set datatype.
- * @see https://redis.io/commands/spop Documentation for sPOP operation, capable of retriving AND emptying a Set at once.
  *
  * @author Nicolas Grekas <p@tchwork.com>
  * @author André Rømcke <andre.romcke+symfony@gmail.com>
- *
- * @experimental in 4.3
  */
 class RedisTagAwareAdapter extends AbstractTagAwareAdapter
 {
     use RedisTrait;
-
-    /**
-     * Redis "Set" can hold more than 4 billion members, here we limit ourselves to PHP's > 2 billion max int (32Bit).
-     */
-    private const POP_MAX_LIMIT = 2147483647 - 1;
-
-    /**
-     * Limits for how many keys are deleted in batch.
-     */
-    private const BULK_DELETE_LIMIT = 10000;
 
     /**
      * On cache items without a lifetime set, we set it to 100 days. This is to make sure cache items are
@@ -65,32 +52,44 @@ class RedisTagAwareAdapter extends AbstractTagAwareAdapter
     private const DEFAULT_CACHE_TTL = 8640000;
 
     /**
-     * @var bool|null
+     * @var string|null detected eviction policy used on Redis server
      */
-    private $redisServerSupportSPOP = null;
+    private $redisEvictionPolicy;
 
     /**
      * @param \Redis|\RedisArray|\RedisCluster|\Predis\ClientInterface $redisClient     The redis client
      * @param string                                                   $namespace       The default namespace
      * @param int                                                      $defaultLifetime The default lifetime
-     *
-     * @throws \Symfony\Component\Cache\Exception\LogicException If phpredis with version lower than 3.1.3.
      */
     public function __construct($redisClient, string $namespace = '', int $defaultLifetime = 0, MarshallerInterface $marshaller = null)
     {
-        $this->init($redisClient, $namespace, $defaultLifetime, $marshaller);
-
-        // Make sure php-redis is 3.1.3 or higher configured for Redis classes
-        if (!$this->redis instanceof \Predis\ClientInterface && version_compare(phpversion('redis'), '3.1.3', '<')) {
-            throw new LogicException('RedisTagAwareAdapter requires php-redis 3.1.3 or higher, alternatively use predis/predis');
+        if ($redisClient instanceof \Predis\ClientInterface && $redisClient->getConnection() instanceof ClusterInterface && !$redisClient->getConnection() instanceof PredisCluster) {
+            throw new InvalidArgumentException(sprintf('Unsupported Predis cluster connection: only "%s" is, "%s" given.', PredisCluster::class, get_debug_type($redisClient->getConnection())));
         }
+
+        if (\defined('Redis::OPT_COMPRESSION') && ($redisClient instanceof \Redis || $redisClient instanceof \RedisArray || $redisClient instanceof \RedisCluster)) {
+            $compression = $redisClient->getOption(\Redis::OPT_COMPRESSION);
+
+            foreach (\is_array($compression) ? $compression : [$compression] as $c) {
+                if (\Redis::COMPRESSION_NONE !== $c) {
+                    throw new InvalidArgumentException(sprintf('phpredis compression must be disabled when using "%s", use "%s" instead.', static::class, DeflateMarshaller::class));
+                }
+            }
+        }
+
+        $this->init($redisClient, $namespace, $defaultLifetime, new TagAwareMarshaller($marshaller));
     }
 
     /**
      * {@inheritdoc}
      */
-    protected function doSave(array $values, ?int $lifetime, array $addTagData = [], array $delTagData = []): array
+    protected function doSave(array $values, int $lifetime, array $addTagData = [], array $delTagData = []): array
     {
+        $eviction = $this->getRedisEvictionPolicy();
+        if ('noeviction' !== $eviction && 0 !== strpos($eviction, 'volatile-')) {
+            throw new LogicException(sprintf('Redis maxmemory-policy setting "%s" is *not* supported by RedisTagAwareAdapter, use "noeviction" or "volatile-*" eviction policies.', $eviction));
+        }
+
         // serialize values
         if (!$serialized = $this->marshaller->marshall($values, $failed)) {
             return $failed;
@@ -127,7 +126,7 @@ class RedisTagAwareAdapter extends AbstractTagAwareAdapter
                 continue;
             }
             // setEx results
-            if (true !== $result && (!$result instanceof Status || $result !== Status::get('OK'))) {
+            if (true !== $result && (!$result instanceof Status || Status::get('OK') !== $result)) {
                 $failed[] = $id;
             }
         }
@@ -138,26 +137,52 @@ class RedisTagAwareAdapter extends AbstractTagAwareAdapter
     /**
      * {@inheritdoc}
      */
-    protected function doDelete(array $ids, array $tagData = []): bool
+    protected function doDeleteYieldTags(array $ids): iterable
     {
-        if (!$ids) {
-            return true;
+        $lua = <<<'EOLUA'
+            local v = redis.call('GET', KEYS[1])
+            local e = redis.pcall('UNLINK', KEYS[1])
+
+            if type(e) ~= 'number' then
+                redis.call('DEL', KEYS[1])
+            end
+
+            if not v or v:len() <= 13 or v:byte(1) ~= 0x9D or v:byte(6) ~= 0 or v:byte(10) ~= 0x5F then
+                return ''
+            end
+
+            return v:sub(14, 13 + v:byte(13) + v:byte(12) * 256 + v:byte(11) * 65536)
+EOLUA;
+
+        $results = $this->pipeline(function () use ($ids, $lua) {
+            foreach ($ids as $id) {
+                yield 'eval' => $this->redis instanceof \Predis\ClientInterface ? [$lua, 1, $id] : [$lua, [$id], 1];
+            }
+        });
+
+        foreach ($results as $id => $result) {
+            try {
+                yield $id => !\is_string($result) || '' === $result ? [] : $this->marshaller->unmarshall($result);
+            } catch (\Exception $e) {
+                yield $id => [];
+            }
         }
+    }
 
-        $predisCluster = $this->redis instanceof \Predis\ClientInterface && $this->redis->getConnection() instanceof ClusterInterface;
-        $this->pipeline(static function () use ($ids, $tagData, $predisCluster) {
-            if ($predisCluster) {
-                foreach ($ids as $id) {
-                    yield 'del' => [$id];
-                }
-            } else {
-                yield 'del' => $ids;
-            }
-
+    /**
+     * {@inheritdoc}
+     */
+    protected function doDeleteTagRelations(array $tagData): bool
+    {
+        $results = $this->pipeline(static function () use ($tagData) {
             foreach ($tagData as $tagId => $idList) {
-                yield 'sRem' => array_merge([$tagId], $idList);
+                array_unshift($idList, $tagId);
+                yield 'sRem' => $idList;
             }
-        })->rewind();
+        });
+        foreach ($results as $result) {
+            // no-op
+        }
 
         return true;
     }
@@ -167,46 +192,103 @@ class RedisTagAwareAdapter extends AbstractTagAwareAdapter
      */
     protected function doInvalidate(array $tagIds): bool
     {
-        if (!$this->redisServerSupportSPOP()) {
-            return false;
-        }
+        // This script scans the set of items linked to tag: it empties the set
+        // and removes the linked items. When the set is still not empty after
+        // the scan, it means we're in cluster mode and that the linked items
+        // are on other nodes: we move the links to a temporary set and we
+        // gargage collect that set from the client side.
 
-        // Pop all tag info at once to avoid race conditions
-        $tagIdSets = $this->pipeline(static function () use ($tagIds) {
-            foreach ($tagIds as $tagId) {
-                // Client: Predis or PHP Redis 3.1.3+ (https://github.com/phpredis/phpredis/commit/d2e203a6)
-                // Server: Redis 3.2 or higher (https://redis.io/commands/spop)
-                yield 'sPop' => [$tagId, self::POP_MAX_LIMIT];
+        $lua = <<<'EOLUA'
+            local cursor = '0'
+            local id = KEYS[1]
+            repeat
+                local result = redis.call('SSCAN', id, cursor, 'COUNT', 5000);
+                cursor = result[1];
+                local rems = {}
+
+                for _, v in ipairs(result[2]) do
+                    local ok, _ = pcall(redis.call, 'DEL', ARGV[1]..v)
+                    if ok then
+                        table.insert(rems, v)
+                    end
+                end
+                if 0 < #rems then
+                    redis.call('SREM', id, unpack(rems))
+                end
+            until '0' == cursor;
+
+            redis.call('SUNIONSTORE', '{'..id..'}'..id, id)
+            redis.call('DEL', id)
+
+            return redis.call('SSCAN', '{'..id..'}'..id, '0', 'COUNT', 5000)
+EOLUA;
+
+        $results = $this->pipeline(function () use ($tagIds, $lua) {
+            if ($this->redis instanceof \Predis\ClientInterface) {
+                $prefix = $this->redis->getOptions()->prefix ? $this->redis->getOptions()->prefix->getPrefix() : '';
+            } elseif (\is_array($prefix = $this->redis->getOption(\Redis::OPT_PREFIX) ?? '')) {
+                $prefix = current($prefix);
+            }
+
+            foreach ($tagIds as $id) {
+                yield 'eval' => $this->redis instanceof \Predis\ClientInterface ? [$lua, 1, $id, $prefix] : [$lua, [$id, $prefix], 1];
             }
         });
 
-        // Flatten generator result from pipeline, ignore keys (tag ids)
-        $ids = array_unique(array_merge(...iterator_to_array($tagIdSets, false)));
+        $lua = <<<'EOLUA'
+            local id = KEYS[1]
+            local cursor = table.remove(ARGV)
+            redis.call('SREM', '{'..id..'}'..id, unpack(ARGV))
 
-        // Delete cache in chunks to avoid overloading the connection
-        foreach (array_chunk($ids, self::BULK_DELETE_LIMIT) as $chunkIds) {
-            $this->doDelete($chunkIds);
+            return redis.call('SSCAN', '{'..id..'}'..id, cursor, 'COUNT', 5000)
+EOLUA;
+
+        foreach ($results as $id => [$cursor, $ids]) {
+            while ($ids || '0' !== $cursor) {
+                $this->doDelete($ids);
+
+                $evalArgs = [$id, $cursor];
+                array_splice($evalArgs, 1, 0, $ids);
+
+                if ($this->redis instanceof \Predis\ClientInterface) {
+                    array_unshift($evalArgs, $lua, 1);
+                } else {
+                    $evalArgs = [$lua, $evalArgs, 1];
+                }
+
+                $results = $this->pipeline(function () use ($evalArgs) {
+                    yield 'eval' => $evalArgs;
+                });
+
+                foreach ($results as [$cursor, $ids]) {
+                    // no-op
+                }
+            }
         }
 
         return true;
     }
 
-    private function redisServerSupportSPOP(): bool
+    private function getRedisEvictionPolicy(): string
     {
-        if (null !== $this->redisServerSupportSPOP) {
-            return $this->redisServerSupportSPOP;
+        if (null !== $this->redisEvictionPolicy) {
+            return $this->redisEvictionPolicy;
         }
 
-        foreach ($this->getHosts() as $host) {
-            $info = $host->info('Server');
-            $info = isset($info['Server']) ? $info['Server'] : $info;
-            if (version_compare($info['redis_version'], '3.2', '<')) {
-                CacheItem::log($this->logger, 'Redis server needs to be version 3.2 or higher, your Redis server was detected as '.$info['redis_version']);
-
-                return $this->redisServerSupportSPOP = false;
-            }
+        $hosts = $this->getHosts();
+        $host = reset($hosts);
+        if ($host instanceof \Predis\Client && $host->getConnection() instanceof ReplicationInterface) {
+            // Predis supports info command only on the master in replication environments
+            $hosts = [$host->getClientFor('master')];
         }
 
-        return $this->redisServerSupportSPOP = true;
+        foreach ($hosts as $host) {
+            $info = $host->info('Memory');
+            $info = $info['Memory'] ?? $info;
+
+            return $this->redisEvictionPolicy = $info['maxmemory_policy'];
+        }
+
+        return $this->redisEvictionPolicy = '';
     }
 }

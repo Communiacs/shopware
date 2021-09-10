@@ -80,7 +80,7 @@ class ProductIndexer implements DataIndexerInterface
             }
 
             $this->indexProducts($index, $numbers);
-            $progress->advance(count(array_unique($ids)));
+            $progress->advance(\count(array_unique($ids)));
         }
         $progress->finish();
     }
@@ -117,7 +117,6 @@ class ProductIndexer implements DataIndexerInterface
 
         $this->client->bulk([
             'index' => $index->getName(),
-            'type' => ProductMapping::TYPE,
             'body' => $documents,
         ]);
     }

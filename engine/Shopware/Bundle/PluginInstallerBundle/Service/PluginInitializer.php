@@ -83,7 +83,7 @@ class PluginInitializer
         $this->activePlugins = $stmt->fetchAll(PDO::FETCH_UNIQUE);
 
         foreach ($this->activePlugins as $pluginName => &$pluginData) {
-            if (in_array($pluginData['namespace'], ['ShopwarePlugins', 'ProjectPlugins'], true)) {
+            if (\in_array($pluginData['namespace'], ['ShopwarePlugins', 'ProjectPlugins'], true)) {
                 $shopwarePlugins[] = $pluginName;
             }
             $pluginData = $pluginData['version'];
@@ -107,7 +107,7 @@ class PluginInitializer
 
                 $pluginsAvailable[$pluginName] = [
                     'className' => '\\' . $pluginName . '\\' . $pluginName,
-                    'isActive' => in_array($pluginName, $shopwarePlugins, true),
+                    'isActive' => \in_array($pluginName, $shopwarePlugins, true),
                     'pluginFile' => $pluginFile,
                     'pluginNamespace' => $pluginNamespace,
                 ];
@@ -123,7 +123,7 @@ class PluginInitializer
             $plugin = new $pluginDetails['className']($pluginDetails['isActive'], $pluginDetails['pluginNamespace']);
 
             if (!$plugin instanceof Plugin) {
-                throw new \RuntimeException(sprintf('Class %s must extend %s in file %s', get_class($plugin), Plugin::class, $pluginDetails['pluginFile']));
+                throw new \RuntimeException(sprintf('Class %s must extend %s in file %s', \get_class($plugin), Plugin::class, $pluginDetails['pluginFile']));
             }
 
             $plugins[$plugin->getName()] = $plugin;
@@ -149,14 +149,14 @@ class PluginInitializer
      *
      * @return mixed|void
      */
-    public function errorHandler(int $errno, string $errstr, string $errfile, int $errline, array $errcontext)
+    public function errorHandler(int $errno, string $errstr, string $errfile, int $errline)
     {
         if (stripos($errstr, 'should be compatible with Shopware\Components\Plugin::registerCommands(Symfony\Component\Console\Application $application)') !== false) {
             return;
         }
 
         if ($this->originalErrorHandler) {
-            return call_user_func($this->originalErrorHandler, $errno, $errstr, $errfile, $errline, $errcontext);
+            return \call_user_func($this->originalErrorHandler, $errno, $errstr, $errfile, $errline);
         }
     }
 }

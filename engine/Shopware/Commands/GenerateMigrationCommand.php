@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /**
@@ -73,10 +74,18 @@ class GenerateMigrationCommand extends ShopwareCommand
     private function findMigrationDirectory(?string $pluginName): ?string
     {
         if ($pluginName === null) {
-            return $this->container->getParameter('kernel.root_dir') . '/_sql/migrations';
+            $rootDir = $this->container->getParameter('kernel.root_dir');
+
+            if (!\is_string($rootDir)) {
+                throw new \RuntimeException('Parameter kernel.root_dir has to be an string');
+            }
+
+            return $rootDir . '/_sql/migrations';
         }
 
-        foreach ($this->container->getParameter('shopware.plugin_directories') as $pluginDirectory) {
+        /** @var array<string, string> $pluginDirectories */
+        $pluginDirectories = $this->container->getParameter('shopware.plugin_directories');
+        foreach ($pluginDirectories as $pluginDirectory) {
             $path = $pluginDirectory . $pluginName;
             if (file_exists($path)) {
                 return $path . DIRECTORY_SEPARATOR . 'Resources' . DIRECTORY_SEPARATOR . 'migrations';
@@ -98,7 +107,9 @@ class GenerateMigrationCommand extends ShopwareCommand
             return 0;
         }
 
-        return (int) max(array_column($values, '1'));
+        $versions = array_column($values, '1');
+
+        return empty($versions) ? 0 : (int) max($versions);
     }
 
     private function createMigration(string $migrationFolder, string $migrationName, ?string $pluginName, int $nextVersion): string

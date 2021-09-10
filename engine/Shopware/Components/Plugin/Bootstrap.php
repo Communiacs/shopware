@@ -205,7 +205,7 @@ abstract class Shopware_Components_Plugin_Bootstrap extends Enlight_Plugin_Boots
             $reflection = new \ReflectionClass($this);
 
             if ($fileName = $reflection->getFileName()) {
-                $return = dirname($fileName) . DIRECTORY_SEPARATOR;
+                $return = \dirname($fileName) . DIRECTORY_SEPARATOR;
             }
         }
 
@@ -335,7 +335,7 @@ abstract class Shopware_Components_Plugin_Bootstrap extends Enlight_Plugin_Boots
         /** @var \Shopware\Components\Plugin\PaymentInstaller $installer */
         $installer = $this->get('shopware.plugin_payment_installer');
 
-        if (is_string($options)) {
+        if (\is_string($options)) {
             $options = ['name' => $options];
         }
         if ($description !== null) {
@@ -357,7 +357,7 @@ abstract class Shopware_Components_Plugin_Bootstrap extends Enlight_Plugin_Boots
      */
     public function createTemplate($options)
     {
-        if (is_string($options)) {
+        if (\is_string($options)) {
             $options = ['template' => $options];
         }
         /** @var Template|null $template */
@@ -388,7 +388,7 @@ abstract class Shopware_Components_Plugin_Bootstrap extends Enlight_Plugin_Boots
     public function createCronJob($name, $action, $interval = 86400, $active = 1, $disableOnError = true)
     {
         /** @var \Doctrine\DBAL\Connection $connection */
-        $connection = $this->get('dbal_connection');
+        $connection = $this->get(\Doctrine\DBAL\Connection::class);
         $connection->insert(
             's_crontab',
             [
@@ -747,9 +747,9 @@ abstract class Shopware_Components_Plugin_Bootstrap extends Enlight_Plugin_Boots
      */
     public function removeSnippets($removeDirty = false)
     {
-        $this->get('shopware.snippet_database_handler')->removeFromDatabase($this->Path() . 'Snippets/', $removeDirty);
-        $this->get('shopware.snippet_database_handler')->removeFromDatabase($this->Path() . 'snippets/', $removeDirty);
-        $this->get('shopware.snippet_database_handler')->removeFromDatabase($this->Path() . 'Resources/snippet/', $removeDirty);
+        $this->get(\Shopware\Components\Snippet\DatabaseHandler::class)->removeFromDatabase($this->Path() . 'Snippets/', $removeDirty);
+        $this->get(\Shopware\Components\Snippet\DatabaseHandler::class)->removeFromDatabase($this->Path() . 'snippets/', $removeDirty);
+        $this->get(\Shopware\Components\Snippet\DatabaseHandler::class)->removeFromDatabase($this->Path() . 'Resources/snippet/', $removeDirty);
     }
 
     /**
@@ -789,7 +789,7 @@ abstract class Shopware_Components_Plugin_Bootstrap extends Enlight_Plugin_Boots
             }
 
             // First process the form translations
-            if (array_key_exists('plugin_form', $translationSet)) {
+            if (\array_key_exists('plugin_form', $translationSet)) {
                 $isUpdate = false;
                 $translationArray = $translationSet['plugin_form'];
                 foreach ($form->getTranslations() as $existingTranslation) {
@@ -797,10 +797,10 @@ abstract class Shopware_Components_Plugin_Bootstrap extends Enlight_Plugin_Boots
                     if ($existingTranslation->getLocale()->getLocale() != $localeCode) {
                         continue;
                     }
-                    if (array_key_exists('label', $translationArray)) {
+                    if (\array_key_exists('label', $translationArray)) {
                         $existingTranslation->setLabel($translationArray['label']);
                     }
-                    if (array_key_exists('description', $translationArray)) {
+                    if (\array_key_exists('description', $translationArray)) {
                         $existingTranslation->setDescription($translationArray['description']);
                     }
                     $isUpdate = true;
@@ -808,10 +808,10 @@ abstract class Shopware_Components_Plugin_Bootstrap extends Enlight_Plugin_Boots
                 }
                 if (!$isUpdate) {
                     $formTranslation = new FormTranslation();
-                    if (array_key_exists('label', $translationArray)) {
+                    if (\array_key_exists('label', $translationArray)) {
                         $formTranslation->setLabel($translationArray['label']);
                     }
-                    if (array_key_exists('description', $translationArray)) {
+                    if (\array_key_exists('description', $translationArray)) {
                         $formTranslation->setDescription($translationArray['description']);
                     }
                     $formTranslation->setLocale($locale);
@@ -829,10 +829,10 @@ abstract class Shopware_Components_Plugin_Bootstrap extends Enlight_Plugin_Boots
                     if ($existingTranslation->getLocale()->getLocale() != $localeCode) {
                         continue;
                     }
-                    if (array_key_exists('label', $translationArray)) {
+                    if (\array_key_exists('label', $translationArray)) {
                         $existingTranslation->setLabel($translationArray['label']);
                     }
-                    if (array_key_exists('description', $translationArray)) {
+                    if (\array_key_exists('description', $translationArray)) {
                         $existingTranslation->setDescription($translationArray['description']);
                     }
                     $isUpdate = true;
@@ -840,10 +840,10 @@ abstract class Shopware_Components_Plugin_Bootstrap extends Enlight_Plugin_Boots
                 }
                 if (!$isUpdate) {
                     $elementTranslation = new ElementTranslation();
-                    if (array_key_exists('label', $translationArray)) {
+                    if (\array_key_exists('label', $translationArray)) {
                         $elementTranslation->setLabel($translationArray['label']);
                     }
-                    if (array_key_exists('description', $translationArray)) {
+                    if (\array_key_exists('description', $translationArray)) {
                         $elementTranslation->setDescription($translationArray['description']);
                     }
                     $elementTranslation->setLocale($locale);
@@ -889,7 +889,7 @@ abstract class Shopware_Components_Plugin_Bootstrap extends Enlight_Plugin_Boots
     {
         foreach ($plugins as $plugin) {
             $sql = 'SELECT 1 FROM s_core_plugins WHERE name = ? AND active = 1';
-            $test = $this->get('dbal_connection')->fetchColumn($sql, [$plugin]);
+            $test = $this->get(\Doctrine\DBAL\Connection::class)->fetchColumn($sql, [$plugin]);
             if (!$test) {
                 return false;
             }

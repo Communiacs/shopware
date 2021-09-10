@@ -32,42 +32,44 @@ use Symfony\Component\Intl\Locale\Locale;
  * @author Bernhard Schussek <bschussek@gmail.com>
  *
  * @internal
+ *
+ * @deprecated since Symfony 5.3, use symfony/polyfill-intl-icu ^1.21 instead
  */
 abstract class Collator
 {
     /* Attribute constants */
-    const FRENCH_COLLATION = 0;
-    const ALTERNATE_HANDLING = 1;
-    const CASE_FIRST = 2;
-    const CASE_LEVEL = 3;
-    const NORMALIZATION_MODE = 4;
-    const STRENGTH = 5;
-    const HIRAGANA_QUATERNARY_MODE = 6;
-    const NUMERIC_COLLATION = 7;
+    public const FRENCH_COLLATION = 0;
+    public const ALTERNATE_HANDLING = 1;
+    public const CASE_FIRST = 2;
+    public const CASE_LEVEL = 3;
+    public const NORMALIZATION_MODE = 4;
+    public const STRENGTH = 5;
+    public const HIRAGANA_QUATERNARY_MODE = 6;
+    public const NUMERIC_COLLATION = 7;
 
     /* Attribute constants values */
-    const DEFAULT_VALUE = -1;
+    public const DEFAULT_VALUE = -1;
 
-    const PRIMARY = 0;
-    const SECONDARY = 1;
-    const TERTIARY = 2;
-    const DEFAULT_STRENGTH = 2;
-    const QUATERNARY = 3;
-    const IDENTICAL = 15;
+    public const PRIMARY = 0;
+    public const SECONDARY = 1;
+    public const TERTIARY = 2;
+    public const DEFAULT_STRENGTH = 2;
+    public const QUATERNARY = 3;
+    public const IDENTICAL = 15;
 
-    const OFF = 16;
-    const ON = 17;
+    public const OFF = 16;
+    public const ON = 17;
 
-    const SHIFTED = 20;
-    const NON_IGNORABLE = 21;
+    public const SHIFTED = 20;
+    public const NON_IGNORABLE = 21;
 
-    const LOWER_FIRST = 24;
-    const UPPER_FIRST = 25;
+    public const LOWER_FIRST = 24;
+    public const UPPER_FIRST = 25;
 
     /* Sorting options */
-    const SORT_REGULAR = 0;
-    const SORT_NUMERIC = 2;
-    const SORT_STRING = 1;
+    public const SORT_REGULAR = 0;
+    public const SORT_NUMERIC = 2;
+    public const SORT_STRING = 1;
 
     /**
      * @param string|null $locale The locale code. The only currently supported locale is "en" (or null using the default locale, i.e. "en")
@@ -90,7 +92,7 @@ abstract class Collator
      *
      * @throws MethodArgumentValueNotImplementedException When $locale different than "en" or null is passed
      */
-    public static function create($locale)
+    public static function create(?string $locale)
     {
         return new static($locale);
     }
@@ -106,15 +108,15 @@ abstract class Collator
      *
      * @return bool True on success or false on failure
      */
-    public function asort(&$array, $sortFlag = self::SORT_REGULAR)
+    public function asort(array &$array, int $sortFlag = self::SORT_REGULAR)
     {
         $intlToPlainFlagMap = [
-            self::SORT_REGULAR => SORT_REGULAR,
-            self::SORT_NUMERIC => SORT_NUMERIC,
-            self::SORT_STRING => SORT_STRING,
+            self::SORT_REGULAR => \SORT_REGULAR,
+            self::SORT_NUMERIC => \SORT_NUMERIC,
+            self::SORT_STRING => \SORT_STRING,
         ];
 
-        $plainSortFlag = isset($intlToPlainFlagMap[$sortFlag]) ? $intlToPlainFlagMap[$sortFlag] : self::SORT_REGULAR;
+        $plainSortFlag = $intlToPlainFlagMap[$sortFlag] ?? self::SORT_REGULAR;
 
         return asort($array, $plainSortFlag);
     }
@@ -134,7 +136,7 @@ abstract class Collator
      *
      * @throws MethodNotImplementedException
      */
-    public function compare($str1, $str2)
+    public function compare(string $str1, string $str2)
     {
         throw new MethodNotImplementedException(__METHOD__);
     }
@@ -150,7 +152,7 @@ abstract class Collator
      *
      * @throws MethodNotImplementedException
      */
-    public function getAttribute($attr)
+    public function getAttribute(int $attr)
     {
         throw new MethodNotImplementedException(__METHOD__);
     }
@@ -183,7 +185,7 @@ abstract class Collator
      * @return string The locale used to create the collator. Currently always
      *                returns "en".
      */
-    public function getLocale($type = Locale::ACTUAL_LOCALE)
+    public function getLocale(int $type = Locale::ACTUAL_LOCALE)
     {
         return 'en';
     }
@@ -199,7 +201,7 @@ abstract class Collator
      *
      * @throws MethodNotImplementedException
      */
-    public function getSortKey($string)
+    public function getSortKey(string $string)
     {
         throw new MethodNotImplementedException(__METHOD__);
     }
@@ -230,7 +232,7 @@ abstract class Collator
      *
      * @throws MethodNotImplementedException
      */
-    public function setAttribute($attr, $val)
+    public function setAttribute(int $attr, int $val)
     {
         throw new MethodNotImplementedException(__METHOD__);
     }
@@ -252,7 +254,7 @@ abstract class Collator
      *
      * @throws MethodNotImplementedException
      */
-    public function setStrength($strength)
+    public function setStrength(int $strength)
     {
         throw new MethodNotImplementedException(__METHOD__);
     }
@@ -268,7 +270,7 @@ abstract class Collator
      *
      * @throws MethodNotImplementedException
      */
-    public function sortWithSortKeys(&$arr)
+    public function sortWithSortKeys(array &$arr)
     {
         throw new MethodNotImplementedException(__METHOD__);
     }
@@ -288,7 +290,7 @@ abstract class Collator
      *
      * @throws MethodNotImplementedException
      */
-    public function sort(&$arr, $sortFlag = self::SORT_REGULAR)
+    public function sort(array &$arr, int $sortFlag = self::SORT_REGULAR)
     {
         throw new MethodNotImplementedException(__METHOD__);
     }

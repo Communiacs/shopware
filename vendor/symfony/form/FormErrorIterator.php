@@ -33,13 +33,12 @@ class FormErrorIterator implements \RecursiveIterator, \SeekableIterator, \Array
     /**
      * The prefix used for indenting nested error messages.
      */
-    const INDENTATION = '    ';
+    public const INDENTATION = '    ';
 
     private $form;
     private $errors;
 
     /**
-     * @param FormInterface      $form   The erroneous form
      * @param FormError[]|self[] $errors An array of form errors and instances
      *                                   of FormErrorIterator
      *
@@ -272,12 +271,8 @@ class FormErrorIterator implements \RecursiveIterator, \SeekableIterator, \Array
 
     /**
      * Utility function for indenting multi-line strings.
-     *
-     * @param string $string The string
-     *
-     * @return string The indented string
      */
-    private static function indent($string)
+    private static function indent(string $string): string
     {
         return rtrim(self::INDENTATION.str_replace("\n", "\n".self::INDENTATION, $string), ' ');
     }

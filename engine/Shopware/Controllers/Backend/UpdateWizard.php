@@ -35,12 +35,12 @@ class Shopware_Controllers_Backend_UpdateWizard extends Shopware_Controllers_Bac
     public function indexAction()
     {
         /** @var Connection $connection */
-        $connection = $this->get('dbal_connection');
+        $connection = $this->get(\Doctrine\DBAL\Connection::class);
         $sql = "INSERT IGNORE INTO `s_core_config_elements` (`id`, `form_id`, `name`, `value`, `label`, `description`, `type`, `required`, `position`, `scope`)
                 VALUES (NULL, '0', 'updateWizardStarted', 'b:1;', '', '', 'checkbox', '0', '0', '1');";
         $connection->executeUpdate($sql);
 
-        Shopware()->Container()->get('shopware.cache_manager')->clearConfigCache();
+        Shopware()->Container()->get(\Shopware\Components\CacheManager::class)->clearConfigCache();
     }
 
     public function updateAction()
@@ -48,10 +48,10 @@ class Shopware_Controllers_Backend_UpdateWizard extends Shopware_Controllers_Bac
         $pluginCheck = new \ShopwarePlugins\SwagUpdate\Components\PluginCheck($this->container);
 
         /** @var PluginLicenceService $licenceService */
-        $licenceService = $this->get('shopware_plugininstaller.plugin_licence_service');
+        $licenceService = $this->get(\Shopware\Bundle\PluginInstallerBundle\Service\PluginLicenceService::class);
 
         /** @var AccountManagerService $accountService */
-        $accountService = $this->get('shopware_plugininstaller.account_manager_service');
+        $accountService = $this->get(\Shopware\Bundle\PluginInstallerBundle\Service\AccountManagerService::class);
 
         $request = new UpdateLicencesRequest(
             $this->getVersion(),
@@ -95,12 +95,15 @@ class Shopware_Controllers_Backend_UpdateWizard extends Shopware_Controllers_Bac
         return $this->container->get('auth')->getIdentity()->locale->getLocale();
     }
 
-    /**
-     * @return string
-     */
-    private function getVersion()
+    private function getVersion(): string
     {
-        return $this->container->getParameter('shopware.release.version');
+        $version = $this->container->getParameter('shopware.release.version');
+
+        if (!\is_string($version)) {
+            throw new \RuntimeException('Parameter shopware.release.version has to be an string');
+        }
+
+        return $version;
     }
 
     /**

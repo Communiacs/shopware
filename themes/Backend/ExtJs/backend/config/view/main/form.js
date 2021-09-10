@@ -25,7 +25,7 @@
  * todo@all: Documentation
  */
 
-//{namespace name=backend/config/view/main}
+//{namespace name="backend/config/view/main"}
 
 //{block name="backend/config/view/main/form"}
 Ext.define('Shopware.apps.Config.view.main.Form', {
@@ -57,11 +57,11 @@ Ext.define('Shopware.apps.Config.view.main.Form', {
     getButtons: function() {
         var me = this;
         return [{
-            text: '{s name=form/reset_text}Reset{/s}',
+            text: '{s name="form/reset_text"}Reset{/s}',
             cls: 'secondary',
             action: 'reset'
         },{
-            text: '{s name=form/save_text}Save{/s}',
+            text: '{s name="form/save_text"}Save{/s}',
             cls: 'primary',
             action: 'save'
         }];
@@ -89,7 +89,7 @@ Ext.define('Shopware.apps.Config.view.main.Form', {
             items.push({
                 xtype: 'fieldset',
                 margin: 10,
-                title: '{s name=form/description_title}Description{/s}',
+                title: '{s name="form/description_title"}Description{/s}',
                 html: formDescription
             });
         }
@@ -106,7 +106,7 @@ Ext.define('Shopware.apps.Config.view.main.Form', {
                 }
 
                 type = element.get('type').toLowerCase();
-                type = 'config-element-' + type;
+                type = 'base-element-' + type;
                 name = 'values[' + shop.get('id') + ']['+ element.get('id') + ']';
 
                 options = element.get('options');
@@ -134,7 +134,7 @@ Ext.define('Shopware.apps.Config.view.main.Form', {
                 }
                 /*{/if}*/
 
-                var field = Ext.applyIf({
+                var field = Ext.apply({
                     xtype: type,
                     name: name,
                     elementName: elementName,
@@ -146,7 +146,7 @@ Ext.define('Shopware.apps.Config.view.main.Form', {
                     allowBlank: !element.get('required') || !shop.get('default')
                 }, options);
 
-                if (field.xtype === 'config-element-boolean' || field.xtype === 'config-element-checkbox') {
+                if (field.xtype === 'base-element-boolean' || field.xtype === 'base-element-checkbox') {
                     field = me.convertCheckBoxToComboBox(field, shop, initialValue);
                 }
 

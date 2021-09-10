@@ -35,6 +35,7 @@ class RegisterDynamicController implements CompilerPassInterface
 {
     public function process(ContainerBuilder $container): void
     {
+        /** @var array<string, array> $types */
         $types = $container->getParameter('shopware.bundle.content_type.types');
 
         foreach ($types as $name => $type) {
@@ -52,6 +53,7 @@ class RegisterDynamicController implements CompilerPassInterface
                     'module' => 'backend',
                 ]
             );
+            $backendController->setPublic(true);
 
             $container->setDefinition('shopware_bundle.content_type.controllers.backend.' . $name, $backendController);
 
@@ -69,17 +71,18 @@ class RegisterDynamicController implements CompilerPassInterface
                     'module' => 'api',
                 ]
             );
+            $apiController->setPublic(true);
 
             $container->setDefinition('shopware_bundle.content_type.controllers.api.' . $name, $apiController);
 
             if ($this->allFrontendRequirementsMet($type)) {
-                $apiController = new Definition(\Shopware\Bundle\ContentTypeBundle\Controller\Frontend\ContentType::class);
-                $apiController->setArguments([
+                $frontendController = new Definition(\Shopware\Bundle\ContentTypeBundle\Controller\Frontend\ContentType::class);
+                $frontendController->setArguments([
                     new Reference('shopware.bundle.content_type.' . $name),
                     new Expression('service("Shopware\\\\Bundle\\\\ContentTypeBundle\\\\Services\\\\FrontendTypeTranslatorInterface").translate(service("Shopware\\\\Bundle\\\\ContentTypeBundle\\\\Services\\\\TypeProvider").getType("' . $name . '"))'),
                 ]);
 
-                $apiController->addTag(
+                $frontendController->addTag(
                     'shopware.controller',
                     [
                         'controller' => 'Custom' . ucfirst($name),
@@ -87,7 +90,9 @@ class RegisterDynamicController implements CompilerPassInterface
                     ]
                 );
 
-                $container->setDefinition('shopware_bundle.content_type.controllers.frontend.' . $name, $apiController);
+                $frontendController->setPublic(true);
+
+                $container->setDefinition('shopware_bundle.content_type.controllers.frontend.' . $name, $frontendController);
             }
         }
     }

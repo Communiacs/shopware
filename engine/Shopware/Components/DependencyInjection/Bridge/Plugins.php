@@ -28,7 +28,7 @@ use Enlight_Event_EventManager;
 use Enlight_Loader;
 use Enlight_Plugin_PluginManager;
 use Shopware;
-use Shopware\Components\Plugin\ConfigReader;
+use Shopware\Components\Plugin\Configuration\ReaderInterface;
 use Shopware_Components_Plugin_Namespace;
 
 class Plugins
@@ -41,7 +41,7 @@ class Plugins
         Enlight_Event_EventManager $eventManager,
         Shopware $application,
         array $pluginDirectories,
-        ConfigReader $configReader
+        ReaderInterface $configReader
     ) {
         $pluginManager = new Enlight_Plugin_PluginManager($application);
 

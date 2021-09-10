@@ -38,8 +38,11 @@ class ImageMigrateCommand extends ShopwareCommand implements CompletionAwareInte
      */
     public function completeOptionValues($optionName, CompletionContext $context)
     {
-        if (in_array($optionName, ['from', 'to'])) {
-            return array_keys($this->getContainer()->getParameter('shopware.cdn.adapters'));
+        /** @var array<string, array> $cdnAdapters */
+        $cdnAdapters = $this->getContainer()->getParameter('shopware.cdn.adapters');
+
+        if (\in_array($optionName, ['from', 'to'])) {
+            return array_keys($cdnAdapters);
         }
 
         return [];
@@ -76,7 +79,7 @@ class ImageMigrateCommand extends ShopwareCommand implements CompletionAwareInte
         $to = $input->getOption('to') ?: 'local';
         $skipScan = $input->getOption('skip-scan');
 
-        $filesystemFactory = $this->getContainer()->get('shopware_media.media_service_factory');
+        $filesystemFactory = $this->getContainer()->get(\Shopware\Bundle\MediaBundle\MediaServiceFactory::class);
         $fromFileSystem = $filesystemFactory->factory($from);
         $toFileSystem = $filesystemFactory->factory($to);
 

@@ -211,8 +211,8 @@ class Customer extends Resource
         $billing = $this->createAddress($params['billing']) ?: new AddressModel();
         $shipping = $this->createAddress($params['shipping']);
 
-        $registerService = $this->getContainer()->get('shopware_account.register_service');
-        $context = $this->getContainer()->get('shopware_storefront.context_service')->getShopContext()->getShop();
+        $registerService = $this->getContainer()->get(\Shopware\Bundle\AccountBundle\Service\RegisterServiceInterface::class);
+        $context = $this->getContainer()->get(\Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface::class)->getShopContext()->getShop();
 
         $context->addAttribute('sendOptinMail', new Attribute([
             'sendOptinMail' => $params['sendOptinMail'] === true,
@@ -270,9 +270,9 @@ class Customer extends Resource
 
         $customer->fromArray($params);
 
-        $customerValidator = $this->getContainer()->get('shopware_account.customer_validator');
-        $addressValidator = $this->getContainer()->get('shopware_account.address_validator');
-        $addressService = $this->getContainer()->get('shopware_account.address_service');
+        $customerValidator = $this->getContainer()->get(\Shopware\Bundle\AccountBundle\Service\Validator\CustomerValidatorInterface::class);
+        $addressValidator = $this->getContainer()->get(\Shopware\Bundle\AccountBundle\Service\Validator\AddressValidatorInterface::class);
+        $addressService = $this->getContainer()->get(\Shopware\Bundle\AccountBundle\Service\AddressServiceInterface::class);
 
         $customerValidator->validate($customer);
         $addressValidator->validate($customer->getDefaultBillingAddress());
@@ -351,11 +351,11 @@ class Customer extends Resource
      */
     protected function prepareCustomerPaymentData($data, CustomerModel $customer)
     {
-        if (!array_key_exists('paymentData', $data) && !array_key_exists('debit', $data)) {
+        if (!\array_key_exists('paymentData', $data) && !\array_key_exists('debit', $data)) {
             return $data;
         }
 
-        if (array_key_exists('debit', $data) && !array_key_exists('paymentData', $data)) {
+        if (\array_key_exists('debit', $data) && !\array_key_exists('paymentData', $data)) {
             $debitPaymentMean = $this->getManager()->getRepository(\Shopware\Models\Payment\Payment::class)->findOneBy(['name' => 'debit']);
 
             if ($debitPaymentMean) {
@@ -395,9 +395,7 @@ class Customer extends Resource
             if (isset($paymentDataData['paymentMeanId'])) {
                 $paymentMean = $this->getManager()->getRepository(\Shopware\Models\Payment\Payment::class)->find($paymentDataData['paymentMeanId']);
                 if ($paymentMean === null) {
-                    throw new ApiException\CustomValidationException(
-                        sprintf('%s by %s %s not found', \Shopware\Models\Payment\Payment::class, 'id', $paymentDataData['paymentMeanId'])
-                    );
+                    throw new ApiException\CustomValidationException(sprintf('%s by %s %s not found', \Shopware\Models\Payment\Payment::class, 'id', $paymentDataData['paymentMeanId']));
                 }
                 $paymentData->setPaymentMean($paymentMean);
                 unset($paymentDataData['paymentMeanId']);
@@ -430,21 +428,21 @@ class Customer extends Resource
      */
     private function prepareCustomerData(array $params, CustomerModel $customer)
     {
-        if (array_key_exists('groupKey', $params)) {
+        if (\array_key_exists('groupKey', $params)) {
             $params['group'] = Shopware()->Models()->getRepository(\Shopware\Models\Customer\Group::class)->findOneBy(['key' => $params['groupKey']]);
             if (!$params['group']) {
                 throw new ApiException\CustomValidationException(sprintf('CustomerGroup by key %s not found', $params['groupKey']));
             }
         }
 
-        if (array_key_exists('shopId', $params)) {
+        if (\array_key_exists('shopId', $params)) {
             $params['shop'] = Shopware()->Models()->find(\Shopware\Models\Shop\Shop::class, $params['shopId']);
             if (!$params['shop']) {
                 throw new ApiException\CustomValidationException(sprintf('Shop by id %s not found', $params['shopId']));
             }
         }
 
-        if (array_key_exists('priceGroupId', $params)) {
+        if (\array_key_exists('priceGroupId', $params)) {
             $priceGroupId = (int) $params['priceGroupId'];
             if ($priceGroupId > 0) {
                 $params['priceGroup'] = Shopware()->Models()->find(\Shopware\Models\Customer\PriceGroup::class, $params['priceGroupId']);
@@ -471,7 +469,7 @@ class Customer extends Resource
     private function setupContext($shopId = null)
     {
         /** @var Repository $shopRepository */
-        $shopRepository = $this->getContainer()->get('models')->getRepository(ShopModel::class);
+        $shopRepository = $this->getContainer()->get(\Shopware\Components\Model\ModelManager::class)->getRepository(ShopModel::class);
 
         if ($shopId) {
             $shop = $shopRepository->getActiveById($shopId);
@@ -482,7 +480,7 @@ class Customer extends Resource
             $shop = $shopRepository->getActiveDefault();
         }
 
-        $this->getContainer()->get('shopware.components.shop_registration_service')->registerShop($shop);
+        $this->getContainer()->get(\Shopware\Components\ShopRegistrationServiceInterface::class)->registerShop($shop);
     }
 
     /**
@@ -517,8 +515,8 @@ class Customer extends Resource
      */
     private function prepareAddressData(array $data, $filter = false)
     {
-        $data['country'] = !empty($data['country']) ? $this->getContainer()->get('models')->find(CountryModel::class, (int) $data['country']) : null;
-        $data['state'] = !empty($data['state']) ? $this->getContainer()->get('models')->find(StateModel::class, $data['state']) : null;
+        $data['country'] = !empty($data['country']) ? $this->getContainer()->get(\Shopware\Components\Model\ModelManager::class)->find(CountryModel::class, (int) $data['country']) : null;
+        $data['state'] = !empty($data['state']) ? $this->getContainer()->get(\Shopware\Components\Model\ModelManager::class)->find(StateModel::class, $data['state']) : null;
 
         return $filter ? array_filter($data) : $data;
     }
@@ -531,19 +529,19 @@ class Customer extends Resource
         $billingData = [];
         $shippingData = [];
 
-        if (array_key_exists('billing', $params)) {
+        if (\array_key_exists('billing', $params)) {
             $billingData = $this->prepareAddressData($params['billing'], true);
         }
 
-        if (array_key_exists('shipping', $params)) {
+        if (\array_key_exists('shipping', $params)) {
             $shippingData = $this->prepareAddressData($params['shipping'], true);
         }
 
-        if (array_key_exists('defaultBillingAddress', $params)) {
+        if (\array_key_exists('defaultBillingAddress', $params)) {
             $billingData = array_merge($billingData, $this->prepareAddressData($params['defaultBillingAddress'], true));
         }
 
-        if (array_key_exists('defaultShippingAddress', $params)) {
+        if (\array_key_exists('defaultShippingAddress', $params)) {
             $shippingData = array_merge($shippingData, $this->prepareAddressData($params['defaultShippingAddress'], true));
         }
 

@@ -26,6 +26,7 @@
  *
  * @category   Enlight
  * @package    Enlight_Application
+ *
  * @copyright  Copyright (c) 2011, shopware AG (http://www.shopware.de)
  * @license    http://enlight.de/license     New BSD License
  */
@@ -43,7 +44,7 @@ class Enlight_Application
 
     /**
      * @var Enlight_Application Instance of the Enlight application.
-     * Will be set in the class constructor.
+     *                          Will be set in the class constructor.
      */
     protected static $instance;
 
@@ -52,7 +53,7 @@ class Enlight_Application
         self::$instance = $this;
 
         $this->core_path = __DIR__ . DIRECTORY_SEPARATOR;
-        $this->path      = dirname(__DIR__) . DIRECTORY_SEPARATOR;
+        $this->path = \dirname(__DIR__) . DIRECTORY_SEPARATOR;
     }
 
     /**
@@ -62,7 +63,7 @@ class Enlight_Application
      */
     public static function DS()
     {
-        trigger_error('Enlight_Application::DS() is deprecated since version 5.2 and will be removed in 6.0.', E_USER_DEPRECATED);
+        trigger_error('Enlight_Application::DS() is deprecated since version 5.2 and will be removed in 5.8.', E_USER_DEPRECATED);
 
         return DIRECTORY_SEPARATOR;
     }
@@ -74,7 +75,7 @@ class Enlight_Application
      */
     public static function Instance()
     {
-        trigger_error('Enlight_Application::Instance() is deprecated since version 5.2 and will be removed in 6.0.', E_USER_DEPRECATED);
+        trigger_error('Enlight_Application::Instance() is deprecated since version 5.2 and will be removed in 5.8.', E_USER_DEPRECATED);
 
         return self::$instance;
     }
@@ -83,11 +84,12 @@ class Enlight_Application
      * Returns the enlight path: <projectroot>/engine/Library/Enlight/
      *
      * @param string $path
+     *
      * @return string
      */
     public function CorePath($path = null)
     {
-        trigger_error('Enlight_Application::CorePath() is deprecated since version 5.2 and will be removed in 6.0.', E_USER_DEPRECATED);
+        trigger_error('Enlight_Application::CorePath() is deprecated since version 5.2 and will be removed in 5.8.', E_USER_DEPRECATED);
 
         return $this->normalizePath($this->core_path, $path);
     }
@@ -96,32 +98,34 @@ class Enlight_Application
      * Returns the enlight components path: <projectroot>/engine/Library/Enlight/Components/
      *
      * @param string $path
+     *
      * @return string
      */
     public function ComponentsPath($path = null)
     {
-        trigger_error('Enlight_Application::ComponentsPath() is deprecated since version 5.2 and will be removed in 6.0.', E_USER_DEPRECATED);
+        trigger_error('Enlight_Application::ComponentsPath() is deprecated since version 5.2 and will be removed in 5.8.', E_USER_DEPRECATED);
 
         return $this->normalizePath($this->core_path . 'Components' . DIRECTORY_SEPARATOR, $path);
     }
-
 
     /**
      * Returns the library path: <projectroot>/engine/Library/
      *
      * @param string $path
+     *
      * @return string
      */
     public function Path($path = null)
     {
-        trigger_error('Enlight_Application::Path() is deprecated since version 5.2 and will be removed in 6.0.', E_USER_DEPRECATED);
+        trigger_error('Enlight_Application::Path() is deprecated since version 5.2 and will be removed in 5.8.', E_USER_DEPRECATED);
 
         return $this->normalizePath($this->path, $path);
     }
 
     /**
-     * @param string $basePath
+     * @param string      $basePath
      * @param string|null $path
+     *
      * @return string
      */
     private function normalizePath($basePath, $path = null)
@@ -139,12 +143,13 @@ class Enlight_Application
 /**
  * Proxy to Shopware()
  *
- * @param   Enlight_Application $newInstance
- * @return  Enlight_Application
+ * @param Enlight_Application $newInstance
+ *
+ * @return Enlight_Application
  */
 function Enlight($newInstance = null)
 {
-    trigger_error('Enlight() is deprecated since version 5.2 and will be removed in 6.0. Use Shopware() instead.', E_USER_DEPRECATED);
+    trigger_error('Enlight() is deprecated since version 5.2 and will be removed in 5.8. Use Shopware() instead.', E_USER_DEPRECATED);
 
     return Shopware($newInstance);
 }

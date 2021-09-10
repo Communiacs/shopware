@@ -48,7 +48,7 @@ class Shopware_Controllers_Backend_Widgets extends Shopware_Controllers_Backend_
         $identity = $auth->getIdentity();
         $userID = (int) $identity->id;
 
-        $builder = Shopware()->Container()->get('models')->createQueryBuilder();
+        $builder = Shopware()->Container()->get(\Shopware\Components\Model\ModelManager::class)->createQueryBuilder();
         $builder->select(['widget', 'view', 'plugin'])
             ->from(Widget::class, 'widget')
             ->leftJoin('widget.views', 'view', 'WITH', 'view.authId = ?1')
@@ -151,17 +151,17 @@ class Shopware_Controllers_Backend_Widgets extends Shopware_Controllers_Backend_
 
         $model = new View();
         $model->setWidget(
-            $this->get('models')->find(Widget::class, $widgetId)
+            $this->get(\Shopware\Components\Model\ModelManager::class)->find(Widget::class, $widgetId)
         );
         $model->setAuth(
-            $this->get('models')->find(User::class, $userID)
+            $this->get(\Shopware\Components\Model\ModelManager::class)->find(User::class, $userID)
         );
         $model->setColumn($column);
         $model->setPosition($position);
         $model->setData($data);
 
-        $this->get('models')->persist($model);
-        $this->get('models')->flush();
+        $this->get(\Shopware\Components\Model\ModelManager::class)->persist($model);
+        $this->get(\Shopware\Components\Model\ModelManager::class)->flush();
         $viewId = $model->getId();
 
         $this->View()->assign(['success' => !empty($viewId), 'viewId' => $viewId]);
@@ -183,9 +183,9 @@ class Shopware_Controllers_Backend_Widgets extends Shopware_Controllers_Backend_
         $request = $this->Request();
         $id = $request->getParam('id');
 
-        if ($model = Shopware()->Container()->get('models')->find(View::class, $id)) {
-            Shopware()->Container()->get('models')->remove($model);
-            Shopware()->Container()->get('models')->flush();
+        if ($model = Shopware()->Container()->get(\Shopware\Components\Model\ModelManager::class)->find(View::class, $id)) {
+            Shopware()->Container()->get(\Shopware\Components\Model\ModelManager::class)->remove($model);
+            Shopware()->Container()->get(\Shopware\Components\Model\ModelManager::class)->flush();
         }
 
         $this->View()->assign(['success' => true]);
@@ -320,17 +320,17 @@ class Shopware_Controllers_Backend_Widgets extends Shopware_Controllers_Backend_
                 'data' => [
                     [
                         'name' => $namespace->get('today', 'Today'),
-                        'turnover' => $fetchAmount['today'],
-                        'visitors' => $fetchVisitors['today'],
-                        'newCustomers' => $fetchCustomers['today'],
-                        'orders' => $fetchOrders['today'],
+                        'turnover' => (float) $fetchAmount['today'],
+                        'visitors' => (int) $fetchVisitors['today'],
+                        'newCustomers' => (int) $fetchCustomers['today'],
+                        'orders' => (int) $fetchOrders['today'],
                     ],
                     [
                         'name' => $namespace->get('yesterday', 'Yesterday'),
-                        'turnover' => $fetchAmount['yesterday'],
-                        'visitors' => $fetchVisitors['yesterday'],
-                        'newCustomers' => $fetchCustomers['yesterday'],
-                        'orders' => $fetchOrders['yesterday'],
+                        'turnover' => (float) $fetchAmount['yesterday'],
+                        'visitors' => (int) $fetchVisitors['yesterday'],
+                        'newCustomers' => (int) $fetchCustomers['yesterday'],
+                        'orders' => (int) $fetchOrders['yesterday'],
                     ],
                 ],
                 'conversion' => $fetchConversion,
@@ -358,7 +358,7 @@ class Shopware_Controllers_Backend_Widgets extends Shopware_Controllers_Backend_
 
         $data = Shopware()->Container()->get('db')->fetchAll($sql, [$timeBack]);
 
-        $result[] = [];
+        $result = [];
         foreach ($data as $row) {
             $result[] = [
                 'timestamp' => strtotime($row['date']),
@@ -478,7 +478,13 @@ class Shopware_Controllers_Backend_Widgets extends Shopware_Controllers_Backend_
      */
     public function getNoticeAction()
     {
-        $userID = $_SESSION['Shopware']['Auth']->id;
+        $userID = $_SESSION['ShopwareBackend']['Auth']->id;
+
+        if (empty($userID)) {
+            $this->View()->assign(['success' => false, 'message' => 'No user id']);
+
+            return;
+        }
 
         $noticeMsg = Shopware()->Container()->get('db')->fetchOne(
             '
@@ -499,13 +505,14 @@ class Shopware_Controllers_Backend_Widgets extends Shopware_Controllers_Backend_
     {
         $noticeMsg = (string) $this->Request()->getParam('notice');
 
-        $userID = $_SESSION['Shopware']['Auth']->id;
+        $userID = $_SESSION['ShopwareBackend']['Auth']->id;
 
         if (empty($userID)) {
             $this->View()->assign(['success' => false, 'message' => 'No user id']);
 
             return;
         }
+
         if (Shopware()->Container()->get('db')->fetchOne('SELECT id FROM s_plugin_widgets_notes WHERE userID = ?', [$userID])) {
             // Update
             Shopware()->Container()->get('db')->query(
@@ -593,7 +600,7 @@ class Shopware_Controllers_Backend_Widgets extends Shopware_Controllers_Backend_
         }
         $tplMail = sprintf($tplMail, $customerGroup);
 
-        $builder = $this->container->get('models')->createQueryBuilder();
+        $builder = $this->container->get(\Shopware\Components\Model\ModelManager::class)->createQueryBuilder();
         $builder->select(['customer.email', 'customer.languageId'])
             ->from('Shopware\Models\Customer\Customer', 'customer')
             ->where('customer.id = ?1')
@@ -636,7 +643,7 @@ class Shopware_Controllers_Backend_Widgets extends Shopware_Controllers_Backend_
             return true;
         }
 
-        $translationReader = $this->container->get('translation');
+        $translationReader = $this->container->get(\Shopware_Components_Translation::class);
         $translation = $translationReader->read($customer['languageId'], 'config_mails', $mailModel->getId());
         $mailModel->setTranslation($translation);
 
@@ -727,12 +734,12 @@ class Shopware_Controllers_Backend_Widgets extends Shopware_Controllers_Backend_
      */
     private function setWidgetPosition($viewId, $position, $column)
     {
-        $model = Shopware()->Container()->get('models')->find('Shopware\Models\Widget\View', $viewId);
+        $model = Shopware()->Container()->get(\Shopware\Components\Model\ModelManager::class)->find('Shopware\Models\Widget\View', $viewId);
         $model->setPosition($position);
         $model->setColumn($column);
 
-        Shopware()->Container()->get('models')->persist($model);
-        Shopware()->Container()->get('models')->flush();
+        Shopware()->Container()->get(\Shopware\Components\Model\ModelManager::class)->persist($model);
+        Shopware()->Container()->get(\Shopware\Components\Model\ModelManager::class)->flush();
     }
 
     /**
@@ -782,7 +789,7 @@ class Shopware_Controllers_Backend_Widgets extends Shopware_Controllers_Backend_
         }
 
         if ($limit) {
-            $result = array_slice($result, 0, $limit);
+            $result = \array_slice($result, 0, $limit);
         }
 
         return $result;

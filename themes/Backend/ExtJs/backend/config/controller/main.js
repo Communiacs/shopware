@@ -47,20 +47,6 @@ Ext.define('Shopware.apps.Config.controller.Main', {
         'main.Panel',
         'main.Form', 'main.Fieldset',
 
-        'element.Boolean',
-        'element.Button',
-        'element.Date',
-        'element.Html',
-        'element.Select',
-        'element.Text',
-        'element.TextArea',
-        'element.Time',
-        'element.Number',
-        'element.DateTime',
-        'element.Interval',
-        'element.SelectTree',
-        'element.ProductBoxLayoutSelect',
-        'element.Color',
         'element.CustomSortingSelection',
         'element.CustomSortingGrid',
         'element.CustomFacetGrid'
@@ -227,20 +213,20 @@ Ext.define('Shopware.apps.Config.controller.Main', {
 
         form.setDirty();
 
-        var title = '{s name=form/message/save_form_title}Save form{/s}',
+        var title = '{s name="form/message/save_form_title"}Save form{/s}',
             win = me.getWindow();
 
         form.store.add(form);
         form.store.sync({
             success :function (records, operation) {
-                var template = new Ext.Template('{s name=form/message/save_form_success}Form „[name]“ has been saved.{/s}'),
+                var template = new Ext.Template('{s name="form/message/save_form_success"}Form „[name]“ has been saved.{/s}'),
                     message = template.applyTemplate({
                         name: form.data.label || form.data.name
                     });
                 Shopware.Notification.createGrowlMessage(title, message, win.title);
             },
             failure:function (batch) {
-                var template = new Ext.Template('{s name=form/message/save_form_error}Form „[name]“ could not be saved.{/s}'),
+                var template = new Ext.Template('{s name="form/message/save_form_error"}Form „[name]“ could not be saved.{/s}'),
                     message = template.applyTemplate({
                         name: form.data.label || form.data.name
                     });

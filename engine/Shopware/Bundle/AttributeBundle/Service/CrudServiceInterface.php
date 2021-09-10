@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 /**
  * Shopware 5
  * Copyright (c) shopware AG
@@ -26,8 +28,8 @@ namespace Shopware\Bundle\AttributeBundle\Service;
 
 interface CrudServiceInterface
 {
-    const EXT_JS_PREFIX = '__attribute_';
-    const NULL_STRING = 'NULL';
+    public const EXT_JS_PREFIX = '__attribute_';
+    public const NULL_STRING = 'NULL';
 
     /**
      * @param string $table

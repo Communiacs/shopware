@@ -25,7 +25,6 @@
 use Psr\Log\LoggerInterface;
 use Shopware\Components\CSRFWhitelistAware;
 use ShopwarePlugins\SwagUpdate\Components\Checks\EmotionTemplateCheck;
-use ShopwarePlugins\SwagUpdate\Components\Checks\IonCubeLoaderCheck;
 use ShopwarePlugins\SwagUpdate\Components\Checks\LicenseCheck;
 use ShopwarePlugins\SwagUpdate\Components\Checks\MySQLVersionCheck;
 use ShopwarePlugins\SwagUpdate\Components\Checks\PHPExtensionCheck;
@@ -50,7 +49,7 @@ class Shopware_Controllers_Backend_SwagUpdate extends Shopware_Controllers_Backe
     /**
      * Cache key for update response
      */
-    const CACHE_KEY = 'swag_update_response';
+    public const CACHE_KEY = 'swag_update_response';
 
     public function changelogAction()
     {
@@ -115,8 +114,11 @@ class Shopware_Controllers_Backend_SwagUpdate extends Shopware_Controllers_Backe
 
         $namespace = $this->get('snippets')->getNamespace('backend/swag_update/main');
 
+        /** @var string $endpoint */
+        $endpoint = $this->container->getParameter('shopware.store.apiEndpoint');
+
         $fileSystem = new \ShopwarePlugins\SwagUpdate\Components\FileSystem();
-        $conn = $this->get('dbal_connection');
+        $conn = $this->get(\Doctrine\DBAL\Connection::class);
         $checks = [
             new RegexCheck($namespace, $userLang),
             new MySQLVersionCheck($conn, $namespace),
@@ -124,8 +126,7 @@ class Shopware_Controllers_Backend_SwagUpdate extends Shopware_Controllers_Backe
             new EmotionTemplateCheck($conn, $namespace),
             new PHPExtensionCheck($namespace),
             new WritableCheck($fileSystem, $namespace),
-            new IonCubeLoaderCheck($namespace),
-            new LicenseCheck($conn, $this->container->getParameter('shopware.store.apiEndpoint'), $this->getShopwareVersion(), $namespace),
+            new LicenseCheck($conn, $endpoint, $this->getShopwareVersion(), $namespace),
         ];
         $validation = new Validation($namespace, $checks);
 
@@ -157,7 +158,7 @@ class Shopware_Controllers_Backend_SwagUpdate extends Shopware_Controllers_Backe
         $result = $fs->checkDirectoryPermissions(Shopware()->DocPath(), true);
 
         if (!empty($result)) {
-            $wrongPermissionCount = count($result);
+            $wrongPermissionCount = \count($result);
 
             $this->container->get('corelogger')->error(
                 sprintf('SwagUpdate: There are %d files without write permission. FTP credentials are needed.', $wrongPermissionCount),
@@ -252,7 +253,9 @@ class Shopware_Controllers_Backend_SwagUpdate extends Shopware_Controllers_Backe
         }
 
         $payload = json_encode($payload);
-        $projectDir = $this->container->getParameter('shopware.app.rootdir');
+
+        /** @var string $projectDir */
+        $projectDir = $this->container->getParameter('shopware.app.rootDir');
         $updateFilePath = $projectDir . 'files/update/update.json';
 
         if (!file_put_contents($updateFilePath, $payload)) {
@@ -357,7 +360,7 @@ class Shopware_Controllers_Backend_SwagUpdate extends Shopware_Controllers_Backe
             $sourceFile = $file->getPathname();
             $destinationFile = Shopware()->DocPath() . str_replace($fileDir, '', $file->getPathname());
 
-            $destinationDirectory = dirname($destinationFile);
+            $destinationDirectory = \dirname($destinationFile);
             $fs->mkdir($destinationDirectory);
             $fs->rename($sourceFile, $destinationFile, true);
         }
@@ -407,7 +410,7 @@ class Shopware_Controllers_Backend_SwagUpdate extends Shopware_Controllers_Backe
     private function getUnique()
     {
         /** @var Shopware\Bundle\PluginInstallerBundle\Service\UniqueIdGeneratorInterface $uniqueIdGenerator */
-        $uniqueIdGenerator = $this->container->get('shopware_plugininstaller.unique_id_generator');
+        $uniqueIdGenerator = $this->container->get(\Shopware\Bundle\PluginInstallerBundle\Service\UniqueIdGenerator\UniqueIdGenerator::class);
 
         return $uniqueIdGenerator->getUniqueId();
     }
@@ -430,7 +433,10 @@ class Shopware_Controllers_Backend_SwagUpdate extends Shopware_Controllers_Backe
         if (!empty($pluginConfig['update-fake-version'])) {
             $shopwareVersion = $pluginConfig['update-fake-version'];
         } else {
+            /** @var string $shopwareVersion */
             $shopwareVersion = $this->container->getParameter('shopware.release.version');
+
+            /** @var string $versionText */
             $versionText = $this->container->getParameter('shopware.release.version_text');
             if (!empty($versionText)) {
                 $shopwareVersion .= '-' . $versionText;
@@ -446,7 +452,7 @@ class Shopware_Controllers_Backend_SwagUpdate extends Shopware_Controllers_Backe
     private function getCachedVersion()
     {
         /** @var \Zend_Cache_Core $cache */
-        $cache = $this->get('cache');
+        $cache = $this->get(\Zend_Cache_Core::class);
         if (false === $version = $cache->load(self::CACHE_KEY)) {
             $version = $this->fetchUpdateVersion();
         }
@@ -471,7 +477,7 @@ class Shopware_Controllers_Backend_SwagUpdate extends Shopware_Controllers_Backe
         $result = $update->checkUpdate($shopwareVersion, $params);
 
         /** @var \Zend_Cache_Core $cache */
-        $cache = $this->get('cache');
+        $cache = $this->get(\Zend_Cache_Core::class);
         $cache->save($result, self::CACHE_KEY, [], 60);
 
         return $result;
@@ -484,7 +490,10 @@ class Shopware_Controllers_Backend_SwagUpdate extends Shopware_Controllers_Backe
     {
         $filename = 'update_' . $version->sha1 . '.zip';
 
-        return $this->container->getParameter('shopware.app.rootdir') . $filename;
+        /** @var string $rootDir */
+        $rootDir = $this->container->getParameter('shopware.app.rootDir');
+
+        return $rootDir . $filename;
     }
 
     /**
@@ -531,6 +540,9 @@ class Shopware_Controllers_Backend_SwagUpdate extends Shopware_Controllers_Backe
 
     private function checkSecurityPlugin(): bool
     {
-        return array_key_exists('SwagSecurity', $this->container->getParameter('active_plugins'));
+        /** @var array<string, string> $activePlugins */
+        $activePlugins = $this->container->getParameter('active_plugins');
+
+        return \array_key_exists('SwagSecurity', $activePlugins);
     }
 }

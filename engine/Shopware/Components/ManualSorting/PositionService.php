@@ -95,7 +95,7 @@ ON DUPLICATE KEY UPDATE
         $productIds = array_map('intval', array_keys($positions));
         $positionValues = array_values($positions);
         $sorting = $this->getSorting($categoryId, $sortingId);
-        $maxPosition = max($positionValues);
+        $maxPosition = empty($positionValues) ? 0 : max($positionValues);
         $hasFoundMaxPosition = false;
 
         $products = $this->productLoader->load($categoryId, 0, max($maxPosition, $maxValue), $sorting)['data'];
@@ -103,11 +103,11 @@ ON DUPLICATE KEY UPDATE
 
         $i = 1;
         foreach ($products as $key => $product) {
-            if (in_array((int) $product['id'], $productIds, true)) {
+            if (\in_array((int) $product['id'], $productIds, true)) {
                 continue;
             }
 
-            while (in_array($i, $positionValues, true)) {
+            while (\in_array($i, $positionValues, true)) {
                 if ($maxPosition === $i) {
                     $hasFoundMaxPosition = true;
                 }

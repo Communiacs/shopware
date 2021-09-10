@@ -33,10 +33,14 @@ use Shopware\Models\Emotion\Preset;
 
 class PresetLoader implements PresetLoaderInterface
 {
-    /** @var ModelManager */
+    /**
+     * @var ModelManager
+     */
     private $modelManager;
 
-    /** @var MediaServiceInterface */
+    /**
+     * @var MediaServiceInterface
+     */
     private $mediaService;
 
     public function __construct(ModelManager $modelManager, MediaServiceInterface $mediaService)
@@ -126,13 +130,13 @@ class PresetLoader implements PresetLoaderInterface
             foreach ($element['data'] as &$data) {
                 $field = $fieldMapping[$data['fieldId']];
 
-                if (in_array($field['name'], ['file', 'image', 'fallback_picture'], true)) {
+                if (\in_array($field['name'], ['file', 'image', 'fallback_picture'], true)) {
                     $data['value'] = $this->mediaService->getUrl($data['value']);
                 }
 
                 if (!empty($data['value']) && strtolower($field['valueType']) === 'json') {
                     $data['value'] = json_decode($data['value'], true);
-                    if (is_array($data['value'])) {
+                    if (\is_array($data['value'])) {
                         foreach ($data['value'] as $key => &$value) {
                             if (isset($value['path'])) {
                                 $value['path'] = $this->mediaService->getUrl($value['path']);

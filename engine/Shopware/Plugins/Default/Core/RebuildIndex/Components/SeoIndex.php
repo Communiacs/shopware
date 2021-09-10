@@ -122,7 +122,7 @@ class Shopware_Components_SeoIndex extends Enlight_Class
 
         $shop = $repository->getById($shopId);
 
-        Shopware()->Container()->get('shopware.components.shop_registration_service')->registerShop($shop);
+        Shopware()->Container()->get(\Shopware\Components\ShopRegistrationServiceInterface::class)->registerShop($shop);
 
         return $shop;
     }
@@ -314,7 +314,7 @@ class Shopware_Components_SeoIndex extends Enlight_Class
             }
         }
 
-        return count($static);
+        return \count($static);
     }
 
     /**
@@ -343,6 +343,6 @@ class Shopware_Components_SeoIndex extends Enlight_Class
 
     public function countContentTypes(): int
     {
-        return (int) count(Shopware()->Container()->get(\Shopware\Bundle\ContentTypeBundle\Services\TypeProvider::class)->getTypes());
+        return (int) \count(Shopware()->Container()->get(\Shopware\Bundle\ContentTypeBundle\Services\TypeProvider::class)->getTypes());
     }
 }

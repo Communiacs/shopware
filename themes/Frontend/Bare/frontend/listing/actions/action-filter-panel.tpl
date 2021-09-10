@@ -2,7 +2,7 @@
 {namespace name="frontend/listing/listing_actions"}
 
 {block name='frontend_listing_actions_filter'}
-    {$listingMode = {config name=listingMode}}
+    {$listingMode = {config name="listingMode"}}
 
     <div class="action--filter-options off-canvas{if $facets|count <= 0} is--hidden{/if}{if $listingMode != 'full_page_reload'} is--ajax-reload{/if}">
 
@@ -34,7 +34,7 @@
                         {/block}
 
                         {block name="frontend_listing_actions_filter_form_search"}
-                            {if $term}
+                            {if $term !== null}
                                 <input type="hidden" name="{$shortParameters['sSearch']}" value="{$term|escape}"/>
                             {/if}
                         {/block}

@@ -62,7 +62,7 @@ class PluginExtractor
     public function __construct(
         $pluginDir,
         Filesystem $filesystem,
-        array $pluginDirectories = [],
+        array $pluginDirectories,
         ShopwareReleaseStruct $release,
         RequirementValidator $requirementValidator
     ) {
@@ -146,11 +146,11 @@ class PluginExtractor
      */
     private function clearOpcodeCache()
     {
-        if (function_exists('opcache_reset')) {
+        if (\function_exists('opcache_reset')) {
             opcache_reset();
         }
 
-        if (function_exists('apcu_clear_cache')) {
+        if (\function_exists('apcu_clear_cache')) {
             apcu_clear_cache();
         }
     }
@@ -162,13 +162,7 @@ class PluginExtractor
     private function assertPrefix($filename, $prefix)
     {
         if (strpos($filename, $prefix) !== 0) {
-            throw new \RuntimeException(
-                sprintf(
-                    'Detected invalid file/directory %s in the plugin zip: %s',
-                    $filename,
-                    $prefix
-                )
-            );
+            throw new \RuntimeException(sprintf('Detected invalid file/directory %s in the plugin zip: %s', $filename, $prefix));
         }
     }
 

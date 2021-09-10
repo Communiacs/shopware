@@ -117,7 +117,7 @@ class Shopware_Controllers_Backend_Customer extends Shopware_Controllers_Backend
      */
     public function preDispatch()
     {
-        if (!in_array($this->Request()->getActionName(), ['index', 'load', 'validateEmail'])) {
+        if (!\in_array($this->Request()->getActionName(), ['index', 'load', 'validateEmail'])) {
             $this->Front()->Plugins()->Json()->setRenderer(true);
         }
     }
@@ -143,7 +143,7 @@ class Shopware_Controllers_Backend_Customer extends Shopware_Controllers_Backend
         }, $paymentStatus);
 
         // Translate payment and dispatch method names.
-        $translationComponent = $this->get('translation');
+        $translationComponent = $this->get(\Shopware_Components_Translation::class);
         $payment = $translationComponent->translatePaymentMethods($payment);
         $dispatch = $translationComponent->translateDispatchMethods($dispatch);
 
@@ -177,7 +177,7 @@ class Shopware_Controllers_Backend_Customer extends Shopware_Controllers_Backend
         }
 
         $data = $this->getCustomer($customerId);
-        $data['serverTime'] = new DateTime($this->get('dbal_connection')->fetchColumn('SELECT NOW()'));
+        $data['serverTime'] = new DateTime($this->get(\Doctrine\DBAL\Connection::class)->fetchColumn('SELECT NOW()'));
 
         $this->View()->assign(['success' => true, 'data' => $data, 'total' => 1]);
     }
@@ -359,7 +359,7 @@ class Shopware_Controllers_Backend_Customer extends Shopware_Controllers_Backend
         $customer->fromArray($params);
 
         // If user will be activated, but the first login is still 0, because he was in doi-process
-        if ($customer->getActive() && $customer->getFirstLogin()->getTimestamp() === 0) {
+        if ($customer->getActive() && (!$customer->getFirstLogin() || $customer->getFirstLogin()->getTimestamp() === 0)) {
             $customer->setFirstLogin(new DateTime());
         }
 
@@ -372,7 +372,7 @@ class Shopware_Controllers_Backend_Customer extends Shopware_Controllers_Backend
 
         if (!$customer->getNumber() && Shopware()->Config()->get('shopwareManagedCustomerNumbers')) {
             /** @var NumberRangeIncrementerInterface $incrementer */
-            $incrementer = Shopware()->Container()->get('shopware.number_range_incrementer');
+            $incrementer = Shopware()->Container()->get(\Shopware\Components\NumberRangeIncrementerInterface::class);
             $customer->setNumber((string) $incrementer->increment('user'));
         }
 
@@ -426,7 +426,7 @@ class Shopware_Controllers_Backend_Customer extends Shopware_Controllers_Backend
         $customer = $query->getArrayResult();
 
         /** @var \Shopware\Components\Validator\EmailValidatorInterface $emailValidator */
-        $emailValidator = $this->container->get('validator.email');
+        $emailValidator = $this->container->get(\Shopware\Components\Validator\EmailValidator::class);
 
         if (empty($customer) && $emailValidator->isValid($mail)) {
             $this->Response()->setContent(1);
@@ -441,7 +441,7 @@ class Shopware_Controllers_Backend_Customer extends Shopware_Controllers_Backend
     public function performOrderAction()
     {
         $userId = $this->Request()->getParam('id');
-        $user = $this->get('dbal_connection')->fetchAssoc(
+        $user = $this->get(\Doctrine\DBAL\Connection::class)->fetchAssoc(
             'SELECT id, email, password, subshopID, language FROM s_user WHERE id = :userId',
             [
                 ':userId' => $userId,
@@ -456,18 +456,16 @@ class Shopware_Controllers_Backend_Customer extends Shopware_Controllers_Backend
         $repository = $this->getShopRepository();
         $shop = $repository->getActiveById($user['language']);
 
-        $this->get('shopware.components.shop_registration_service')->registerShop($shop);
-
-        session_regenerate_id(true);
-        $newSessionId = session_id();
-
         session_write_close();
-        session_start();
 
-        Shopware()->Session()->offsetSet('sessionId', $newSessionId);
-        Shopware()->Container()->reset('SessionId');
-        Shopware()->Container()->set('SessionId', $newSessionId);
-        Shopware()->Session()->unsetAll();
+        $this->get(\Shopware\Components\ShopRegistrationServiceInterface::class)->registerShop($shop);
+
+        $session = $this->get('session');
+        $session->clear();
+        $session->migrate(true);
+
+        Shopware()->Session()->offsetSet('sessionId', $session->getId());
+        Shopware()->Container()->set('sessionid', $session->getId());
 
         Shopware()->Session()->Admin = true;
         Shopware()->System()->_POST = [
@@ -476,7 +474,7 @@ class Shopware_Controllers_Backend_Customer extends Shopware_Controllers_Backend
         ];
         Shopware()->Modules()->Admin()->sLogin(true);
 
-        $hash = $this->container->get('shopware.components.optin_service')->add(OptinServiceInterface::TYPE_CUSTOMER_LOGIN_FROM_BACKEND, 300, [
+        $hash = $this->container->get(\Shopware\Components\OptinServiceInterface::class)->add(OptinServiceInterface::TYPE_CUSTOMER_LOGIN_FROM_BACKEND, 300, [
             'sessionId' => Shopware()->Session()->get('sessionId'),
             'shopId' => $shop->getId(),
         ]);
@@ -505,7 +503,7 @@ class Shopware_Controllers_Backend_Customer extends Shopware_Controllers_Backend
     {
         $hash = $this->Request()->getQuery('hash');
 
-        $optinService = $this->container->get('shopware.components.optin_service');
+        $optinService = $this->container->get(\Shopware\Components\OptinServiceInterface::class);
 
         $data = $optinService->get(OptinServiceInterface::TYPE_CUSTOMER_LOGIN_FROM_BACKEND, $hash);
 
@@ -721,7 +719,7 @@ class Shopware_Controllers_Backend_Customer extends Shopware_Controllers_Backend
 
         if (!empty($orders)) {
             $first = new \DateTime($orders[0]['date']);
-            $last = new \DateTime($orders[count($orders) - 1]['date']);
+            $last = new \DateTime($orders[\count($orders) - 1]['date']);
 
             // To display the whole time range the user inserted, check if the date of the first order equals the fromDate parameter
             if ($fromDate->format('Y-m') !== $first->format('Y-m')) {
@@ -855,7 +853,7 @@ class Shopware_Controllers_Backend_Customer extends Shopware_Controllers_Backend
      */
     private function fetchCustomerStreams($id)
     {
-        $query = $this->container->get('dbal_connection')->createQueryBuilder();
+        $query = $this->container->get(\Doctrine\DBAL\Connection::class)->createQueryBuilder();
 
         $ids = $query->select(['mapping.stream_id'])
             ->from('s_customer_streams_mapping', 'mapping')

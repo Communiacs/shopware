@@ -27,13 +27,14 @@
  * but we need a third state as a fallback to the default shop value
  */
 
-//{namespace name=backend/base/component/main}
+//{namespace name="backend/base/component/main"}
 
 //{block name="backend/base/component/element/boolean_select"}
 Ext.define('Shopware.apps.Base.view.element.BooleanSelect', {
     extend:'Ext.form.field.ComboBox',
     alias:[
-        'widget.base-element-boolean-select'
+        'widget.base-element-boolean-select',
+        'widget.config-element-boolean-select'
     ],
 
     queryMode: 'local',

@@ -101,13 +101,13 @@ class SettingsLabelsFindMissingCommand extends ShopwareCommand implements Comple
         }
 
         /** @var Locale|null $locale */
-        $locale = $this->container->get('models')
+        $locale = $this->container->get(\Shopware\Components\Model\ModelManager::class)
             ->getRepository(\Shopware\Models\Shop\Locale::class)
             ->findOneByLocale($input->getArgument('locale'));
         if (!$locale) {
             $output->writeln('<error>Provided locale not found</error>');
 
-            return null;
+            return 1;
         }
 
         $this->exportFormLabels($output, $locale, $dir);
@@ -127,7 +127,7 @@ class SettingsLabelsFindMissingCommand extends ShopwareCommand implements Comple
      */
     protected function exportFormLabels(OutputInterface $output, $locale, $dir)
     {
-        $formQueryBuilder = $this->container->get('models')->getDBALQueryBuilder();
+        $formQueryBuilder = $this->container->get(\Shopware\Components\Model\ModelManager::class)->getDBALQueryBuilder();
         $statement = $formQueryBuilder
             ->select('form.name AS name', 'form.label AS label', 'form.description AS description')
             ->from('s_core_config_forms', 'form')
@@ -145,7 +145,7 @@ class SettingsLabelsFindMissingCommand extends ShopwareCommand implements Comple
         $missingFormLabels = $statement->fetchAll();
 
         $output->writeln('<info></info>');
-        $output->writeln('<info>' . count($missingFormLabels) . ' missing form labels detected</info>');
+        $output->writeln('<info>' . \count($missingFormLabels) . ' missing form labels detected</info>');
         if ($missingFormLabels) {
             $formLabelFilePath = $dir . 'formTranslations' . str_replace('_', '', $locale->getLocale()) . '.php';
 
@@ -164,7 +164,7 @@ class SettingsLabelsFindMissingCommand extends ShopwareCommand implements Comple
      */
     protected function exportElementLabels(OutputInterface $output, $locale, $dir)
     {
-        $elementsQueryBuilder = $this->container->get('models')->getDBALQueryBuilder();
+        $elementsQueryBuilder = $this->container->get(\Shopware\Components\Model\ModelManager::class)->getDBALQueryBuilder();
         $statement = $elementsQueryBuilder
             ->select('form.name AS formName', 'elem.name AS elementName', 'elem.label AS label')
             ->from('s_core_config_forms', 'form')
@@ -184,7 +184,7 @@ class SettingsLabelsFindMissingCommand extends ShopwareCommand implements Comple
         $missingElementLabels = $statement->fetchAll();
 
         $output->writeln('<info></info>');
-        $output->writeln('<info>' . count($missingElementLabels) . ' missing element labels detected</info>');
+        $output->writeln('<info>' . \count($missingElementLabels) . ' missing element labels detected</info>');
         if ($missingElementLabels) {
             $elementLabelFilePath = $dir . 'elementTranslations' . str_replace('_', '', $locale->getLocale()) . '.php';
 

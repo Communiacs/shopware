@@ -150,12 +150,16 @@ class LegacyStructConverter
     }
 
     /**
-     * @param StoreFrontBundle\Struct\Country\State[] $states
+     * @param StoreFrontBundle\Struct\Country\State[]|null $states
      *
      * @return array
      */
     public function convertStateStructList($states)
     {
+        if ($states === null) {
+            return [];
+        }
+
         return array_map([$this, 'convertStateStruct'], $states);
     }
 
@@ -229,7 +233,7 @@ class LegacyStructConverter
         $detailUrl = ($category->isBlog() ? $blogBaseUrl : $baseUrl) . $category->getId();
         $canonicalParams = $this->getCategoryCanonicalParams($category);
 
-        if ($media && !array_key_exists('path', $media)) {
+        if ($media && !\array_key_exists('path', $media)) {
             $media['path'] = $media['source'];
         }
 
@@ -334,7 +338,7 @@ class LegacyStructConverter
         $promotion['linkVariant'] = $this->config->get('baseFile') .
             '?sViewport=detail&sArticle=' . $promotion['articleID'] . '&number=' . $promotion['ordernumber'];
 
-        if ($this->config->get('useShortDescriptionInListing') && strlen($promotion['description']) > 5) {
+        if ($this->config->get('useShortDescriptionInListing') && \strlen($promotion['description']) > 5) {
             $promotion['description_long'] = $promotion['description'];
         }
 
@@ -451,7 +455,7 @@ class LegacyStructConverter
         $data['referenceprice'] = $variantPrice->getCalculatedReferencePrice();
         $data['pricegroup'] = $variantPrice->getCustomerGroup()->getKey();
 
-        if (count($product->getPrices()) > 1) {
+        if (\count($product->getPrices()) > 1) {
             foreach ($product->getPrices() as $price) {
                 $data['sBlockPrices'][] = $this->convertPriceStruct(
                     $price
@@ -920,7 +924,7 @@ class LegacyStructConverter
         $variantPrice = $product->getVariantPrice();
         $cheapestPrice = $product->getListingPrice();
 
-        if (count($product->getPrices()) > 1 || $product->hasDifferentPrices()) {
+        if (\count($product->getPrices()) > 1 || $product->hasDifferentPrices()) {
             $data['priceStartingFrom'] = $this->sFormatPrice($cheapestPrice->getCalculatedPrice());
         }
 
@@ -1169,8 +1173,8 @@ class LegacyStructConverter
         $price = str_replace('.', ',', (string) $price); // Replaces points with commas
         $commaPos = strpos($price, ',');
         if ($commaPos) {
-            $part = substr($price, $commaPos + 1, strlen($price) - $commaPos);
-            switch (strlen($part)) {
+            $part = substr($price, $commaPos + 1, \strlen($price) - $commaPos);
+            switch (\strlen($part)) {
                 case 1:
                     $price .= '0';
                     break;

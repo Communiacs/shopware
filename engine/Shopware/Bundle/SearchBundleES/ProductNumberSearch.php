@@ -47,33 +47,23 @@ class ProductNumberSearch implements ProductNumberSearchInterface
     private $client;
 
     /**
-     * @var HandlerInterface[]
-     */
-    private $handlers;
-
-    /**
      * @var IndexFactoryInterface
      */
     private $indexFactory;
 
     /**
-     * @var string
+     * @var HandlerRegistry
      */
-    private $esVersion;
+    private $handlerRegistry;
 
-    /**
-     * @param HandlerInterface[] $handlers
-     */
     public function __construct(
         Client $client,
         IndexFactoryInterface $indexFactory,
-        $handlers,
-        string $esVersion
+        HandlerRegistry $handlerRegistry
     ) {
         $this->client = $client;
-        $this->handlers = $handlers;
         $this->indexFactory = $indexFactory;
-        $this->esVersion = $esVersion;
+        $this->handlerRegistry = $handlerRegistry;
     }
 
     /**
@@ -86,19 +76,10 @@ class ProductNumberSearch implements ProductNumberSearchInterface
 
         $arguments = [
             'index' => $index->getName(),
-            'type' => ProductMapping::TYPE,
             'body' => $search->toArray(),
+            'rest_total_hits_as_int' => true,
+            'track_total_hits' => true,
         ];
-
-        if (version_compare($this->esVersion, '7', '>=')) {
-            $arguments = array_merge(
-                $arguments,
-                [
-                    'rest_total_hits_as_int' => true,
-                    'track_total_hits' => true,
-                ]
-            );
-        }
 
         $data = $this->client->search(
             $arguments
@@ -116,7 +97,7 @@ class ProductNumberSearch implements ProductNumberSearchInterface
             $result->addAttribute('elastic_search', new Attribute(['max_score' => $data['hits']['max_score']]));
         }
 
-        foreach ($this->handlers as $handler) {
+        foreach ($this->handlerRegistry->getHandlers() as $handler) {
             if (!($handler instanceof ResultHydratorInterface)) {
                 continue;
             }
@@ -147,6 +128,7 @@ class ProductNumberSearch implements ProductNumberSearchInterface
         if ($criteria->getLimit() !== null) {
             $search->setSize($criteria->getLimit());
         }
+
         $search->addSort(new FieldSort('id', 'asc'));
 
         return $search;
@@ -162,23 +144,10 @@ class ProductNumberSearch implements ProductNumberSearchInterface
         array $criteriaParts
     ) {
         foreach ($criteriaParts as $criteriaPart) {
-            $handler = $this->getHandler($criteriaPart);
+            $handler = $this->handlerRegistry->getHandler($criteriaPart);
 
             $handler->handle($criteriaPart, $criteria, $search, $context);
         }
-    }
-
-    /**
-     * @return HandlerInterface|PartialConditionHandlerInterface
-     */
-    private function getHandler(CriteriaPartInterface $criteriaPart)
-    {
-        foreach ($this->handlers as $handler) {
-            if ($handler->supports($criteriaPart)) {
-                return $handler;
-            }
-        }
-        throw new \RuntimeException(sprintf('%s class not supported', get_class($criteriaPart)));
     }
 
     /**
@@ -218,27 +187,27 @@ class ProductNumberSearch implements ProductNumberSearchInterface
         EsSearch $search
     ): void {
         foreach ($criteria->getBaseConditions() as $condition) {
-            $handler = $this->getHandler($condition);
+            $handler = $this->handlerRegistry->getHandler($condition);
 
             if ($handler instanceof PartialConditionHandlerInterface) {
                 $handler->handleFilter($condition, $criteria, $search, $context);
             } else {
-                trigger_error(sprintf("Condition handler %s doesn't support new filter mode. Class has to implement \\Shopware\\Bundle\\SearchBundleES\\PartialConditionHandlerInterface.", get_class($handler)), E_USER_DEPRECATED);
+                trigger_error(sprintf("Condition handler %s doesn't support new filter mode. Class has to implement \\Shopware\\Bundle\\SearchBundleES\\PartialConditionHandlerInterface.", \get_class($handler)), E_USER_DEPRECATED);
                 $handler->handle($condition, $criteria, $search, $context);
             }
         }
 
         foreach ($criteria->getUserConditions() as $criteriaPart) {
-            $handler = $this->getHandler($criteriaPart);
+            $handler = $this->handlerRegistry->getHandler($criteriaPart);
 
             // Trigger error when new interface isn't implemented
             if (!$handler instanceof PartialConditionHandlerInterface) {
-                trigger_error(sprintf('Condition handler "%s" doesn\'t support new filter mode. Class has to implement "%s".', get_class($handler), PartialConditionHandlerInterface::class), E_USER_DEPRECATED);
+                trigger_error(sprintf('Condition handler "%s" doesn\'t support new filter mode. Class has to implement "%s".', \get_class($handler), PartialConditionHandlerInterface::class), E_USER_DEPRECATED);
             }
 
             // Filter mode active and handler doesn't supports the filter mode?
             if (!$handler instanceof PartialConditionHandlerInterface && $criteria->generatePartialFacets()) {
-                throw new \Exception(sprintf('New filter mode activated, handler class %s doesn\'t support this mode', get_class($handler)));
+                throw new \Exception(sprintf('New filter mode activated, handler class %s doesn\'t support this mode', \get_class($handler)));
             }
 
             // Filter mode active and handler supports new filter mode?
@@ -267,10 +236,10 @@ class ProductNumberSearch implements ProductNumberSearchInterface
         $sortedFacets = [];
 
         foreach ($result->getFacets() as $facetResult) {
-            if (array_key_exists($facetResult->getFacetName(), $sorting)) {
+            if (\array_key_exists($facetResult->getFacetName(), $sorting)) {
                 $position = $sorting[$facetResult->getFacetName()];
             } else {
-                $position = count($sorting) + count($sortedFacets) + 1;
+                $position = \count($sorting) + \count($sortedFacets) + 1;
             }
 
             $sortedFacets[$position] = $facetResult;

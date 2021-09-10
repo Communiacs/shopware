@@ -45,7 +45,7 @@ class Category extends Resource
 
     public function __construct(TranslationComponent $translationComponent = null)
     {
-        $this->translationComponent = $translationComponent ?: Shopware()->Container()->get('translation');
+        $this->translationComponent = $translationComponent ?: Shopware()->Container()->get(\Shopware_Components_Translation::class);
     }
 
     /**
@@ -97,7 +97,7 @@ class Category extends Resource
                 if (!empty($attributeTranslation)) {
                     $attributeTranslation['shopId'] = $shop['id'];
 
-                    if (!is_array($category['translations'][$shop['id']])) {
+                    if (!\is_array($category['translations'][$shop['id']])) {
                         $category['translations'][$shop['id']] = [];
                     }
 
@@ -398,7 +398,7 @@ class Category extends Resource
 
         if (isset($data['media']['link'])) {
             /** @var Media $mediaResource */
-            $mediaResource = $this->getContainer()->get('shopware.api.media');
+            $mediaResource = $this->getContainer()->get(\Shopware\Components\Api\Resource\Media::class);
             /** @var MediaModel $media */
             $media = $mediaResource->internalCreateMediaByFileLink($data['media']['link']);
         } elseif (!empty($data['media']['mediaId'])) {
@@ -417,7 +417,7 @@ class Category extends Resource
 
     private function prepareManualSorting(array $data, CategoryModel $category): array
     {
-        if (!array_key_exists('manualSorting', $data)) {
+        if (!\array_key_exists('manualSorting', $data)) {
             return $data;
         }
 
@@ -473,7 +473,7 @@ class Category extends Resource
     private function getAttributeProperties()
     {
         /** @var \Shopware\Bundle\AttributeBundle\Service\CrudServiceInterface $crud */
-        $crud = $this->getContainer()->get('shopware_attribute.crud_service');
+        $crud = $this->getContainer()->get(\Shopware\Bundle\AttributeBundle\Service\CrudServiceInterface::class);
         $list = $crud->getList('s_categories_attributes');
         $fields = [];
         foreach ($list as $property) {

@@ -49,11 +49,12 @@ class PluginCheck
      */
     public function checkInstalledPluginsAvailableForNewVersion($version)
     {
-        $service = $this->container->get('shopware_plugininstaller.plugin_service_store_production');
+        $service = $this->container->get(\Shopware\Bundle\PluginInstallerBundle\Service\PluginStoreService::class);
         $installedPlugins = $this->getUserInstalledPlugins();
         $technicalNames = array_column($installedPlugins, 'name');
         $locale = $this->getLocale();
 
+        /** @var string $shopwareVersion */
         $shopwareVersion = $this->container->getParameter('shopware.release.version');
 
         $request = new PluginsByTechnicalNameRequest($locale, $shopwareVersion, $technicalNames);
@@ -69,8 +70,8 @@ class PluginCheck
                 $key = strtolower($plugin['name']);
                 $name = $plugin['label'];
 
-                $inStore = array_key_exists($key, $storePlugins);
-                $targetVersionUpdateAvailable = array_key_exists($key, $updatesAvailable);
+                $inStore = \array_key_exists($key, $storePlugins);
+                $targetVersionUpdateAvailable = \array_key_exists($key, $updatesAvailable);
                 $description = $this->getPluginStateDescription($inStore, $targetVersionUpdateAvailable);
 
                 $results[] = [
@@ -136,7 +137,7 @@ class PluginCheck
      */
     private function getUserInstalledPlugins()
     {
-        $query = $this->container->get('dbal_connection')->createQueryBuilder();
+        $query = $this->container->get(\Doctrine\DBAL\Connection::class)->createQueryBuilder();
         $query->select(['plugin.name', 'plugin.label', 'plugin.version'])
             ->from('s_core_plugins', 'plugin')
             ->where('plugin.name NOT IN (:names)')

@@ -45,9 +45,7 @@ class EventSubscriberCompilerPass implements CompilerPassInterface
 
         foreach ($taggedServices as $id => $tagAttributes) {
             $def = $container->getDefinition($id);
-            if (!$def->isPublic()) {
-                throw new \InvalidArgumentException(sprintf('The service "%s" must be public as event subscribers are lazy-loaded.', $id));
-            }
+            $def->setPublic(true);
 
             if ($def->isAbstract()) {
                 throw new \InvalidArgumentException(sprintf('The service "%s" must not be abstract as event subscribers are lazy-loaded.', $id));

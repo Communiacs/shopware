@@ -5,6 +5,8 @@
            xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <services>
+        <defaults public="true"/>
+
         <service id="shopware_controllers_backend_address" class="Shopware_Controllers_Backend_Address">
             <tag name="shopware.controller" module="backend" controller="address"/>
         </service>
@@ -43,8 +45,9 @@
         </service>
 
         <service id="shopware_controllers_backend_logger" class="Shopware\Controllers\Backend\Logger">
-            <argument type="service" id="models"/>
-            <argument type="service" id="shopware.components.privacy.ip_anonymizer"/>
+            <argument type="service" id="Shopware\Components\Model\ModelManager"/>
+            <argument type="service" id="Shopware\Components\Privacy\IpAnonymizerInterface"/>
+
             <tag name="shopware.controller" module="backend" controller="logger"/>
         </service>
 
@@ -222,6 +225,7 @@
         </service>
 
         <service id="shopware_controllers_backend_snippet" class="Shopware_Controllers_Backend_Snippet">
+            <argument type="service" id="db" />
             <tag name="shopware.controller" module="backend" controller="snippet"/>
         </service>
 
@@ -271,6 +275,14 @@
 
         <service id="shopware_controllers_backend_manual_sorting" class="Shopware\Controllers\Backend\ManualSorting">
             <tag name="shopware.controller" module="backend" controller="manualsorting"/>
+        </service>
+
+        <service id="Shopware\Controllers\Backend\PluginManager">
+            <tag name="shopware.controller" module="backend" controller="pluginmanager"/>
+        </service>
+
+        <service id="Shopware\Controllers\Backend\PluginInstaller">
+            <tag name="shopware.controller" module="backend" controller="plugininstaller"/>
         </service>
     </services>
 </container>

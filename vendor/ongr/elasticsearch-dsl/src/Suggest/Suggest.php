@@ -11,11 +11,11 @@
 
 namespace ONGR\ElasticsearchDSL\Suggest;
 
-use ONGR\ElasticsearchDSL\BuilderInterface;
+use ONGR\ElasticsearchDSL\NamedBuilderInterface;
 use ONGR\ElasticsearchDSL\ParametersTrait;
 use Symfony\Component\Serializer\Exception\InvalidArgumentException;
 
-class Suggest implements BuilderInterface
+class Suggest implements NamedBuilderInterface
 {
     use ParametersTrait;
 
@@ -58,10 +58,14 @@ class Suggest implements BuilderInterface
 
     /**
      * @param string $name
+     *
+     * @return $this
      */
     public function setName($name)
     {
         $this->name = $name;
+
+        return $this;
     }
 
     /**
@@ -86,10 +90,14 @@ class Suggest implements BuilderInterface
 
     /**
      * @param string $type
+     *
+     * @return $this
      */
     public function setType($type)
     {
         $this->type = $type;
+
+        return $this;
     }
 
     /**
@@ -102,10 +110,14 @@ class Suggest implements BuilderInterface
 
     /**
      * @param string $text
+     *
+     * @return $this
      */
     public function setText($text)
     {
         $this->text = $text;
+
+        return $this;
     }
 
     /**
@@ -118,10 +130,14 @@ class Suggest implements BuilderInterface
 
     /**
      * @param string $field
+     *
+     * @return $this
      */
     public function setField($field)
     {
         $this->field = $field;
+
+        return $this;
     }
 
     /**

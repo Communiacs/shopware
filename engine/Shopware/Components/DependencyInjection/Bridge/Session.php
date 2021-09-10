@@ -24,11 +24,11 @@
 
 namespace Shopware\Components\DependencyInjection\Bridge;
 
-use Enlight_Components_Session as EnlightSession;
-use Enlight_Components_Session_Namespace as SessionNamespace;
 use Shopware\Components\DependencyInjection\Container;
 use Shopware\Components\Session\PdoSessionHandler;
-use Shopware\Models\Shop\Shop;
+use Symfony\Component\HttpFoundation\Session\Attribute\NamespacedAttributeBag;
+use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
+use Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage;
 
 /**
  * Session Dependency Injection Bridge
@@ -41,12 +41,16 @@ class Session
      */
     public function createSaveHandler(Container $container)
     {
-        $sessionOptions = $container->getParameter('shopware.session');
+        $sessionOptions = (array) $container->getParameter('shopware.session');
         if (isset($sessionOptions['save_handler']) && $sessionOptions['save_handler'] !== 'db') {
             return null;
         }
 
         $dbOptions = $container->getParameter('shopware.db');
+        if (!\is_array($dbOptions)) {
+            throw new \RuntimeException('Parameter shopware.db has to be an array');
+        }
+
         $conn = Db::createPDO($dbOptions);
 
         return new PdoSessionHandler(
@@ -63,38 +67,47 @@ class Session
     }
 
     /**
-     * @return SessionNamespace
+     * @return \Enlight_Components_Session_Namespace
      */
     public function createSession(Container $container, \SessionHandlerInterface $saveHandler = null)
     {
+        // If another session is already started, save and close it before starting the frontend session below.
+        // We need to do this, because the other session would use the session id of the frontend session and thus write
+        // its data into the wrong session.
+        \Enlight_Components_Session_Namespace::ensureBackendSessionClosed($container);
+        // Ensure no session is active before starting the frontend session below. We need to do this because there
+        // could be another session with inconsistent/invalid state in the container.
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+            // The empty session id signals to `Enlight_Components_Session_Namespace::start()` that the session cookie
+            // should be used as session id.
+            session_id('');
+        }
+
         $sessionOptions = $container->getParameter('shopware.session');
 
-        if (!empty($sessionOptions['unitTestEnabled'])) {
-            EnlightSession::$_unitTestEnabled = true;
-        }
-        unset($sessionOptions['unitTestEnabled']);
-
-        if (EnlightSession::isStarted()) {
-            EnlightSession::writeClose();
+        if (!\is_array($sessionOptions)) {
+            throw new \RuntimeException('Parameter shopware.session has to be an array');
         }
 
-        /** @var Shop $shop */
+        /** @var \Shopware\Models\Shop\Shop $shop */
         $shop = $container->get('shop');
         $mainShop = $shop->getMain() ?: $shop;
 
         $name = 'session-' . $shop->getId();
 
-        if ($container->get('config')->get('shareSessionBetweenLanguageShops')) {
+        if ($container->get(\Shopware_Components_Config::class)->get('shareSessionBetweenLanguageShops')) {
             $name = 'session-' . $mainShop->getId();
         }
 
         $sessionOptions['name'] = $name;
-        $basePath = $mainShop->getBasePath();
-        $sessionOptions['cookie_path'] = empty($basePath) ? '/' : $basePath;
 
         if ($mainShop->getSecure()) {
             $sessionOptions['cookie_secure'] = true;
         }
+
+        $basePath = $mainShop->getBasePath();
+        $sessionOptions['cookie_path'] = empty($basePath) ? '/' : $basePath;
 
         if ($saveHandler) {
             session_set_save_handler($saveHandler);
@@ -103,14 +116,34 @@ class Session
 
         unset($sessionOptions['locking']);
 
-        EnlightSession::start($sessionOptions);
+        if (isset($sessionOptions['save_path'])) {
+            ini_set('session.save_path', (string) $sessionOptions['save_path']);
+        }
 
-        $sessionId = EnlightSession::getId();
-        $container->set('sessionid', $sessionId);
+        if (isset($sessionOptions['save_handler'])) {
+            ini_set('session.save_handler', (string) $sessionOptions['save_handler']);
+        }
 
-        $namespace = new SessionNamespace('Shopware');
-        $namespace->offsetSet('sessionId', $sessionId);
+        $storage = new NativeSessionStorage($sessionOptions, $saveHandler);
 
-        return $namespace;
+        if (!empty($sessionOptions['unitTestEnabled']) || session_status() === PHP_SESSION_ACTIVE) {
+            $storage = new MockArraySessionStorage();
+        }
+
+        $attributeBag = new NamespacedAttributeBag('Shopware');
+
+        $session = new \Enlight_Components_Session_Namespace($storage, $attributeBag);
+        $session->start();
+        $session->set('sessionId', $session->getId());
+
+        $container->set('sessionid', $session->getId());
+
+        $requestStack = $container->get('request_stack');
+
+        if ($requestStack->getCurrentRequest()) {
+            $requestStack->getCurrentRequest()->setSession($session);
+        }
+
+        return $session;
     }
 }

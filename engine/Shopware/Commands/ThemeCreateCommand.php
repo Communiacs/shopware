@@ -58,7 +58,7 @@ class ThemeCreateCommand extends ShopwareCommand implements CompletionAwareInter
             /** @var QueryBuilder $queryBuilder */
             $queryBuilder = $this->getRepository()->createQueryBuilder('tpl');
 
-            if (strlen($context->getCurrentWord())) {
+            if (\strlen($context->getCurrentWord())) {
                 $queryBuilder->andWhere($queryBuilder->expr()->like('tpl.template', ':search'))
                     ->setParameter('search', addcslashes($context->getCurrentWord(), '_%') . '%');
             }
@@ -129,7 +129,7 @@ EOF
         $arguments = $input->getArguments();
 
         /** @var Installer $themeInstaller */
-        $themeInstaller = $this->container->get('theme_installer');
+        $themeInstaller = $this->container->get(\Shopware\Components\Theme\Installer::class);
         $themeInstaller->synchronize();
 
         if ($this->getRepository()->findOneByTemplate($arguments['template'])) {
@@ -155,7 +155,7 @@ EOF
         $arguments = array_merge($arguments, $this->dialog($input, $output));
 
         /** @var Generator $themeGenerator */
-        $themeGenerator = $this->container->get('theme_generator');
+        $themeGenerator = $this->container->get(\Shopware\Components\Theme\Generator::class);
         $themeGenerator->generateTheme($arguments, $parent);
 
         $output->writeln(sprintf('Theme "%s" has been created successfully.', $arguments['name']));
@@ -171,7 +171,7 @@ EOF
     private function getRepository()
     {
         if ($this->repository === null) {
-            $this->repository = $this->container->get('models')->getRepository('Shopware\Models\Shop\Template');
+            $this->repository = $this->container->get(\Shopware\Components\Model\ModelManager::class)->getRepository('Shopware\Models\Shop\Template');
         }
 
         return $this->repository;
