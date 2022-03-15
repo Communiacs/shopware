@@ -34,16 +34,6 @@ class YoutubeComponentHandler implements ComponentHandlerInterface
     public const COMPONENT_NAME = 'emotion-components-youtube';
 
     /**
-     * @var \Enlight_Event_EventManager
-     */
-    private $eventManager;
-
-    public function __construct(\Enlight_Event_EventManager $eventManager)
-    {
-        $this->eventManager = $eventManager;
-    }
-
-    /**
      * @return bool
      */
     public function supports(Element $element)

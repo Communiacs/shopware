@@ -38,7 +38,7 @@ interface ShopGatewayInterface
     /**
      * @param int $id
      *
-     * @return Shop
+     * @return Shop|null
      */
     public function get($id);
 }

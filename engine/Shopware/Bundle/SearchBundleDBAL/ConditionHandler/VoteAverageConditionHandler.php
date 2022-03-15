@@ -29,23 +29,19 @@ use Shopware\Bundle\SearchBundle\ConditionInterface;
 use Shopware\Bundle\SearchBundleDBAL\ConditionHandlerInterface;
 use Shopware\Bundle\SearchBundleDBAL\QueryBuilder;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
+use Shopware_Components_Config;
 
 class VoteAverageConditionHandler implements ConditionHandlerInterface
 {
-    /**
-     * @var \Shopware_Components_Config
-     */
-    private $config;
+    private Shopware_Components_Config $config;
 
-    public function __construct(\Shopware_Components_Config $config)
+    public function __construct(Shopware_Components_Config $config)
     {
         $this->config = $config;
     }
 
     /**
-     * Checks if the passed condition can be handled by this class.
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public function supportsCondition(ConditionInterface $condition)
     {
@@ -60,6 +56,14 @@ class VoteAverageConditionHandler implements ConditionHandlerInterface
         QueryBuilder $query,
         ShopContextInterface $context
     ) {
+        $this->addCondition($condition, $query, $context);
+    }
+
+    private function addCondition(
+        VoteAverageCondition $condition,
+        QueryBuilder $query,
+        ShopContextInterface $context
+    ): void {
         $shopCondition = '';
         if ($this->config->get('displayOnlySubShopVotes')) {
             $shopCondition = ' AND (vote.shop_id = :voteAverageShopId OR vote.shop_id IS NULL)';
@@ -80,7 +84,6 @@ GROUP BY vote.articleID';
              AND voteAverage.average >= :average'
         );
 
-        /* @var VoteAverageCondition $condition */
         $query->setParameter(':average', (float) $condition->getAverage());
         $query->addState(VoteAverageCondition::STATE_INCLUDES_VOTE_TABLE);
     }

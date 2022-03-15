@@ -24,8 +24,13 @@
 
 namespace Shopware\Bundle\PluginInstallerBundle\Struct;
 
-class UpdateResultStruct implements \JsonSerializable
+use JsonSerializable;
+use Shopware\Components\ObjectJsonSerializeTraitDeprecated;
+
+class UpdateResultStruct implements JsonSerializable
 {
+    use ObjectJsonSerializeTraitDeprecated;
+
     /**
      * @var PluginStruct[]
      */
@@ -68,13 +73,5 @@ class UpdateResultStruct implements \JsonSerializable
     public function isGtcAcceptanceRequired()
     {
         return $this->gtcAcceptanceRequired;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function jsonSerialize()
-    {
-        return get_object_vars($this);
     }
 }

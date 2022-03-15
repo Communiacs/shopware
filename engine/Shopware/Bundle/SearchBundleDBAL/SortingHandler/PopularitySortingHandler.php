@@ -49,6 +49,11 @@ class PopularitySortingHandler implements SortingHandlerInterface
         QueryBuilder $query,
         ShopContextInterface $context
     ) {
+        $this->addSorting($sorting, $query);
+    }
+
+    private function addSorting(PopularitySorting $sorting, QueryBuilder $query): void
+    {
         if (!$query->hasState(SalesConditionHandler::STATE_INCLUDES_TOPSELLER_TABLE)) {
             $query->leftJoin(
                 'product',
@@ -59,7 +64,6 @@ class PopularitySortingHandler implements SortingHandlerInterface
             $query->addState(SalesConditionHandler::STATE_INCLUDES_TOPSELLER_TABLE);
         }
 
-        /* @var PopularitySorting $sorting */
         $query->addOrderBy('topSeller.sales', $sorting->getDirection());
     }
 }

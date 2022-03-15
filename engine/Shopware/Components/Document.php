@@ -22,10 +22,21 @@
  * our trademarks remain entirely with us.
  */
 
+use Doctrine\ORM\OptimisticLockException;
 use Mpdf\Mpdf;
+use Shopware\Bundle\AttributeBundle\Service\DataLoader;
 use Shopware\Bundle\OrderBundle\Service\OrderListProductServiceInterface;
 use Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface;
+use Shopware\Components\Model\Exception\ModelNotFoundException;
+use Shopware\Components\Model\ModelManager;
 use Shopware\Components\NumberRangeIncrementerInterface;
+use Shopware\Components\ShopRegistrationServiceInterface;
+use Shopware\Components\Theme\PathResolver;
+use Shopware\Models\Attribute\Document as DocumentAttribute;
+use Shopware\Models\Order\Document\Document;
+use Shopware\Models\Shop\Currency;
+use Shopware\Models\Shop\Shop;
+use Shopware\Models\Shop\Template;
 
 /**
  * Shopware document generator
@@ -35,21 +46,21 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
     /**
      * Object from Type Model\Order
      *
-     * @var \Shopware_Models_Document_Order
+     * @var Shopware_Models_Document_Order
      */
     public $_order;
 
     /**
      * Shopware Template Object (Smarty)
      *
-     * @var \Enlight_Template_Manager
+     * @var Enlight_Template_Manager
      */
     public $_template;
 
     /**
      * Shopware View Object (Smarty)
      *
-     * @var \Smarty_Data
+     * @var Smarty_Data
      */
     public $_view;
 
@@ -148,7 +159,7 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
     /**
      * Ref to the translation component
      *
-     * @var \Shopware_Components_Translation
+     * @var Shopware_Components_Translation
      */
     public $translationComponent;
 
@@ -161,7 +172,7 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
      *
      * @throws Enlight_Exception
      *
-     * @return \Shopware_Components_Document
+     * @return Shopware_Components_Document
      */
     public static function initDocument($orderID, $documentID, array $config = [])
     {
@@ -250,7 +261,7 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
      *
      * @param string $_renderer optional define renderer (pdf,html,return)
      *
-     * @throws \Enlight_Event_Exception
+     * @throws Enlight_Event_Exception
      * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
      */
     public function render($_renderer = '')
@@ -262,9 +273,8 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
             $this->assignValues();
         }
 
-        /* @var \Shopware\Models\Shop\Template $template */
         if (!empty($this->_subshop['doc_template_id'])) {
-            $template = Shopware()->Container()->get(\Shopware\Components\Model\ModelManager::class)->find(\Shopware\Models\Shop\Template::class, $this->_subshop['doc_template_id']);
+            $template = Shopware()->Container()->get(ModelManager::class)->find(Template::class, $this->_subshop['doc_template_id']);
 
             $inheritance = Shopware()->Container()->get('theme_inheritance')->getTemplateDirectories($template);
             $this->_template->setTemplateDir($inheritance);
@@ -272,7 +282,7 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
 
         $html = $this->_template->fetch('documents/' . $this->_document['template'], $this->_view);
 
-        /** @var \Enlight_Event_EventManager $eventManager */
+        /** @var Enlight_Event_EventManager $eventManager */
         $eventManager = Shopware()->Container()->get('events');
         $html = $eventManager->filter('Shopware_Components_Document_Render_FilterHtml', $html, [
             'subject' => $this,
@@ -415,7 +425,7 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
      *
      * @param int $userID
      *
-     * @throws \Exception
+     * @throws Exception
      *
      * @return array
      */
@@ -425,7 +435,7 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
             return [];
         }
 
-        $service = Shopware()->Container()->get(\Shopware\Bundle\AttributeBundle\Service\DataLoader::class);
+        $service = Shopware()->Container()->get(DataLoader::class);
 
         return $service->load('s_user_attributes', $userID);
     }
@@ -489,7 +499,7 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
         }
 
         $this->_view->assign('Order', $this->_order->__toArray());
-        $this->_view->assign('Containers', $this->_document->containers->getArrayCopy());
+        $this->_view->assign('Containers', $this->_document->offsetGet('containers')->getArrayCopy());
 
         $order = clone $this->_order;
 
@@ -561,7 +571,7 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
             Shopware()->Db()->fetchRow(
                 'SELECT * FROM s_core_documents WHERE id = ?',
                 [$id],
-                \PDO::FETCH_ASSOC
+                PDO::FETCH_ASSOC
             )
         );
 
@@ -569,11 +579,11 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
         $containers = Shopware()->Db()->fetchAll(
             'SELECT * FROM s_core_documents_box WHERE documentID = ?',
             [$id],
-            \PDO::FETCH_ASSOC
+            PDO::FETCH_ASSOC
         );
 
         $translation = $this->translationComponent->read($this->_order->order->language, 'documents');
-        $this->_document->containers = new ArrayObject();
+        $this->_document->offsetSet('containers', new ArrayObject());
         foreach ($containers as $key => $container) {
             if (!is_numeric($key)) {
                 continue;
@@ -588,18 +598,18 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
             // Parse smarty tags
             $containers[$key]['value'] = $this->_template->fetch('string:' . $containers[$key]['value']);
 
-            $this->_document->containers->offsetSet($container['name'], $containers[$key]);
+            $this->_document->offsetGet('containers')->offsetSet($container['name'], $containers[$key]);
         }
     }
 
     /**
      * Initiate smarty template engine
      *
-     * @throws \Exception
+     * @throws Exception
      */
     protected function initTemplateEngine()
     {
-        $frontendThemeDirectory = Shopware()->Container()->get(\Shopware\Components\Theme\PathResolver::class)->getFrontendThemeDirectory();
+        $frontendThemeDirectory = Shopware()->Container()->get(PathResolver::class)->getFrontendThemeDirectory();
 
         $this->_template = clone Shopware()->Template();
         $this->_view = $this->_template->createData();
@@ -616,30 +626,37 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
     /**
      * Sets the translation component
      *
-     * @throws \Exception
+     * @throws Exception
      */
     protected function setTranslationComponent()
     {
-        $this->translationComponent = Shopware()->Container()->get(\Shopware_Components_Translation::class);
+        $this->translationComponent = Shopware()->Container()->get(Shopware_Components_Translation::class);
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     protected function setOrder(Shopware_Models_Document_Order $order)
     {
         $this->_order = $order;
 
-        $repository = Shopware()->Models()->getRepository(\Shopware\Models\Shop\Shop::class);
+        $repository = Shopware()->Models()->getRepository(Shop::class);
         // "language" actually refers to a language-shop and not to a locale
         $shop = $repository->getById($this->_order->order->language);
-
-        if (!empty($this->_order->order->currencyID)) {
-            $repository = Shopware()->Models()->getRepository(\Shopware\Models\Shop\Currency::class);
-            $shop->setCurrency($repository->find($this->_order->order->currencyID));
+        if ($shop === null) {
+            throw new ModelNotFoundException(Shop::class, $this->_order->order->language);
         }
 
-        Shopware()->Container()->get(\Shopware\Components\ShopRegistrationServiceInterface::class)->registerResources($shop);
+        if (!empty($this->_order->order->currencyID)) {
+            $repository = Shopware()->Models()->getRepository(Currency::class);
+            $currency = $repository->find($this->_order->order->currencyID);
+            if ($currency === null) {
+                throw new ModelNotFoundException(Currency::class, $this->_order->order->currencyID);
+            }
+            $shop->setCurrency($currency);
+        }
+
+        Shopware()->Container()->get(ShopRegistrationServiceInterface::class)->registerResources($shop);
     }
 
     /**
@@ -658,10 +675,10 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
     /**
      * Save document in database / generate number
      *
-     * @throws \Exception
-     * @throws \RuntimeException
-     * @throws \Zend_Db_Adapter_Exception
-     * @throws \Doctrine\ORM\OptimisticLockException
+     * @throws Exception
+     * @throws RuntimeException
+     * @throws Zend_Db_Adapter_Exception
+     * @throws OptimisticLockException
      */
     protected function saveDocument()
     {
@@ -703,23 +720,26 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
 
             if (!empty($this->_config['attributes'])) {
                 // Get the updated document
-                $updatedDocument = Shopware()->Models()->getRepository(\Shopware\Models\Order\Document\Document::class)->findOneBy([
+                $updatedDocument = Shopware()->Models()->getRepository(Document::class)->findOneBy([
                     'type' => $typID,
                     'customerId' => $this->_order->userID,
                     'orderId' => $this->_order->id,
                 ]);
                 // Check its attributes
                 if ($updatedDocument->getAttribute() === null) {
-                    // Create a new attributes entity for the document
-                    $documentAttributes = new \Shopware\Models\Attribute\Document();
-                    $updatedDocument->setAttribute($documentAttributes);
+                    // Create a new attribute entity for the document
+                    $updatedDocument->setAttribute(new DocumentAttribute());
                     // Persist the document
                     Shopware()->Models()->flush($updatedDocument);
                 }
                 // Save all given attributes
-                $updatedDocument->getAttribute()->fromArray($this->_config['attributes']);
+                $documentAttributes = $updatedDocument->getAttribute();
+                if (!$documentAttributes instanceof DocumentAttribute) {
+                    throw new RuntimeException('Document attributes are not set correctly');
+                }
+                $documentAttributes->fromArray($this->_config['attributes']);
                 // Persist the attributes
-                Shopware()->Models()->flush($updatedDocument->getAttribute());
+                Shopware()->Models()->flush($documentAttributes);
             }
 
             $rowID = $checkForExistingDocument['id'];
@@ -750,11 +770,14 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
 
             // Add an entry in s_order_documents_attributes for the created document
             // containing all values found in the 'attributes' element of '_config'
-            $createdDocument = Shopware()->Models()->getRepository('\Shopware\Models\Order\Document\Document')->findOneById($rowID);
-            // Create a new attributes entity for the document
-            $documentAttributes = new \Shopware\Models\Attribute\Document();
+            $createdDocument = Shopware()->Models()->getRepository(Document::class)->findOneById($rowID);
+            // Create a new attribute entity for the document
+            $documentAttributes = new DocumentAttribute();
             $createdDocument->setAttribute($documentAttributes);
             if (!empty($this->_config['attributes'])) {
+                if (!$createdDocument->getAttribute() instanceof DocumentAttribute) {
+                    throw new RuntimeException('Document attributes are not set correctly');
+                }
                 // Save all given attributes
                 $createdDocument->getAttribute()->fromArray($this->_config['attributes']);
             }
@@ -774,7 +797,7 @@ class Shopware_Components_Document extends Enlight_Class implements Enlight_Hook
                 }
 
                 /** @var NumberRangeIncrementerInterface $incrementer */
-                $incrementer = Shopware()->Container()->get(\Shopware\Components\NumberRangeIncrementerInterface::class);
+                $incrementer = Shopware()->Container()->get(NumberRangeIncrementerInterface::class);
 
                 // Get the next number and save it in the document
                 $nextNumber = $incrementer->increment($numberrange);

@@ -24,6 +24,7 @@
 
 use Doctrine\ORM\AbstractQuery;
 use Shopware\Components\CSRFWhitelistAware;
+use Shopware\Components\Model\Exception\ModelNotFoundException;
 use Shopware\Components\Random;
 use Shopware\Models\Tax\Tax;
 use Shopware\Models\Voucher\Code;
@@ -302,6 +303,9 @@ class Shopware_Controllers_Backend_Voucher extends Shopware_Controllers_Backend_
             }
             //edit voucher
             $voucher = $this->getVoucherRepository()->find($voucherId);
+            if (!$voucher instanceof Voucher) {
+                throw new ModelNotFoundException(Voucher::class, $voucherId);
+            }
         } else {
             if (!$this->_isAllowed('create', 'voucher')) {
                 return;
@@ -446,7 +450,7 @@ class Shopware_Controllers_Backend_Voucher extends Shopware_Controllers_Backend_
     private function getVoucherRepository()
     {
         if ($this->voucherRepository === null) {
-            $this->voucherRepository = Shopware()->Models()->getRepository(Voucher::class);
+            $this->voucherRepository = $this->get('models')->getRepository(Voucher::class);
         }
 
         return $this->voucherRepository;
@@ -460,7 +464,7 @@ class Shopware_Controllers_Backend_Voucher extends Shopware_Controllers_Backend_
     private function getManager()
     {
         if ($this->manager === null) {
-            $this->manager = Shopware()->Models();
+            $this->manager = $this->get('models');
         }
 
         return $this->manager;
@@ -519,13 +523,13 @@ class Shopware_Controllers_Backend_Voucher extends Shopware_Controllers_Backend_
      * @param array  $range
      * @param string $pattern
      *
-     * @return string|null
+     * @return string
      */
     private function replaceAllMatchingPatterns($generatedCode, $range, $pattern)
     {
         $allPatternsReplaced = false;
         while (!$allPatternsReplaced) {
-            $generatedCode = preg_replace('/\\' . $pattern . '/', $range[Random::getInteger(1, \count($range) - 1)], $generatedCode, 1);
+            $generatedCode = (string) preg_replace('/\\' . $pattern . '/', $range[Random::getInteger(1, \count($range) - 1)], $generatedCode, 1);
             $allPatternsReplaced = substr_count($generatedCode, $pattern) == 0;
         }
 

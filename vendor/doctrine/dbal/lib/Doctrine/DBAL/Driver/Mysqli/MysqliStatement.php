@@ -17,6 +17,7 @@ use IteratorAggregate;
 use mysqli;
 use mysqli_stmt;
 use PDO;
+use ReturnTypeWillChange;
 
 use function array_combine;
 use function array_fill;
@@ -59,7 +60,7 @@ class MysqliStatement implements IteratorAggregate, StatementInterface, Result
     /** @var mixed[] */
     protected $_rowBindedValues = [];
 
-    /** @var mixed[] */
+    /** @var mixed[]|null */
     protected $_bindedValues;
 
     /** @var string */
@@ -563,6 +564,7 @@ class MysqliStatement implements IteratorAggregate, StatementInterface, Result
      *
      * @deprecated Use iterateNumeric(), iterateAssociative() or iterateColumn() instead.
      */
+    #[ReturnTypeWillChange]
     public function getIterator()
     {
         return new StatementIterator($this);

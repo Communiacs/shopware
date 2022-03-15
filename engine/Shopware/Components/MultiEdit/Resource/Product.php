@@ -24,6 +24,7 @@
 
 namespace Shopware\Components\MultiEdit\Resource;
 
+use RuntimeException;
 use Shopware\Components\MultiEdit\Resource\Product\Backup;
 use Shopware\Components\MultiEdit\Resource\Product\BatchProcess;
 use Shopware\Components\MultiEdit\Resource\Product\DqlHelper;
@@ -169,6 +170,10 @@ class Product implements ResourceInterface
             // All models except price
             if ($prefix !== 'price') {
                 $model = $entityManager->find($entity, $primaryIdentifiers[$prefix]);
+                if ($model === null) {
+                    continue;
+                }
+
                 foreach ($fields as $field) {
                     // Do not persist non-editable fields
                     $fieldInfo = $columnInfo[ucfirst($prefix) . ucfirst($field['field'])];
@@ -186,10 +191,14 @@ class Product implements ResourceInterface
             } else {
                 $detailModel = $entityManager->find(Detail::class, $primaryIdentifiers['detail']);
                 // store net prices
-                $tax = $detailModel->getArticle()->getTax()->getTax() / 100 + 1;
+                $tax = (float) $detailModel->getArticle()->getTax()->getTax() / 100 + 1;
                 $priceModel = $entityManager->getRepository($entity)->findOneBy(
                     ['articleDetailsId' => $detailModel->getId(), 'customerGroupKey' => 'EK', 'from' => 1]
                 );
+                if ($priceModel === null) {
+                    continue;
+                }
+
                 foreach ($fields as $field) {
                     // Do not persist non-editable fields
                     $fieldInfo = $columnInfo[ucfirst($prefix) . ucfirst($field['field'])];
@@ -198,6 +207,9 @@ class Product implements ResourceInterface
                     }
 
                     $price = str_replace(',', '.', $field['value']);
+                    if (!\is_string($price)) {
+                        throw new RuntimeException('Price needs to be a string');
+                    }
                     $price = $tax != 0 ? $price / $tax : 0;
                     $setter = 'set' . ucfirst($field['field']);
                     $priceModel->$setter($price);

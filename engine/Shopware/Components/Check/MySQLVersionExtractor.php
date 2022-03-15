@@ -24,13 +24,19 @@
 
 namespace Shopware\Components\Check;
 
+use RuntimeException;
+
 class MySQLVersionExtractor
 {
+    /**
+     * @return array<int, string>
+     */
     public static function extract(string $versionString): array
     {
         if (stripos($versionString, 'mariadb') === false) {
-            if (strpos($versionString, '-')) {
-                $versionString = substr($versionString, 0, strpos($versionString, '-'));
+            $versionStringDashPosition = strpos($versionString, '-');
+            if ($versionStringDashPosition !== false) {
+                $versionString = substr($versionString, 0, $versionStringDashPosition);
             }
 
             return ['mysql', $versionString];
@@ -46,7 +52,7 @@ class MySQLVersionExtractor
             $versionString,
             $versionParts
         )) {
-            throw new \RuntimeException(sprintf('Invalid version string: %s', $versionString));
+            throw new RuntimeException(sprintf('Invalid version string: %s', $versionString));
         }
 
         return $versionParts['major'] . '.' . $versionParts['minor'] . '.' . $versionParts['patch'];

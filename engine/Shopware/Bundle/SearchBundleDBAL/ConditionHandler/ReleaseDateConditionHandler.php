@@ -24,6 +24,8 @@
 
 namespace Shopware\Bundle\SearchBundleDBAL\ConditionHandler;
 
+use DateInterval;
+use DateTime;
 use Shopware\Bundle\SearchBundle\Condition\ReleaseDateCondition;
 use Shopware\Bundle\SearchBundle\ConditionInterface;
 use Shopware\Bundle\SearchBundleDBAL\ConditionHandlerInterface;
@@ -48,16 +50,20 @@ class ReleaseDateConditionHandler implements ConditionHandlerInterface
         QueryBuilder $query,
         ShopContextInterface $context
     ) {
-        $date = new \DateTime();
-        /** @var ReleaseDateCondition $condition */
+        $this->addCondition($condition, $query);
+    }
+
+    private function addCondition(ReleaseDateCondition $condition, QueryBuilder $query): void
+    {
+        $date = new DateTime();
         $intervalSpec = 'P' . $condition->getDays() . 'D';
-        $interval = new \DateInterval($intervalSpec);
+        $interval = new DateInterval($intervalSpec);
 
-        $dateNow = new \DateTime();
+        $dateNow = new DateTime();
 
-        $min = ':releaseDateFrom' . md5(json_encode($condition));
-        $max = ':releaseDateTo' . md5(json_encode($condition));
-        $now = ':dateNow' . md5(json_encode($condition));
+        $min = ':releaseDateFrom' . md5(json_encode($condition, JSON_THROW_ON_ERROR));
+        $max = ':releaseDateTo' . md5(json_encode($condition, JSON_THROW_ON_ERROR));
+        $now = ':dateNow' . md5(json_encode($condition, JSON_THROW_ON_ERROR));
 
         switch ($condition->getDirection()) {
             case ReleaseDateCondition::DIRECTION_FUTURE:

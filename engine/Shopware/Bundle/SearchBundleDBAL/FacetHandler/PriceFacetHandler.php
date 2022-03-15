@@ -24,61 +24,44 @@
 
 namespace Shopware\Bundle\SearchBundleDBAL\FacetHandler;
 
+use Enlight_Components_Snippet_Namespace;
+use PDO;
+use Shopware\Bundle\SearchBundle\Condition\PriceCondition;
 use Shopware\Bundle\SearchBundle\Condition\VariantCondition;
 use Shopware\Bundle\SearchBundle\Criteria;
-use Shopware\Bundle\SearchBundle\Facet;
+use Shopware\Bundle\SearchBundle\Facet\PriceFacet;
 use Shopware\Bundle\SearchBundle\FacetInterface;
 use Shopware\Bundle\SearchBundle\FacetResult\RangeFacetResult;
-use Shopware\Bundle\SearchBundle\FacetResultInterface;
 use Shopware\Bundle\SearchBundleDBAL\ListingPriceSwitcher;
 use Shopware\Bundle\SearchBundleDBAL\PartialFacetHandlerInterface;
+use Shopware\Bundle\SearchBundleDBAL\QueryBuilder;
 use Shopware\Bundle\SearchBundleDBAL\QueryBuilderFactoryInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 use Shopware\Components\QueryAliasMapper;
+use Shopware_Components_Snippet_Manager;
 
 class PriceFacetHandler implements PartialFacetHandlerInterface
 {
-    /**
-     * @var QueryBuilderFactoryInterface
-     */
-    private $queryBuilderFactory;
+    private QueryBuilderFactoryInterface $queryBuilderFactory;
 
-    /**
-     * @var \Enlight_Components_Snippet_Namespace
-     */
-    private $snippetNamespace;
+    private Enlight_Components_Snippet_Namespace $snippetNamespace;
 
-    /**
-     * @var string
-     */
-    private $minFieldName;
+    private string $minFieldName;
 
-    /**
-     * @var string
-     */
-    private $maxFieldName;
+    private string $maxFieldName;
 
-    /**
-     * @var ListingPriceSwitcher
-     */
-    private $listingPriceSwitcher;
+    private ListingPriceSwitcher $listingPriceSwitcher;
 
     public function __construct(
         QueryBuilderFactoryInterface $queryBuilderFactory,
-        \Shopware_Components_Snippet_Manager $snippetManager,
+        Shopware_Components_Snippet_Manager $snippetManager,
         QueryAliasMapper $queryAliasMapper,
         ListingPriceSwitcher $listingPriceSwitcher
     ) {
         $this->queryBuilderFactory = $queryBuilderFactory;
         $this->snippetNamespace = $snippetManager->getNamespace('frontend/listing/facet_labels');
-
-        if (!$this->minFieldName = $queryAliasMapper->getShortAlias('priceMin')) {
-            $this->minFieldName = 'priceMin';
-        }
-
-        if (!$this->maxFieldName = $queryAliasMapper->getShortAlias('priceMax')) {
-            $this->maxFieldName = 'priceMax';
-        }
+        $this->minFieldName = $queryAliasMapper->getShortAlias('priceMin') ?? 'priceMin';
+        $this->maxFieldName = $queryAliasMapper->getShortAlias('priceMax') ?? 'priceMax';
         $this->listingPriceSwitcher = $listingPriceSwitcher;
     }
 
@@ -87,49 +70,53 @@ class PriceFacetHandler implements PartialFacetHandlerInterface
      */
     public function supportsFacet(FacetInterface $facet)
     {
-        return $facet instanceof Facet\PriceFacet;
+        return $facet instanceof PriceFacet;
     }
 
-    /**
-     * @return FacetResultInterface|null
-     */
     public function generatePartialFacet(
         FacetInterface $facet,
         Criteria $reverted,
         Criteria $criteria,
         ShopContextInterface $context
     ) {
+        return $this->extracted($facet, $reverted, $criteria, $context);
+    }
+
+    private function extracted(
+        PriceFacet $facet,
+        Criteria $reverted,
+        Criteria $criteria,
+        ShopContextInterface $context
+    ): ?RangeFacetResult {
         $query = $this->buildQuery($reverted, $criteria, $context);
 
         $query->orderBy('listing_price.cheapest_price', 'ASC');
 
-        /** @var \Doctrine\DBAL\Driver\ResultStatement $statement */
         $statement = $query->execute();
 
-        $min = $statement->fetch(\PDO::FETCH_COLUMN);
+        $min = (float) $statement->fetch(PDO::FETCH_COLUMN);
 
         $query = $this->buildQuery($reverted, $criteria, $context);
 
         $query->orderBy('listing_price.cheapest_price', 'DESC');
 
-        /** @var \Doctrine\DBAL\Driver\ResultStatement $statement */
         $statement = $query->execute();
 
-        $max = $statement->fetch(\PDO::FETCH_COLUMN);
+        $max = (float) $statement->fetch(PDO::FETCH_COLUMN);
 
         $activeMin = $min;
         $activeMax = $max;
 
-        if ($condition = $criteria->getCondition($facet->getName())) {
+        $condition = $criteria->getCondition($facet->getName());
+        if ($condition instanceof PriceCondition) {
             $activeMin = $condition->getMinPrice();
             $activeMax = $condition->getMaxPrice();
         }
 
-        if ($min == $max) {
+        if ($min === $max) {
             return null;
         }
 
-        /** @var Facet\PriceFacet $facet */
         if (!empty($facet->getLabel())) {
             $label = $facet->getLabel();
         } else {
@@ -140,10 +127,10 @@ class PriceFacetHandler implements PartialFacetHandlerInterface
             $facet->getName(),
             $criteria->hasCondition($facet->getName()),
             $label,
-            (float) $min,
-            (float) $max,
-            (float) $activeMin,
-            (float) $activeMax,
+            $min,
+            $max,
+            $activeMin,
+            $activeMax,
             $this->minFieldName,
             $this->maxFieldName,
             [],
@@ -153,10 +140,7 @@ class PriceFacetHandler implements PartialFacetHandlerInterface
         );
     }
 
-    /**
-     * @return \Shopware\Bundle\SearchBundleDBAL\QueryBuilder
-     */
-    private function buildQuery(Criteria $reverted, Criteria $criteria, ShopContextInterface $context)
+    private function buildQuery(Criteria $reverted, Criteria $criteria, ShopContextInterface $context): QueryBuilder
     {
         $tmp = clone $reverted;
         $conditions = $criteria->getConditionsByClass(VariantCondition::class);

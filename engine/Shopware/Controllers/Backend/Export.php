@@ -46,7 +46,7 @@ class Shopware_Controllers_Backend_Export extends Enlight_Controller_Action impl
     public function init()
     {
         Shopware()->Plugins()->Backend()->Auth()->setNoAuth();
-        Shopware()->Plugins()->Controller()->ViewRenderer()->setNoRender();
+        Shopware()->Front()->Plugins()->ViewRenderer()->setNoRender();
         $this->Front()->setParam('disableOutputBuffering', true);
         $this->export = Shopware()->Modules()->Export();
     }
@@ -61,7 +61,7 @@ class Shopware_Controllers_Backend_Export extends Enlight_Controller_Action impl
         $this->prepareExport();
         $this->sendHeaders();
 
-        $productFeed = Shopware()->Models()->getRepository('\Shopware\Models\ProductFeed\ProductFeed')->find((int) $this->Request()->feedID);
+        $productFeed = $this->get('models')->getRepository('\Shopware\Models\ProductFeed\ProductFeed')->find((int) $this->Request()->feedID);
 
         // Live generation
         if ($productFeed->getInterval() === 0) {
@@ -90,8 +90,8 @@ class Shopware_Controllers_Backend_Export extends Enlight_Controller_Action impl
 
             // update last refresh
             $productFeed->setCacheRefreshed('now');
-            Shopware()->Models()->persist($productFeed);
-            Shopware()->Models()->flush($productFeed);
+            $this->get('models')->persist($productFeed);
+            $this->get('models')->flush($productFeed);
         }
 
         if (!file_exists($filePath)) {
@@ -186,12 +186,11 @@ class Shopware_Controllers_Backend_Export extends Enlight_Controller_Action impl
      */
     private function createOutputDirectory()
     {
-        $dirName = $this->container->getParameter('kernel.cache_dir');
+        $dirName = $this->container->getParameter('shopware.product_export.cache_dir');
         if (!\is_string($dirName)) {
-            throw new \RuntimeException('Parameter kernel.cache_dir has to be an string');
+            throw new \RuntimeException('Parameter shopware.product_export.cache_dir has to be an string');
         }
 
-        $dirName .= '/productexport/';
         if (!file_exists($dirName)) {
             mkdir($dirName);
         }

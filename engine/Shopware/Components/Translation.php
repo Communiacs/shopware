@@ -450,7 +450,8 @@ class Shopware_Components_Translation
 
         // Save the translated objects
         foreach ($orders as &$order) {
-            $orderDocuments = $order['documents'];
+            $orderDocuments = \is_array($order['documents']) ? $order['documents'] : [];
+
             for ($documentCounter = 0, $orderDocumentsCount = \count($orderDocuments); $documentCounter < $orderDocumentsCount; ++$documentCounter) {
                 $type = $orderDocuments[$documentCounter]['type'];
                 $order['documents'][$documentCounter]['type'] = $translatedDocumentTypes[$type['id']];
@@ -589,7 +590,7 @@ class Shopware_Components_Translation
 
         $text = html_entity_decode($text);
         $text = preg_replace('!<[^>]*?>!', ' ', $text);
-        $text = str_replace(\chr(0xa0), ' ', $text);
+        $text = str_replace(\chr(0xA0), ' ', $text);
         $text = preg_replace('/\s\s+/', ' ', $text);
         $text = htmlspecialchars($text);
         $text = trim($text);
@@ -602,7 +603,7 @@ class Shopware_Components_Translation
      *
      * @param string $type
      *
-     * @return array|bool
+     * @return array|false
      */
     protected function getMapping($type)
     {

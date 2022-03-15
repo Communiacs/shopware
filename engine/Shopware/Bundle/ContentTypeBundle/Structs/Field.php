@@ -24,9 +24,10 @@
 
 namespace Shopware\Bundle\ContentTypeBundle\Structs;
 
+use JsonSerializable;
 use Shopware\Bundle\ContentTypeBundle\Field\FieldInterface;
 
-class Field implements \JsonSerializable
+class Field implements JsonSerializable
 {
     /**
      * @var string
@@ -266,6 +267,9 @@ class Field implements \JsonSerializable
         return $this;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function jsonSerialize(): array
     {
         $vars = get_object_vars($this);

@@ -24,10 +24,14 @@
 
 namespace Shopware\Bundle\EmotionBundle\Struct;
 
+use JsonSerializable;
 use Shopware\Bundle\EmotionBundle\Struct\Library\Component;
+use Shopware\Components\ObjectJsonSerializeTraitDeprecated;
 
-class Element implements \JsonSerializable
+class Element implements JsonSerializable
 {
+    use ObjectJsonSerializeTraitDeprecated;
+
     /**
      * @var int
      */
@@ -275,13 +279,5 @@ class Element implements \JsonSerializable
     public function setCssClass($cssClass)
     {
         $this->cssClass = $cssClass;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function jsonSerialize()
-    {
-        return get_object_vars($this);
     }
 }

@@ -24,10 +24,14 @@
 
 namespace Shopware\Bundle\SearchBundle\Condition;
 
+use JsonSerializable;
 use Shopware\Bundle\SearchBundle\ConditionInterface;
+use Shopware\Components\ObjectJsonSerializeTraitDeprecated;
 
-class OrdernumberCondition implements ConditionInterface, \JsonSerializable
+class OrdernumberCondition implements ConditionInterface, JsonSerializable
 {
+    use ObjectJsonSerializeTraitDeprecated;
+
     private const NAME = 'ordernumber';
 
     /**
@@ -57,13 +61,5 @@ class OrdernumberCondition implements ConditionInterface, \JsonSerializable
     public function getOrdernumbers()
     {
         return $this->ordernumbers;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function jsonSerialize()
-    {
-        return get_object_vars($this);
     }
 }

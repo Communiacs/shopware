@@ -48,9 +48,14 @@ class PropertyConditionHandler implements ConditionHandlerInterface
         QueryBuilder $query,
         ShopContextInterface $context
     ) {
+        $this->addCondition($condition, $query);
+    }
+
+    private function addCondition(PropertyCondition $condition, QueryBuilder $query): void
+    {
         $tableKey = $condition->getName();
 
-        $suffix = md5(json_encode($condition));
+        $suffix = md5(json_encode($condition, JSON_THROW_ON_ERROR));
 
         if ($query->hasState('property_' . $tableKey)) {
             return;

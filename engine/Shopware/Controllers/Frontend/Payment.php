@@ -22,6 +22,8 @@
  * our trademarks remain entirely with us.
  */
 
+use Shopware\Bundle\CartBundle\CartKey;
+use Shopware\Bundle\CartBundle\CheckoutKey;
 use Shopware\Bundle\MailBundle\Service\LogEntryBuilder;
 use Shopware\Components\BasketSignature\BasketPersister;
 use Shopware\Components\BasketSignature\BasketSignatureGeneratorInterface;
@@ -88,7 +90,7 @@ abstract class Shopware_Controllers_Frontend_Payment extends Enlight_Controller_
         $orderNumber = Shopware()->Db()->fetchOne($sql, [
                 $transactionId,
                 $paymentUniqueId,
-                Shopware()->Session()->sUserId,
+                Shopware()->Session()->get('sUserId'),
             ]);
 
         if (empty($orderNumber)) {
@@ -97,16 +99,16 @@ abstract class Shopware_Controllers_Frontend_Payment extends Enlight_Controller_
 
             $order = Shopware()->Modules()->Order();
             $order->sUserData = $user;
-            $order->sComment = Shopware()->Session()->sComment;
+            $order->sComment = Shopware()->Session()->get('sComment');
             $order->sBasketData = $basket;
-            $order->sAmount = $basket['sAmount'];
-            $order->sAmountWithTax = !empty($basket['AmountWithTaxNumeric']) ? $basket['AmountWithTaxNumeric'] : $basket['AmountNumeric'];
-            $order->sAmountNet = $basket['AmountNetNumeric'];
-            $order->sShippingcosts = $basket['sShippingcosts'];
-            $order->sShippingcostsNumeric = $basket['sShippingcostsWithTax'];
-            $order->sShippingcostsNumericNet = $basket['sShippingcostsNet'];
+            $order->sAmount = $basket[CheckoutKey::AMOUNT];
+            $order->sAmountWithTax = !empty($basket[CartKey::AMOUNT_WITH_TAX_NUMERIC]) ? $basket[CartKey::AMOUNT_WITH_TAX_NUMERIC] : $basket[CartKey::AMOUNT_NUMERIC];
+            $order->sAmountNet = $basket[CartKey::AMOUNT_NET_NUMERIC];
+            $order->sShippingcosts = $basket[CheckoutKey::SHIPPING_COSTS];
+            $order->sShippingcostsNumeric = $basket[CheckoutKey::SHIPPING_COSTS_WITH_TAX];
+            $order->sShippingcostsNumericNet = $basket[CheckoutKey::SHIPPING_COSTS_NET];
             $order->bookingId = $transactionId;
-            $order->dispatchId = Shopware()->Session()->sDispatch;
+            $order->dispatchId = Shopware()->Session()->get('sDispatch');
             $order->sNet = empty($user['additional']['charge_vat']);
             $order->uniqueID = $paymentUniqueId;
             $order->deviceType = $this->Request()->getDeviceType();
@@ -153,10 +155,10 @@ abstract class Shopware_Controllers_Frontend_Payment extends Enlight_Controller_
         $user = $this->getUser();
         $basket = $this->getBasket();
         if (!empty($user['additional']['charge_vat'])) {
-            return empty($basket['AmountWithTaxNumeric']) ? $basket['AmountNumeric'] : $basket['AmountWithTaxNumeric'];
+            return empty($basket[CartKey::AMOUNT_WITH_TAX_NUMERIC]) ? $basket[CartKey::AMOUNT_NUMERIC] : $basket[CartKey::AMOUNT_WITH_TAX_NUMERIC];
         }
 
-        return $basket['AmountNetNumeric'];
+        return $basket[CartKey::AMOUNT_NET_NUMERIC];
     }
 
     /**
@@ -169,10 +171,10 @@ abstract class Shopware_Controllers_Frontend_Payment extends Enlight_Controller_
         $user = $this->getUser();
         $basket = $this->getBasket();
         if (!empty($user['additional']['charge_vat'])) {
-            return $basket['sShippingcostsWithTax'];
+            return $basket[CheckoutKey::SHIPPING_COSTS_WITH_TAX];
         }
 
-        return str_replace(',', '.', $basket['sShippingcosts']);
+        return str_replace(',', '.', $basket[CheckoutKey::SHIPPING_COSTS]);
     }
 
     /**
@@ -182,8 +184,8 @@ abstract class Shopware_Controllers_Frontend_Payment extends Enlight_Controller_
      */
     public function getUser()
     {
-        if (!empty(Shopware()->Session()->sOrderVariables['sUserData'])) {
-            return Shopware()->Session()->sOrderVariables['sUserData'];
+        if (!empty(Shopware()->Session()->get('sOrderVariables')['sUserData'])) {
+            return Shopware()->Session()->get('sOrderVariables')['sUserData'];
         }
 
         return null;
@@ -196,8 +198,8 @@ abstract class Shopware_Controllers_Frontend_Payment extends Enlight_Controller_
      */
     public function getBasket()
     {
-        if (!empty(Shopware()->Session()->sOrderVariables['sBasket'])) {
-            return Shopware()->Session()->sOrderVariables['sBasket'];
+        if (!empty(Shopware()->Session()->get('sOrderVariables')['sBasket'])) {
+            return Shopware()->Session()->get('sOrderVariables')['sBasket'];
         }
 
         return null;
@@ -208,8 +210,8 @@ abstract class Shopware_Controllers_Frontend_Payment extends Enlight_Controller_
      */
     public function getOrderNumber()
     {
-        if (!empty(Shopware()->Session()->sOrderVariables['sOrderNumber'])) {
-            return Shopware()->Session()->sOrderVariables['sOrderNumber'];
+        if (!empty(Shopware()->Session()->get('sOrderVariables')['sOrderNumber'])) {
+            return Shopware()->Session()->get('sOrderVariables')['sOrderNumber'];
         }
 
         return null;

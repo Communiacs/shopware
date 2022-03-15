@@ -26,11 +26,14 @@ namespace Shopware\Components\Api\Resource;
 
 use Doctrine\ORM\AbstractQuery;
 use Doctrine\ORM\EntityRepository;
+use Exception;
 use Shopware\Components\Api\BatchInterface;
-use Shopware\Components\Api\Exception as ApiException;
+use Shopware\Components\Api\Exception\CustomValidationException;
+use Shopware\Components\Api\Exception\NotFoundException;
+use Shopware\Components\Api\Exception\ParameterMissingException;
+use Shopware\Components\Model\Exception\ModelNotFoundException;
 use Shopware\Components\Model\QueryBuilder;
 use Shopware\Models\Article\Configurator\Group as ConfiguratorGroup;
-use Shopware\Models\Article\Configurator\Option as ConfiguratorOption;
 use Shopware\Models\Article\Detail;
 use Shopware\Models\Article\Supplier;
 use Shopware\Models\Country\Country;
@@ -41,6 +44,7 @@ use Shopware\Models\Property\Group;
 use Shopware\Models\Property\Option;
 use Shopware\Models\Property\Value;
 use Shopware\Models\Translation\Translation as TranslationModel;
+use Shopware_Components_Translation;
 
 /**
  * Translation API Resource
@@ -63,23 +67,23 @@ class Translation extends Resource implements BatchInterface
     public const TYPE_CONFIGURATOR_OPTION = 'configuratoroption';
 
     /**
-     * @var \Shopware_Components_Translation
+     * @var Shopware_Components_Translation
      */
     protected $translationWriter;
 
     /**
-     * @var EntityRepository
+     * @var EntityRepository|null
      */
     protected $repository;
 
     /**
-     * @var \Shopware_Components_Translation
+     * @var Shopware_Components_Translation
      */
     private $translationComponent;
 
-    public function __construct(\Shopware_Components_Translation $translationComponent = null)
+    public function __construct(Shopware_Components_Translation $translationComponent = null)
     {
-        $this->translationComponent = $translationComponent ?: Shopware()->Container()->get(\Shopware_Components_Translation::class);
+        $this->translationComponent = $translationComponent ?: Shopware()->Container()->get(Shopware_Components_Translation::class);
     }
 
     /**
@@ -106,7 +110,7 @@ class Translation extends Resource implements BatchInterface
     }
 
     /**
-     * @return \Shopware_Components_Translation
+     * @return Shopware_Components_Translation
      */
     public function getTranslationComponent()
     {
@@ -114,7 +118,7 @@ class Translation extends Resource implements BatchInterface
     }
 
     /**
-     * @param \Shopware_Components_Translation $translationWriter
+     * @param Shopware_Components_Translation $translationWriter
      */
     public function setTranslationComponent($translationWriter)
     {
@@ -169,7 +173,7 @@ class Translation extends Resource implements BatchInterface
      *
      * This three parameters are required in each function: create, update, delete / *-byNumber
      *
-     * @throws ApiException\ParameterMissingException
+     * @throws ParameterMissingException
      *
      * @return TranslationModel
      */
@@ -180,7 +184,7 @@ class Translation extends Resource implements BatchInterface
         $this->checkRequirements($data);
 
         if (!isset($data['key']) || empty($data['key'])) {
-            throw new ApiException\ParameterMissingException('The parameter key is required for a object translation.');
+            throw new ParameterMissingException('The parameter key is required for a object translation.');
         }
 
         return $this->saveTranslation($data);
@@ -198,7 +202,7 @@ class Translation extends Resource implements BatchInterface
      *
      * This three parameters are required in each function: create, update, delete / *-byNumber
      *
-     * @throws ApiException\ParameterMissingException
+     * @throws ParameterMissingException
      *
      * @return TranslationModel
      */
@@ -207,7 +211,7 @@ class Translation extends Resource implements BatchInterface
         $this->checkPrivilege('create');
 
         if (empty($data['key'])) {
-            throw new ApiException\ParameterMissingException('Create by number expects a passed entity number in the key property');
+            throw new ParameterMissingException('Create by number expects a passed entity number in the key property');
         }
 
         $this->checkRequirements($data);
@@ -234,7 +238,7 @@ class Translation extends Resource implements BatchInterface
      *
      * @param int $id - Identifier of the translated object, like the s_articles.id.
      *
-     * @throws ApiException\ParameterMissingException
+     * @throws ParameterMissingException
      *
      * @return TranslationModel
      */
@@ -243,7 +247,7 @@ class Translation extends Resource implements BatchInterface
         $this->checkPrivilege('update');
 
         if (empty($id)) {
-            throw new ApiException\ParameterMissingException('Update expects a passed id');
+            throw new ParameterMissingException('Update expects a passed id');
         }
 
         $this->checkRequirements($data);
@@ -269,7 +273,7 @@ class Translation extends Resource implements BatchInterface
      *                       This can be a product number, configurator group name or some thing else.
      *                       For more information which number fields are supported, look into the #getIdByNumber
      *
-     * @throws ApiException\ParameterMissingException
+     * @throws ParameterMissingException
      *
      * @return TranslationModel
      */
@@ -278,7 +282,7 @@ class Translation extends Resource implements BatchInterface
         $this->checkPrivilege('update');
 
         if (empty($number)) {
-            throw new ApiException\ParameterMissingException('Create by number expects a passed entity number');
+            throw new ParameterMissingException('Create by number expects a passed entity number');
         }
         $this->checkRequirements($data);
 
@@ -303,17 +307,17 @@ class Translation extends Resource implements BatchInterface
      * @param int   $id
      * @param array $data
      *
-     * @throws \Shopware\Components\Api\Exception\NotFoundException
-     * @throws ApiException\ParameterMissingException
+     * @throws NotFoundException
+     * @throws ParameterMissingException
      *
-     * @return bool
+     * @return true
      */
     public function delete($id, $data)
     {
         $this->checkPrivilege('delete');
 
         if (empty($id)) {
-            throw new ApiException\ParameterMissingException('id');
+            throw new ParameterMissingException('id');
         }
 
         $this->checkRequirements($data, false);
@@ -325,8 +329,8 @@ class Translation extends Resource implements BatchInterface
             AbstractQuery::HYDRATE_OBJECT
         );
 
-        if (!$translation) {
-            throw new ApiException\NotFoundException(sprintf('No translation found for type %s, shop id %s and foreign key %s', $data['type'], $data['shopId'], $id));
+        if (!$translation instanceof TranslationModel) {
+            throw new NotFoundException(sprintf('No translation found for type %s, shop id %s and foreign key %s', $data['type'], $data['shopId'], $id));
         }
 
         $this->getManager()->remove($translation);
@@ -351,14 +355,14 @@ class Translation extends Resource implements BatchInterface
      *                       For more information which number fields are supported, look into the #getIdByNumber
      * @param array  $data
      *
-     * @throws ApiException\ParameterMissingException
+     * @throws ParameterMissingException
      *
-     * @return bool
+     * @return true
      */
     public function deleteByNumber($number, $data)
     {
         if (empty($number)) {
-            throw new ApiException\ParameterMissingException('Delete by number expects a passed entity number');
+            throw new ParameterMissingException('Delete by number expects a passed entity number');
         }
 
         $this->checkRequirements($data, false);
@@ -383,10 +387,11 @@ class Translation extends Resource implements BatchInterface
      * @param int $offset
      * @param int $limit
      *
-     * @return \Doctrine\ORM\QueryBuilder|\Shopware\Components\Model\QueryBuilder
+     * @return QueryBuilder
      */
     protected function getListQuery($offset = 0, $limit = 25, array $criteria = [], array $orderBy = [])
     {
+        /** @var QueryBuilder $builder */
         $builder = $this->getManager()->createQueryBuilder();
         $builder->select(['translation'])
             ->from(TranslationModel::class, 'translation')
@@ -408,18 +413,17 @@ class Translation extends Resource implements BatchInterface
     /**
      * Helper function which handles the update and create process of translations.
      *
-     * @return array|TranslationModel|null
+     * @return TranslationModel
      */
     protected function saveTranslation(array $data)
     {
-        /** @var array $existing */
         $existing = $this->getObjectTranslation(
             $data['type'], // Translation object type
             $data['key'], // Identifier of the translatable entity (s_articles.id)
             $data['shopId'] // Identifier of the shop object
         );
 
-        if (!$existing) {
+        if (!\is_array($existing)) {
             $existing = [];
         } else {
             $existing['data'] = unserialize($existing['data'], ['allowed_classes' => false]);
@@ -438,12 +442,17 @@ class Translation extends Resource implements BatchInterface
             $data['data']
         );
 
-        return $this->getObjectTranslation(
+        $translation = $this->getObjectTranslation(
             $data['type'],
             $data['key'],
             $data['shopId'],
             AbstractQuery::HYDRATE_OBJECT
         );
+        if (!$translation instanceof TranslationModel) {
+            throw new ModelNotFoundException(TranslationModel::class, $data['key'], 'key');
+        }
+
+        return $translation;
     }
 
     /**
@@ -458,7 +467,6 @@ class Translation extends Resource implements BatchInterface
      */
     protected function getObjectTranslation($type, $key, $shopId, $resultMode = AbstractQuery::HYDRATE_ARRAY)
     {
-        /** @var QueryBuilder $builder */
         $builder = $this->getRepository()->createQueryBuilder('translations');
         $builder->setFirstResult(0)
             ->setMaxResults(1);
@@ -480,7 +488,7 @@ class Translation extends Resource implements BatchInterface
      * @param string $number
      * @param string $type
      *
-     * @throws \Exception
+     * @throws Exception
      *
      * @return int
      */
@@ -492,9 +500,11 @@ class Translation extends Resource implements BatchInterface
             case self::TYPE_VARIANT:
                 return $this->getProductVariantIdByNumber($number);
             case self::TYPE_PRODUCT_LINK:
-                return $this->getLinkIdByNumber($number);
+                $this->getLinkIdByNumber($number);
+                // no break
             case self::TYPE_PRODUCT_DOWNLOAD:
-                return $this->getDownloadIdByNumber($number);
+                $this->getDownloadIdByNumber($number);
+                // no break
             case self::TYPE_PRODUCT_MANUFACTURER:
                 return $this->getManufacturerIdByNumber($number);
             case self::TYPE_COUNTRY:
@@ -516,7 +526,7 @@ class Translation extends Resource implements BatchInterface
             case self::TYPE_CONFIGURATOR_OPTION:
                 return $this->getConfiguratorOptionIdByNumber($number);
             default:
-                throw new ApiException\CustomValidationException(sprintf('Unknown translation type %s', $type));
+                throw new CustomValidationException(sprintf('Unknown translation type %s', $type));
         }
     }
 
@@ -526,20 +536,19 @@ class Translation extends Resource implements BatchInterface
      *
      * @param string $number - Alphanumeric order number of the variant
      *
-     * @throws \Exception
+     * @throws Exception
      *
      * @return int - Identifier of the product
      */
     protected function getProductIdByNumber($number)
     {
-        /** @var Detail|null $entity */
         $entity = $this->findEntityByConditions(
             Detail::class,
             [['number' => $number]]
         );
 
-        if (!$entity) {
-            throw new ApiException\NotFoundException(sprintf('Variant by order number %s not found', $number));
+        if (!$entity instanceof Detail) {
+            throw new NotFoundException(sprintf('Variant by order number %s not found', $number));
         }
 
         return $entity->getArticle()->getId();
@@ -551,20 +560,19 @@ class Translation extends Resource implements BatchInterface
      *
      * @param string $number - Alphanumeric order number of the variant
      *
-     * @throws \Exception
+     * @throws Exception
      *
      * @return int - Identifier of the product
      */
     protected function getProductVariantIdByNumber($number)
     {
-        /** @var Detail|null $entity */
         $entity = $this->findEntityByConditions(
             Detail::class,
             [['number' => $number]]
         );
 
-        if (!$entity) {
-            throw new ApiException\NotFoundException(sprintf('Variant by order number %s not found', $number));
+        if (!$entity instanceof Detail) {
+            throw new NotFoundException(sprintf('Variant by order number %s not found', $number));
         }
 
         return $entity->getId();
@@ -577,11 +585,13 @@ class Translation extends Resource implements BatchInterface
      *
      * @param string $number
      *
-     * @throws ApiException\CustomValidationException
+     * @throws CustomValidationException
+     *
+     * @return never-return
      */
     protected function getLinkIdByNumber($number)
     {
-        throw new ApiException\CustomValidationException('Product links can not be found via an alphanumeric key');
+        throw new CustomValidationException('Product links can not be found via an alphanumeric key');
     }
 
     /**
@@ -591,11 +601,13 @@ class Translation extends Resource implements BatchInterface
      *
      * @param string $number
      *
-     * @throws ApiException\CustomValidationException
+     * @throws CustomValidationException
+     *
+     * @return never-return
      */
     protected function getDownloadIdByNumber($number)
     {
-        throw new ApiException\CustomValidationException('Product downloads can not be found via an alphanumeric key');
+        throw new CustomValidationException('Product downloads can not be found via an alphanumeric key');
     }
 
     /**
@@ -603,20 +615,19 @@ class Translation extends Resource implements BatchInterface
      *
      * @param string $number
      *
-     * @throws \Exception
+     * @throws Exception
      *
      * @return int
      */
     protected function getManufacturerIdByNumber($number)
     {
-        /** @var Supplier|null $entity */
         $entity = $this->findEntityByConditions(
             Supplier::class,
             [['name' => $number]]
         );
 
-        if (!$entity) {
-            throw new ApiException\NotFoundException(sprintf('Manufacturer by name %s not found', $number));
+        if (!$entity instanceof Supplier) {
+            throw new NotFoundException(sprintf('Manufacturer by name %s not found', $number));
         }
 
         return $entity->getId();
@@ -628,13 +639,12 @@ class Translation extends Resource implements BatchInterface
      *
      * @param string $number
      *
-     * @throws \Exception
+     * @throws Exception
      *
      * @return int
      */
     protected function getCountryIdByNumber($number)
     {
-        /** @var Country|null $country */
         $country = $this->findEntityByConditions(
             Country::class,
             [
@@ -643,8 +653,8 @@ class Translation extends Resource implements BatchInterface
             ]
         );
 
-        if (!$country) {
-            throw new ApiException\NotFoundException(sprintf('Country by iso/name %s not found', $number));
+        if (!$country instanceof Country) {
+            throw new NotFoundException(sprintf('Country by iso/name %s not found', $number));
         }
 
         return $country->getId();
@@ -656,13 +666,12 @@ class Translation extends Resource implements BatchInterface
      *
      * @param string $number
      *
-     * @throws \Exception
+     * @throws Exception
      *
      * @return int
      */
     protected function getCountryStateIdByNumber($number)
     {
-        /** @var State|null $entity */
         $entity = $this->findEntityByConditions(
             State::class,
             [
@@ -671,8 +680,8 @@ class Translation extends Resource implements BatchInterface
             ]
         );
 
-        if (!$entity) {
-            throw new ApiException\NotFoundException(sprintf('Country state by name/short code %s not found', $number));
+        if (!$entity instanceof State) {
+            throw new NotFoundException(sprintf('Country state by name/short code %s not found', $number));
         }
 
         return $entity->getId();
@@ -683,13 +692,12 @@ class Translation extends Resource implements BatchInterface
      *
      * @param string $number
      *
-     * @throws \Exception
+     * @throws Exception
      *
      * @return int
      */
     protected function getDispatchIdByNumber($number)
     {
-        /** @var Dispatch|null $entity */
         $entity = $this->findEntityByConditions(
             Dispatch::class,
             [
@@ -697,8 +705,8 @@ class Translation extends Resource implements BatchInterface
             ]
         );
 
-        if (!$entity) {
-            throw new ApiException\NotFoundException(sprintf('Dispatch by name code %s not found', $number));
+        if (!$entity instanceof Dispatch) {
+            throw new NotFoundException(sprintf('Dispatch by name code %s not found', $number));
         }
 
         return $entity->getId();
@@ -709,13 +717,12 @@ class Translation extends Resource implements BatchInterface
      *
      * @param string $number
      *
-     * @throws \Exception
+     * @throws Exception
      *
      * @return int
      */
     protected function getPaymentIdByNumber($number)
     {
-        /** @var Payment|null $entity */
         $entity = $this->findEntityByConditions(
             Payment::class,
             [
@@ -724,8 +731,8 @@ class Translation extends Resource implements BatchInterface
             ]
         );
 
-        if (!$entity) {
-            throw new ApiException\NotFoundException(sprintf('Payment by name/description code %s not found', $number));
+        if (!$entity instanceof Payment) {
+            throw new NotFoundException(sprintf('Payment by name/description code %s not found', $number));
         }
 
         return $entity->getId();
@@ -736,13 +743,12 @@ class Translation extends Resource implements BatchInterface
      *
      * @param string $number
      *
-     * @throws \Exception
+     * @throws Exception
      *
      * @return int
      */
     protected function getFilterSetIdByNumber($number)
     {
-        /** @var Group|null $entity */
         $entity = $this->findEntityByConditions(
             Group::class,
             [
@@ -750,8 +756,8 @@ class Translation extends Resource implements BatchInterface
             ]
         );
 
-        if (!$entity) {
-            throw new ApiException\NotFoundException(sprintf('Filter set by name code %s not found', $number));
+        if (!$entity instanceof Group) {
+            throw new NotFoundException(sprintf('Filter set by name code %s not found', $number));
         }
 
         return $entity->getId();
@@ -766,7 +772,7 @@ class Translation extends Resource implements BatchInterface
      *
      * @param string $number
      *
-     * @throws \Exception
+     * @throws Exception
      *
      * @return int
      */
@@ -775,10 +781,9 @@ class Translation extends Resource implements BatchInterface
         $numbers = explode('|', $number);
 
         if (\count($numbers) < 2) {
-            throw new ApiException\CustomValidationException(sprintf('Passed filter group number %s contains not the full path: set|group', $number));
+            throw new CustomValidationException(sprintf('Passed filter group number %s contains not the full path: set|group', $number));
         }
 
-        /** @var Group|null $set */
         $set = $this->findEntityByConditions(
             Group::class,
             [
@@ -786,19 +791,18 @@ class Translation extends Resource implements BatchInterface
             ]
         );
 
-        if (!$set) {
-            throw new ApiException\NotFoundException(sprintf('Filter set by name code %s not found', $numbers[0]));
+        if (!$set instanceof Group) {
+            throw new NotFoundException(sprintf('Filter set by name code %s not found', $numbers[0]));
         }
 
-        /** @var Option|null $group */
         $group = $this->getCollectionElementByProperty(
             $set->getOptions(),
             'name',
             $numbers[1]
         );
 
-        if (!$group) {
-            throw new ApiException\NotFoundException(sprintf('Filter group by name code %s not found', $numbers[1]));
+        if (!$group instanceof Option) {
+            throw new NotFoundException(sprintf('Filter group by name code %s not found', $numbers[1]));
         }
 
         return $group->getId();
@@ -813,7 +817,7 @@ class Translation extends Resource implements BatchInterface
      *
      * @param string $number
      *
-     * @throws \Exception
+     * @throws Exception
      *
      * @return int
      */
@@ -822,10 +826,9 @@ class Translation extends Resource implements BatchInterface
         $numbers = explode('|', $number);
 
         if (\count($numbers) < 3) {
-            throw new ApiException\CustomValidationException(sprintf('Passed filter option number %s contains not the full path: set|group|option', $number));
+            throw new CustomValidationException(sprintf('Passed filter option number %s contains not the full path: set|group|option', $number));
         }
 
-        /** @var Group|null $set */
         $set = $this->findEntityByConditions(
             Group::class,
             [
@@ -833,30 +836,28 @@ class Translation extends Resource implements BatchInterface
             ]
         );
 
-        if (!$set) {
-            throw new ApiException\NotFoundException(sprintf('Filter set by name %s not found', $numbers[0]));
+        if (!$set instanceof Group) {
+            throw new NotFoundException(sprintf('Filter set by name %s not found', $numbers[0]));
         }
 
-        /** @var Option|null $group */
         $group = $this->getCollectionElementByProperty(
             $set->getOptions(),
             'name',
             $numbers[1]
         );
 
-        if (!$group) {
-            throw new ApiException\NotFoundException(sprintf('Filter group by name %s not found', $numbers[1]));
+        if (!$group instanceof Option) {
+            throw new NotFoundException(sprintf('Filter group by name %s not found', $numbers[1]));
         }
 
-        /** @var Value|null $option */
         $option = $this->getCollectionElementByProperty(
             $group->getValues(),
             'value',
             $numbers[2]
         );
 
-        if (!$option) {
-            throw new ApiException\NotFoundException(sprintf('Filter option by name %s not found', $numbers[2]));
+        if (!$option instanceof Value) {
+            throw new NotFoundException(sprintf('Filter option by name %s not found', $numbers[2]));
         }
 
         return $option->getId();
@@ -867,20 +868,19 @@ class Translation extends Resource implements BatchInterface
      *
      * @param string $number
      *
-     * @throws \Exception
+     * @throws Exception
      *
      * @return int
      */
     protected function getConfiguratorGroupIdByNumber($number)
     {
-        /** @var ConfiguratorGroup|null $entity */
         $entity = $this->findEntityByConditions(
             ConfiguratorGroup::class,
             [['name' => $number]]
         );
 
-        if (!$entity) {
-            throw new ApiException\NotFoundException(sprintf('Configurator group by name %s not found', $number));
+        if (!$entity instanceof ConfiguratorGroup) {
+            throw new NotFoundException(sprintf('Configurator group by name %s not found', $number));
         }
 
         return $entity->getId();
@@ -895,8 +895,8 @@ class Translation extends Resource implements BatchInterface
      *
      * @param string $number
      *
-     * @throws ApiException\CustomValidationException
-     * @throws \Shopware\Components\Api\Exception\NotFoundException
+     * @throws CustomValidationException
+     * @throws NotFoundException
      *
      * @return int
      */
@@ -905,27 +905,25 @@ class Translation extends Resource implements BatchInterface
         $numbers = explode('|', $number);
 
         if (\count($numbers) < 2) {
-            throw new ApiException\CustomValidationException(sprintf('Passed configurator option name %s contains not the full path: group|option', $number));
+            throw new CustomValidationException(sprintf('Passed configurator option name %s contains not the full path: group|option', $number));
         }
 
-        /** @var ConfiguratorGroup|null $group */
         $group = $this->findEntityByConditions(
             ConfiguratorGroup::class,
             [['name' => $numbers[0]]]
         );
 
         if (!$group) {
-            throw new ApiException\NotFoundException(sprintf('Configurator group by name %s not found', $numbers[0]));
+            throw new NotFoundException(sprintf('Configurator group by name %s not found', $numbers[0]));
         }
 
-        /** @var ConfiguratorOption|null $option */
         $option = $this->getCollectionElementByProperty(
             $group->getOptions(),
             'name',
             $numbers[1]
         );
         if (!$option) {
-            throw new ApiException\NotFoundException(sprintf('Configurator option by name %s not found', $numbers[1]));
+            throw new NotFoundException(sprintf('Configurator option by name %s not found', $numbers[1]));
         }
 
         return $option->getId();
@@ -934,20 +932,20 @@ class Translation extends Resource implements BatchInterface
     protected function checkRequirements($data, $checkData = true)
     {
         if (!isset($data['type']) || empty($data['type'])) {
-            throw new ApiException\ParameterMissingException('Passed translation contains no object type');
+            throw new ParameterMissingException('Passed translation contains no object type');
         }
 
         if (empty($data['shopId'])) {
-            throw new ApiException\ParameterMissingException('Passed translation contains no shop id');
+            throw new ParameterMissingException('Passed translation contains no shop id');
         }
 
         if ($checkData) {
             if (!isset($data['data']) || empty($data['data'])) {
-                throw new ApiException\ParameterMissingException('The parameter data is required for a object translation');
+                throw new ParameterMissingException('The parameter data is required for a object translation');
             }
 
             if (!\is_array($data['data'])) {
-                throw new ApiException\CustomValidationException('The parameter data has to be an array.');
+                throw new CustomValidationException('The parameter data has to be an array.');
             }
         }
     }

@@ -24,8 +24,13 @@
 
 namespace Shopware\Bundle\EmotionBundle\Struct\Library;
 
-class Component implements \JsonSerializable
+use JsonSerializable;
+use Shopware\Components\ObjectJsonSerializeTraitDeprecated;
+
+class Component implements JsonSerializable
 {
+    use ObjectJsonSerializeTraitDeprecated;
+
     /**
      * @var int
      */
@@ -192,13 +197,5 @@ class Component implements \JsonSerializable
     public function setPluginId($pluginId)
     {
         $this->pluginId = $pluginId;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function jsonSerialize()
-    {
-        return get_object_vars($this);
     }
 }

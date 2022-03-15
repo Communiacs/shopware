@@ -24,17 +24,15 @@
 
 namespace ShopwarePlugins\SwagUpdate\Components\Checks;
 
-use Enlight_Components_Snippet_Namespace as SnippetNamespace;
+use InvalidArgumentException;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use RegexIterator;
 use ShopwarePlugins\SwagUpdate\Components\CheckInterface;
 
 class RegexCheck implements CheckInterface
 {
     public const CHECK_TYPE = 'regex';
-
-    /**
-     * @var SnippetNamespace
-     */
-    private $namespace;
 
     /**
      * @var string
@@ -44,9 +42,8 @@ class RegexCheck implements CheckInterface
     /**
      * @param string $userLang
      */
-    public function __construct(SnippetNamespace $namespace, $userLang)
+    public function __construct($userLang)
     {
-        $this->namespace = $namespace;
         $this->userLang = $userLang;
     }
 
@@ -55,7 +52,7 @@ class RegexCheck implements CheckInterface
      */
     public function canHandle($requirement)
     {
-        return $requirement['type'] == self::CHECK_TYPE;
+        return $requirement['type'] === self::CHECK_TYPE;
     }
 
     /**
@@ -63,6 +60,10 @@ class RegexCheck implements CheckInterface
      */
     public function check($requirement)
     {
+        if (!\is_array($requirement['value'])) {
+            throw new InvalidArgumentException(__CLASS__ . ' needs an array as value for the requirement check');
+        }
+
         $results = [];
         foreach ($requirement['value']['directories'] as $dir) {
             $result = $this->scanDirectoryForRegex(
@@ -84,7 +85,6 @@ class RegexCheck implements CheckInterface
         return [
                 'type' => self::CHECK_TYPE,
                 'errorLevel' => $requirement['level'],
-                'description' => $requirement['description'],
                 'message' => sprintf($message, implode('<br>', $files)),
             ];
     }
@@ -101,15 +101,15 @@ class RegexCheck implements CheckInterface
     private function scanDirectoryForRegex($path, $regex, $regexFile = null)
     {
         // Iterate the given path recursively
-        $directoryIterator = new \RecursiveDirectoryIterator($path);
+        $directoryIterator = new RecursiveDirectoryIterator($path);
         // get a flat iterator
-        $iterator = new \RecursiveIteratorIterator($directoryIterator);
+        $iterator = new RecursiveIteratorIterator($directoryIterator);
 
         $results = [];
 
         // Allow files to be filtered out by name
         if (isset($regexFile) && !empty($regexFile)) {
-            $iterator = new \RegexIterator($iterator, $regexFile);
+            $iterator = new RegexIterator($iterator, $regexFile);
         }
 
         // Iterate the result, get file content, check for $regex matches

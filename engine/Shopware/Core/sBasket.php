@@ -24,6 +24,8 @@
  */
 
 use Doctrine\DBAL\Connection;
+use Shopware\Bundle\CartBundle\CartKey;
+use Shopware\Bundle\CartBundle\CartPositionsMode;
 use Shopware\Bundle\OrderBundle\Service\OrderListProductServiceInterface;
 use Shopware\Bundle\StoreFrontBundle;
 use Shopware\Bundle\StoreFrontBundle\Gateway\ListProductGatewayInterface;
@@ -40,6 +42,8 @@ use Symfony\Component\HttpFoundation\Cookie;
 
 /**
  * Shopware Class that handles cart operations
+ *
+ * @phpstan-type BasketArray array{content: non-empty-array, Amount: string, AmountNet: string, Quantity: int, AmountNumeric: float, AmountNetNumeric: float, AmountWithTax: string, AmountWithTaxNumeric: float}
  */
 class sBasket implements \Enlight_Hook
 {
@@ -1030,11 +1034,11 @@ SQL;
      * Get productId of all products from cart
      * Used in CheckoutController
      *
-     * @return array|null List of product ids in current basket, or null if none
+     * @return array<int>|null List of product ids in current basket, or null if none
      */
     public function sGetBasketIds()
     {
-        $products = $this->db->fetchCol(
+        $productIds = $this->db->fetchCol(
             'SELECT DISTINCT articleID
                 FROM s_order_basket
                 WHERE sessionID = ?
@@ -1042,8 +1046,13 @@ SQL;
                 ORDER BY modus ASC, datum DESC',
             [$this->session->get('sessionId')]
         );
+        if (empty($productIds)) {
+            return null;
+        }
 
-        return empty($products) ? null : $products;
+        return array_map(static function ($productId) {
+            return (int) $productId;
+        }, $productIds);
     }
 
     /**
@@ -1329,7 +1338,9 @@ SQL;
      * @throws \Enlight_Event_Exception
      * @throws \Zend_Db_Adapter_Exception
      *
-     * @return array Basket content
+     * @phpstan-return array|BasketArray
+     *
+     * @return array
      */
     public function sGetBasket()
     {
@@ -1386,6 +1397,8 @@ SQL;
      * @throws \Exception
      * @throws \Enlight_Exception
      *
+     * @phpstan-return array|BasketArray
+     *
      * @return array
      */
     public function sGetBasketData()
@@ -1428,18 +1441,18 @@ SQL;
         $totalAmountNet = $this->moduleManager->Articles()->sFormatPrice($totalAmountNet);
 
         $result = [
-            'content' => $getProducts,
-            'Amount' => $totalAmount,
-            'AmountNet' => $totalAmountNet,
-            'Quantity' => $totalCount,
-            'AmountNumeric' => $totalAmountNumeric,
-            'AmountNetNumeric' => $totalAmountNetNumeric,
-            'AmountWithTax' => $totalAmountWithTax,
-            'AmountWithTaxNumeric' => $totalAmountWithTaxNumeric,
+            CartKey::POSITIONS => $getProducts,
+            CartKey::AMOUNT => $totalAmount,
+            CartKey::AMOUNT_NET => $totalAmountNet,
+            CartKey::QUANTITY => $totalCount,
+            CartKey::AMOUNT_NUMERIC => $totalAmountNumeric,
+            CartKey::AMOUNT_NET_NUMERIC => $totalAmountNetNumeric,
+            CartKey::AMOUNT_WITH_TAX => $totalAmountWithTax,
+            CartKey::AMOUNT_WITH_TAX_NUMERIC => $totalAmountWithTaxNumeric,
         ];
 
-        if (!empty($result['content'])) {
-            foreach ($result['content'] as $key => $value) {
+        if (!empty($result[CartKey::POSITIONS])) {
+            foreach ($result[CartKey::POSITIONS] as $key => $value) {
                 if (!empty($value['amountWithTax'])) {
                     $t = round((float) str_replace(',', '.', $value['amountWithTax']), 2);
                 } else {
@@ -1456,7 +1469,7 @@ SQL;
                     );
                 }
                 $calcDifference = $this->moduleManager->Articles()->sFormatPrice($t - $p);
-                $result['content'][$key]['tax'] = $calcDifference;
+                $result[CartKey::POSITIONS][$key]['tax'] = $calcDifference;
             }
         }
         $result = $this->eventManager->filter(
@@ -1655,7 +1668,7 @@ SQL;
      * @throws \Zend_Db_Adapter_Exception
      * @throws \Enlight_Exception         If database could not be updated
      *
-     * @return bool
+     * @return false|null
      */
     public function sUpdateArticle($id, $quantity)
     {
@@ -1676,7 +1689,7 @@ SQL;
      * @throws Enlight_Exception
      * @throws Zend_Db_Adapter_Exception
      *
-     * @return bool|null
+     * @return false|null
      */
     public function updateCartItems(array $cartItems)
     {
@@ -2620,7 +2633,7 @@ SQL;
             }
 
             // Get additional basket meta data for each product
-            if ($getProducts[$key]['modus'] == 0) {
+            if ($getProducts[$key]['modus'] == CartPositionsMode::PRODUCT) {
                 if (isset($additionalDetails[$getProducts[$key]['ordernumber']])) {
                     $getProducts[$key]['additional_details'] = $additionalDetails[$getProducts[$key]['ordernumber']];
                     $getProducts[$key]['shippingtime'] = $additionalDetails[$getProducts[$key]['ordernumber']]['shippingtime'];
@@ -2686,16 +2699,18 @@ SQL;
                     if ($this->sSYSTEM->sUSERGROUPDATA['basketdiscount'] && $this->sCheckForDiscount()) {
                         $discount += ($getProducts[$key]['amountWithTax'] / 100 * $this->sSYSTEM->sUSERGROUPDATA['basketdiscount']);
                     }
-                } elseif ($getProducts[$key]['modus'] == 3) {
+                } elseif ($getProducts[$key]['modus'] == CartPositionsMode::CUSTOMER_GROUP_DISCOUNT) {
                     $getProducts[$key]['amountWithTax'] = round(1 * (round($price, 2) / 100 * (100 + $tax)), 2);
                 // Basket discount
-                } elseif ($getProducts[$key]['modus'] == 2) {
+                } elseif ($getProducts[$key]['modus'] == CartPositionsMode::VOUCHER) {
                     $getProducts[$key]['amountWithTax'] = round(1 * (round($price, 2) / 100 * (100 + $tax)), 2);
 
                     if ($this->sSYSTEM->sUSERGROUPDATA['basketdiscount'] && $this->sCheckForDiscount()) {
                         $discount += ($getProducts[$key]['amountWithTax'] / 100 * ($this->sSYSTEM->sUSERGROUPDATA['basketdiscount']));
                     }
-                } elseif ($getProducts[$key]['modus'] == 4 || $getProducts[$key]['modus'] == 10) {
+                } elseif ($getProducts[$key]['modus'] == CartPositionsMode::PAYMENT_SURCHARGE_OR_DISCOUNT
+                                 || $getProducts[$key]['modus'] == CartPositionsMode::SWAG_BUNDLE_DISCOUNT
+                ) {
                     $getProducts[$key]['amountWithTax'] = round(1 * ($price / 100 * (100 + $tax)), 2);
                     if ($this->sSYSTEM->sUSERGROUPDATA['basketdiscount'] && $this->sCheckForDiscount()) {
                         $discount += ($getProducts[$key]['amountWithTax'] / 100 * $this->sSYSTEM->sUSERGROUPDATA['basketdiscount']);
@@ -2720,8 +2735,7 @@ SQL;
                 $getProducts[$key]['itemInfoArray']['price'] = $this->moduleManager->Articles()->sFormatPrice($getProducts[$key]['amount'] / $quantity * $getProducts[$key]['purchaseunit']);
             }
 
-            if ($getProducts[$key]['modus'] == 2) {
-                // Vouchers
+            if ($getProducts[$key]['modus'] == CartPositionsMode::VOUCHER) {
                 if (!$this->sSYSTEM->sUSERGROUPDATA['tax'] && $this->sSYSTEM->sUSERGROUPDATA['id']) {
                     $getProducts[$key]['amountnet'] = $quantity * round($price, 2);
                 } else {
@@ -2765,8 +2779,7 @@ SQL;
 
             if (!empty($getProducts[$key]['additional_details']['image'])) {
                 $getProducts[$key]['image'] = $this->getBasketImage($getProducts[$key]['additional_details']['image']);
-            } elseif ((int) $getProducts[$key]['modus'] === 1 && !empty($getProducts[$key]['articleID'])) {
-                // Premium product image
+            } elseif ((int) $getProducts[$key]['modus'] === CartPositionsMode::PREMIUM_PRODUCT && !empty($getProducts[$key]['articleID'])) {
                 $getProducts[$key]['image'] = $this->moduleManager->Articles()
                     ->sGetArticlePictures(
                         $getProducts[$key]['articleID'],
@@ -2778,7 +2791,7 @@ SQL;
 
             // Links to details, basket
             $getProducts[$key]['linkDetails'] = $this->config->get('sBASEFILE') . '?sViewport=detail&sArticle=' . $getProducts[$key]['articleID'];
-            if ($getProducts[$key]['modus'] == 2) {
+            if ($getProducts[$key]['modus'] == CartPositionsMode::VOUCHER) {
                 $getProducts[$key]['linkDelete'] = $this->config->get('sBASEFILE') . '?sViewport=basket&sDelete=voucher';
             } else {
                 $getProducts[$key]['linkDelete'] = $this->config->get('sBASEFILE') . '?sViewport=basket&sDelete=' . $getProducts[$key]['id'];

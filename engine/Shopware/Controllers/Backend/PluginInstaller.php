@@ -24,14 +24,21 @@
 
 namespace Shopware\Controllers\Backend;
 
+use Exception;
+use InvalidArgumentException;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 use Shopware\Bundle\PluginInstallerBundle\Service\DownloadService;
 use Shopware\Bundle\PluginInstallerBundle\Service\InstallerService;
+use Shopware\Components\Model\Exception\ModelNotFoundException;
+use Shopware\Components\Model\ModelManager;
 use Shopware\Components\Model\ModelRepository;
 use Shopware\Models\Plugin\Plugin;
+use Shopware_Controllers_Backend_ExtJs;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\FileBag;
 
-class PluginInstaller extends \Shopware_Controllers_Backend_ExtJs
+class PluginInstaller extends Shopware_Controllers_Backend_ExtJs
 {
     /**
      * @var InstallerService
@@ -68,7 +75,7 @@ class PluginInstaller extends \Shopware_Controllers_Backend_ExtJs
         try {
             $result = $this->pluginManager->installPlugin($plugin);
             $this->View()->assign(['success' => true, 'result' => $result]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->View()->assign(['success' => false, 'message' => $e->getMessage()]);
         }
     }
@@ -84,7 +91,7 @@ class PluginInstaller extends \Shopware_Controllers_Backend_ExtJs
         //disable plugin and save state
         $active = $plugin->getActive();
         $plugin->setActive(false);
-        $this->get(\Shopware\Components\Model\ModelManager::class)->flush();
+        $this->get(ModelManager::class)->flush();
 
         try {
             if ($plugin->getInstalled()) {
@@ -92,7 +99,7 @@ class PluginInstaller extends \Shopware_Controllers_Backend_ExtJs
             } else {
                 $result = $this->pluginManager->installPlugin($plugin);
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->View()->assign([
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -104,7 +111,7 @@ class PluginInstaller extends \Shopware_Controllers_Backend_ExtJs
         $plugin = $this->getPluginModel($technicalName);
 
         $plugin->setActive($active);
-        $this->get(\Shopware\Components\Model\ModelManager::class)->flush();
+        $this->get(ModelManager::class)->flush();
 
         $this->View()->assign(['success' => true, 'result' => $result]);
     }
@@ -118,7 +125,7 @@ class PluginInstaller extends \Shopware_Controllers_Backend_ExtJs
         try {
             $result = $this->pluginManager->uninstallPlugin($plugin);
             $this->View()->assign(['result' => $result]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->View()->assign(['success' => false, 'message' => $e->getMessage()]);
         }
     }
@@ -135,7 +142,7 @@ class PluginInstaller extends \Shopware_Controllers_Backend_ExtJs
                 !$plugin->hasCapabilitySecureUninstall()
             );
             $this->View()->assign(['success' => true, 'result' => $result]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->View()->assign(['success' => false, 'message' => $e->getMessage()]);
         }
     }
@@ -159,13 +166,13 @@ class PluginInstaller extends \Shopware_Controllers_Backend_ExtJs
                 try {
                     $directory = $this->pluginManager->getPluginPath($pluginName);
                     $this->removeDirectory($directory);
-                } catch (\InvalidArgumentException $e) {
+                } catch (InvalidArgumentException $e) {
                     // empty catch intended
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     return $this->View()->assign(['success' => false, 'message' => $e->getMessage()]);
                 } finally {
-                    $this->get(\Shopware\Components\Model\ModelManager::class)->remove($plugin);
-                    $this->get(\Shopware\Components\Model\ModelManager::class)->flush();
+                    $this->get(ModelManager::class)->remove($plugin);
+                    $this->get(ModelManager::class)->flush();
                 }
         }
 
@@ -179,7 +186,7 @@ class PluginInstaller extends \Shopware_Controllers_Backend_ExtJs
         try {
             $result = $this->pluginManager->activatePlugin($plugin);
             $this->View()->assign(['success' => true, 'result' => $result]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->View()->assign(['success' => false, 'message' => $e->getMessage()]);
         }
     }
@@ -191,7 +198,7 @@ class PluginInstaller extends \Shopware_Controllers_Backend_ExtJs
         try {
             $result = $this->pluginManager->deactivatePlugin($plugin);
             $this->View()->assign(['success' => true, 'result' => $result]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->View()->assign(['success' => false, 'message' => $e->getMessage()]);
         }
     }
@@ -206,7 +213,7 @@ class PluginInstaller extends \Shopware_Controllers_Backend_ExtJs
 
             /** @var UploadedFile $file */
             $file = $fileBag->get('plugin');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->View()->assign([
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -235,7 +242,7 @@ class PluginInstaller extends \Shopware_Controllers_Backend_ExtJs
 
             $pluginName = $information['basename'];
             $pluginDownloadService->extractPluginZip($file->getPathname(), $pluginName);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->View()->assign([
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -256,18 +263,20 @@ class PluginInstaller extends \Shopware_Controllers_Backend_ExtJs
      */
     public function getPluginModel($technicalName)
     {
-        /** @var Plugin $plugin */
         $plugin = $this->getRepository()->findOneBy(['name' => $technicalName]);
+        if ($plugin === null) {
+            throw new ModelNotFoundException(Plugin::class, $technicalName, 'name');
+        }
 
         return $plugin;
     }
 
     /**
-     * @return ModelRepository
+     * @return ModelRepository<Plugin>
      */
     private function getRepository()
     {
-        return $this->get(\Shopware\Components\Model\ModelManager::class)->getRepository(Plugin::class);
+        return $this->get(ModelManager::class)->getRepository(Plugin::class);
     }
 
     /**
@@ -278,8 +287,8 @@ class PluginInstaller extends \Shopware_Controllers_Backend_ExtJs
         if (!is_dir($path)) {
             return;
         }
-        $it = new \RecursiveDirectoryIterator($path);
-        $files = new \RecursiveIteratorIterator($it, \RecursiveIteratorIterator::CHILD_FIRST);
+        $it = new RecursiveDirectoryIterator($path);
+        $files = new RecursiveIteratorIterator($it, RecursiveIteratorIterator::CHILD_FIRST);
         foreach ($files as $file) {
             if ($file->isDir()) {
                 rmdir($file->getRealPath());

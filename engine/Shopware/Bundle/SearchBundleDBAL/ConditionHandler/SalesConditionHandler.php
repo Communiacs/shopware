@@ -50,6 +50,11 @@ class SalesConditionHandler implements ConditionHandlerInterface
         QueryBuilder $query,
         ShopContextInterface $context
     ) {
+        $this->addCondition($condition, $query);
+    }
+
+    private function addCondition(SalesCondition $condition, QueryBuilder $query): void
+    {
         if (!$query->hasState(self::STATE_INCLUDES_TOPSELLER_TABLE)) {
             $query->leftJoin(
                 'product',
@@ -60,10 +65,9 @@ class SalesConditionHandler implements ConditionHandlerInterface
             $query->addState(self::STATE_INCLUDES_TOPSELLER_TABLE);
         }
 
-        $key = ':sales' . md5(json_encode($condition));
+        $key = ':sales' . md5(json_encode($condition, JSON_THROW_ON_ERROR));
         $query->andWhere('topSeller.sales >= ' . $key);
 
-        /* @var SalesCondition $condition */
         $query->setParameter($key, $condition->getMinSales());
     }
 }

@@ -23,53 +23,90 @@
  */
 
 use Doctrine\ORM\AbstractQuery;
+use Shopware\Bundle\AttributeBundle\Service\CrudService;
 use Shopware\Bundle\AttributeBundle\Service\CrudServiceInterface;
+use Shopware\Bundle\MediaBundle\MediaServiceInterface;
 use Shopware\Bundle\StoreFrontBundle;
 use Shopware\Bundle\StoreFrontBundle\Service\AdditionalTextServiceInterface;
+use Shopware\Bundle\StoreFrontBundle\Service\ConfiguratorServiceInterface;
 use Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface;
+use Shopware\Components\Model\Exception\ModelNotFoundException;
+use Shopware\Components\ShopRegistrationServiceInterface;
 use Shopware\Components\Thumbnail\Manager;
+use Shopware\Models\Media\Album;
 use Shopware\Models\Media\Media;
+use Shopware\Models\Media\Repository;
 use Shopware\Models\Shop\Currency;
+use Shopware\Models\Shop\Shop;
 
 /**
  * Shopware Class to provide product export feeds
  */
-class sExport implements \Enlight_Hook
+class sExport implements Enlight_Hook
 {
+    private const DEFAULT_MAX_EXECUTION_TIME = 30;
+    private const DISABLED_MAX_EXECUTION_TIME = 0;
+
+    /**
+     * @var int
+     */
     public $sFeedID;
 
+    /**
+     * @var string
+     */
     public $sHash;
 
+    /**
+     * @var array<string, mixed>
+     */
     public $sSettings;
 
     /**
-     * @deprecated in 5.6, will be removed in 5.7 without replacement
+     * @deprecated in 5.6, will be removed in 5.8 without replacement
+     *
+     * @var null
      */
     public $sDB;
 
     /**
-     * @deprecated in 5.6, will be removed in 5.7 without replacement
+     * @deprecated in 5.6, will be removed in 5.8 without replacement
+     *
+     * @var null
      */
     public $sApi;
 
+    /**
+     * @var sSystem
+     */
     public $sSYSTEM;
 
     /**
-     * @deprecated in 5.6, will be removed in 5.7 without replacement
+     * @deprecated in 5.6, will be removed in 5.8 without replacement
+     *
+     * @var null
      */
     public $sPath;
 
     /**
-     * @deprecated in 5.6, will be removed in 5.7 without replacement
+     * @deprecated in 5.6, will be removed in 5.8 without replacement
+     *
+     * @var null
      */
     public $sTemplates;
 
+    /**
+     * @var array<string, mixed>|false
+     */
     public $sCurrency;
 
+    /**
+     * @var array<string, mixed>|false
+     */
     public $sCustomergroup;
 
     /**
-     * @var \Shopware\Models\Shop\Shop
+     * @var Shop
      */
     public $shop;
 
@@ -79,76 +116,55 @@ class sExport implements \Enlight_Hook
     public $sSmarty;
 
     /**
-     * @var \Shopware\Models\Media\Repository
+     * @var Repository|null
      */
     protected $mediaRepository;
 
     /**
-     * @var \Shopware\Models\Media\Album
+     * @var Album
      */
     protected $articleMediaAlbum;
 
     /**
-     * @var array Contains shop data in array format
+     * @var array<string, mixed> Contains shop data in array format
      */
-    private $shopData;
+    private array $shopData;
+
+    private ContextServiceInterface $contextService;
+
+    private AdditionalTextServiceInterface $additionalTextService;
+
+    private Enlight_Components_Db_Adapter_Pdo_Mysql $db;
+
+    private Shopware_Components_Config $config;
+
+    private ConfiguratorServiceInterface $configuratorService;
 
     /**
-     * @var ContextServiceInterface
+     * @var array<string, mixed>
      */
-    private $contextService;
+    private array $cdnConfig;
 
-    /**
-     * @var AdditionalTextServiceInterface
-     */
-    private $additionalTextService;
-
-    /**
-     * @var Enlight_Components_Db_Adapter_Pdo_Mysql
-     */
-    private $db;
-
-    /**
-     * @var Shopware_Components_Config
-     */
-    private $config;
-
-    /**
-     * @var StoreFrontBundle\Service\ConfiguratorServiceInterface
-     */
-    private $configuratorService;
-
-    /**
-     * @var array
-     */
-    private $cdnConfig;
-
-    /**
-     * @param ContextServiceInterface                               $contextService
-     * @param Enlight_Components_Db_Adapter_Pdo_Mysql               $db
-     * @param Shopware_Components_Config                            $config
-     * @param StoreFrontBundle\Service\ConfiguratorServiceInterface $configuratorService
-     */
     public function __construct(
         ContextServiceInterface $contextService = null,
         Enlight_Components_Db_Adapter_Pdo_Mysql $db = null,
         Shopware_Components_Config $config = null,
-        StoreFrontBundle\Service\ConfiguratorServiceInterface $configuratorService = null
+        ConfiguratorServiceInterface $configuratorService = null
     ) {
         $container = Shopware()->Container();
 
-        $this->contextService = $contextService ?: $container->get(\Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface::class);
-        $this->additionalTextService = $container->get(\Shopware\Bundle\StoreFrontBundle\Service\AdditionalTextServiceInterface::class);
+        $this->contextService = $contextService ?: $container->get(ContextServiceInterface::class);
+        $this->additionalTextService = $container->get(AdditionalTextServiceInterface::class);
         $this->db = $db ?: $container->get('db');
-        $this->config = $config ?: $container->get(\Shopware_Components_Config::class);
-        $this->configuratorService = $configuratorService ?: $container->get(\Shopware\Bundle\StoreFrontBundle\Service\ConfiguratorServiceInterface::class);
+        $this->config = $config ?: $container->get(Shopware_Components_Config::class);
+        $this->configuratorService = $configuratorService ?: $container->get(ConfiguratorServiceInterface::class);
         $this->cdnConfig = (array) $container->getParameter('shopware.cdn');
     }
 
     /**
      * @param int|string $currency
      *
-     * @return array|false
+     * @return array<string, mixed>|false
      */
     public function sGetCurrency($currency)
     {
@@ -180,7 +196,7 @@ class sExport implements \Enlight_Hook
     /**
      * @param int|string $customerGroup
      *
-     * @return bool|array
+     * @return array<string, mixed>|false
      */
     public function sGetCustomergroup($customerGroup)
     {
@@ -210,12 +226,14 @@ class sExport implements \Enlight_Hook
         return $cache[$customerGroup];
     }
 
+    /**
+     * @return void
+     */
     public function sInitSettings()
     {
         $hash = $this->db->quote($this->sHash);
 
-        /** @var \Shopware\Models\Shop\Repository $shopRepository */
-        $shopRepository = Shopware()->Models()->getRepository(\Shopware\Models\Shop\Shop::class);
+        $shopRepository = Shopware()->Models()->getRepository(Shop::class);
 
         $sql = "
             SELECT
@@ -284,6 +302,10 @@ class sExport implements \Enlight_Hook
         }
 
         $shop = $shopRepository->getActiveById($this->sSettings['languageID']);
+        if (!$shop instanceof Shop) {
+            throw new ModelNotFoundException(Shop::class, $this->sSettings['languageID']);
+        }
+
         $this->shopData = $this->getShopData($this->sSettings['languageID']);
 
         if (empty($this->sSettings['categoryID'])) {
@@ -299,18 +321,18 @@ class sExport implements \Enlight_Hook
         }
 
         $this->sCurrency = $this->sGetCurrency($this->sSettings['currencyID']);
-
         $this->sCustomergroup = $this->sGetCustomergroup($this->sSettings['customergroupID']);
 
         $this->articleMediaAlbum = $this->getMediaRepository()
             ->getAlbumWithSettingsQuery(-1)
             ->getOneOrNullResult(AbstractQuery::HYDRATE_OBJECT);
 
-        $repository = Shopware()->Models()->getRepository(Currency::class);
-        /** @var Currency $currency */
-        $currency = $repository->find($this->sCurrency['id']);
+        if ($this->sCurrency === false) {
+            throw new RuntimeException('Currency could not be fetched correctly.');
+        }
+        $currency = Shopware()->Models()->getRepository(Currency::class)->find($this->sCurrency['id']);
         $shop->setCurrency($currency);
-        Shopware()->Container()->get(\Shopware\Components\ShopRegistrationServiceInterface::class)->registerShop($shop);
+        Shopware()->Container()->get(ShopRegistrationServiceInterface::class)->registerShop($shop);
 
         if ($this->sCustomergroup !== false) {
             Shopware()->Container()->get('session')->offsetSet('sUserGroup', $this->sCustomergroup['groupkey']);
@@ -323,13 +345,16 @@ class sExport implements \Enlight_Hook
         $this->sSYSTEM->sCONFIG = Shopware()->Config();
     }
 
+    /**
+     * @return void
+     */
     public function sInitSmarty()
     {
         $this->sSYSTEM->sSMARTY->compile_id = 'export_' . $this->sFeedID;
 
         $this->sSYSTEM->sSMARTY->cache_lifetime = 0;
-        $this->sSYSTEM->sSMARTY->debugging = 0;
-        $this->sSYSTEM->sSMARTY->caching = 0;
+        $this->sSYSTEM->sSMARTY->debugging = false;
+        $this->sSYSTEM->sSMARTY->caching = false;
 
         $this->sSmarty->registerPlugin('modifier', 'htmlentities', [$this, 'sHtmlEntities']);
         $this->sSmarty->registerPlugin('modifier', 'format', [$this, 'sFormatString']);
@@ -530,11 +555,8 @@ class sExport implements \Enlight_Hook
             return '';
         }
 
-        /** @var \Shopware\Bundle\MediaBundle\MediaServiceInterface $mediaService */
-        $mediaService = Shopware()->Container()->get(\Shopware\Bundle\MediaBundle\MediaServiceInterface::class);
-
-        /** @var Manager $thumbnailManager */
-        $thumbnailManager = Shopware()->Container()->get(\Shopware\Components\Thumbnail\Manager::class);
+        $mediaService = Shopware()->Container()->get(MediaServiceInterface::class);
+        $thumbnailManager = Shopware()->Container()->get(Manager::class);
 
         // If no imageSize was set, return the full image
         if ($imageSize === null) {
@@ -645,7 +667,7 @@ class sExport implements \Enlight_Hook
                     'metaTitle' => 'metaTitle',
                 ];
 
-                $attributes = Shopware()->Container()->get(\Shopware\Bundle\AttributeBundle\Service\CrudService::class)->getList('s_articles_attributes');
+                $attributes = Shopware()->Container()->get(CrudService::class)->getList('s_articles_attributes');
                 foreach ($attributes as $attribute) {
                     if ($attribute->isIdentifier()) {
                         continue;
@@ -710,7 +732,7 @@ class sExport implements \Enlight_Hook
                     }
                     $elements[$i] = str_replace($fieldmark . $fieldmark, $fieldmark, $elements[$i]);
                 }
-                $index = substr($elements[$i], 0, strpos($elements[$i], ':'));
+                $index = substr($elements[$i], 0, (int) strpos($elements[$i], ':'));
                 $elements[$i] = substr($elements[$i], strpos($elements[$i], ':') + 1);
                 $tmp_elements[$index] = $elements[$i];
             }
@@ -719,6 +741,9 @@ class sExport implements \Enlight_Hook
         return $tmp_elements;
     }
 
+    /**
+     * @return string
+     */
     public function sCreateSql()
     {
         $sql_add_join = [];
@@ -783,6 +808,10 @@ class sExport implements \Enlight_Hook
             ON m.id = i.media_id
         ';
 
+        if ($this->sCustomergroup === false) {
+            throw new RuntimeException('Customer group could not be fetched correctly.');
+        }
+
         if (!empty($this->sCustomergroup['groupkey'])
             && empty($this->sCustomergroup['mode'])
             && $this->sCustomergroup['groupkey'] !== 'EK'
@@ -801,6 +830,9 @@ class sExport implements \Enlight_Hook
         }
 
         if (empty($this->sSettings['variant_export']) || $this->sSettings['variant_export'] == 1) {
+            if ($this->sCurrency === false) {
+                throw new RuntimeException('Currency could not be fetched correctly.');
+            }
             $sql_add_select[] = "IF(COUNT(d.ordernumber) <= 1, '', GROUP_CONCAT(DISTINCT(CONCAT('\"', d.id, ':', REPLACE(d.ordernumber,'\"','\"\"'),'\"')) SEPARATOR ';')) as group_ordernumber";
             $sql_add_select[] = "IF(COUNT(d.additionaltext) <= 1, '', GROUP_CONCAT(DISTINCT(CONCAT('\"', d.id, ':', REPLACE(d.additionaltext,'\"','\"\"'),'\"')) SEPARATOR ';')) as group_additionaltext";
             $sql_add_select[] = "IF(COUNT($pricefield)<=1,'',GROUP_CONCAT(ROUND(CAST($pricefield*(100-IF(pd.discount,pd.discount,0)-{$this->sCustomergroup['discount']})/100*{$this->sCurrency['factor']} AS DECIMAL(10,3)),2) SEPARATOR ';')) as group_pricenet";
@@ -838,6 +870,9 @@ class sExport implements \Enlight_Hook
             $sql_add_where[] = "(v.instock>={$this->sSettings['instock_filter']} OR (v.instock IS NULL AND d.instock>={$this->sSettings['instock_filter']}))";
         }
         if (!empty($this->sSettings['price_filter'])) {
+            if ($this->sCurrency === false) {
+                throw new RuntimeException('Currency could not be fetched correctly.');
+            }
             $sql_add_where[] = "ROUND(CAST(IFNULL($grouppricefield,$pricefield)*(100+t.tax-IF(pd.discount IS NULL,0,pd.discount)-{$this->sCustomergroup['discount']})/100*{$this->sCurrency['factor']} AS DECIMAL(10,3)),2)>=" . $this->sSettings['price_filter'];
         }
         if (!empty($this->sSettings['own_filter']) && trim($this->sSettings['own_filter'])) {
@@ -876,6 +911,11 @@ class sExport implements \Enlight_Hook
             unset($attributeColumnNames['id'], $attributeColumnNames['articleID'], $attributeColumnNames['articledetailsID']);
             $attributeColumns = trim('at.' . implode(',at.', array_keys($attributeColumnNames)), ',');
         }
+
+        if ($this->sCurrency === false) {
+            throw new RuntimeException('Currency could not be fetched correctly.');
+        }
+
         $sql = "
             SELECT
                 a.id as `articleID`,
@@ -1039,6 +1079,8 @@ class sExport implements \Enlight_Hook
      * Executes the current product export
      *
      * @param resource $handleResource used as a file or the stdout to fetch the smarty output
+     *
+     * @return void
      */
     public function executeExport($handleResource)
     {
@@ -1182,7 +1224,6 @@ class sExport implements \Enlight_Hook
 
                 $configurationGroups = $this->configuratorService->getProductConfiguration($product, $context);
 
-                /* @var StoreFrontBundle\Struct\Configurator\Group $configuratorOption */
                 foreach ($configurationGroups as $configurationGroup) {
                     $option = current($configurationGroup->getOptions());
                     $row['configurator_options'][$configurationGroup->getName()] = $option->getName();
@@ -1190,13 +1231,12 @@ class sExport implements \Enlight_Hook
             }
             $rows[] = $row;
 
-            if ($rowIndex == $count || \count($rows) >= 50) {
-                @set_time_limit(30);
-
+            if ($rowIndex === $count || \count($rows) >= 50) {
+                $this->ensurePHPTimeLimit();
                 $rows = Shopware()->Container()->get('events')->filter(
                     'Shopware_Modules_Export_ExportResult_Filter_Fixed',
                     $rows,
-                    ['feedId' => $this->sFeedID, 'subject' => $this]
+                    ['feedId' => $this->sFeedID, 'subject' => $this, 'rowIndex' => $rowIndex]
                 );
 
                 $this->sSmarty->assign('sArticles', $rows);
@@ -1239,7 +1279,7 @@ class sExport implements \Enlight_Hook
     /**
      * @param int|string $country
      *
-     * @return bool|array
+     * @return array|false
      */
     public function sGetCountry($country)
     {
@@ -1271,7 +1311,7 @@ class sExport implements \Enlight_Hook
     /**
      * @param int|string $payment
      *
-     * @return bool|array
+     * @return array|false
      */
     public function sGetPaymentmean($payment)
     {
@@ -1313,11 +1353,13 @@ class sExport implements \Enlight_Hook
      * @param int|string|null $dispatch
      * @param int|string|null $country
      *
-     * @deprecated in 5.6, will be removed in 5.7 without replacement
+     * @return array<string, mixed>
+     *
+     * @deprecated in 5.6, will be removed in 5.8 without replacement
      */
     public function sGetDispatch($dispatch = null, $country = null)
     {
-        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be removed with 5.7. Will be removed without replacement.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be removed with 5.8. Will be removed without replacement.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
 
         if (empty($dispatch)) {
             $sql_order = '';
@@ -1369,7 +1411,7 @@ class sExport implements \Enlight_Hook
      * @param int|null $countryID
      * @param int|null $paymentID
      *
-     * @return bool|mixed
+     * @return array<string, mixed>|false
      */
     public function sGetDispatchBasket($article, $countryID = null, $paymentID = null)
     {
@@ -1452,6 +1494,10 @@ class sExport implements \Enlight_Hook
         ";
 
         try {
+            if ($this->sCurrency === false) {
+                throw new RuntimeException('Currency could not be fetched correctly.');
+            }
+
             $basket = $this->db->fetchRow($sql, [
                 $article['articleID'],
                 $article['ordernumber'],
@@ -1469,6 +1515,9 @@ class sExport implements \Enlight_Hook
         if (empty($basket)) {
             return false;
         }
+        if ($this->sCustomergroup === false) {
+            throw new RuntimeException('Customer group could not be fetched correctly.');
+        }
         $mainID = $this->shopData['main_id'];
         $shopID = $this->shopData['id'];
         $basket['countryID'] = $countryID;
@@ -1481,11 +1530,12 @@ class sExport implements \Enlight_Hook
     }
 
     /**
-     * @param array  $article
-     * @param string $payment
-     * @param string $country
+     * @param array           $article
+     * @param string          $payment
+     * @param string          $country
+     * @param int|string|null $dispatch
      *
-     * @return bool|float
+     * @return float|false
      */
     public function sGetArticleShippingcost($article, $payment, $country, $dispatch = null)
     {
@@ -1502,6 +1552,9 @@ class sExport implements \Enlight_Hook
         }
         if (!empty($payment['country_surcharge'][$country['countryiso']])) {
             $payment['surcharge'] += $payment['country_surcharge'][$country['countryiso']];
+        }
+        if ($this->sCurrency === false) {
+            throw new RuntimeException('Currency could not be fetched correctly.');
         }
         $payment['surcharge'] = round($payment['surcharge'] * $this->sCurrency['factor'], 2);
 
@@ -1638,7 +1691,7 @@ class sExport implements \Enlight_Hook
     /**
      * @param array $basket
      *
-     * @return bool|float|int
+     * @return float|false
      */
     public function sGetPremiumDispatchSurcharge($basket)
     {
@@ -1758,16 +1811,16 @@ class sExport implements \Enlight_Hook
             }
         }
 
-        return $surcharge;
+        return (float) $surcharge;
     }
 
     /**
-     * @param array    $article
-     * @param array    $payment
-     * @param array    $country
-     * @param int|null $dispatch
+     * @param array           $article
+     * @param array           $payment
+     * @param array           $country
+     * @param int|string|null $dispatch
      *
-     * @return bool|float
+     * @return float|false
      */
     public function sGetArticlePremiumShippingcosts($article, $payment, $country, $dispatch = null)
     {
@@ -1775,31 +1828,30 @@ class sExport implements \Enlight_Hook
         if (empty($basket)) {
             return false;
         }
-        /** @var array|null $dispatch */
-        $dispatch = $this->sGetPremiumDispatch($basket, $dispatch);
-        if (empty($dispatch)) {
+        $dispatchData = $this->sGetPremiumDispatch($basket, $dispatch);
+        if (empty($dispatchData)) {
             return false;
         }
 
-        if ((!empty($dispatch['shippingfree']) && $dispatch['shippingfree'] <= $basket['amount'])
+        if ((!empty($dispatchData['shippingfree']) && $dispatchData['shippingfree'] <= $basket['amount'])
             || empty($basket['count_article'])
-            || (!empty($basket['shippingfree']) && empty($dispatch['bind_shippingfree']))
+            || (!empty($basket['shippingfree']) && empty($dispatchData['bind_shippingfree']))
         ) {
-            if (empty($dispatch['surcharge_calculation'])) {
+            if (empty($dispatchData['surcharge_calculation'])) {
                 return $payment['surcharge'];
             }
 
             return 0;
         }
 
-        if (empty($dispatch['calculation'])) {
+        if (empty($dispatchData['calculation'])) {
             $from = round($basket['weight'], 3);
-        } elseif ($dispatch['calculation'] == 1) {
+        } elseif ($dispatchData['calculation'] == 1) {
             $from = round($basket['amount'], 2);
-        } elseif ($dispatch['calculation'] == 2) {
+        } elseif ($dispatchData['calculation'] == 2) {
             $from = round($basket['count_article']);
-        } elseif ($dispatch['calculation'] == 3) {
-            $from = round($basket['calculation_value_' . $dispatch['id']], 2);
+        } elseif ($dispatchData['calculation'] == 3) {
+            $from = round($basket['calculation_value_' . $dispatchData['id']], 2);
         } else {
             return false;
         }
@@ -1808,7 +1860,7 @@ class sExport implements \Enlight_Hook
             SELECT `value` , `factor`
             FROM `s_premium_shippingcosts`
             WHERE `from`<=$from
-            AND `dispatchID`={$dispatch['id']}
+            AND `dispatchID`={$dispatchData['id']}
             ORDER BY `from` DESC
             LIMIT 1
         ";
@@ -1826,9 +1878,12 @@ class sExport implements \Enlight_Hook
         if (!empty($result['surcharge'])) {
             $result['shippingcosts'] += $result['surcharge'];
         }
+        if ($this->sCurrency === false) {
+            throw new RuntimeException('Currency could not be fetched correctly.');
+        }
         $result['shippingcosts'] *= $this->sCurrency['factor'];
         $result['shippingcosts'] = round($result['shippingcosts'], 2);
-        if (!empty($payment['surcharge']) && $dispatch['surcharge_calculation'] != 2 && (empty($article['shippingfree']) || empty($dispatch['surcharge_calculation']))) {
+        if (!empty($payment['surcharge']) && $dispatchData['surcharge_calculation'] != 2 && (empty($article['shippingfree']) || empty($dispatchData['surcharge_calculation']))) {
             $result['shippingcosts'] += $payment['surcharge'];
         }
 
@@ -1837,8 +1892,10 @@ class sExport implements \Enlight_Hook
 
     /**
      * @param int|string $id
+     *
+     * @return array<string, mixed>
      */
-    private function getShopData($id)
+    private function getShopData($id): array
     {
         $sql = null;
         static $cache = [];
@@ -1890,10 +1947,8 @@ class sExport implements \Enlight_Hook
 
     /**
      * Helper function to get access to the media repository.
-     *
-     * @return \Shopware\Models\Media\Repository
      */
-    private function getMediaRepository()
+    private function getMediaRepository(): Repository
     {
         if ($this->mediaRepository === null) {
             $this->mediaRepository = Shopware()->Models()->getRepository(Media::class);
@@ -1904,13 +1959,8 @@ class sExport implements \Enlight_Hook
 
     /**
      * Makes sure the given URL contains the correct host for the selected (sub-)shop
-     *
-     * @param string $url
-     * @param string $adapterType
-     *
-     * @return string
      */
-    private function fixShopHost($url, $adapterType)
+    private function fixShopHost(string $url, string $adapterType): string
     {
         if ($adapterType !== 'local' || $this->hasMediaUrl()) {
             return $url;
@@ -1925,10 +1975,7 @@ class sExport implements \Enlight_Hook
         return $url;
     }
 
-    /**
-     * @return string
-     */
-    private function getTypeOfImage(string $hash)
+    private function getTypeOfImage(string $hash): string
     {
         $types = [
             Media::TYPE_IMAGE,
@@ -1965,5 +2012,15 @@ class sExport implements \Enlight_Hook
         }
 
         return false;
+    }
+
+    private function ensurePHPTimeLimit(): void
+    {
+        $maxExecutionTime = (int) ini_get('max_execution_time');
+        if ($maxExecutionTime <= self::DISABLED_MAX_EXECUTION_TIME || $maxExecutionTime >= self::DEFAULT_MAX_EXECUTION_TIME) {
+            return;
+        }
+
+        @set_time_limit(self::DEFAULT_MAX_EXECUTION_TIME);
     }
 }

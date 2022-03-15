@@ -28,6 +28,7 @@ use Shopware\Bundle\AccountBundle\Constraint\CustomerEmail;
 use Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface;
 use Shopware\Components\Api\Exception\ValidationException;
 use Shopware\Models\Customer\Customer;
+use Shopware_Components_Config;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Constraints\Choice;
 use Symfony\Component\Validator\Constraints\NotBlank;
@@ -36,30 +37,18 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class CustomerValidator implements CustomerValidatorInterface
 {
-    /**
-     * @var ValidatorInterface
-     */
-    private $validator;
+    private ValidatorInterface $validator;
 
-    /**
-     * @var ContextServiceInterface
-     */
-    private $context;
+    private ContextServiceInterface $context;
 
-    /**
-     * @var \Shopware_Components_Config
-     */
-    private $config;
+    private Shopware_Components_Config $config;
 
-    /**
-     * @var ContextualValidatorInterface
-     */
-    private $validationContext;
+    private ContextualValidatorInterface $validationContext;
 
     public function __construct(
         ValidatorInterface $validator,
         ContextServiceInterface $context,
-        \Shopware_Components_Config $config
+        Shopware_Components_Config $config
     ) {
         $this->validator = $validator;
         $this->context = $context;
@@ -84,7 +73,7 @@ class CustomerValidator implements CustomerValidatorInterface
             ]),
         ]);
 
-        if ($this->validationContext->getViolations()->count()) {
+        if ($this->validationContext->getViolations()->count() > 0) {
             throw new ValidationException($this->validationContext->getViolations());
         }
     }
@@ -104,11 +93,9 @@ class CustomerValidator implements CustomerValidatorInterface
     }
 
     /**
-     * @param string       $property
-     * @param string       $value
      * @param Constraint[] $constraints
      */
-    private function validateField($property, $value, $constraints)
+    private function validateField(string $property, ?string $value, array $constraints): void
     {
         $this->validationContext->atPath($property)->validate($value, $constraints);
     }
@@ -116,7 +103,7 @@ class CustomerValidator implements CustomerValidatorInterface
     /**
      * @return Constraint[]
      */
-    private function getSalutationConstraints()
+    private function getSalutationConstraints(): array
     {
         $salutations = explode(',', $this->config->get('shopsalutations'));
 

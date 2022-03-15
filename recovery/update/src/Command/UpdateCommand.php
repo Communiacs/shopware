@@ -24,6 +24,8 @@
 
 namespace Shopware\Recovery\Update\Command;
 
+use Exception;
+use PDO;
 use Shopware\Components\Migrations\Manager as MigrationManager;
 use Shopware\Recovery\Common\DumpIterator;
 use Shopware\Recovery\Common\IOHelper;
@@ -97,6 +99,7 @@ class UpdateCommand extends Command
         }
 
         $this->unpackFiles();
+        $this->updateHtaccess();
         $this->migrateDatabase();
         $this->importSnippets();
         $this->cleanup();
@@ -139,11 +142,16 @@ class UpdateCommand extends Command
         do {
             $result = $step->run($offset, $total);
             if ($result instanceof ErrorResult) {
-                throw new \Exception($result->getMessage(), 0, $result->getException());
+                throw new Exception($result->getMessage(), 0, $result->getException());
             }
             $offset = $result->getOffset();
             $total = $result->getTotal();
         } while ($result instanceof ValidResult);
+    }
+
+    private function updateHtaccess()
+    {
+        $this->container->get('shopware.update.update_htaccess')->update();
     }
 
     private function migrateDatabase()
@@ -172,7 +180,7 @@ class UpdateCommand extends Command
             $progress->setProgress($offset);
             $result = $step->run($offset);
             if ($result instanceof ErrorResult) {
-                throw new \Exception($result->getMessage(), 0, $result->getException());
+                throw new Exception($result->getMessage(), 0, $result->getException());
             }
 
             $offset = $result->getOffset();
@@ -195,7 +203,7 @@ class UpdateCommand extends Command
             return 1;
         }
 
-        /** @var \PDO $conn */
+        /** @var PDO $conn */
         $conn = $this->container->get('db');
         $snippetStep = new SnippetStep($conn, $dump);
 
@@ -207,7 +215,7 @@ class UpdateCommand extends Command
             $progress->setProgress($offset);
             $result = $snippetStep->run($offset);
             if ($result instanceof ErrorResult) {
-                throw new \Exception($result->getMessage(), 0, $result->getException());
+                throw new Exception($result->getMessage(), 0, $result->getException());
             }
             $offset = $result->getOffset();
             $progress->setProgress($offset);

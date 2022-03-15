@@ -24,7 +24,9 @@
 
 namespace Shopware\Bundle\EmotionBundle\Struct;
 
-class ElementConfig implements \JsonSerializable
+use JsonSerializable;
+
+class ElementConfig implements JsonSerializable
 {
     /**
      * Internal storage which contains all struct data.
@@ -76,8 +78,11 @@ class ElementConfig implements \JsonSerializable
     }
 
     /**
-     * {@inheritdoc}
+     * @return array<string, mixed>
+     *
+     * @deprecated - Native return type will be added with Shopware 5.8
      */
+    #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
         return $this->storage;

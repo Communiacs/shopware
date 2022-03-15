@@ -24,10 +24,16 @@
 
 namespace Shopware\Models\Tracking;
 
+use DateTime;
+use DateTimeInterface;
+use Doctrine\ORM\Query;
+use Doctrine\ORM\QueryBuilder;
 use Shopware\Components\Model\ModelRepository;
 
 /**
  * Shopware Tracking Model
+ *
+ * @extends ModelRepository<ArticleImpression|Banner>
  */
 class Repository extends ModelRepository
 {
@@ -39,17 +45,17 @@ class Repository extends ModelRepository
      *
      * @return Banner
      */
-    public function getOrCreateBannerStatsModel($bannerId, \DateTimeInterface $date = null)
+    public function getOrCreateBannerStatsModel($bannerId, DateTimeInterface $date = null)
     {
         if ($date === null) {
-            $date = new \DateTime();
+            $date = new DateTime();
         }
         /** @var Banner|null $bannerStatistics */
         $bannerStatistics = $this->findOneBy(['bannerId' => $bannerId, 'displayDate' => $date]);
 
         // If no Entry for this day exists - create a new one
-        if (!$bannerStatistics) {
-            $bannerStatistics = new \Shopware\Models\Tracking\Banner($bannerId, $date);
+        if (!$bannerStatistics instanceof Banner) {
+            $bannerStatistics = new Banner($bannerId, $date);
 
             $bannerStatistics->setClicks(0);
             $bannerStatistics->setViews(0);
@@ -61,17 +67,17 @@ class Repository extends ModelRepository
     /**
      * Returns an instance of the \Doctrine\ORM\Query object which select the article impression
      *
-     * @param int                     $articleId
-     * @param int                     $shopId
-     * @param \DateTimeInterface|null $date
-     * @param string|null             $deviceType
+     * @param int                    $articleId
+     * @param int                    $shopId
+     * @param DateTimeInterface|null $date
+     * @param string|null            $deviceType
      *
-     * @return \Doctrine\ORM\Query
+     * @return Query
      */
     public function getArticleImpressionQuery($articleId, $shopId, $date = null, $deviceType = null)
     {
         if ($date == null) {
-            $date = new \DateTime();
+            $date = new DateTime();
         }
         $builder = $this->getArticleImpressionQueryBuilder($articleId, $shopId, $date, $deviceType);
 
@@ -82,18 +88,18 @@ class Repository extends ModelRepository
      * Helper function to create the query builder for the "getArticleImpressionQuery" function.
      * This function can be hooked to modify the query builder of the query object.
      *
-     * @param int                $articleId
-     * @param int                $shopId
-     * @param \DateTimeInterface $date
-     * @param string|null        $deviceType
+     * @param int               $articleId
+     * @param int               $shopId
+     * @param DateTimeInterface $date
+     * @param string|null       $deviceType
      *
-     * @return \Doctrine\ORM\QueryBuilder
+     * @return QueryBuilder
      */
     public function getArticleImpressionQueryBuilder($articleId, $shopId, $date, $deviceType = null)
     {
         $builder = $this->getEntityManager()->createQueryBuilder();
         $builder->select('articleImpression')
-                ->from(\Shopware\Models\Tracking\ArticleImpression::class, 'articleImpression')
+                ->from(ArticleImpression::class, 'articleImpression')
                 ->where('articleImpression.articleId = :articleId')
                 ->andWhere('articleImpression.shopId = :shopId')
                 ->andWhere('articleImpression.date = :fromDate')

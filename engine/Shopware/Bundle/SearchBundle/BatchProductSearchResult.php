@@ -24,6 +24,7 @@
 
 namespace Shopware\Bundle\SearchBundle;
 
+use OutOfBoundsException;
 use Shopware\Bundle\StoreFrontBundle\Struct\ListProduct;
 
 class BatchProductSearchResult
@@ -31,10 +32,13 @@ class BatchProductSearchResult
     /**
      * Internal storage which contains all struct data.
      *
-     * @var array
+     * @var array<string, array<ListProduct>>
      */
     protected $storage = [];
 
+    /**
+     * @param array<string, array<ListProduct>> $storage
+     */
     public function __construct(array $storage)
     {
         $this->storage = $storage;
@@ -45,9 +49,9 @@ class BatchProductSearchResult
      *
      * @param string $key
      *
-     * @throws \OutOfBoundsException
+     * @throws OutOfBoundsException
      *
-     * @return array<string, ListProduct|null>
+     * @return array<ListProduct>
      */
     public function get($key)
     {
@@ -55,11 +59,11 @@ class BatchProductSearchResult
             return $this->storage[$key];
         }
 
-        throw new \OutOfBoundsException(sprintf('Key "%s" was not found.', $key));
+        throw new OutOfBoundsException(sprintf('Key "%s" was not found.', $key));
     }
 
     /**
-     * @return array
+     * @return array<string, array<ListProduct>>
      */
     public function getAll()
     {
@@ -67,12 +71,12 @@ class BatchProductSearchResult
     }
 
     /**
-     * @return array
+     * @return array<string>
      */
     public function getProductNumbers()
     {
-        if (!\count($this->storage)) {
-            return $this->storage;
+        if (\count($this->storage) === 0) {
+            return [];
         }
 
         $productNumbers = array_merge(...array_values($this->storage));

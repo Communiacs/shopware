@@ -33,10 +33,7 @@ use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
 class VariantConditionHandler implements ConditionHandlerInterface
 {
-    /**
-     * @var VariantHelperInterface
-     */
-    private $helper;
+    private VariantHelperInterface $helper;
 
     public function __construct(VariantHelperInterface $helper)
     {
@@ -59,7 +56,6 @@ class VariantConditionHandler implements ConditionHandlerInterface
         QueryBuilder $query,
         ShopContextInterface $context
     ) {
-        /* @var VariantCondition $condition */
         $this->helper->joinVariantCondition($query, $condition);
     }
 }

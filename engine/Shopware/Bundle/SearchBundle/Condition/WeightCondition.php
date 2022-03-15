@@ -24,10 +24,14 @@
 
 namespace Shopware\Bundle\SearchBundle\Condition;
 
+use JsonSerializable;
 use Shopware\Bundle\SearchBundle\ConditionInterface;
+use Shopware\Components\ObjectJsonSerializeTraitDeprecated;
 
-class WeightCondition implements ConditionInterface, \JsonSerializable
+class WeightCondition implements ConditionInterface, JsonSerializable
 {
+    use ObjectJsonSerializeTraitDeprecated;
+
     private const NAME = 'weight';
 
     /**
@@ -69,13 +73,5 @@ class WeightCondition implements ConditionInterface, \JsonSerializable
     public function getMaxWeight()
     {
         return $this->maxWeight;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function jsonSerialize()
-    {
-        return get_object_vars($this);
     }
 }

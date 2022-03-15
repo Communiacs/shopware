@@ -24,8 +24,11 @@
 
 namespace Shopware\Models\Article;
 
+use DateTime;
+use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
+use Shopware\Models\Shop\Shop;
 
 /**
  * Shopware Vote Model
@@ -43,15 +46,15 @@ class Vote extends ModelEntity
     /**
      * OWNING SIDE
      *
-     * @var \Shopware\Models\Article\Article
+     * @var Article
      *
      * @ORM\ManyToOne(targetEntity="Shopware\Models\Article\Article", inversedBy="votes", cascade={"persist"})
-     * @ORM\JoinColumn(name="articleID", referencedColumnName="id")
+     * @ORM\JoinColumn(name="articleID", referencedColumnName="id", nullable=false)
      */
     protected $article;
 
     /**
-     * @var \Shopware\Models\Shop\Shop
+     * @var Shop|null
      *
      * @ORM\ManyToOne(targetEntity="Shopware\Models\Shop\Shop")
      * @ORM\JoinColumn(name="shop_id", referencedColumnName="id")
@@ -110,14 +113,14 @@ class Vote extends ModelEntity
     private $points;
 
     /**
-     * @var \DateTimeInterface
+     * @var DateTimeInterface
      *
      * @ORM\Column(name="datum", type="datetime", nullable=false)
      */
     private $datum;
 
     /**
-     * @var int
+     * @var bool
      *
      * @ORM\Column(name="active", type="boolean", nullable=false)
      */
@@ -138,7 +141,7 @@ class Vote extends ModelEntity
     private $answer;
 
     /**
-     * @var \DateTimeInterface|null
+     * @var DateTimeInterface|null
      *
      * @ORM\Column(name="answer_date", type="datetime", nullable=true)
      */
@@ -254,14 +257,14 @@ class Vote extends ModelEntity
     /**
      * Sets the datum of the vote
      *
-     * @param \DateTimeInterface $datum
+     * @param DateTimeInterface $datum
      *
      * @return Vote
      */
     public function setDatum($datum)
     {
-        if (!$datum instanceof \DateTimeInterface) {
-            $datum = new \DateTime($datum);
+        if (!$datum instanceof DateTimeInterface) {
+            $datum = new DateTime($datum);
         }
 
         $this->datum = $datum;
@@ -272,7 +275,7 @@ class Vote extends ModelEntity
     /**
      * Gets the datum of the vote
      *
-     * @return \DateTimeInterface
+     * @return DateTimeInterface
      */
     public function getDatum()
     {
@@ -283,7 +286,7 @@ class Vote extends ModelEntity
      * Sets the vote activation-status
      * 1 = accepted, 0 = not accepted yet
      *
-     * @param int $active
+     * @param bool $active
      *
      * @return Vote
      */
@@ -298,7 +301,7 @@ class Vote extends ModelEntity
      * Gets the activation-status of the vote
      * 1 = accepted, 0 = not accepted yet
      *
-     * @return int
+     * @return bool
      */
     public function getActive()
     {
@@ -356,14 +359,14 @@ class Vote extends ModelEntity
     /**
      * Sets the datum of the answer
      *
-     * @param \DateTimeInterface|string|null $answer_date
+     * @param DateTimeInterface|string|null $answer_date
      *
      * @return Vote
      */
     public function setAnswerDate($answer_date)
     {
-        if (!$answer_date instanceof \DateTimeInterface) {
-            $answer_date = new \DateTime($answer_date);
+        if (!$answer_date instanceof DateTimeInterface) {
+            $answer_date = new DateTime($answer_date);
         }
         $this->answer_date = $answer_date;
 
@@ -373,7 +376,7 @@ class Vote extends ModelEntity
     /**
      * Gets the datum of the answer
      *
-     * @return \DateTimeInterface|null
+     * @return DateTimeInterface|null
      */
     public function getAnswerDate()
     {
@@ -384,7 +387,7 @@ class Vote extends ModelEntity
      * OWNING SIDE
      * of the association between votes and article
      *
-     * @return \Shopware\Models\Article\Article
+     * @return Article
      */
     public function getArticle()
     {
@@ -392,9 +395,9 @@ class Vote extends ModelEntity
     }
 
     /**
-     * @param \Shopware\Models\Article\Article|array $article
+     * @param Article|array $article
      *
-     * @return \Shopware\Models\Article\Vote
+     * @return Vote
      */
     public function setArticle($article)
     {
@@ -404,7 +407,7 @@ class Vote extends ModelEntity
     }
 
     /**
-     * @return \Shopware\Models\Shop\Shop|null
+     * @return Shop|null
      */
     public function getShop()
     {
@@ -412,7 +415,7 @@ class Vote extends ModelEntity
     }
 
     /**
-     * @param \Shopware\Models\Shop\Shop|null $shop
+     * @param Shop|null $shop
      */
     public function setShop($shop)
     {

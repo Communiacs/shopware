@@ -24,7 +24,10 @@
 
 namespace Shopware\Components\Model\DBAL;
 
+use Doctrine\DBAL\ForwardCompatibility\DriverStatement;
 use Doctrine\DBAL\Query\QueryBuilder;
+use PDO;
+use RuntimeException;
 
 /**
  * Class Result which allows to paginate dbal queries.
@@ -41,7 +44,7 @@ class Result
     /**
      * Contains the executed pdo statement of the passed query builder.
      *
-     * @var \Doctrine\DBAL\Driver\ResultStatement
+     * @var DriverStatement
      */
     protected $statement;
 
@@ -69,7 +72,7 @@ class Result
      *
      * @internal param array $data
      */
-    public function __construct(QueryBuilder $builder, $fetchMode = \PDO::FETCH_ASSOC, $useCountQuery = true)
+    public function __construct(QueryBuilder $builder, $fetchMode = PDO::FETCH_ASSOC, $useCountQuery = true)
     {
         $builder = clone $builder;
 
@@ -79,7 +82,11 @@ class Result
             $this->addTotalCountSelect($builder);
         }
 
-        $this->statement = $builder->execute();
+        $statement = $builder->execute();
+        if (\is_int($statement)) {
+            throw new RuntimeException('QueryBuilder statement not valid');
+        }
+        $this->statement = $statement;
 
         if ($useCountQuery) {
             $this->totalCount = $builder->getConnection()->fetchColumn(

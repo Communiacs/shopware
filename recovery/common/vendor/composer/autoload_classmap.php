@@ -199,6 +199,7 @@ return array(
     'Shopware\\Recovery\\Update\\StoreApi' => $baseDir . '/../update/src/StoreApi.php',
     'Shopware\\Recovery\\Update\\Struct\\Struct' => $baseDir . '/../update/src/Struct/Struct.php',
     'Shopware\\Recovery\\Update\\Struct\\Version' => $baseDir . '/../update/src/Struct/Version.php',
+    'Shopware\\Recovery\\Update\\UpdateHtaccess' => $baseDir . '/../update/src/UpdateHtaccess.php',
     'Shopware\\Recovery\\Update\\Utils' => $baseDir . '/../update/src/Utils.php',
     'Slim\\Environment' => $vendorDir . '/slim/slim/Slim/Environment.php',
     'Slim\\Exception\\Pass' => $vendorDir . '/slim/slim/Slim/Exception/Pass.php',

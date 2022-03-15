@@ -24,9 +24,12 @@
 
 namespace Shopware\Models\Order;
 
+use DateInterval;
+use DateTime;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\AbstractQuery;
 use Doctrine\ORM\QueryBuilder;
+use PDO;
 use Shopware\Components\Model\ModelManager;
 use Shopware\Components\Model\ModelRepository;
 use Shopware\Models\Article\Article;
@@ -38,6 +41,8 @@ use Shopware\Models\Document\Document;
  * The order model repository is responsible to load all order data.
  * It supports the standard functions like findAll or findBy and extends the standard repository for
  * some specific functions to return the model data as array.
+ *
+ * @extends ModelRepository<Order>
  */
 class Repository extends ModelRepository
 {
@@ -374,7 +379,7 @@ class Repository extends ModelRepository
      */
     public function getVoucherQuery()
     {
-        $today = new \DateTime();
+        $today = new DateTime();
         $today = "'" . $today->format('Y-m-d') . "'";
 
         $builder = Shopware()->Models()->createQueryBuilder();
@@ -626,14 +631,14 @@ class Repository extends ModelRepository
                     break;
 
                 case 'from':
-                    $tmp = new \DateTime($filter['value']);
+                    $tmp = new DateTime($filter['value']);
                     $builder->andWhere('orders.orderTime >= :orderTimeFrom');
                     $builder->setParameter('orderTimeFrom', $tmp->format('Ymd'));
                     break;
 
                 case 'to':
-                    $tmp = new \DateTime($filter['value']);
-                    $tmp->add(new \DateInterval('P1D'));
+                    $tmp = new DateTime($filter['value']);
+                    $tmp->add(new DateInterval('P1D'));
                     $builder->andWhere('orders.orderTime <= :orderTimeTo');
                     $builder->setParameter('orderTimeTo', $tmp->format('Ymd'));
                     break;
@@ -740,13 +745,13 @@ class Repository extends ModelRepository
 
         $query->setMaxResults(self::SEARCH_TERM_LIMIT);
 
-        return $query->execute()->fetchAll(\PDO::FETCH_COLUMN);
+        return $query->execute()->fetchAll(PDO::FETCH_COLUMN);
     }
 
     /**
      * @param string $term
      *
-     * @return int[]
+     * @return array<int, int|string>
      */
     private function searchOrderIds($term)
     {
@@ -787,7 +792,7 @@ class Repository extends ModelRepository
         ]);
 
         $query->setMaxResults(self::SEARCH_TERM_LIMIT);
-        $ids = $query->execute()->fetchAll(\PDO::FETCH_COLUMN);
+        $ids = $query->execute()->fetchAll(PDO::FETCH_COLUMN);
 
         if (empty($ids)) {
             return [];
@@ -806,17 +811,15 @@ class Repository extends ModelRepository
 
         $query->setMaxResults(self::SEARCH_TERM_LIMIT);
 
-        return $query->execute()->fetchAll(\PDO::FETCH_COLUMN);
+        return $query->execute()->fetchAll(PDO::FETCH_COLUMN);
     }
 
     /**
-     * @param string $term
-     * @param string $table
-     * @param int[]  $excludedOrderIds
+     * @param array<int, int|string> $excludedOrderIds
      *
      * @return int[]
      */
-    private function searchAddressTable($term, $table, array $excludedOrderIds = [])
+    private function searchAddressTable(string $term, string $table, array $excludedOrderIds = []): array
     {
         $query = $this->getEntityManager()->getConnection()->createQueryBuilder();
         $query->select('address.orderID');
@@ -837,17 +840,15 @@ class Repository extends ModelRepository
         }
         $query->setMaxResults(self::SEARCH_TERM_LIMIT);
 
-        return $query->execute()->fetchAll(\PDO::FETCH_COLUMN);
+        return $query->execute()->fetchAll(PDO::FETCH_COLUMN);
     }
 
     /**
-     * @param string $term
-     * @param string $table
-     * @param int[]  $excludedOrderIds
+     * @param array<int, int|string> $excludedOrderIds
      *
      * @return int[]
      */
-    private function searchDocumentsTable($term, $table, array $excludedOrderIds = [])
+    private function searchDocumentsTable(string $term, string $table, array $excludedOrderIds = []): array
     {
         $query = $this->getEntityManager()->getConnection()->createQueryBuilder();
         $query->select('documents.orderID');
@@ -863,6 +864,6 @@ class Repository extends ModelRepository
         }
         $query->setMaxResults(self::SEARCH_TERM_LIMIT);
 
-        return $query->execute()->fetchAll(\PDO::FETCH_COLUMN);
+        return $query->execute()->fetchAll(PDO::FETCH_COLUMN);
     }
 }

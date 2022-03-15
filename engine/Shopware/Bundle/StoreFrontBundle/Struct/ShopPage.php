@@ -24,6 +24,8 @@
 
 namespace Shopware\Bundle\StoreFrontBundle\Struct;
 
+use DateTimeInterface;
+
 class ShopPage extends Extendable
 {
     /**
@@ -117,7 +119,7 @@ class ShopPage extends Extendable
     protected $shops;
 
     /**
-     * @var \DateTimeInterface
+     * @var DateTimeInterface
      */
     protected $changed;
 
@@ -414,14 +416,14 @@ class ShopPage extends Extendable
     }
 
     /**
-     * @return \DateTimeInterface
+     * @return DateTimeInterface
      */
     public function getChanged()
     {
         return $this->changed;
     }
 
-    public function setChanged(\DateTimeInterface $changed)
+    public function setChanged(DateTimeInterface $changed)
     {
         $this->changed = $changed;
     }
@@ -504,13 +506,5 @@ class ShopPage extends Extendable
     public function setChildrenCount($childrenCount)
     {
         $this->childrenCount = $childrenCount;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function jsonSerialize()
-    {
-        return get_object_vars($this);
     }
 }

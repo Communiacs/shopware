@@ -304,7 +304,7 @@ class Shopware_Controllers_Backend_Category extends Shopware_Controllers_Backend
      */
     public function getTemplateSettingsAction()
     {
-        $categoryTemplates = array_filter(explode(';', Shopware()->Config()->categoryTemplates));
+        $categoryTemplates = array_filter(explode(';', Shopware()->Config()->get('categoryTemplates')));
         $data = [];
         foreach ($categoryTemplates as $templateConfigRaw) {
             [$template, $name] = explode(':', $templateConfigRaw);
@@ -434,7 +434,6 @@ class Shopware_Controllers_Backend_Category extends Shopware_Controllers_Backend
         $offset = (int) $this->Request()->getParam('start');
         $limit = (int) $this->Request()->getParam('limit', 20);
 
-        /** @var \Shopware\Models\Customer\Repository $customerRepository */
         $customerRepository = $this->getCustomerRepository();
         $dataQuery = $customerRepository->getCustomerGroupsWithoutIdsQuery($usedIds, $offset, $limit);
 
@@ -595,6 +594,7 @@ class Shopware_Controllers_Backend_Category extends Shopware_Controllers_Backend
         $params['changed'] = new DateTime();
         $categoryModel->fromArray($params);
         $categoryModel->setShops($this->Request()->getParam('shops'));
+        $this->em->persist($categoryModel);
         $this->em->flush();
 
         $categoryId = $categoryModel->getId();
@@ -858,7 +858,7 @@ class Shopware_Controllers_Backend_Category extends Shopware_Controllers_Backend
     }
 
     /**
-     * Helper function to add multiple products to an category.
+     * Helper function to add multiple products to a category.
      *
      * @param int   $categoryId
      * @param array $articleIds

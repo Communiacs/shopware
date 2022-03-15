@@ -33,10 +33,7 @@ use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
 class HeightConditionHandler implements ConditionHandlerInterface
 {
-    /**
-     * @var VariantHelperInterface
-     */
-    private $variantHelper;
+    private VariantHelperInterface $variantHelper;
 
     public function __construct(VariantHelperInterface $variantHelper)
     {
@@ -53,10 +50,14 @@ class HeightConditionHandler implements ConditionHandlerInterface
         QueryBuilder $query,
         ShopContextInterface $context
     ) {
-        $min = ':minHeight' . md5(json_encode($condition));
-        $max = ':maxHeight' . md5(json_encode($condition));
+        $this->addCondition($condition, $query);
+    }
 
-        /* @var HeightCondition $condition */
+    private function addCondition(HeightCondition $condition, QueryBuilder $query): void
+    {
+        $min = ':minHeight' . md5(json_encode($condition, JSON_THROW_ON_ERROR));
+        $max = ':maxHeight' . md5(json_encode($condition, JSON_THROW_ON_ERROR));
+
         $this->variantHelper->joinVariants($query);
 
         if ($condition->getMinHeight() > 0) {

@@ -81,17 +81,9 @@ class NumberToLocalizedStringTransformer implements DataTransformerInterface
 
     public function __construct(int $scale = null, ?bool $grouping = false, ?int $roundingMode = self::ROUND_HALF_UP, string $locale = null)
     {
-        if (null === $grouping) {
-            $grouping = false;
-        }
-
-        if (null === $roundingMode) {
-            $roundingMode = self::ROUND_HALF_UP;
-        }
-
         $this->scale = $scale;
-        $this->grouping = $grouping;
-        $this->roundingMode = $roundingMode;
+        $this->grouping = $grouping ?? false;
+        $this->roundingMode = $roundingMode ?? self::ROUND_HALF_UP;
         $this->locale = $locale;
     }
 
@@ -165,7 +157,7 @@ class NumberToLocalizedStringTransformer implements DataTransformerInterface
             $value = str_replace(',', $decSep, $value);
         }
 
-        if (false !== strpos($value, $decSep)) {
+        if (str_contains($value, $decSep)) {
             $type = \NumberFormatter::TYPE_DOUBLE;
         } else {
             $type = \PHP_INT_SIZE === 8

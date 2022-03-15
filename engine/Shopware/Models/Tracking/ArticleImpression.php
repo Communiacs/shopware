@@ -24,6 +24,8 @@
 
 namespace Shopware\Models\Tracking;
 
+use DateTime;
+use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
 
@@ -56,9 +58,9 @@ class ArticleImpression extends ModelEntity
     private $id;
 
     /**
-     * @var \DateTimeInterface|null
+     * @var DateTimeInterface
      *
-     * @ORM\Column(name="date", type="date", nullable=true)
+     * @ORM\Column(name="date", type="date", nullable=false)
      */
     private $date;
 
@@ -90,23 +92,23 @@ class ArticleImpression extends ModelEntity
     private $impressions;
 
     /**
-     * @var string|null
+     * @var string
      *
      * @ORM\Column(name="deviceType", type="string", length=50, nullable=false)
      */
     private $deviceType;
 
     /**
-     * @param int                     $articleId
-     * @param int                     $shopId
-     * @param \DateTimeInterface|null $date
-     * @param int                     $impressions
-     * @param string|null             $deviceType
+     * @param int                    $articleId
+     * @param int                    $shopId
+     * @param DateTimeInterface|null $date
+     * @param int                    $impressions
+     * @param string|null            $deviceType
      */
     public function __construct($articleId, $shopId, $date = null, $impressions = 1, $deviceType = null)
     {
         if ($date === null) {
-            $date = new \DateTime();
+            $date = new DateTime();
         }
         $this->setArticleId($articleId);
         $this->setShopId($shopId);
@@ -128,7 +130,7 @@ class ArticleImpression extends ModelEntity
     /**
      * Set the date
      *
-     * @param \DateTimeInterface|null $date
+     * @param DateTimeInterface $date
      */
     public function setDate($date)
     {
@@ -138,7 +140,7 @@ class ArticleImpression extends ModelEntity
     /**
      * Get the date
      *
-     * @return \DateTimeInterface|null
+     * @return DateTimeInterface
      */
     public function getDate()
     {
@@ -208,7 +210,7 @@ class ArticleImpression extends ModelEntity
     /**
      * Increases the number of impressions
      *
-     * @return \Shopware\Models\Tracking\ArticleImpression
+     * @return ArticleImpression
      */
     public function increaseImpressions()
     {

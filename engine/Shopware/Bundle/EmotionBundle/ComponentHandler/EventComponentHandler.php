@@ -24,6 +24,7 @@
 
 namespace Shopware\Bundle\EmotionBundle\ComponentHandler;
 
+use Enlight_Event_EventManager;
 use Shopware\Bundle\EmotionBundle\Struct\Collection\PrepareDataCollection;
 use Shopware\Bundle\EmotionBundle\Struct\Collection\ResolvedDataCollection;
 use Shopware\Bundle\EmotionBundle\Struct\Element;
@@ -34,12 +35,9 @@ use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
  */
 class EventComponentHandler implements ComponentHandlerInterface
 {
-    /**
-     * @var \Enlight_Event_EventManager
-     */
-    private $eventManager;
+    private Enlight_Event_EventManager $eventManager;
 
-    public function __construct(\Enlight_Event_EventManager $eventManager)
+    public function __construct(Enlight_Event_EventManager $eventManager)
     {
         $this->eventManager = $eventManager;
     }
@@ -59,7 +57,7 @@ class EventComponentHandler implements ComponentHandlerInterface
 
     public function handle(ResolvedDataCollection $collection, Element $element, ShopContextInterface $context)
     {
-        $elementData = json_decode(json_encode($element), true);
+        $elementData = json_decode((string) json_encode($element), true);
         $elementData['component']['xType'] = $element->getComponent()->getType();
         $elementData['component']['cls'] = $element->getComponent()->getCssClass();
 
@@ -75,7 +73,7 @@ class EventComponentHandler implements ComponentHandlerInterface
         $this->deprecationLog($element);
     }
 
-    private function deprecationLog(Element $element)
+    private function deprecationLog(Element $element): void
     {
         $types = ['emotion-components-html-code', 'emotion-components-html-element', 'emotion-components-iframe', 'emotion-components-youtube'];
         if (!\in_array($element->getComponent()->getType(), $types, true)) {

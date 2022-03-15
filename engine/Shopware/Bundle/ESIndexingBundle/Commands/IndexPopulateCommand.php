@@ -25,10 +25,13 @@
 namespace Shopware\Bundle\ESIndexingBundle\Commands;
 
 use Shopware\Bundle\ESIndexingBundle\Console\ConsoleProgressHelper;
+use Shopware\Bundle\ESIndexingBundle\Console\EvaluationHelperInterface;
+use Shopware\Bundle\ESIndexingBundle\IdentifierSelector;
 use Shopware\Bundle\ESIndexingBundle\ShopIndexerInterface;
+use Shopware\Bundle\StoreFrontBundle\Gateway\ShopGatewayInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\Shop;
 use Shopware\Commands\ShopwareCommand;
-use Shopware\Models\Shop\Repository;
+use Shopware\Components\Model\ModelManager;
 use Shopware\Models\Shop\Shop as ShopModel;
 use Stecman\Component\Symfony\Console\BashCompletion\Completion\CompletionAwareInterface;
 use Stecman\Component\Symfony\Console\BashCompletion\CompletionContext;
@@ -38,15 +41,38 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class IndexPopulateCommand extends ShopwareCommand implements CompletionAwareInterface
 {
+    private ModelManager $modelManager;
+
+    private ShopIndexerInterface $shopIndexer;
+
+    private EvaluationHelperInterface $evaluationHelper;
+
+    private IdentifierSelector $identifierSelector;
+
+    private ShopGatewayInterface $shopGateway;
+
+    public function __construct(
+        ModelManager $modelManager,
+        ShopIndexerInterface $shopIndexer,
+        EvaluationHelperInterface $evaluationHelper,
+        IdentifierSelector $identifierSelector,
+        ShopGatewayInterface $shopGateway
+    ) {
+        parent::__construct();
+        $this->modelManager = $modelManager;
+        $this->shopIndexer = $shopIndexer;
+        $this->evaluationHelper = $evaluationHelper;
+        $this->identifierSelector = $identifierSelector;
+        $this->shopGateway = $shopGateway;
+    }
+
     /**
      * {@inheritdoc}
      */
     public function completeOptionValues($optionName, CompletionContext $context)
     {
         if ($optionName === 'shopId') {
-            /** @var Repository $shopRepository */
-            $shopRepository = $this->getContainer()->get(\Shopware\Components\Model\ModelManager::class)->getRepository(ShopModel::class);
-            $queryBuilder = $shopRepository->createQueryBuilder('shop');
+            $queryBuilder = $this->modelManager->getRepository(ShopModel::class)->createQueryBuilder('shop');
 
             if (is_numeric($context->getCurrentWord())) {
                 $queryBuilder->andWhere($queryBuilder->expr()->like('shop.id', ':id'))
@@ -92,32 +118,38 @@ class IndexPopulateCommand extends ShopwareCommand implements CompletionAwareInt
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        if ($shopId = $input->getOption('shopId')) {
-            $shops = [];
-
-            foreach ($input->getOption('shopId') as $shopId) {
-                $shops[] = $this->container->get(\Shopware\Bundle\StoreFrontBundle\Gateway\ShopGatewayInterface::class)->get($shopId);
-            }
-        } else {
-            $shops = $this->container->get(\Shopware\Bundle\ESIndexingBundle\IdentifierSelector::class)->getShops();
-        }
-
-        /** @var ShopIndexerInterface $indexer */
-        $indexer = $this->container->get('shopware_elastic_search.shop_indexer');
-
         $helper = new ConsoleProgressHelper($output);
 
-        $evaluation = $this->container->get(\Shopware\Bundle\ESIndexingBundle\Console\EvaluationHelperInterface::class);
-        $evaluation->setOutput($output)
-            ->setActive(!$input->getOption('no-evaluation'))
-            ->setStopOnError($input->getOption('stop-on-error'));
+        $this->evaluationHelper->setOutput($output);
+        $this->evaluationHelper->setActive(!$input->getOption('no-evaluation'));
+        $this->evaluationHelper->setStopOnError($input->getOption('stop-on-error'));
 
-        /** @var Shop $shop */
-        foreach ($shops as $shop) {
+        foreach ($this->getShops($input, $output) as $shop) {
             $output->writeln("\n## Indexing shop " . $shop->getName() . ' ##');
-            $indexer->index($shop, $helper, $input->getOption('index'));
+            $this->shopIndexer->index($shop, $helper, $input->getOption('index'));
         }
 
         return 0;
+    }
+
+    /**
+     * @return array<Shop>
+     */
+    private function getShops(InputInterface $input, OutputInterface $output): array
+    {
+        $shopIds = $input->getOption('shopId');
+        if ($shopIds === []) {
+            return $this->identifierSelector->getShops();
+        }
+
+        $shops = $this->shopGateway->getList($shopIds);
+        $existingShopIds = array_keys($shops);
+
+        $shopIdsNotFound = array_diff_key($shopIds, $existingShopIds);
+        if ($shopIdsNotFound !== []) {
+            $output->writeln(sprintf('<error>Shops with following IDs not found: %s</error>', implode(', ', $shopIdsNotFound)));
+        }
+
+        return $shops;
     }
 }

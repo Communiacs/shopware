@@ -24,11 +24,14 @@
 
 namespace Shopware\Commands;
 
+use Shopware\Components\CacheManager;
 use Shopware\Components\HttpCache\CacheWarmer;
-use Shopware\Components\HttpCache\UrlProvider\UrlProviderInterface;
 use Shopware\Components\HttpCache\UrlProviderFactoryInterface;
+use Shopware\Components\Model\Exception\ModelNotFoundException;
+use Shopware\Components\Model\ModelManager;
 use Shopware\Components\Routing\Context;
 use Shopware\Models\Shop\Shop;
+use Shopware_Components_Config;
 use Stecman\Component\Symfony\Console\BashCompletion\Completion\CompletionAwareInterface;
 use Stecman\Component\Symfony\Console\BashCompletion\CompletionContext;
 use Symfony\Component\Console\Input\InputArgument;
@@ -114,8 +117,7 @@ class WarmUpHttpCacheCommand extends ShopwareCommand implements CompletionAwareI
             $shopIds = $input->getOption('shopId');
         }
 
-        /** @var \Shopware\Models\Shop\Repository $shopRepository */
-        $shopRepository = $this->container->get(\Shopware\Components\Model\ModelManager::class)->getRepository(Shop::class);
+        $shopRepository = $this->container->get(ModelManager::class)->getRepository(Shop::class);
         $shops = null;
 
         if (!empty($shopIds)) {
@@ -123,7 +125,7 @@ class WarmUpHttpCacheCommand extends ShopwareCommand implements CompletionAwareI
                 $shop = $shopRepository->getById($shopId);
 
                 if (!$shop) {
-                    throw new \RuntimeException(sprintf('Shop with id %d not found', $shopId));
+                    throw new ModelNotFoundException(Shop::class, $shopId);
                 }
 
                 $shops[] = $shop;
@@ -138,7 +140,7 @@ class WarmUpHttpCacheCommand extends ShopwareCommand implements CompletionAwareI
         // Clear cache?
         if ($input->getOption('clear-cache')) {
             $io->writeln('Clearing httpcache.');
-            $this->container->get(\Shopware\Components\CacheManager::class)->clearHttpCache();
+            $this->container->get(CacheManager::class)->clearHttpCache();
         }
 
         /*
@@ -164,10 +166,9 @@ class WarmUpHttpCacheCommand extends ShopwareCommand implements CompletionAwareI
 
         /** @var Shop $shop */
         foreach ($shops as $shop) {
-            /** @var Context $context */
             $context = Context::createFromShop(
                 $shop,
-                $this->container->get(\Shopware_Components_Config::class)
+                $this->container->get(Shopware_Components_Config::class)
             );
 
             // Gathering URLs
@@ -219,7 +220,6 @@ class WarmUpHttpCacheCommand extends ShopwareCommand implements CompletionAwareI
     {
         $options = [];
         $extensions = [];
-        /** @var UrlProviderInterface $provider */
         foreach ($factory->getAllProviders() as $provider) {
             $providerName = $provider->getName();
 

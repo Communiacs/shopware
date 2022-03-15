@@ -24,13 +24,16 @@
 
 namespace Shopware\Models\Benchmark;
 
-use Doctrine\ORM\EntityRepository;
+use DateTime;
+use DateTimeZone;
+use PDO;
 use Ramsey\Uuid\Uuid;
+use Shopware\Components\Model\ModelRepository;
 
 /**
- * Repository
+ * @extends ModelRepository<BenchmarkConfig>
  */
-class Repository extends EntityRepository implements \Enlight_Hook
+class Repository extends ModelRepository
 {
     /**
      * @param int $shopId
@@ -109,7 +112,7 @@ class Repository extends EntityRepository implements \Enlight_Hook
             ->where('configs.last_received > NOW() - INTERVAL 7 DAY')
             ->andWhere('configs.cached_template IS NOT NULL')
             ->execute()
-            ->fetchAll(\PDO::FETCH_GROUP | \PDO::FETCH_UNIQUE | \PDO::FETCH_ASSOC);
+            ->fetchAll(PDO::FETCH_GROUP | PDO::FETCH_UNIQUE | PDO::FETCH_ASSOC);
     }
 
     /**
@@ -143,7 +146,7 @@ class Repository extends EntityRepository implements \Enlight_Hook
                 ->orderBy('configs.shop_id', 'ASC');
         }
 
-        return $queryBuilder->execute()->fetchAll(\PDO::FETCH_GROUP | \PDO::FETCH_UNIQUE | \PDO::FETCH_ASSOC);
+        return $queryBuilder->execute()->fetchAll(PDO::FETCH_GROUP | PDO::FETCH_UNIQUE | PDO::FETCH_ASSOC);
     }
 
     /**
@@ -157,15 +160,15 @@ class Repository extends EntityRepository implements \Enlight_Hook
             ->from('s_core_shops', 'shop')
             ->where('shop.main_id IS NULL')
             ->execute()
-            ->fetchAll(\PDO::FETCH_COLUMN);
+            ->fetchAll(PDO::FETCH_COLUMN);
 
+        /** @var BenchmarkConfig[] $configs */
         $configs = $this->findAll();
 
         $benchmarkShopIds = array_map(function ($config) {
-            return $config->getShopid();
+            return $config->getShopId();
         }, $configs);
 
-        /** @var BenchmarkConfig $config */
         foreach ($configs as $config) {
             if (!\in_array($config->getShopId(), $shopIds)) {
                 // Shop does not exist anymore
@@ -197,7 +200,7 @@ class Repository extends EntityRepository implements \Enlight_Hook
             ->from('s_benchmark_config', 'configs')
             ->where('configs.active = 1 AND configs.industry != 0')
             ->execute()
-            ->fetchAll(\PDO::FETCH_COLUMN);
+            ->fetchAll(PDO::FETCH_COLUMN);
     }
 
     /**
@@ -220,10 +223,10 @@ class Repository extends EntityRepository implements \Enlight_Hook
     {
         $queryBuilder = $this->getEntityManager()->createQueryBuilder();
 
-        $yesterday = new \DateTime('now', new \DateTimeZone('UTC'));
+        $yesterday = new DateTime('now', new DateTimeZone('UTC'));
         $yesterday = $yesterday->modify('-1 day');
 
-        $lastHour = new \DateTime('now', new \DateTimeZone('UTC'));
+        $lastHour = new DateTime('now', new DateTimeZone('UTC'));
         $lastHour = $lastHour->modify('-1 hour');
 
         return $queryBuilder->select('configs')
@@ -247,7 +250,7 @@ class Repository extends EntityRepository implements \Enlight_Hook
     {
         $queryBuilder = $this->getEntityManager()->createQueryBuilder();
 
-        $now = new \DateTime('now', new \DateTimeZone('UTC'));
+        $now = new DateTime('now', new DateTimeZone('UTC'));
         $now = $now->modify('-1 day');
 
         return $queryBuilder->select('configs')
@@ -270,7 +273,7 @@ class Repository extends EntityRepository implements \Enlight_Hook
     public function lockShop($shopId)
     {
         $queryBuilder = $this->getEntityManager()->getConnection()->createQueryBuilder();
-        $now = new \DateTime('now', new \DateTimeZone('UTC'));
+        $now = new DateTime('now', new DateTimeZone('UTC'));
 
         $queryBuilder->update('s_benchmark_config')
             ->set('locked', ':now')
@@ -305,7 +308,7 @@ class Repository extends EntityRepository implements \Enlight_Hook
             ->from('s_benchmark_config', 'configs')
             ->where('configs.industry != 0')
             ->execute()
-            ->fetchAll(\PDO::FETCH_COLUMN);
+            ->fetchAll(PDO::FETCH_COLUMN);
     }
 
     /**
@@ -319,6 +322,6 @@ class Repository extends EntityRepository implements \Enlight_Hook
             ->from('s_core_shops', 'shops')
             ->where('shops.main_id IS NULL')
             ->execute()
-            ->fetchAll(\PDO::FETCH_KEY_PAIR);
+            ->fetchAll(PDO::FETCH_KEY_PAIR);
     }
 }

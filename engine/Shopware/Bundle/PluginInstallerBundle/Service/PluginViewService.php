@@ -24,6 +24,7 @@
 
 namespace Shopware\Bundle\PluginInstallerBundle\Service;
 
+use Exception;
 use Shopware\Bundle\PluginInstallerBundle\Context\BaseRequest;
 use Shopware\Bundle\PluginInstallerBundle\Context\ListingRequest;
 use Shopware\Bundle\PluginInstallerBundle\Context\PluginsByTechnicalNameRequest;
@@ -149,7 +150,7 @@ class PluginViewService
                 $local->getPlugins(),
                 $context
             );
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $local->getPlugins();
         }
 
@@ -224,11 +225,7 @@ class PluginViewService
      */
     private function getAdditionallyLocalData($plugins)
     {
-        $context = new PluginsByTechnicalNameRequest(
-            null,
-            null,
-            array_keys($plugins)
-        );
+        $context = new PluginsByTechnicalNameRequest('', '', array_keys($plugins));
 
         $local = $this->localPluginService->getPlugins($context);
 

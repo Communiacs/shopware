@@ -38,7 +38,11 @@ class NumberSortingHandler implements SortingHandlerInterface
 
     public function handle(SortingInterface $sorting, QueryBuilder $query)
     {
-        /* @var NumberSorting $sorting */
+        $this->addSorting($sorting, $query);
+    }
+
+    private function addSorting(NumberSorting $sorting, QueryBuilder $query): void
+    {
         $query->addOrderBy('customer.customernumber', $sorting->getDirection());
     }
 }

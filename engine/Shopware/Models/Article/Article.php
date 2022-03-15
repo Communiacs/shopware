@@ -24,10 +24,19 @@
 
 namespace Shopware\Models\Article;
 
+use DateTime;
+use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
-use Shopware\Models\Category\Category as ArticleCategory;
+use Shopware\Models\Article\Configurator\Template\Template;
+use Shopware\Models\Category\Category as ProductCategory;
+use Shopware\Models\Customer\Group as CustomerGroup;
+use Shopware\Models\Price\Group as PriceGroup;
+use Shopware\Models\ProductStream\ProductStream;
+use Shopware\Models\Property\Group as PropertyGroup;
+use Shopware\Models\Property\Value;
+use Shopware\Models\Tax\Tax;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
@@ -42,7 +51,7 @@ class Article extends ModelEntity
     /**
      * OWNING SIDE
      *
-     * @var \Shopware\Models\Tax\Tax|null
+     * @var Tax|null
      *
      * @Assert\NotBlank()
      * @Assert\Valid()
@@ -53,7 +62,7 @@ class Article extends ModelEntity
     protected $tax;
 
     /**
-     * @var ArrayCollection<\Shopware\Models\Category\Category>
+     * @var ArrayCollection<ProductCategory>
      *
      * @ORM\ManyToMany(targetEntity="Shopware\Models\Category\Category")
      * @ORM\JoinTable(name="s_articles_categories",
@@ -68,7 +77,7 @@ class Article extends ModelEntity
     protected $categories;
 
     /**
-     * @var ArrayCollection<\Shopware\Models\Category\Category>
+     * @var ArrayCollection<ProductCategory>
      *
      * @ORM\ManyToMany(targetEntity="Shopware\Models\Category\Category")
      * @ORM\JoinTable(name="s_articles_categories_ro",
@@ -83,7 +92,7 @@ class Article extends ModelEntity
     protected $allCategories;
 
     /**
-     * @var ArrayCollection<\Shopware\Models\Article\SeoCategory>
+     * @var ArrayCollection<SeoCategory>
      *
      * @ORM\OneToMany(
      *     targetEntity="Shopware\Models\Article\SeoCategory",
@@ -95,7 +104,7 @@ class Article extends ModelEntity
     protected $seoCategories;
 
     /**
-     * @var ArrayCollection<\Shopware\Models\Customer\Group>
+     * @var ArrayCollection<CustomerGroup>
      *
      * @ORM\ManyToMany(targetEntity="Shopware\Models\Customer\Group")
      * @ORM\JoinTable(name="s_articles_avoid_customergroups",
@@ -110,7 +119,7 @@ class Article extends ModelEntity
     protected $customerGroups;
 
     /**
-     * @var ArrayCollection<\Shopware\Models\ProductStream\ProductStream>
+     * @var ArrayCollection<ProductStream>
      *
      * @ORM\ManyToMany(targetEntity="Shopware\Models\ProductStream\ProductStream")
      * @ORM\JoinTable(name="s_product_streams_articles",
@@ -127,7 +136,7 @@ class Article extends ModelEntity
     /**
      * OWNING SIDE
      *
-     * @var \Shopware\Models\Property\Group|null
+     * @var PropertyGroup|null
      *
      * @ORM\ManyToOne(targetEntity="Shopware\Models\Property\Group", inversedBy="articles")
      * @ORM\JoinColumn(name="filtergroupID", referencedColumnName="id")
@@ -135,7 +144,7 @@ class Article extends ModelEntity
     protected $propertyGroup;
 
     /**
-     * @var ArrayCollection<\Shopware\Models\Article\Article>
+     * @var ArrayCollection<Article>
      *
      * @ORM\ManyToMany(targetEntity="Shopware\Models\Article\Article")
      * @ORM\JoinTable(name="s_articles_relationships",
@@ -150,7 +159,7 @@ class Article extends ModelEntity
     protected $related;
 
     /**
-     * @var ArrayCollection<\Shopware\Models\Article\Article>
+     * @var ArrayCollection<Article>
      *
      * @ORM\ManyToMany(targetEntity="Shopware\Models\Article\Article")
      * @ORM\JoinTable(name="s_articles_similar",
@@ -179,7 +188,7 @@ class Article extends ModelEntity
     /**
      * INVERSE SIDE
      *
-     * @var ArrayCollection<\Shopware\Models\Article\Detail>
+     * @var ArrayCollection<Detail>
      *
      * @Assert\Valid()
      *
@@ -204,7 +213,7 @@ class Article extends ModelEntity
     /**
      * INVERSE SIDE
      *
-     * @var ArrayCollection<\Shopware\Models\Article\Link>
+     * @var ArrayCollection<Link>
      *
      * @Assert\Valid()
      *
@@ -215,7 +224,7 @@ class Article extends ModelEntity
     /**
      * INVERSE SIDE
      *
-     * @var ArrayCollection<\Shopware\Models\Article\Download>
+     * @var ArrayCollection<Download>
      *
      * @Assert\Valid()
      *
@@ -226,7 +235,7 @@ class Article extends ModelEntity
     /**
      * INVERSE SIDE
      *
-     * @var ArrayCollection<\Shopware\Models\Article\Image>
+     * @var ArrayCollection<Image>
      *
      * @Assert\Valid()
      *
@@ -238,7 +247,7 @@ class Article extends ModelEntity
     /**
      * OWNING SIDE
      *
-     * @var \Shopware\Models\Price\Group|null
+     * @var PriceGroup|null
      *
      * @ORM\ManyToOne(targetEntity="Shopware\Models\Price\Group")
      * @ORM\JoinColumn(name="pricegroupID", referencedColumnName="id")
@@ -248,7 +257,7 @@ class Article extends ModelEntity
     /**
      * INVERSE SIDE
      *
-     * @var ArrayCollection<\Shopware\Models\Article\Vote>
+     * @var ArrayCollection<Vote>
      *
      * @ORM\OneToMany(targetEntity="Shopware\Models\Article\Vote", mappedBy="article", orphanRemoval=true, cascade={"persist"})
      */
@@ -265,7 +274,7 @@ class Article extends ModelEntity
     protected $configuratorSet;
 
     /**
-     * @var ArrayCollection<\Shopware\Models\Property\Value>
+     * @var ArrayCollection<Value>
      *
      * @ORM\ManyToMany(targetEntity="Shopware\Models\Property\Value", inversedBy="articles", cascade={"persist"})
      * @ORM\JoinTable(name="s_filter_articles",
@@ -282,7 +291,7 @@ class Article extends ModelEntity
     /**
      * INVERSE SIDE
      *
-     * @var Configurator\Template\Template
+     * @var Template|null
      *
      * @ORM\OneToOne(targetEntity="Shopware\Models\Article\Configurator\Template\Template", mappedBy="article", orphanRemoval=true, cascade={"persist"})
      */
@@ -291,7 +300,7 @@ class Article extends ModelEntity
     /**
      * INVERSE SIDE
      *
-     * @var ArrayCollection<\Shopware\Models\Article\Esd>
+     * @var ArrayCollection<Esd>
      *
      * @ORM\OneToMany(targetEntity="Shopware\Models\Article\Esd", mappedBy="article", orphanRemoval=true, cascade={"persist"})
      */
@@ -372,7 +381,7 @@ class Article extends ModelEntity
     private $descriptionLong;
 
     /**
-     * @var \DateTimeInterface|null
+     * @var DateTimeInterface|null
      *
      * @Assert\DateTime()
      *
@@ -416,7 +425,7 @@ class Article extends ModelEntity
     private $metaTitle;
 
     /**
-     * @var \DateTimeInterface
+     * @var DateTimeInterface
      *
      * @ORM\Column(name="changetime", type="datetime", nullable=false)
      */
@@ -430,7 +439,7 @@ class Article extends ModelEntity
     private $priceGroupActive = false;
 
     /**
-     * @var bool
+     * @var bool|null
      *
      * @deprecated 5.6 will be removed in 5.8
      * @ORM\Column(name="laststock", type="boolean", nullable=true)
@@ -466,14 +475,14 @@ class Article extends ModelEntity
     private $mode = 0;
 
     /**
-     * @var \DateTimeInterface|null
+     * @var DateTimeInterface|null
      *
      * @ORM\Column(name="available_from", type="datetime", nullable=true)
      */
     private $availableFrom;
 
     /**
-     * @var \DateTimeInterface|null
+     * @var DateTimeInterface|null
      *
      * @ORM\Column(name="available_to", type="datetime", nullable=true)
      */
@@ -494,8 +503,8 @@ class Article extends ModelEntity
         $this->images = new ArrayCollection();
         $this->votes = new ArrayCollection();
         $this->esds = new ArrayCollection();
-        $this->added = new \DateTime();
-        $this->changed = new \DateTime();
+        $this->added = new DateTime();
+        $this->changed = new DateTime();
     }
 
     /**
@@ -567,14 +576,14 @@ class Article extends ModelEntity
     }
 
     /**
-     * @param \DateTimeInterface|string $added
+     * @param DateTimeInterface|string $added
      *
      * @return Article
      */
     public function setAdded($added = 'now')
     {
-        if (!($added instanceof \DateTimeInterface)) {
-            $this->added = new \DateTime($added);
+        if (!($added instanceof DateTimeInterface)) {
+            $this->added = new DateTime($added);
         } else {
             $this->added = $added;
         }
@@ -583,7 +592,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @return \DateTimeInterface|null
+     * @return DateTimeInterface|null
      */
     public function getAdded()
     {
@@ -691,14 +700,14 @@ class Article extends ModelEntity
     }
 
     /**
-     * @param \DateTimeInterface|string $changed
+     * @param DateTimeInterface|string $changed
      *
      * @return Article
      */
     public function setChanged($changed = 'now')
     {
-        if (!$changed instanceof \DateTimeInterface) {
-            $this->changed = new \DateTime($changed);
+        if (!$changed instanceof DateTimeInterface) {
+            $this->changed = new DateTime($changed);
         } else {
             $this->changed = $changed;
         }
@@ -707,7 +716,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @return \DateTimeInterface
+     * @return DateTimeInterface
      */
     public function getChanged()
     {
@@ -751,7 +760,7 @@ class Article extends ModelEntity
     /**
      * @deprecated 5.6 will be removed in 5.7
      *
-     * @return bool
+     * @return bool|null
      */
     public function getLastStock()
     {
@@ -819,7 +828,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @return ArrayCollection<\Shopware\Models\Category\Category>
+     * @return ArrayCollection<ProductCategory>
      */
     public function getCategories()
     {
@@ -835,7 +844,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @param ArrayCollection<\Shopware\Models\Category\Category> $categories
+     * @param ArrayCollection<ProductCategory> $categories
      *
      * @return Article
      */
@@ -849,7 +858,7 @@ class Article extends ModelEntity
     /**
      * @return Article
      */
-    public function addCategory(ArticleCategory $category)
+    public function addCategory(ProductCategory $category)
     {
         if (!$this->categories->contains($category)) {
             $this->categories->add($category);
@@ -861,7 +870,7 @@ class Article extends ModelEntity
     /**
      * @return Article
      */
-    public function removeCategory(ArticleCategory $category)
+    public function removeCategory(ProductCategory $category)
     {
         $this->categories->removeElement($category);
 
@@ -869,7 +878,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @return ArrayCollection
+     * @return ArrayCollection<array-key, CustomerGroup>
      */
     public function getCustomerGroups()
     {
@@ -877,7 +886,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @param ArrayCollection $customerGroups
+     * @param ArrayCollection<array-key, CustomerGroup> $customerGroups
      *
      * @return Article
      */
@@ -889,7 +898,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @return \Shopware\Models\Property\Group|null
+     * @return PropertyGroup|null
      */
     public function getPropertyGroup()
     {
@@ -897,7 +906,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @param \Shopware\Models\Property\Group|null $propertyGroup
+     * @param PropertyGroup|null $propertyGroup
      *
      * @return Article
      */
@@ -909,7 +918,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @return ArrayCollection<Article>
+     * @return ArrayCollection<array-key, Article>
      */
     public function getRelated()
     {
@@ -917,7 +926,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @return ArrayCollection<Article>
+     * @return ArrayCollection<array-key, Article>
      */
     public function getSimilar()
     {
@@ -925,7 +934,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @param ArrayCollection<Article> $related
+     * @param ArrayCollection<array-key, Article> $related
      *
      * @return Article
      */
@@ -937,7 +946,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @param ArrayCollection<Article> $similar
+     * @param ArrayCollection<array-key, Article> $similar
      *
      * @return Article
      */
@@ -949,7 +958,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @return \Shopware\Models\Tax\Tax|null
+     * @return Tax|null
      */
     public function getTax()
     {
@@ -957,7 +966,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @param \Shopware\Models\Tax\Tax $tax
+     * @param Tax $tax
      */
     public function setTax($tax)
     {
@@ -973,7 +982,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @param Image[]|null $images
+     * @param Image[]|ArrayCollection<array-key, Image> $images
      *
      * @return Article
      */
@@ -985,7 +994,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @return ArrayCollection
+     * @return ArrayCollection<Download>
      */
     public function getDownloads()
     {
@@ -993,7 +1002,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @param Download[]|null $downloads
+     * @param Download[]|ArrayCollection<array-key, Download> $downloads
      *
      * @return Article
      */
@@ -1005,7 +1014,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @return ArrayCollection
+     * @return ArrayCollection<Link>
      */
     public function getLinks()
     {
@@ -1013,7 +1022,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @param Link[]|null $links
+     * @param Link[]|ArrayCollection<array-key, Link> $links
      *
      * @return Article
      */
@@ -1038,7 +1047,7 @@ class Article extends ModelEntity
     /**
      * @param Supplier|array $supplier
      *
-     * @return \Shopware\Components\Model\ModelEntity
+     * @return ModelEntity
      */
     public function setSupplier($supplier)
     {
@@ -1089,7 +1098,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @return \Shopware\Models\Price\Group|null
+     * @return PriceGroup|null
      */
     public function getPriceGroup()
     {
@@ -1097,7 +1106,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @param \Shopware\Models\Price\Group|null $priceGroup
+     * @param PriceGroup|null $priceGroup
      *
      * @return Article
      */
@@ -1149,7 +1158,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @return \DateTimeInterface|null
+     * @return DateTimeInterface|null
      */
     public function getAvailableFrom()
     {
@@ -1157,7 +1166,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @param \DateTimeInterface|null $availableFrom
+     * @param DateTimeInterface|null $availableFrom
      *
      * @return Article
      */
@@ -1169,7 +1178,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @return \DateTimeInterface|null
+     * @return DateTimeInterface|null
      */
     public function getAvailableTo()
     {
@@ -1177,7 +1186,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @param \DateTimeInterface|null $availableTo
+     * @param DateTimeInterface|null $availableTo
      *
      * @return Article
      */
@@ -1229,7 +1238,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @return Configurator\Template\Template
+     * @return Template|null
      */
     public function getConfiguratorTemplate()
     {
@@ -1237,7 +1246,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @param Configurator\Template\Template $configuratorTemplate
+     * @param Template|null $configuratorTemplate
      *
      * @return Article
      */
@@ -1245,7 +1254,7 @@ class Article extends ModelEntity
     {
         $this->setOneToOne(
             $configuratorTemplate,
-            Configurator\Template\Template::class,
+            Template::class,
             'configuratorTemplate',
             'article'
         );
@@ -1254,7 +1263,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @return ArrayCollection<\Shopware\Models\Article\SeoCategory>
+     * @return ArrayCollection<SeoCategory>
      */
     public function getSeoCategories()
     {
@@ -1264,7 +1273,7 @@ class Article extends ModelEntity
     /**
      * @param SeoCategory[]|null $seoCategories
      *
-     * @return \Shopware\Components\Model\ModelEntity
+     * @return ModelEntity
      */
     public function setSeoCategories($seoCategories)
     {
@@ -1277,7 +1286,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @return ArrayCollection<\Shopware\Models\ProductStream\ProductStream>
+     * @return ArrayCollection<ProductStream>
      */
     public function getRelatedProductStreams()
     {
@@ -1285,7 +1294,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @param ArrayCollection<\Shopware\Models\ProductStream\ProductStream> $relatedProductStreams
+     * @param ArrayCollection<ProductStream> $relatedProductStreams
      */
     public function setRelatedProductStreams($relatedProductStreams)
     {
@@ -1298,6 +1307,6 @@ class Article extends ModelEntity
      */
     public function updateChangedTimestamp()
     {
-        $this->changed = new \DateTime();
+        $this->changed = new DateTime();
     }
 }

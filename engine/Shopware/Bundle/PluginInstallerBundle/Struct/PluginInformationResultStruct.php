@@ -24,8 +24,13 @@
 
 namespace Shopware\Bundle\PluginInstallerBundle\Struct;
 
-class PluginInformationResultStruct implements \JsonSerializable
+use JsonSerializable;
+use Shopware\Components\ObjectJsonSerializeTraitDeprecated;
+
+class PluginInformationResultStruct implements JsonSerializable
 {
+    use ObjectJsonSerializeTraitDeprecated;
+
     /**
      * @var PluginInformationStruct[]
      */
@@ -44,14 +49,6 @@ class PluginInformationResultStruct implements \JsonSerializable
     {
         $this->plugins = $plugins;
         $this->isShopUpgraded = $isShopUpgraded;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function jsonSerialize()
-    {
-        return get_object_vars($this);
     }
 
     /**

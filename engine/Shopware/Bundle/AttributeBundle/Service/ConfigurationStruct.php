@@ -24,8 +24,13 @@
 
 namespace Shopware\Bundle\AttributeBundle\Service;
 
-class ConfigurationStruct implements \JsonSerializable
+use JsonSerializable;
+use Shopware\Components\ObjectJsonSerializeTraitDeprecated;
+
+class ConfigurationStruct implements JsonSerializable
 {
+    use ObjectJsonSerializeTraitDeprecated;
+
     /**
      * @var int
      */
@@ -379,11 +384,6 @@ class ConfigurationStruct implements \JsonSerializable
     public function setSqlType($sqlType)
     {
         $this->sqlType = $sqlType;
-    }
-
-    public function jsonSerialize()
-    {
-        return get_object_vars($this);
     }
 
     /**

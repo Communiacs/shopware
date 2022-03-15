@@ -25,8 +25,14 @@
 namespace Shopware\Bundle\PluginInstallerBundle\Service;
 
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Driver\ResultStatement;
 use Doctrine\DBAL\Query\QueryBuilder;
+use DOMDocument;
+use DOMElement;
+use DOMXPath;
+use Enlight_Controller_Front;
+use Exception;
+use InvalidArgumentException;
+use PDO;
 use Shopware\Bundle\PluginInstallerBundle\Context\BaseRequest;
 use Shopware\Bundle\PluginInstallerBundle\Context\ListingRequest;
 use Shopware\Bundle\PluginInstallerBundle\Context\PluginsByTechnicalNameRequest;
@@ -44,14 +50,14 @@ class PluginLocalService
 
     private InstallerService $installerService;
 
-    private \Enlight_Controller_Front $front;
+    private Enlight_Controller_Front $front;
 
     public function __construct(
         Connection $connection,
         StructHydrator $hydrator,
         string $shopwareRootDir,
         InstallerService $installerService,
-        \Enlight_Controller_Front $front
+        Enlight_Controller_Front $front
     ) {
         $this->connection = $connection;
         $this->hydrator = $hydrator;
@@ -61,26 +67,22 @@ class PluginLocalService
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      *
      * @return ListingResultStruct
      */
     public function getListing(ListingRequest $context)
     {
-        $query = $this->getQuery();
-
-        $query->andWhere("plugin.name != 'PluginManager'")
+        $query = $this->getQuery()
+            ->andWhere("plugin.name != 'PluginManager'")
             ->andWhere('plugin.capability_enable = 1');
 
         $this->addSortings($context, $query);
 
-        $query->setFirstResult($context->getOffset())
-            ->setMaxResults($context->getLimit());
-
-        $statement = $query->execute();
-        \assert($statement instanceof ResultStatement);
-
-        $data = $statement->fetchAll(\PDO::FETCH_ASSOC);
+        $data = $query->setFirstResult($context->getOffset())
+            ->setMaxResults($context->getLimit())
+            ->execute()
+            ->fetchAll(PDO::FETCH_ASSOC);
 
         $plugins = $this->iteratePlugins($data, $context);
 
@@ -88,19 +90,17 @@ class PluginLocalService
     }
 
     /**
-     * @return PluginStruct
+     * @return PluginStruct|null
      */
     public function getPlugin(PluginsByTechnicalNameRequest $context)
     {
-        $plugin = $this->getPlugins($context);
-        $plugin = array_shift($plugin);
-        \assert($plugin !== null);
+        $plugins = $this->getPlugins($context);
 
-        return $plugin;
+        return array_shift($plugins);
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      *
      * @return PluginStruct[]
      */
@@ -115,9 +115,8 @@ class PluginLocalService
             );
 
         $statement = $query->execute();
-        \assert($statement instanceof ResultStatement);
 
-        $data = $statement->fetchAll(\PDO::FETCH_ASSOC);
+        $data = $statement->fetchAll(PDO::FETCH_ASSOC);
 
         return $this->iteratePlugins($data, $context);
     }
@@ -127,15 +126,12 @@ class PluginLocalService
      */
     public function getPluginsForUpdateCheck()
     {
-        $query = $this->connection->createQueryBuilder();
-        $query->select(['plugin.name', 'plugin.version'])
+        return $this->connection->createQueryBuilder()
+            ->select(['plugin.name', 'plugin.version'])
             ->from('s_core_plugins', 'plugin')
-            ->where('plugin.capability_update = 1');
-
-        $statement = $query->execute();
-        \assert($statement instanceof ResultStatement);
-
-        return $statement->fetchAll(\PDO::FETCH_KEY_PAIR);
+            ->where('plugin.capability_update = 1')
+            ->execute()
+            ->fetchAll(PDO::FETCH_KEY_PAIR);
     }
 
     private function addSortings(ListingRequest $context, QueryBuilder $builder): void
@@ -162,7 +158,7 @@ class PluginLocalService
         foreach ($plugins as &$row) {
             try {
                 $row['iconPath'] = $this->getIconOfPlugin($row['name']);
-            } catch (\InvalidArgumentException $e) {
+            } catch (InvalidArgumentException $e) {
                 $row['iconPath'] = null;
             }
 
@@ -268,17 +264,17 @@ class PluginLocalService
             return '';
         }
 
-        $dom = new \DOMDocument();
+        $dom = new DOMDocument();
         $dom->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
 
-        $nodes = (new \DOMXPath($dom))->query("//@*[local-name() != 'href']");
+        $nodes = (new DOMXPath($dom))->query("//@*[local-name() != 'href']");
         if ($nodes === false) {
             return '';
         }
 
         foreach ($nodes as $node) {
             $parentNode = $node->parentNode;
-            if ($parentNode instanceof \DOMElement) {
+            if ($parentNode instanceof DOMElement) {
                 $parentNode->removeAttribute($node->nodeName);
             }
         }

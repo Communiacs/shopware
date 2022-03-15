@@ -26,7 +26,9 @@ declare(strict_types=1);
 
 namespace Shopware\Bundle\CookieBundle\Structs;
 
-class CookieStruct implements \JsonSerializable
+use JsonSerializable;
+
+class CookieStruct implements JsonSerializable
 {
     /**
      * @var string
@@ -111,6 +113,9 @@ class CookieStruct implements \JsonSerializable
         $this->group = $group;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function jsonSerialize(): array
     {
         $data = get_object_vars($this);

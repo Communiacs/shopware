@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace Shopware\Models\Sitemap;
 
+use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
 
@@ -66,14 +67,14 @@ class CustomUrl extends ModelEntity
     private $changeFreq;
 
     /**
-     * @var \DateTimeInterface
+     * @var DateTimeInterface
      *
      * @ORM\Column(name="last_mod", type="datetime", nullable=false)
      */
     private $lastMod;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="shop_id", type="integer", nullable=true)
      */
@@ -119,12 +120,12 @@ class CustomUrl extends ModelEntity
         $this->changeFreq = $changeFreq;
     }
 
-    public function getLastMod(): \DateTimeInterface
+    public function getLastMod(): DateTimeInterface
     {
         return $this->lastMod;
     }
 
-    public function setLastMod(\DateTimeInterface $lastMod): void
+    public function setLastMod(DateTimeInterface $lastMod): void
     {
         $this->lastMod = $lastMod;
     }

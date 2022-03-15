@@ -7,6 +7,7 @@ use Doctrine\Persistence\Mapping\MappingException;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionClass;
+
 use function array_merge;
 use function array_unique;
 use function get_declared_classes;
@@ -32,6 +33,7 @@ class StaticPHPDriver implements MappingDriver
      * Map of all class names.
      *
      * @var string[]
+     * @psalm-var list<class-string>
      */
     private $classNames;
 

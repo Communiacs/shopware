@@ -105,7 +105,7 @@ class FullTransformer
         }
 
         // handle unimplemented characters
-        if (false !== strpos($this->notImplementedChars, $dateChars[0])) {
+        if (str_contains($this->notImplementedChars, $dateChars[0])) {
             throw new NotImplementedException(sprintf('Unimplemented date character "%s" in format "%s".', $dateChars[0], $this->pattern));
         }
 
@@ -120,7 +120,7 @@ class FullTransformer
      *
      * @return int|false The corresponding Unix timestamp
      *
-     * @throws \InvalidArgumentException When the value can not be matched with pattern
+     * @throws \InvalidArgumentException When the value cannot be matched with pattern
      */
     public function parse(\DateTime $dateTime, string $value)
     {

@@ -23,11 +23,24 @@
  */
 
 use Doctrine\ORM\AbstractQuery;
+use Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface;
+use Shopware\Bundle\StoreFrontBundle\Service\MediaServiceInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\Media;
+use Shopware\Components\Captcha\CaptchaValidator;
+use Shopware\Components\Compatibility\LegacyStructConverter;
+use Shopware\Components\Model\ModelRepository;
 use Shopware\Components\Random;
 use Shopware\Components\Validator\EmailValidator;
 use Shopware\Models\Blog\Blog;
+use Shopware\Models\Blog\Comment;
+use Shopware\Models\Blog\Repository as BlogRepository;
+use Shopware\Models\Category\Category;
+use Shopware\Models\Category\Repository as CategoryRepository;
+use Shopware\Models\CommentConfirm\CommentConfirm;
+use Shopware\Models\CommentConfirm\Repository as CommentConfirmRepository;
 use Shopware\Models\Shop\Shop;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 /**
  * Frontend Controller for the blog article listing and the detail page.
@@ -37,22 +50,22 @@ use Shopware\Models\Shop\Shop;
 class Shopware_Controllers_Frontend_Blog extends Enlight_Controller_Action
 {
     /**
-     * @var \Shopware\Models\Blog\Repository
+     * @var BlogRepository
      */
     protected $repository;
 
     /**
-     * @var \Shopware\Models\Blog\Repository
+     * @var ModelRepository<Comment>
      */
     protected $blogCommentRepository;
 
     /**
-     * @var \Shopware\Models\Category\Repository
+     * @var CategoryRepository
      */
     protected $categoryRepository;
 
     /**
-     * @var \Shopware\Models\CommentConfirm\Repository
+     * @var CommentConfirmRepository
      */
     protected $commentConfirmRepository;
 
@@ -61,17 +74,11 @@ class Shopware_Controllers_Frontend_Blog extends Enlight_Controller_Action
      */
     protected $blogBaseUrl;
 
-    /**
-     * Init controller method
-     */
     public function init()
     {
         $this->blogBaseUrl = Shopware()->Config()->get('baseFile');
     }
 
-    /**
-     * Pre dispatch method
-     */
     public function preDispatch()
     {
         $this->View()->setScope(Enlight_Template_Manager::SCOPE_PARENT);
@@ -80,12 +87,12 @@ class Shopware_Controllers_Frontend_Blog extends Enlight_Controller_Action
     /**
      * Helper Method to get access to the blog repository.
      *
-     * @return Shopware\Models\Blog\Repository
+     * @return BlogRepository
      */
     public function getRepository()
     {
         if ($this->repository === null) {
-            $this->repository = Shopware()->Models()->getRepository(Blog::class);
+            $this->repository = $this->get('models')->getRepository(Blog::class);
         }
 
         return $this->repository;
@@ -94,12 +101,12 @@ class Shopware_Controllers_Frontend_Blog extends Enlight_Controller_Action
     /**
      * Helper Method to get access to the blog comment repository.
      *
-     * @return Shopware\Models\Blog\Repository
+     * @return ModelRepository<Comment>
      */
     public function getBlogCommentRepository()
     {
         if ($this->blogCommentRepository === null) {
-            $this->blogCommentRepository = Shopware()->Models()->getRepository(Shopware\Models\Blog\Comment::class);
+            $this->blogCommentRepository = $this->get('models')->getRepository(Comment::class);
         }
 
         return $this->blogCommentRepository;
@@ -108,12 +115,12 @@ class Shopware_Controllers_Frontend_Blog extends Enlight_Controller_Action
     /**
      * Helper Method to get access to the category repository.
      *
-     * @return Shopware\Models\Category\Repository
+     * @return CategoryRepository
      */
     public function getCategoryRepository()
     {
         if ($this->categoryRepository === null) {
-            $this->categoryRepository = Shopware()->Models()->getRepository(Shopware\Models\Category\Category::class);
+            $this->categoryRepository = $this->get('models')->getRepository(Category::class);
         }
 
         return $this->categoryRepository;
@@ -122,12 +129,12 @@ class Shopware_Controllers_Frontend_Blog extends Enlight_Controller_Action
     /**
      * Helper Method to get access to the commentConfirm repository.
      *
-     * @return Shopware\Models\CommentConfirm\Repository
+     * @return CommentConfirmRepository
      */
     public function getCommentConfirmRepository()
     {
         if ($this->commentConfirmRepository === null) {
-            $this->commentConfirmRepository = Shopware()->Models()->getRepository(Shopware\Models\CommentConfirm\CommentConfirm::class);
+            $this->commentConfirmRepository = $this->get('models')->getRepository(CommentConfirm::class);
         }
 
         return $this->commentConfirmRepository;
@@ -148,22 +155,12 @@ class Shopware_Controllers_Frontend_Blog extends Enlight_Controller_Action
         // Redirect if blog's category is not a child of the current shop's category
         $shopCategory = $this->get('shop')->getCategory();
         $category = $this->getCategoryRepository()->findOneBy(['id' => $categoryId, 'active' => true]);
-        $isChild = ($shopCategory && $category) ? $category->isChildOf($shopCategory) : false;
+        $isChild = ($shopCategory && $category instanceof Category) ? $category->isChildOf($shopCategory) : false;
         if (!$isChild) {
             throw new Enlight_Controller_Exception('Blog category missing, non-existent or invalid for the current shop', 404);
         }
 
-        $session = $this->get('session');
-
-        // PerPage
-        if (!empty($this->Request()->getParam('sPerPage'))) {
-            $session->offsetSet('sPerPage', (int) $this->Request()->getParam('sPerPage'));
-        }
-
-        $perPage = (int) $session->offsetGet('sPerPage');
-        if (empty($perPage)) {
-            $perPage = (int) $this->get('config')->get('sARTICLESPERPAGE');
-        }
+        $perPage = $this->getPerPage($this->Request(), $this->container->get('session'));
 
         $filter = $this->createFilter($filterDate, $filterAuthor, $filterTags);
 
@@ -195,8 +192,8 @@ class Shopware_Controllers_Frontend_Blog extends Enlight_Controller_Action
             }
         }, $blogArticles);
 
-        $context = $this->get(\Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface::class)->getShopContext();
-        $medias = $this->get(\Shopware\Bundle\StoreFrontBundle\Service\MediaServiceInterface::class)->getList($mediaIds, $context);
+        $context = $this->get(ContextServiceInterface::class)->getShopContext();
+        $medias = $this->get(MediaServiceInterface::class)->getList($mediaIds, $context);
 
         foreach ($blogArticles as $key => $blogArticle) {
             // Adding number of comments to the blog article
@@ -223,7 +220,7 @@ class Shopware_Controllers_Frontend_Blog extends Enlight_Controller_Action
 
             /** @var Media $media */
             $media = $medias[$mediaId];
-            $media = $this->get(\Shopware\Components\Compatibility\LegacyStructConverter::class)->convertMediaStruct($media);
+            $media = $this->get(LegacyStructConverter::class)->convertMediaStruct($media);
 
             $blogArticles[$key]['media'] = $media;
         }
@@ -258,6 +255,7 @@ class Shopware_Controllers_Frontend_Blog extends Enlight_Controller_Action
             'sFilterTags' => $this->getTagsFilterData($blogCategoryIds, $filter, $shopId),
             'sCategoryInfo' => $categoryContent,
             'sBlogArticles' => $blogArticles,
+            'sNumberPages' => (int) ceil($totalResult / $perPage),
         ];
 
         $filters = [
@@ -288,7 +286,7 @@ class Shopware_Controllers_Frontend_Blog extends Enlight_Controller_Action
         $blogArticleQuery = $this->getRepository()->getDetailQuery($blogArticleId, $shop->getId());
         $blogArticleData = $blogArticleQuery->getOneOrNullResult(AbstractQuery::HYDRATE_ARRAY);
 
-        $translation = $this->get(\Shopware_Components_Translation::class)->readWithFallback($shop->getId(), $shop->getFallback() ? $shop->getFallback()->getId() : null, 'blog', $blogArticleId);
+        $translation = $this->get(Shopware_Components_Translation::class)->readWithFallback($shop->getId(), $shop->getFallback() ? $shop->getFallback()->getId() : null, 'blog', $blogArticleId);
         $blogArticleData = array_merge($blogArticleData ?? [], $translation ?? []);
 
         // Redirect if the blog item is not available
@@ -297,7 +295,7 @@ class Shopware_Controllers_Frontend_Blog extends Enlight_Controller_Action
         }
 
         // Redirect if category is not available, inactive or external
-        /** @var \Shopware\Models\Category\Category|null $category */
+        /** @var Category|null $category */
         $category = $this->getCategoryRepository()->find($blogArticleData['categoryId']);
         if ($category === null || !$category->getActive()) {
             $location = ['controller' => 'index'];
@@ -319,8 +317,8 @@ class Shopware_Controllers_Frontend_Blog extends Enlight_Controller_Action
             $this->View()->loadTemplate('frontend/blog/' . $blogArticleData['template']);
         }
 
-        $this->View()->assign('userLoggedIn', !empty(Shopware()->Session()->sUserId));
-        if (!empty(Shopware()->Session()->sUserId) && empty($this->Request()->name)
+        $this->View()->assign('userLoggedIn', !empty(Shopware()->Session()->get('sUserId')));
+        if (!empty(Shopware()->Session()->get('sUserId')) && empty($this->Request()->get('name'))
             && $this->Request()->getParam('__cache') === null) {
             $userData = Shopware()->Modules()->Admin()->sGetUserData();
             $this->View()->assign('sFormData', [
@@ -330,13 +328,13 @@ class Shopware_Controllers_Frontend_Blog extends Enlight_Controller_Action
         }
 
         $mediaIds = array_column($blogArticleData['media'], 'mediaId');
-        $context = $this->get(\Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface::class)->getShopContext();
-        $mediaStructs = $this->get(\Shopware\Bundle\StoreFrontBundle\Service\MediaServiceInterface::class)->getList($mediaIds, $context);
+        $context = $this->get(ContextServiceInterface::class)->getShopContext();
+        $mediaStructs = $this->get(MediaServiceInterface::class)->getList($mediaIds, $context);
 
         // Adding thumbnails to the blog article
         foreach ($blogArticleData['media'] as &$media) {
             $mediaId = $media['mediaId'];
-            $mediaData = $this->get(\Shopware\Components\Compatibility\LegacyStructConverter::class)->convertMediaStruct($mediaStructs[$mediaId]);
+            $mediaData = $this->get(LegacyStructConverter::class)->convertMediaStruct($mediaStructs[$mediaId]);
             if ($media['preview']) {
                 $blogArticleData['preview'] = $mediaData;
             }
@@ -364,7 +362,12 @@ class Shopware_Controllers_Frontend_Blog extends Enlight_Controller_Action
 
         $breadcrumb[] = ['link' => $blogDetailLink, 'name' => $blogArticleData['title']];
 
-        $this->View()->assign(['sBreadcrumb' => $breadcrumb, 'sArticle' => $blogArticleData, 'rand' => Random::getAlphanumericString(32)]);
+        $this->View()->assign([
+            'sBreadcrumb' => $breadcrumb,
+            'sArticle' => $blogArticleData,
+            'rand' => Random::getAlphanumericString(32),
+            'sNumberPages' => 1,
+        ]);
     }
 
     /**
@@ -393,8 +396,8 @@ class Shopware_Controllers_Frontend_Blog extends Enlight_Controller_Action
                     $commentData = unserialize($getComment->getData(), ['allowed_classes' => false]);
 
                     // Delete the data in the s_core_optin table. We don't need it anymore
-                    Shopware()->Models()->remove($getComment);
-                    Shopware()->Models()->flush();
+                    $this->get('models')->remove($getComment);
+                    $this->get('models')->flush();
 
                     $this->sSaveComment($commentData, $blogArticleId);
 
@@ -420,8 +423,8 @@ class Shopware_Controllers_Frontend_Blog extends Enlight_Controller_Action
                     $sErrorFlag['points'] = true;
                 }
 
-                if (!empty(Shopware()->Config()->CaptchaColor)) {
-                    /** @var \Shopware\Components\Captcha\CaptchaValidator $captchaValidator */
+                if (!empty(Shopware()->Config()->get('CaptchaColor'))) {
+                    /** @var CaptchaValidator $captchaValidator */
                     $captchaValidator = $this->container->get('shopware.captcha.validator');
 
                     if (!$captchaValidator->validate($this->Request())) {
@@ -436,17 +439,17 @@ class Shopware_Controllers_Frontend_Blog extends Enlight_Controller_Action
             }
 
             if (empty($sErrorFlag)) {
-                if (!empty(Shopware()->Config()->sOPTINVOTE) && empty(Shopware()->Session()->sUserId)) {
+                if (!empty(Shopware()->Config()->sOPTINVOTE) && empty(Shopware()->Session()->get('sUserId'))) {
                     $hash = Random::getAlphanumericString(32);
 
                     // Save comment confirm for the optin
-                    $blogCommentModel = new \Shopware\Models\CommentConfirm\CommentConfirm();
+                    $blogCommentModel = new CommentConfirm();
                     $blogCommentModel->setCreationDate(new DateTime('now'));
                     $blogCommentModel->setHash($hash);
                     $blogCommentModel->setData(serialize($this->Request()->getPost()));
 
-                    Shopware()->Models()->persist($blogCommentModel);
-                    Shopware()->Models()->flush();
+                    $this->get('models')->persist($blogCommentModel);
+                    $this->get('models')->flush();
 
                     $link = $this->Front()->Router()->assemble(['sViewport' => 'blog', 'action' => 'rating', 'blogArticle' => $blogArticleId, 'sConfirmation' => $hash]);
 
@@ -566,14 +569,14 @@ class Shopware_Controllers_Frontend_Blog extends Enlight_Controller_Action
             throw new Enlight_Exception('sSaveComment #00: Could not save comment');
         }
 
-        $blogCommentModel = new \Shopware\Models\Blog\Comment();
-        /** @var \Shopware\Models\Blog\Blog $blog */
+        $blogCommentModel = new Comment();
+        /** @var Blog $blog */
         $blog = $this->getRepository()->find($blogArticleId);
         /** @var Shop $shop */
-        $shop = $this->getModelManager()->getReference(\Shopware\Models\Shop\Shop::class, $this->get('shop')->getId());
+        $shop = $this->getModelManager()->getReference(Shop::class, $this->get('shop')->getId());
 
         $blogCommentModel->setBlog($blog);
-        $blogCommentModel->setCreationDate(new \DateTime());
+        $blogCommentModel->setCreationDate(new DateTime());
         $blogCommentModel->setActive(false);
 
         $blogCommentModel->setName($commentData['name']);
@@ -583,8 +586,8 @@ class Shopware_Controllers_Frontend_Blog extends Enlight_Controller_Action
         $blogCommentModel->setPoints($commentData['points']);
         $blogCommentModel->setShop($shop);
 
-        Shopware()->Models()->persist($blogCommentModel);
-        Shopware()->Models()->flush();
+        $this->get('models')->persist($blogCommentModel);
+        $this->get('models')->flush();
     }
 
     /**
@@ -713,12 +716,31 @@ class Shopware_Controllers_Frontend_Blog extends Enlight_Controller_Action
             $data[$blogArticle['id']] = $blogArticle;
         }
 
-        $translations = $this->get(\Shopware_Components_Translation::class)->readBatchWithFallback($shop->getId(), $shop->getFallback() ? $shop->getFallback()->getId() : null, 'blog', $ids, false);
+        $translations = $this->get(Shopware_Components_Translation::class)->readBatchWithFallback($shop->getId(), $shop->getFallback() ? $shop->getFallback()->getId() : null, 'blog', $ids, false);
 
         foreach ($translations as $translation) {
             $data[$translation['objectkey']] = array_merge($data[$translation['objectkey']], $translation['objectdata']);
         }
 
         return $data;
+    }
+
+    private function getPerPage(Request $request, SessionInterface $session): int
+    {
+        if (!empty($request->attributes->get('sPerPage'))) {
+            $session->set('sPerPage', (int) $request->attributes->get('sPerPage'));
+        }
+
+        $perPage = (int) $session->get('sPerPage');
+
+        if ($perPage < 1) {
+            $perPage = (int) $this->container->get('config')->get('articlesPerPage');
+        }
+
+        if ($perPage < 1) {
+            return 1;
+        }
+
+        return $perPage;
     }
 }

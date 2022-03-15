@@ -38,7 +38,11 @@ class OrderCountSortingHandler implements SortingHandlerInterface
 
     public function handle(SortingInterface $sorting, QueryBuilder $query)
     {
-        /* @var OrderCountSorting $sorting */
+        $this->addSorting($sorting, $query);
+    }
+
+    private function addSorting(OrderCountSorting $sorting, QueryBuilder $query): void
+    {
         $query->addOrderBy('customer.count_orders', $sorting->getDirection());
     }
 }

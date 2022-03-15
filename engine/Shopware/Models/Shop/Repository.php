@@ -26,9 +26,15 @@ namespace Shopware\Models\Shop;
 
 use Doctrine\ORM\AbstractQuery;
 use Doctrine\ORM\Query;
+use Enlight_Controller_Request_Request;
+use PDO;
+use RuntimeException;
 use Shopware\Components\Model\ModelRepository;
 use Shopware\Components\Model\QueryBuilder;
 
+/**
+ * @extends ModelRepository<Shop>
+ */
 class Repository extends ModelRepository
 {
     /**
@@ -325,7 +331,12 @@ class Repository extends ModelRepository
         $builder = $this->createQueryBuilder('shop');
         $builder->where('shop.default = 1');
 
-        return $builder->getQuery()->getOneOrNullResult();
+        $shop = $builder->getQuery()->getOneOrNullResult();
+        if (!$shop instanceof Shop) {
+            throw new RuntimeException('No default shop found. Check your shop configuration');
+        }
+
+        return $shop;
     }
 
     /**
@@ -360,7 +371,7 @@ class Repository extends ModelRepository
     }
 
     /**
-     * @param \Enlight_Controller_Request_Request $request
+     * @param Enlight_Controller_Request_Request $request
      *
      * @return DetachedShop|null
      */
@@ -378,7 +389,7 @@ class Repository extends ModelRepository
     /**
      * @return array|null
      */
-    public function getActiveShopByRequestAsArray(\Enlight_Controller_Request_Request $request)
+    public function getActiveShopByRequestAsArray(Enlight_Controller_Request_Request $request)
     {
         $host = $request->getHttpHost();
         if (empty($host)) {
@@ -404,7 +415,6 @@ class Repository extends ModelRepository
      */
     public function getQueryBuilder()
     {
-        /* @var QueryBuilder $builder */
         return $this->createQueryBuilder('shop')
             ->addSelect('shop')
 
@@ -442,7 +452,6 @@ class Repository extends ModelRepository
      */
     public function getActiveQueryBuilder()
     {
-        /* @var QueryBuilder $builder */
         return $this->getQueryBuilder()
             ->where('shop.active = 1');
     }
@@ -551,7 +560,7 @@ class Repository extends ModelRepository
         $query->andWhere('shop.active = 1');
         $query->andWhere('(shop.host = :host OR (shop.host IS NULL AND main_shop.host = :host))');
         $query->setParameter(':host', $host);
-        $shops = $query->execute()->fetchAll(\PDO::FETCH_ASSOC);
+        $shops = $query->execute()->fetchAll(PDO::FETCH_ASSOC);
 
         usort($shops, function ($a, $b) {
             if ($a['is_main'] && !$b['is_main']) {
@@ -594,7 +603,7 @@ class Repository extends ModelRepository
         $query->addOrderBy('shop.position');
         $query->setMaxResults(1);
 
-        return $query->execute()->fetch(\PDO::FETCH_ASSOC);
+        return $query->execute()->fetch(PDO::FETCH_ASSOC);
     }
 
     /**
@@ -627,7 +636,6 @@ class Repository extends ModelRepository
      */
     private function getActiveMainShopQueryBuilder()
     {
-        /* @var QueryBuilder $builder */
         return $this->createQueryBuilder('shop')
             ->addSelect('shop')
 
@@ -657,7 +665,6 @@ class Repository extends ModelRepository
      */
     private function getActiveSubShopQueryBuilder()
     {
-        /* @var QueryBuilder $builder */
         return $this->createQueryBuilder('shop')
             ->addSelect('shop')
 

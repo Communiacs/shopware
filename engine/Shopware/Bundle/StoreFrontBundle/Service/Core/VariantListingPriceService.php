@@ -35,7 +35,6 @@ use Shopware\Bundle\StoreFrontBundle\Service\VariantListingPriceServiceInterface
 use Shopware\Bundle\StoreFrontBundle\Struct\ListProduct;
 use Shopware\Bundle\StoreFrontBundle\Struct\Product\PriceDiscount;
 use Shopware\Bundle\StoreFrontBundle\Struct\Product\PriceRule;
-use Shopware\Bundle\StoreFrontBundle\Struct\ShopContext;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 use Shopware_Components_Config;
 
@@ -96,19 +95,17 @@ class VariantListingPriceService implements VariantListingPriceServiceInterface
         }
 
         //executed if no price condition included in search request
-        /* @var ShopContext $context */
+
         $this->loadPrices($criteria, $result, $context);
     }
 
     private function loadPrices(Criteria $criteria, ProductSearchResult $result, ShopContextInterface $context)
     {
-        /** @var ShopContext $context */
         $cheapestPriceData = $this->variantCheapestPriceGateway->getList($result->getProducts(), $context, $context->getCurrentCustomerGroup(), $criteria);
 
         foreach ($result->getProducts() as $product) {
             $number = $product->getNumber();
 
-            /* @var PriceRule $cheapestPriceRule */
             if (!\array_key_exists($number, $cheapestPriceData)) {
                 $cheapestPriceRule = $product->getPriceRules()[0];
                 $displayFromPrice = $product->displayFromPrice();

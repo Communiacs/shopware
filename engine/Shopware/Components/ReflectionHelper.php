@@ -24,33 +24,40 @@
 
 namespace Shopware\Components;
 
+use InvalidArgumentException;
+use ReflectionClass;
+use ReflectionException;
+use RuntimeException;
+
 class ReflectionHelper
 {
     /**
      * Create a class instance from a class name string
      *
-     * @param string $className
-     * @param array  $arguments
-     * @param bool   $secure      Make sure that the class is a valid shopware class
-     * @param string $docPath     Optional document root parameter where the class should be found
-     * @param array  $directories an array of directories in which the class should be found
+     * @template TClass of object
+     *
+     * @param class-string<TClass> $className
+     * @param array                $arguments
+     * @param bool                 $secure      Make sure that the class is a valid shopware class
+     * @param string               $docPath     Optional document root parameter where the class should be found
+     * @param array                $directories an array of directories in which the class should be found
      *
      * @see \Shopware\Components\ReflectionHelper::verifyClass()
      *
-     * @throws \ReflectionException      Class could not be found
-     * @throws \InvalidArgumentException
-     * @throws \RuntimeException         If the class has no namespace
+     * @throws ReflectionException      Class could not be found
+     * @throws InvalidArgumentException
+     * @throws RuntimeException         If the class has no namespace
      *
-     * @return object
+     * @return TClass
      */
     public function createInstanceFromNamedArguments($className, $arguments, $secure = true, $docPath = null, array $directories = [])
     {
-        $reflectionClass = new \ReflectionClass($className);
+        $reflectionClass = new ReflectionClass($className);
 
         $docPath = $docPath === null ? Shopware()->Container()->getParameter('shopware.app.rootDir') : $docPath;
 
         if (!\is_string($docPath)) {
-            throw new \RuntimeException('Parameter shopware.app.rootDir has to be an string');
+            throw new RuntimeException('Parameter shopware.app.rootDir has to be an string');
         }
 
         /** @var string[] $folders */
@@ -83,7 +90,7 @@ class ReflectionHelper
 
             if (!isset($arguments[$paramName])) {
                 if (!$constructorParam->isOptional()) {
-                    throw new \RuntimeException(sprintf('Required constructor parameter missing: "$%s".', $paramName));
+                    throw new RuntimeException(sprintf('Required constructor parameter missing: "$%s".', $paramName));
                 }
                 $newParams[] = $constructorParam->getDefaultValue();
 
@@ -100,20 +107,23 @@ class ReflectionHelper
      * Verify that a given ReflectionClass object is within the documentroot (docPath)
      * and (optionally) that said class belongs to certain directories.
      *
-     * @param string $docPath     Path to the project's document root
-     * @param array  $directories Set of directories in which the class file should be in
+     * @param string        $docPath     Path to the project's document root
+     * @param array<string> $directories Set of directories in which the class file should be in
      *
-     * @throws \InvalidArgumentException If the class is out of scope (docpath mismatch)   (code: 1)
-     * @throws \InvalidArgumentException If the class is out of scope (directory mismatch) (code: 2)
+     * @throws InvalidArgumentException If the class is out of scope (docpath mismatch)   (code: 1)
+     * @throws InvalidArgumentException If the class is out of scope (directory mismatch) (code: 2)
      */
-    private function verifyClass(\ReflectionClass $class, $docPath, array $directories)
+    private function verifyClass(ReflectionClass $class, string $docPath, array $directories): void
     {
         $fileName = $class->getFileName();
+        if ($fileName === false) {
+            throw new RuntimeException('Could not get file name');
+        }
         $fileDir = substr($fileName, 0, \strlen($docPath));
 
         // Trying to execute a class outside of the Shopware DocumentRoot
         if ($fileDir !== $docPath) {
-            throw new \InvalidArgumentException(sprintf('Class "%s" out of scope', $class->getFileName()), 1);
+            throw new InvalidArgumentException(sprintf('Class "%s" out of scope', $class->getFileName()), 1);
         }
 
         $fileName = substr($fileName, \strlen($docPath));
@@ -134,12 +144,12 @@ class ReflectionHelper
         }
 
         if ($error) {
-            throw new \InvalidArgumentException(sprintf('Class "%s" out of scope', $class->getFileName()), 2);
+            throw new InvalidArgumentException(sprintf('Class "%s" out of scope', $class->getFileName()), 2);
         }
 
         $className = $class->getName();
         if (!\array_key_exists(ReflectionAwareInterface::class, class_implements($className))) {
-            throw new \InvalidArgumentException(sprintf('Class %s has to implement the interface %s', $className, ReflectionAwareInterface::class));
+            throw new InvalidArgumentException(sprintf('Class %s has to implement the interface %s', $className, ReflectionAwareInterface::class));
         }
     }
 }

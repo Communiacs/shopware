@@ -24,6 +24,8 @@
 
 namespace Shopware\Commands;
 
+use RuntimeException;
+use Shopware\Components\Snippet\DatabaseHandler;
 use Stecman\Component\Symfony\Console\BashCompletion\Completion\CompletionAwareInterface;
 use Stecman\Component\Symfony\Console\BashCompletion\CompletionContext;
 use Symfony\Component\Console\Input\InputArgument;
@@ -49,7 +51,7 @@ class SnippetsRemoveCommand extends ShopwareCommand implements CompletionAwareIn
             $rootDir = $this->container->getParameter('kernel.root_dir');
 
             if (!\is_string($rootDir)) {
-                throw new \RuntimeException('Parameter kernel.root_dir has to be an string');
+                throw new RuntimeException('Parameter kernel.root_dir has to be an string');
             }
 
             return $this->completeInDirectory($rootDir);
@@ -82,12 +84,17 @@ class SnippetsRemoveCommand extends ShopwareCommand implements CompletionAwareIn
         $rootDir = $this->container->getParameter('kernel.root_dir');
 
         if (!\is_string($rootDir)) {
-            throw new \RuntimeException('Parameter kernel.root_dir has to be an string');
+            throw new RuntimeException('Parameter kernel.root_dir has to be an string');
         }
 
-        $folder = $rootDir . '/' . $input->getArgument('folder') . '/';
+        $folder = $input->getArgument('folder');
+        if (!\is_string($folder)) {
+            throw new RuntimeException('Argument "folder" needs to be a string');
+        }
 
-        $databaseLoader = $this->container->get(\Shopware\Components\Snippet\DatabaseHandler::class);
+        $folder = $rootDir . '/' . $folder . '/';
+
+        $databaseLoader = $this->container->get(DatabaseHandler::class);
         $databaseLoader->setOutput($output);
         $databaseLoader->removeFromDatabase($folder);
 

@@ -25,10 +25,14 @@
 namespace Shopware\Bundle\SearchBundle\Condition;
 
 use Assert\Assertion;
+use JsonSerializable;
 use Shopware\Bundle\SearchBundle\ConditionInterface;
+use Shopware\Components\ObjectJsonSerializeTraitDeprecated;
 
-class VariantCondition implements ConditionInterface, \JsonSerializable
+class VariantCondition implements ConditionInterface, JsonSerializable
 {
+    use ObjectJsonSerializeTraitDeprecated;
+
     /**
      * Each value id is combined via OR expression to restrict the criteria.
      *
@@ -74,14 +78,6 @@ class VariantCondition implements ConditionInterface, \JsonSerializable
     public function getOptionIds()
     {
         return $this->optionIds;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function jsonSerialize()
-    {
-        return get_object_vars($this);
     }
 
     public function expandVariants()

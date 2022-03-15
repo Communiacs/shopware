@@ -24,10 +24,20 @@
 
 namespace Shopware\Commands;
 
+use DateTime;
+use Doctrine\DBAL\Connection;
+use Exception;
+use PDO;
+use sCategories;
+use Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface;
 use Shopware\Components\ContainerAwareEventManager;
+use Shopware\Components\Model\Exception\ModelNotFoundException;
 use Shopware\Components\Model\ModelManager;
-use Shopware\Models\Shop\Repository;
+use Shopware\Components\ShopRegistrationServiceInterface;
 use Shopware\Models\Shop\Shop;
+use Shopware_Components_Modules;
+use Shopware_Components_SeoIndex;
+use sRewriteTable;
 use Stecman\Component\Symfony\Console\BashCompletion\Completion\CompletionAwareInterface;
 use Stecman\Component\Symfony\Console\BashCompletion\CompletionContext;
 use Symfony\Component\Console\Input\InputArgument;
@@ -39,32 +49,32 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class RebuildSeoIndexCommand extends ShopwareCommand implements CompletionAwareInterface
 {
     /**
-     * @var \Shopware_Components_SeoIndex
+     * @var Shopware_Components_SeoIndex
      */
     protected $seoIndex;
 
     /**
-     * @var \sRewriteTable
+     * @var sRewriteTable
      */
     protected $rewriteTable;
 
     /**
-     * @var \sCategories
+     * @var sCategories
      */
     protected $categories;
 
     /**
-     * @var \Doctrine\DBAL\Connection
+     * @var Connection
      */
     protected $database;
 
     /**
-     * @var \Shopware_Components_Modules
+     * @var Shopware_Components_Modules
      */
     protected $modules;
 
     /**
-     * @var \Shopware\Components\Model\ModelManager
+     * @var ModelManager
      */
     protected $modelManager;
 
@@ -87,9 +97,7 @@ class RebuildSeoIndexCommand extends ShopwareCommand implements CompletionAwareI
     public function completeArgumentValues($argumentName, CompletionContext $context)
     {
         if ($argumentName === 'shopId') {
-            /** @var ModelManager $em */
-            $em = $this->getContainer()->get(\Shopware\Components\Model\ModelManager::class);
-            /** @var Repository $shopRepository */
+            $em = $this->getContainer()->get(ModelManager::class);
             $shopRepository = $em->getRepository(Shop::class);
             $queryBuilder = $shopRepository->createQueryBuilder('shop');
 
@@ -128,13 +136,13 @@ class RebuildSeoIndexCommand extends ShopwareCommand implements CompletionAwareI
     /**
      * {@inheritdoc}
      *
-     * @throws \Exception
+     * @throws Exception
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->database = $this->container->get(\Doctrine\DBAL\Connection::class);
+        $this->database = $this->container->get(Connection::class);
         $this->modules = $this->container->get('modules');
-        $this->modelManager = $this->container->get(\Shopware\Components\Model\ModelManager::class);
+        $this->modelManager = $this->container->get(ModelManager::class);
         $this->seoIndex = $this->container->get('seoindex');
         $this->rewriteTable = $this->modules->RewriteTable();
         $this->events = $this->container->get('events');
@@ -150,35 +158,33 @@ class RebuildSeoIndexCommand extends ShopwareCommand implements CompletionAwareI
         }
 
         if (empty($shops)) {
-            /** @var \Doctrine\DBAL\Query\QueryBuilder $query */
             $query = $this->database->createQueryBuilder();
             $shops = $query->select('id')
                 ->from('s_core_shops', 'shops')
                 ->where('active', 1)
                 ->execute()
-                ->fetchAll(\PDO::FETCH_COLUMN);
+                ->fetchAll(PDO::FETCH_COLUMN);
         }
 
-        $currentTime = new \DateTime();
+        $currentTime = new DateTime();
 
         $this->rewriteTable->sCreateRewriteTableCleanup();
 
         foreach ($shops as $shopId) {
             $output->writeln('Rebuilding SEO index for shop ' . $shopId);
 
-            /** @var \Shopware\Models\Shop\Repository $repository */
-            $repository = $this->modelManager->getRepository(\Shopware\Models\Shop\Shop::class);
+            $repository = $this->modelManager->getRepository(Shop::class);
             $shop = $repository->getActiveById($shopId);
 
             if ($shop === null) {
-                throw new \RuntimeException('No valid shop id passed');
+                throw new ModelNotFoundException(Shop::class, $shopId);
             }
 
-            $this->container->get(\Shopware\Components\ShopRegistrationServiceInterface::class)->registerShop($shop);
+            $this->container->get(ShopRegistrationServiceInterface::class)->registerShop($shop);
 
             $this->modules->Categories()->baseId = $shop->getCategory()->getId();
 
-            list($cachedTime, $elementId, $shopId) = $this->seoIndex->getCachedTime();
+            [, $elementId, $shopId] = $this->seoIndex->getCachedTime();
 
             $this->seoIndex->setCachedTime($currentTime->format('Y-m-d H:i:s'), $elementId, $shopId);
             $this->rewriteTable->baseSetup();
@@ -194,7 +200,7 @@ class RebuildSeoIndexCommand extends ShopwareCommand implements CompletionAwareI
 
             $this->seoIndex->setCachedTime($currentTime->format('Y-m-d H:i:s'), $elementId, $shopId);
 
-            $context = $this->container->get(\Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface::class)->createShopContext($shopId);
+            $context = $this->container->get(ContextServiceInterface::class)->createShopContext($shopId);
 
             $this->rewriteTable->sCreateRewriteTableCategories();
             $this->rewriteTable->sCreateRewriteTableCampaigns();

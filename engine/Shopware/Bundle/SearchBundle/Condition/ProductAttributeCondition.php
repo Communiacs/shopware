@@ -25,17 +25,21 @@
 namespace Shopware\Bundle\SearchBundle\Condition;
 
 use Assert\Assertion;
+use JsonSerializable;
 use Shopware\Bundle\SearchBundle\ConditionInterface;
+use Shopware\Components\ObjectJsonSerializeTraitDeprecated;
 
-class ProductAttributeCondition implements ConditionInterface, \JsonSerializable
+class ProductAttributeCondition implements ConditionInterface, JsonSerializable
 {
+    use ObjectJsonSerializeTraitDeprecated;
+
     /**
      * @var string
      */
     protected $field;
 
     /**
-     * @var string|array
+     * @var array|int|string|null
      */
     protected $value;
 
@@ -45,9 +49,9 @@ class ProductAttributeCondition implements ConditionInterface, \JsonSerializable
     protected $operator;
 
     /**
-     * @param string       $field
-     * @param string       $operator
-     * @param string|array $value    ['min' => 1, 'max' => 10] for between operator
+     * @param string                $field
+     * @param string                $operator
+     * @param array|int|string|null $value    ['min' => 1, 'max' => 10] for between operator
      */
     public function __construct($field, $operator, $value)
     {
@@ -82,7 +86,7 @@ class ProductAttributeCondition implements ConditionInterface, \JsonSerializable
     }
 
     /**
-     * @return string|array|null $value
+     * @return array|int|string|null $value
      */
     public function getValue()
     {
@@ -90,7 +94,7 @@ class ProductAttributeCondition implements ConditionInterface, \JsonSerializable
     }
 
     /**
-     * @param string|array $value
+     * @param array|int|string|null $value
      */
     public function setValue($value)
     {
@@ -111,13 +115,5 @@ class ProductAttributeCondition implements ConditionInterface, \JsonSerializable
     public function setOperator($operator)
     {
         $this->operator = $operator;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function jsonSerialize()
-    {
-        return get_object_vars($this);
     }
 }

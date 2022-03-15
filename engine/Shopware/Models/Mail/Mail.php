@@ -24,8 +24,12 @@
 
 namespace Shopware\Models\Mail;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
+use RecursiveArrayIterator;
+use RecursiveIteratorIterator;
 use Shopware\Components\Model\ModelEntity;
+use Shopware\Models\Order\Status;
 
 /**
  * Shopware mail model represents a single mail
@@ -60,7 +64,7 @@ class Mail extends ModelEntity
     /**
      * OWNING SIDE
      *
-     * @var \Shopware\Models\Order\Status
+     * @var Status|null
      *
      * @ORM\OneToOne(targetEntity="Shopware\Models\Order\Status", inversedBy="mail")
      * @ORM\JoinColumn(name="stateID", referencedColumnName="id")
@@ -71,7 +75,7 @@ class Mail extends ModelEntity
     /**
      * INVERSE SIDE
      *
-     * @var \Doctrine\Common\Collections\ArrayCollection<\Shopware\Models\Mail\Attachment>
+     * @var ArrayCollection<Attachment>
      *
      * @ORM\OneToMany(targetEntity="Shopware\Models\Mail\Attachment", mappedBy="mail", orphanRemoval=true, cascade={"persist"})
      */
@@ -179,7 +183,7 @@ class Mail extends ModelEntity
 
     public function __construct()
     {
-        $this->attachments = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->attachments = new ArrayCollection();
     }
 
     /**
@@ -193,7 +197,7 @@ class Mail extends ModelEntity
     /**
      * @param string $name
      *
-     * @return \Shopware\Models\Mail\Mail
+     * @return Mail
      */
     public function setName($name)
     {
@@ -213,7 +217,7 @@ class Mail extends ModelEntity
     /**
      * @param string $fromMail
      *
-     * @return \Shopware\Models\Mail\Mail
+     * @return Mail
      */
     public function setFromMail($fromMail)
     {
@@ -233,7 +237,7 @@ class Mail extends ModelEntity
     /**
      * @param string $fromName
      *
-     * @return \Shopware\Models\Mail\Mail
+     * @return Mail
      */
     public function setFromName($fromName)
     {
@@ -253,7 +257,7 @@ class Mail extends ModelEntity
     /**
      * @param string $subject
      *
-     * @return \Shopware\Models\Mail\Mail
+     * @return Mail
      */
     public function setSubject($subject)
     {
@@ -273,7 +277,7 @@ class Mail extends ModelEntity
     /**
      * @param string $content
      *
-     * @return \Shopware\Models\Mail\Mail
+     * @return Mail
      */
     public function setContent($content)
     {
@@ -293,7 +297,7 @@ class Mail extends ModelEntity
     /**
      * @param string $contentHtml
      *
-     * @return \Shopware\Models\Mail\Mail
+     * @return Mail
      */
     public function setContentHtml($contentHtml)
     {
@@ -313,7 +317,7 @@ class Mail extends ModelEntity
     /**
      * @param bool $isHtml
      *
-     * @return \Shopware\Models\Mail\Mail
+     * @return Mail
      */
     public function setIsHtml($isHtml = true)
     {
@@ -403,7 +407,7 @@ class Mail extends ModelEntity
     /**
      * @param int $mailtype
      *
-     * @return \Shopware\Models\Mail\Mail
+     * @return Mail
      */
     public function setMailtype($mailtype)
     {
@@ -425,7 +429,7 @@ class Mail extends ModelEntity
      *
      * @param array $translation
      *
-     * @return \Shopware\Models\Mail\Mail
+     * @return Mail
      */
     public function setTranslation($translation)
     {
@@ -453,7 +457,7 @@ class Mail extends ModelEntity
     /**
      * @param array $context
      *
-     * @return \Shopware\Models\Mail\Mail
+     * @return Mail
      */
     public function setContext($context)
     {
@@ -501,7 +505,7 @@ class Mail extends ModelEntity
     public function arrayGetPath($array, $glue = '.')
     {
         $result = [];
-        $iterator = new \RecursiveIteratorIterator(new \RecursiveArrayIterator($array));
+        $iterator = new RecursiveIteratorIterator(new RecursiveArrayIterator($array));
         foreach ($iterator as $leafValue) {
             $parts = [];
             foreach (range(0, $iterator->getDepth()) as $depth) {
@@ -517,7 +521,7 @@ class Mail extends ModelEntity
     }
 
     /**
-     * @return \Shopware\Models\Order\Status|null
+     * @return Status|null
      */
     public function getStatus()
     {
@@ -525,7 +529,7 @@ class Mail extends ModelEntity
     }
 
     /**
-     * @param \Shopware\Models\Order\Status[]|null $status
+     * @param Status[]|null $status
      *
      * @return Mail
      */
@@ -533,11 +537,11 @@ class Mail extends ModelEntity
     {
         $this->mailtype = self::MAILTYPE_STATE;
 
-        return $this->setOneToOne($status, \Shopware\Models\Order\Status::class, 'status', 'mail');
+        return $this->setOneToOne($status, Status::class, 'status', 'mail');
     }
 
     /**
-     * @return \Shopware\Models\Mail\Attachment[]
+     * @return Attachment[]
      */
     public function getAttachments()
     {
@@ -545,13 +549,13 @@ class Mail extends ModelEntity
     }
 
     /**
-     * @param \Shopware\Models\Mail\Attachment[]|null $attachments
+     * @param Attachment[]|null $attachments
      *
      * @return Mail
      */
     public function setAttachments($attachments)
     {
-        return $this->setOneToMany($attachments, \Shopware\Models\Mail\Attachment::class, 'attachments', 'mail');
+        return $this->setOneToMany($attachments, Attachment::class, 'attachments', 'mail');
     }
 
     /**

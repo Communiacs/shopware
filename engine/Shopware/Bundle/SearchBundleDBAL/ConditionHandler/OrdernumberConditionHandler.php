@@ -49,11 +49,15 @@ class OrdernumberConditionHandler implements ConditionHandlerInterface
         QueryBuilder $query,
         ShopContextInterface $context
     ) {
-        $key = ':ordernumbers' . md5(json_encode($condition));
+        $this->addCondition($condition, $query);
+    }
+
+    private function addCondition(OrdernumberCondition $condition, QueryBuilder $query): void
+    {
+        $key = ':ordernumbers' . md5(json_encode($condition, JSON_THROW_ON_ERROR));
 
         $query->andWhere('variant.ordernumber IN (' . $key . ')');
 
-        /* @var OrdernumberCondition $condition */
         $query->setParameter(
             $key,
             $condition->getOrdernumbers(),

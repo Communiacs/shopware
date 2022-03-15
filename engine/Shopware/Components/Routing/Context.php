@@ -25,6 +25,8 @@
 namespace Shopware\Components\Routing;
 
 use Enlight_Controller_Request_Request as EnlightRequest;
+use JsonSerializable;
+use Shopware\Components\ObjectJsonSerializeTraitDeprecated;
 use Shopware\Models\Shop\Shop as ShopwareShop;
 use Shopware_Components_Config as ShopwareConfig;
 
@@ -33,8 +35,10 @@ use Shopware_Components_Config as ShopwareConfig;
  * @see http://api.symfony.com/2.0/Symfony/Component/Routing/RequestContext.html
  * @see \Enlight_Controller_Request_Request
  */
-class Context implements \JsonSerializable
+class Context implements JsonSerializable
 {
+    use ObjectJsonSerializeTraitDeprecated;
+
     /**
      * @var array
      */
@@ -395,13 +399,5 @@ class Context implements \JsonSerializable
         $self->setRemoveCategory((bool) $config->get('routerRemoveCategory'));
 
         return $self;
-    }
-
-    /**
-     * @return array
-     */
-    public function jsonSerialize()
-    {
-        return get_object_vars($this);
     }
 }

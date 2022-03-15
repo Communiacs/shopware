@@ -26,8 +26,8 @@ namespace Shopware\Bundle\MailBundle\Service;
 
 use Enlight_Components_Mail;
 use League\Flysystem\FilesystemInterface;
+use RuntimeException;
 use Shopware\Bundle\MediaBundle\MediaServiceInterface;
-use Shopware\Models\Mail\Contact;
 use Shopware\Models\Mail\Log;
 use Shopware\Models\Order\Document\Document;
 
@@ -60,12 +60,11 @@ class LogEntryMailBuilder implements LogEntryMailBuilderInterface
 
         try {
             $mail->setFrom($entry->getSender());
-        } catch (\RuntimeException $exception) {
+        } catch (RuntimeException $exception) {
             $mail->setFrom(self::INVALID_SENDER_REPLACEMENT_ADDRESS);
         }
 
         $entry->getRecipients()->map(function ($recipient) use ($mail) {
-            /* @var Contact $recipient */
             $mail->addTo($recipient->getMailAddress());
         });
 

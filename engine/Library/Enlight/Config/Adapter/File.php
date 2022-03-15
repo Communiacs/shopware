@@ -123,13 +123,8 @@ class Enlight_Config_Adapter_File extends Enlight_Config_Adapter
                     break;
                     // Section is defect
                 } catch (Exception $e) {
-                    if (!empty($section) && \is_array($section)) {
-                        // Try next section
-                        array_shift($section);
-                    } else {
-                        $config->setData([]);
-                        break;
-                    }
+                    $config->setData([]);
+                    break;
                 }
             }
         } else {
@@ -160,34 +155,21 @@ class Enlight_Config_Adapter_File extends Enlight_Config_Adapter
 
         if (!empty($section)) {
             $base = $this->readBase($filename);
-            if (\is_array($section)) {
-                foreach (array_reverse($section) as $sectionName) {
-                    if (!isset($base->$sectionName)) {
-                        $base->$sectionName = [];
-                    }
-                }
-                $sectionName = $extendingSection = array_shift($section);
-                foreach ($section as $extendedSection) {
-                    $base->setExtend($extendingSection, $extendedSection);
-                    $extendingSection = $extendedSection;
-                }
-            } else {
-                $sectionName = (string) $section;
-            }
+            $sectionName = $section;
             $base->$sectionName = $config;
         } else {
             $base = $config;
         }
 
         $dir = \dirname($filename);
-        if (!file_exists($dir) || !is_writeable($dir)) {
+        if (!file_exists($dir) || !is_writable($dir)) {
             $old = umask(0);
             mkdir($dir, 0777, true);
             chmod($dir, 0777);
             umask($old);
         }
 
-        if (!is_writeable($dir)) {
+        if (!is_writable($dir)) {
             return $this;
         }
 

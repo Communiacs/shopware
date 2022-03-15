@@ -27,8 +27,13 @@ declare(strict_types=1);
 
 namespace Shopware\Bundle\PluginInstallerBundle\Struct;
 
-class DomainStruct implements \JsonSerializable
+use JsonSerializable;
+use Shopware\Components\ObjectJsonSerializeTrait;
+
+class DomainStruct implements JsonSerializable
 {
+    use ObjectJsonSerializeTrait;
+
     /**
      * @var int
      */
@@ -86,13 +91,5 @@ class DomainStruct implements \JsonSerializable
     public function isPartner(): bool
     {
         return $this->isPartner;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function jsonSerialize(): array
-    {
-        return get_object_vars($this);
     }
 }

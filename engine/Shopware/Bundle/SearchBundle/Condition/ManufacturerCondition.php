@@ -25,10 +25,14 @@
 namespace Shopware\Bundle\SearchBundle\Condition;
 
 use Assert\Assertion;
+use JsonSerializable;
 use Shopware\Bundle\SearchBundle\ConditionInterface;
+use Shopware\Components\ObjectJsonSerializeTraitDeprecated;
 
-class ManufacturerCondition implements ConditionInterface, \JsonSerializable
+class ManufacturerCondition implements ConditionInterface, JsonSerializable
 {
+    use ObjectJsonSerializeTraitDeprecated;
+
     private const NAME = 'manufacturer';
 
     /**
@@ -60,13 +64,5 @@ class ManufacturerCondition implements ConditionInterface, \JsonSerializable
     public function getManufacturerIds()
     {
         return $this->manufacturerIds;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function jsonSerialize()
-    {
-        return get_object_vars($this);
     }
 }

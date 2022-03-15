@@ -24,6 +24,8 @@
 
 namespace Shopware\Bundle\CustomerSearchBundleDBAL\ConditionHandler;
 
+use DateInterval;
+use DateTime;
 use Shopware\Bundle\CustomerSearchBundle\Condition\OrderedInLastDaysCondition;
 use Shopware\Bundle\CustomerSearchBundleDBAL\ConditionHandlerInterface;
 use Shopware\Bundle\SearchBundle\ConditionInterface;
@@ -38,10 +40,14 @@ class OrderedInLastDaysConditionHandler implements ConditionHandlerInterface
 
     public function handle(ConditionInterface $condition, QueryBuilder $query)
     {
-        /* @var OrderedInLastDaysCondition $condition */
+        $this->addCondition($condition, $query);
+    }
+
+    private function addCondition(OrderedInLastDaysCondition $condition, QueryBuilder $query): void
+    {
         $query->andWhere('customer.last_order_time >= :OrderedInLastDaysCondition');
-        $date = new \DateTime();
-        $date->sub(new \DateInterval('P' . $condition->getLastDays() . 'D'));
+        $date = new DateTime();
+        $date->sub(new DateInterval('P' . $condition->getLastDays() . 'D'));
         $query->setParameter(':OrderedInLastDaysCondition', $date->format('Y-m-d H:i:s'));
     }
 }

@@ -54,7 +54,7 @@ Ext.define('Shopware.apps.Shipping.store.Country', {
      *
      * @integer
      */
-    pageSize: 30,
+    pageSize: 999,
 
     /**
      * Enables the remote filter system
@@ -76,7 +76,7 @@ Ext.define('Shopware.apps.Shipping.store.Country', {
      * @object
      */
     proxy: {
-        type:'ajax',
+        type: 'ajax',
 
         /**
          * Configure the url mapping for the different

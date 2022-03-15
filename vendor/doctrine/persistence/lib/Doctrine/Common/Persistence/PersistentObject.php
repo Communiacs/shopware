@@ -10,6 +10,7 @@ use Doctrine\Persistence\ObjectManager;
 use Doctrine\Persistence\ObjectManagerAware;
 use InvalidArgumentException;
 use RuntimeException;
+
 use function lcfirst;
 use function substr;
 
@@ -50,7 +51,10 @@ abstract class PersistentObject implements ObjectManagerAware
     /** @var ObjectManager|null */
     private static $objectManager = null;
 
-    /** @var ClassMetadata|null */
+    /**
+     * @var ClassMetadata<object>|null
+     * @psalm-var ClassMetadata<object>|null
+     */
     private $cm = null;
 
     /**
@@ -105,9 +109,10 @@ abstract class PersistentObject implements ObjectManagerAware
             $this->$field = $args[0];
         } elseif ($this->cm->hasAssociation($field) && $this->cm->isSingleValuedAssociation($field)) {
             $targetClass = $this->cm->getAssociationTargetClass($field);
-            if (! ($args[0] instanceof $targetClass) && $args[0] !== null) {
+            if ($targetClass !== null && ! ($args[0] instanceof $targetClass) && $args[0] !== null) {
                 throw new InvalidArgumentException("Expected persistent object of type '" . $targetClass . "'");
             }
+
             $this->$field = $args[0];
             $this->completeOwningSide($field, $targetClass, $args[0]);
         } else {
@@ -136,9 +141,10 @@ abstract class PersistentObject implements ObjectManagerAware
     /**
      * If this is an inverse side association, completes the owning side.
      *
-     * @param string        $field
-     * @param ClassMetadata $targetClass
-     * @param object        $targetObject
+     * @param string $field
+     * @param string $targetClass
+     * @param object $targetObject
+     * @psalm-param class-string $targetClass
      *
      * @return void
      */
@@ -175,12 +181,14 @@ abstract class PersistentObject implements ObjectManagerAware
         }
 
         $targetClass = $this->cm->getAssociationTargetClass($field);
-        if (! ($args[0] instanceof $targetClass)) {
+        if ($targetClass !== null && ! ($args[0] instanceof $targetClass)) {
             throw new InvalidArgumentException("Expected persistent object of type '" . $targetClass . "'");
         }
+
         if (! ($this->$field instanceof Collection)) {
             $this->$field = new ArrayCollection($this->$field ?: []);
         }
+
         $this->$field->add($args[0]);
         $this->completeOwningSide($field, $targetClass, $args[0]);
     }

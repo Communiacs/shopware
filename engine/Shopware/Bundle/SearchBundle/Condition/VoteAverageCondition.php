@@ -25,10 +25,14 @@
 namespace Shopware\Bundle\SearchBundle\Condition;
 
 use Assert\Assertion;
+use JsonSerializable;
 use Shopware\Bundle\SearchBundle\ConditionInterface;
+use Shopware\Components\ObjectJsonSerializeTraitDeprecated;
 
-class VoteAverageCondition implements ConditionInterface, \JsonSerializable
+class VoteAverageCondition implements ConditionInterface, JsonSerializable
 {
+    use ObjectJsonSerializeTraitDeprecated;
+
     public const STATE_INCLUDES_VOTE_TABLE = 'vote';
     private const NAME = 'vote_average';
 
@@ -60,13 +64,5 @@ class VoteAverageCondition implements ConditionInterface, \JsonSerializable
     public function getAverage()
     {
         return $this->average;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function jsonSerialize()
-    {
-        return get_object_vars($this);
     }
 }

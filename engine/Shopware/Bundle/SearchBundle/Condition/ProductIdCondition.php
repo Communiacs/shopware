@@ -24,10 +24,14 @@
 
 namespace Shopware\Bundle\SearchBundle\Condition;
 
+use JsonSerializable;
 use Shopware\Bundle\SearchBundle\ConditionInterface;
+use Shopware\Components\ObjectJsonSerializeTraitDeprecated;
 
-class ProductIdCondition implements ConditionInterface, \JsonSerializable
+class ProductIdCondition implements ConditionInterface, JsonSerializable
 {
+    use ObjectJsonSerializeTraitDeprecated;
+
     private const NAME = 'productids';
 
     /**
@@ -57,13 +61,5 @@ class ProductIdCondition implements ConditionInterface, \JsonSerializable
     public function getProductIds()
     {
         return $this->productIds;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function jsonSerialize()
-    {
-        return get_object_vars($this);
     }
 }

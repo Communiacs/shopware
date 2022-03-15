@@ -25,6 +25,9 @@
 use Doctrine\DBAL\Connection;
 use Shopware\Models\Article\Vote;
 
+/**
+ * @extends Shopware_Controllers_Backend_Application<Vote>
+ */
 class Shopware_Controllers_Backend_Vote extends Shopware_Controllers_Backend_Application
 {
     protected $model = Vote::class;
@@ -119,7 +122,7 @@ class Shopware_Controllers_Backend_Vote extends Shopware_Controllers_Backend_App
     }
 
     /**
-     * @param int[] $shopIds
+     * @param array<int, int|string> $shopIds
      *
      * @return array indexed by id
      */

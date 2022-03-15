@@ -71,6 +71,8 @@ class Enlight_Config_BaseConfig implements Countable, Iterator
      * Contains which config file sections were loaded. This is null
      * if all sections were loaded, a string name if one section is loaded
      * and an array of string names if multiple sections were loaded.
+     *
+     * @var string[]|string|null
      */
     protected $_loadedSection;
 
@@ -243,7 +245,10 @@ class Enlight_Config_BaseConfig implements Countable, Iterator
      * Defined by Countable interface
      *
      * @return int
+     *
+     * @deprecated - Native return type will be added with Shopware 5.8
      */
+    #[\ReturnTypeWillChange]
     public function count()
     {
         return $this->_count;
@@ -251,7 +256,12 @@ class Enlight_Config_BaseConfig implements Countable, Iterator
 
     /**
      * Defined by Iterator interface
+     *
+     * @return mixed can return any value
+     *
+     * @deprecated - Native return type will be added with Shopware 5.8
      */
+    #[\ReturnTypeWillChange]
     public function current()
     {
         $this->_skipNextIteration = false;
@@ -261,7 +271,12 @@ class Enlight_Config_BaseConfig implements Countable, Iterator
 
     /**
      * Defined by Iterator interface
+     *
+     * @return mixed can return any value
+     *
+     * @deprecated - Native return type will be added with Shopware 5.8
      */
+    #[\ReturnTypeWillChange]
     public function key()
     {
         return key($this->_data);
@@ -269,7 +284,12 @@ class Enlight_Config_BaseConfig implements Countable, Iterator
 
     /**
      * Defined by Iterator interface
+     *
+     * @return void
+     *
+     * @deprecated - Native return type will be added with Shopware 5.8
      */
+    #[\ReturnTypeWillChange]
     public function next()
     {
         if ($this->_skipNextIteration) {
@@ -283,7 +303,12 @@ class Enlight_Config_BaseConfig implements Countable, Iterator
 
     /**
      * Defined by Iterator interface
+     *
+     * @return void
+     *
+     * @deprecated - Native return type will be added with Shopware 5.8
      */
+    #[\ReturnTypeWillChange]
     public function rewind()
     {
         $this->_skipNextIteration = false;
@@ -295,7 +320,10 @@ class Enlight_Config_BaseConfig implements Countable, Iterator
      * Defined by Iterator interface
      *
      * @return bool
+     *
+     * @deprecated - Native return type will be added with Shopware 5.8
      */
+    #[\ReturnTypeWillChange]
     public function valid()
     {
         return $this->_index < $this->_count;
@@ -303,6 +331,8 @@ class Enlight_Config_BaseConfig implements Countable, Iterator
 
     /**
      * Returns the section name(s) loaded.
+     *
+     * @return string[]|string|null
      */
     public function getSectionName()
     {

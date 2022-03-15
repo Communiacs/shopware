@@ -24,10 +24,14 @@
 
 namespace Shopware\Bundle\SearchBundle\Condition;
 
+use JsonSerializable;
 use Shopware\Bundle\SearchBundle\ConditionInterface;
+use Shopware\Components\ObjectJsonSerializeTraitDeprecated;
 
-class LastProductIdCondition implements ConditionInterface, \JsonSerializable
+class LastProductIdCondition implements ConditionInterface, JsonSerializable
 {
+    use ObjectJsonSerializeTraitDeprecated;
+
     private const NAME = 'last_product_id';
 
     /**
@@ -49,14 +53,6 @@ class LastProductIdCondition implements ConditionInterface, \JsonSerializable
     public function getLastId()
     {
         return $this->lastId;
-    }
-
-    /**
-     * @return array
-     */
-    public function jsonSerialize()
-    {
-        return get_object_vars($this);
     }
 
     /**

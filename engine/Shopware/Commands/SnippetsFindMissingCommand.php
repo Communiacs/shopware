@@ -24,7 +24,9 @@
 
 namespace Shopware\Commands;
 
-use Shopware\Components\Model\ModelRepository;
+use Enlight_Components_Snippet_Namespace;
+use Enlight_Config_Adapter_File;
+use Shopware\Components\Model\ModelManager;
 use Shopware\Models\Shop\Locale;
 use Stecman\Component\Symfony\Console\BashCompletion\Completion\CompletionAwareInterface;
 use Stecman\Component\Symfony\Console\BashCompletion\CompletionContext;
@@ -43,11 +45,10 @@ class SnippetsFindMissingCommand extends ShopwareCommand implements CompletionAw
         if ($optionName === 'target') {
             return $this->completeDirectoriesInDirectory();
         } elseif ($optionName === 'fallback') {
-            /** @var ModelRepository $localeRepository */
-            $localeRepository = $this->getContainer()->get(\Shopware\Components\Model\ModelManager::class)->getRepository(Locale::class);
+            $localeRepository = $this->getContainer()->get(ModelManager::class)->getRepository(Locale::class);
             $queryBuilder = $localeRepository->createQueryBuilder('locale');
 
-            if (\strlen($context->getCurrentWord())) {
+            if ($context->getCurrentWord() !== '') {
                 $queryBuilder->andWhere($queryBuilder->expr()->like('locale.locale', ':search'))
                     ->setParameter('search', addcslashes($context->getCurrentWord(), '_%') . '%');
             }
@@ -109,15 +110,15 @@ class SnippetsFindMissingCommand extends ShopwareCommand implements CompletionAw
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $locale = $this->container->get(\Shopware\Components\Model\ModelManager::class)->getRepository(Locale::class)->findOneByLocale($input->getArgument('locale'));
+        $locale = $this->container->get(ModelManager::class)->getRepository(Locale::class)->findOneByLocale($input->getArgument('locale'));
         if (!$locale) {
             $output->writeln('<error>Provided locale not found</error>');
 
             return 1;
         }
 
-        $filteredQueryBuilder = $this->container->get(\Shopware\Components\Model\ModelManager::class)->getDBALQueryBuilder();
-        $localeQueryBuilder = $this->container->get(\Shopware\Components\Model\ModelManager::class)->getDBALQueryBuilder();
+        $filteredQueryBuilder = $this->container->get(ModelManager::class)->getDBALQueryBuilder();
+        $localeQueryBuilder = $this->container->get(ModelManager::class)->getDBALQueryBuilder();
 
         $statement = $localeQueryBuilder
             ->select('DISTINCT CONCAT(s.namespace, s.name) as hash')
@@ -146,7 +147,7 @@ class SnippetsFindMissingCommand extends ShopwareCommand implements CompletionAw
         ;
 
         if ($input->getOption('fallback')) {
-            $targetLocale = $this->container->get(\Shopware\Components\Model\ModelManager::class)->getRepository(Locale::class)->findOneByLocale($input->getOption('fallback'));
+            $targetLocale = $this->container->get(ModelManager::class)->getRepository(Locale::class)->findOneByLocale($input->getOption('fallback'));
             if (!$targetLocale) {
                 $output->writeln('<error>Provided fallback locale not found</error>');
 
@@ -170,7 +171,7 @@ class SnippetsFindMissingCommand extends ShopwareCommand implements CompletionAw
         $output->writeln('<info></info>');
         $output->writeln('<info>' . \count($snippets) . ' missing snippets detected</info>');
 
-        $outputAdapter = new \Enlight_Config_Adapter_File([
+        $outputAdapter = new Enlight_Config_Adapter_File([
             'configDir' => $input->getOption('target') . '/',
         ]);
 
@@ -178,7 +179,7 @@ class SnippetsFindMissingCommand extends ShopwareCommand implements CompletionAw
 
         foreach ($snippets as $snippet) {
             if (!\array_key_exists($snippet['namespace'], $data)) {
-                $data[$snippet['namespace']] = new \Enlight_Components_Snippet_Namespace([
+                $data[$snippet['namespace']] = new Enlight_Components_Snippet_Namespace([
                     'name' => $snippet['namespace'],
                     'section' => [
                         $locale->getLocale(),

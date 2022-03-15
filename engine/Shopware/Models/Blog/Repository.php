@@ -24,6 +24,7 @@
 
 namespace Shopware\Models\Blog;
 
+use DateTime;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\Query\Expr\Join;
@@ -36,6 +37,8 @@ use Shopware\Components\Model\QueryBuilder;
  * The Blog model repository is responsible to load all Blog data.
  * It supports the standard functions like findAll or findBy and extends the standard repository for
  * some specific functions to return the model data as array.
+ *
+ * @extends ModelRepository<Blog>
  */
 class Repository extends ModelRepository
 {
@@ -93,7 +96,7 @@ class Repository extends ModelRepository
         ->leftJoin('blog.attribute', 'attribute')
         ->where('blog.active = 1')
         ->andWhere('blog.displayDate < :now')
-        ->setParameter('now', new \DateTime())
+        ->setParameter('now', new DateTime())
         ->orderBy('blog.displayDate', 'DESC');
 
         if ($shopId !== null) {
@@ -331,7 +334,7 @@ class Repository extends ModelRepository
             ->leftJoin('blog.author', 'author')
             ->where('blog.active = 1')
             ->andWhere('blog.displayDate < :now')
-            ->setParameter('now', new \DateTime())
+            ->setParameter('now', new DateTime())
             ->orderBy('blog.displayDate', 'DESC');
 
         if ($shopId !== null) {

@@ -24,14 +24,13 @@
 
 namespace Shopware\Components;
 
+use DateTime;
 use Doctrine\DBAL\Connection;
+use RuntimeException;
 
 class HolidayTableUpdater
 {
-    /**
-     * @var Connection
-     */
-    private $db;
+    private Connection $db;
 
     public function __construct(Connection $db)
     {
@@ -40,10 +39,12 @@ class HolidayTableUpdater
 
     /**
      * Updates entries in s_premium_holidays to the current date
+     *
+     * @return void
      */
     public function update()
     {
-        $date = new \DateTime('now');
+        $date = new DateTime('now');
 
         // Update new, or outdated holidays to current year
         $holidays = $this->getPastHolidays();
@@ -65,26 +66,23 @@ class HolidayTableUpdater
     }
 
     /**
-     * @return array
+     * @return array<int, string[]>
      */
-    private function getPastHolidays()
+    private function getPastHolidays(): array
     {
-        $holidays = $this->db->fetchAll(
+        return $this->db->fetchAllAssociative(
             '
             SELECT id, calculation, `date`
             FROM `s_premium_holidays`
             WHERE `date` < CURDATE()
             '
         );
-
-        return $holidays;
     }
 
     /**
-     * @param array $holidays
-     * @param int   $year
+     * @param array<int, string[]> $holidays
      */
-    private function updateHolidaysForYear($holidays, $year)
+    private function updateHolidaysForYear(array $holidays, int $year): void
     {
         $easterDate = $this->getEasterDateForYear($year);
 
@@ -97,54 +95,30 @@ class HolidayTableUpdater
                 "DATE(CONCAT(YEAR(),'-','\$1-\$2'))",
                 $calculation
             );
-            $calculation = str_replace('EASTERDATE()', "'$easterDate'", $calculation);
-            $calculation = (string) str_replace('YEAR()', "'$year'", $calculation);
+            if (!\is_string($calculation)) {
+                throw new RuntimeException('Holiday calculating string could not be created');
+            }
+            $calculation = str_replace(['EASTERDATE()', 'YEAR()'], ["'$easterDate'", "'$year'"], $calculation);
 
             $sql = <<<SQL
 UPDATE s_premium_holidays
 set `date` = $calculation
 WHERE id = ?
 SQL;
-            $this->db->executeUpdate($sql, [$id]);
+            $this->db->executeStatement($sql, [$id]);
         }
     }
 
-    /**
-     * @param int $year
-     *
-     * @return string
-     */
-    private function getEasterDateForYear($year)
+    private function getEasterDateForYear(int $year): string
     {
-        $easterDate = date('Y-m-d', mktime(0, 0, 0, 3, 21 + $this->getEasterDays($year), $year));
-
-        return $easterDate;
-    }
-
-    /**
-     * Wrapper for easter_days function
-     *
-     * @param int $year
-     *
-     * @return int
-     */
-    private function getEasterDays($year)
-    {
-        if (!\function_exists('easter_days')) {
-            return $this->easterDaysFallback($year);
+        if (\function_exists('easter_date')) {
+            return date('Y-m-d', easter_date($year));
         }
 
-        return easter_days($year);
+        return date('Y-m-d', (int) mktime(0, 0, 0, 3, 21 + $this->getEasterDays($year), $year));
     }
 
-    /**
-     * Fallback implementation of easter_days
-     *
-     * @param int $year
-     *
-     * @return int
-     */
-    private function easterDaysFallback($year)
+    private function getEasterDays(int $year): int
     {
         $G = $year % 19;
         $C = (int) ($year / 100);
@@ -152,9 +126,9 @@ SQL;
         $I = (int) $H - (int) ($H / 28) * (1 - (int) ($H / 28) * (int) (29 / ($H + 1)) * ((int) (21 - $G) / 11));
         $J = ($year + (int) ($year / 4) + $I + 2 - $C + (int) ($C / 4)) % 7;
         $L = $I - $J;
-        $m = 3 + (int) (($L + 40) / 44);
-        $d = $L + 28 - 31 * ((int) ($m / 4));
-        $E = mktime(0, 0, 0, $m, $d, $year) - mktime(0, 0, 0, 3, 21, $year);
+        $month = 3 + (int) (($L + 40) / 44);
+        $day = (int) ($L + 28 - 31 * ((int) ($month / 4)));
+        $E = mktime(0, 0, 0, $month, $day, $year) - mktime(0, 0, 0, 3, 21, $year);
 
         return (int) round($E / (60 * 60 * 24));
     }

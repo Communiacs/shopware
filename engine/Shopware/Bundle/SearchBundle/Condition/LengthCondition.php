@@ -24,10 +24,14 @@
 
 namespace Shopware\Bundle\SearchBundle\Condition;
 
+use JsonSerializable;
 use Shopware\Bundle\SearchBundle\ConditionInterface;
+use Shopware\Components\ObjectJsonSerializeTraitDeprecated;
 
-class LengthCondition implements ConditionInterface, \JsonSerializable
+class LengthCondition implements ConditionInterface, JsonSerializable
 {
+    use ObjectJsonSerializeTraitDeprecated;
+
     private const NAME = 'length';
 
     /**
@@ -69,13 +73,5 @@ class LengthCondition implements ConditionInterface, \JsonSerializable
     public function getMaxLength()
     {
         return $this->maxLength;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function jsonSerialize()
-    {
-        return get_object_vars($this);
     }
 }

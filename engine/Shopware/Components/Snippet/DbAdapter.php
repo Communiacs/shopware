@@ -24,12 +24,15 @@
 
 namespace Shopware\Components\Snippet;
 
-class DbAdapter extends \Enlight_Config_Adapter_DbTable
+use Enlight_Config;
+use Enlight_Config_Adapter_DbTable;
+
+class DbAdapter extends Enlight_Config_Adapter_DbTable
 {
     /**
      * {@inheritdoc}
      */
-    public function write(\Enlight_Config $config, $fields = null, $update = true, $force = false, $allowReset = false)
+    public function write(Enlight_Config $config, $fields = null, $update = true, $force = false, $allowReset = false)
     {
         $this->overwriteWithDefaultShopValues($config);
 
@@ -40,9 +43,17 @@ class DbAdapter extends \Enlight_Config_Adapter_DbTable
      * If there is a snippet missing, set the shopID and localeID to the main shop since all
      * language shops derive from it.
      */
-    private function overwriteWithDefaultShopValues(\Enlight_Config $config)
+    private function overwriteWithDefaultShopValues(Enlight_Config $config): void
     {
         $section = explode($config->getSectionSeparator(), $config->getSection());
+        if ($section === false) {
+            return;
+        }
+
+        if (!\is_array($this->_sectionColumn)) {
+            return;
+        }
+
         foreach ($this->_sectionColumn as $key => $columnName) {
             switch ($columnName) {
                 case 'shopID':

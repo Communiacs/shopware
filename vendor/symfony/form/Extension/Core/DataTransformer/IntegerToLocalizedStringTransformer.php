@@ -34,7 +34,7 @@ class IntegerToLocalizedStringTransformer extends NumberToLocalizedStringTransfo
             @trigger_error(sprintf('Passing a precision as the first value to %s::__construct() is deprecated since Symfony 4.2 and support for it will be dropped in 5.0.', __CLASS__), \E_USER_DEPRECATED);
 
             $grouping = $roundingMode;
-            $roundingMode = null !== $locale ? $locale : self::ROUND_DOWN;
+            $roundingMode = $locale ?? self::ROUND_DOWN;
             $locale = null;
         }
 
@@ -48,7 +48,7 @@ class IntegerToLocalizedStringTransformer extends NumberToLocalizedStringTransfo
     {
         $decimalSeparator = $this->getNumberFormatter()->getSymbol(\NumberFormatter::DECIMAL_SEPARATOR_SYMBOL);
 
-        if (\is_string($value) && false !== strpos($value, $decimalSeparator)) {
+        if (\is_string($value) && str_contains($value, $decimalSeparator)) {
             throw new TransformationFailedException(sprintf('The value "%s" is not a valid integer.', $value));
         }
 

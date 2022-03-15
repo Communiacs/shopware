@@ -24,6 +24,7 @@
 
 namespace Shopware\Models\Order;
 
+use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
 use Shopware\Models\Attribute\OrderBasket as OrderBasketAttribute;
@@ -65,7 +66,7 @@ class Basket extends ModelEntity
     /**
      * INVERSE SIDE
      *
-     * @var OrderBasketAttribute
+     * @var OrderBasketAttribute|null
      *
      * @ORM\OneToOne(targetEntity="Shopware\Models\Attribute\OrderBasket", mappedBy="orderBasket", orphanRemoval=true, cascade={"persist"})
      */
@@ -130,7 +131,7 @@ class Basket extends ModelEntity
     private $netPrice = 0;
 
     /**
-     * @var \DateTimeInterface|null
+     * @var DateTimeInterface|null
      *
      * @ORM\Column(name="datum", type="datetime", nullable=true)
      */
@@ -176,10 +177,10 @@ class Basket extends ModelEntity
      *
      * @ORM\Column(name="currencyFactor", type="float", nullable=false)
      */
-    private $currencyFactor = 1;
+    private $currencyFactor = 1.0;
 
     /**
-     * @return OrderBasketAttribute
+     * @return OrderBasketAttribute|null
      */
     public function getAttribute()
     {
@@ -187,7 +188,7 @@ class Basket extends ModelEntity
     }
 
     /**
-     * @param OrderBasketAttribute|array|null $attribute
+     * @param OrderBasketAttribute|null $attribute
      *
      * @return Basket
      */
@@ -397,7 +398,7 @@ class Basket extends ModelEntity
     }
 
     /**
-     * @return \DateTimeInterface|null
+     * @return DateTimeInterface|null
      */
     public function getDate()
     {
@@ -405,7 +406,7 @@ class Basket extends ModelEntity
     }
 
     /**
-     * @param \DateTimeInterface|null $date
+     * @param DateTimeInterface|null $date
      */
     public function setDate($date)
     {

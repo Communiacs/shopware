@@ -25,10 +25,14 @@
 namespace Shopware\Bundle\SearchBundle\Condition;
 
 use Assert\Assertion;
+use JsonSerializable;
 use Shopware\Bundle\SearchBundle\ConditionInterface;
+use Shopware\Components\ObjectJsonSerializeTraitDeprecated;
 
-class PriceCondition implements ConditionInterface, \JsonSerializable
+class PriceCondition implements ConditionInterface, JsonSerializable
 {
+    use ObjectJsonSerializeTraitDeprecated;
+
     private const NAME = 'price';
 
     /**
@@ -75,13 +79,5 @@ class PriceCondition implements ConditionInterface, \JsonSerializable
     public function getMaxPrice()
     {
         return $this->maxPrice;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function jsonSerialize()
-    {
-        return get_object_vars($this);
     }
 }

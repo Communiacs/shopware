@@ -24,8 +24,13 @@
 
 namespace Shopware\Bundle\PluginInstallerBundle\Struct;
 
-class PluginInformationStruct implements \JsonSerializable
+use JsonSerializable;
+use Shopware\Components\ObjectJsonSerializeTraitDeprecated;
+
+class PluginInformationStruct implements JsonSerializable
 {
+    use ObjectJsonSerializeTraitDeprecated;
+
     /**
      * @const array
      */
@@ -205,13 +210,5 @@ class PluginInformationStruct implements \JsonSerializable
     public function getLicenseQuantity()
     {
         return $this->licenseQuantity;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function jsonSerialize()
-    {
-        return get_object_vars($this);
     }
 }

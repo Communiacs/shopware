@@ -24,10 +24,11 @@
 
 namespace Shopware\Components\Plugin\Context;
 
+use JsonSerializable;
 use Shopware\Components\CacheManager;
 use Shopware\Models\Plugin\Plugin;
 
-class InstallContext implements \JsonSerializable
+class InstallContext implements JsonSerializable
 {
     public const CACHE_TAG_TEMPLATE = CacheManager::CACHE_TAG_TEMPLATE;
     public const CACHE_TAG_CONFIG = CacheManager::CACHE_TAG_CONFIG;
@@ -73,7 +74,7 @@ class InstallContext implements \JsonSerializable
     private $plugin;
 
     /**
-     * @var array
+     * @var array{message?: string, cache?: array<string>}
      */
     private $scheduled = [];
 
@@ -122,6 +123,8 @@ class InstallContext implements \JsonSerializable
 
     /**
      * @param string $message
+     *
+     * @return void
      */
     public function scheduleMessage($message)
     {
@@ -132,6 +135,8 @@ class InstallContext implements \JsonSerializable
      * Adds the defer task to clear the frontend cache
      *
      * @param string[] $caches
+     *
+     * @return void
      */
     public function scheduleClearCache(array $caches)
     {
@@ -142,7 +147,7 @@ class InstallContext implements \JsonSerializable
     }
 
     /**
-     * @return array
+     * @return array{message?: string, cache?: array<string>}
      */
     public function getScheduled()
     {
@@ -158,8 +163,11 @@ class InstallContext implements \JsonSerializable
     }
 
     /**
-     * @return array
+     * @return array{scheduled: array{message?: string, cache?: array<string>}}
+     *
+     * @deprecated - Native return type will be added with Shopware 5.8
      */
+    #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
         return ['scheduled' => $this->scheduled];

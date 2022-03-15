@@ -24,8 +24,14 @@
 
 namespace Shopware\Bundle\PluginInstallerBundle\Struct;
 
-class LicenceStruct implements \JsonSerializable
+use DateTimeInterface;
+use JsonSerializable;
+use Shopware\Components\ObjectJsonSerializeTraitDeprecated;
+
+class LicenceStruct implements JsonSerializable
 {
+    use ObjectJsonSerializeTraitDeprecated;
+
     /**
      * @var string
      */
@@ -52,12 +58,12 @@ class LicenceStruct implements \JsonSerializable
     private $subscription;
 
     /**
-     * @var \DateTimeInterface
+     * @var DateTimeInterface
      */
     private $creationDate;
 
     /**
-     * @var \DateTimeInterface
+     * @var DateTimeInterface
      */
     private $expirationDate;
 
@@ -151,7 +157,7 @@ class LicenceStruct implements \JsonSerializable
     }
 
     /**
-     * @return \DateTimeInterface
+     * @return DateTimeInterface
      */
     public function getCreationDate()
     {
@@ -159,7 +165,7 @@ class LicenceStruct implements \JsonSerializable
     }
 
     /**
-     * @param \DateTimeInterface $creationDate
+     * @param DateTimeInterface $creationDate
      */
     public function setCreationDate($creationDate)
     {
@@ -167,7 +173,7 @@ class LicenceStruct implements \JsonSerializable
     }
 
     /**
-     * @return \DateTimeInterface
+     * @return DateTimeInterface
      */
     public function getExpirationDate()
     {
@@ -175,7 +181,7 @@ class LicenceStruct implements \JsonSerializable
     }
 
     /**
-     * @param \DateTimeInterface $expirationDate
+     * @param DateTimeInterface $expirationDate
      */
     public function setExpirationDate($expirationDate)
     {
@@ -212,14 +218,6 @@ class LicenceStruct implements \JsonSerializable
     public function setPriceModel($priceModel)
     {
         $this->priceModel = $priceModel;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function jsonSerialize()
-    {
-        return get_object_vars($this);
     }
 
     /**

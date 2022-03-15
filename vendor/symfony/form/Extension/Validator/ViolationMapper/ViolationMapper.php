@@ -50,7 +50,7 @@ class ViolationMapper implements ViolationMapperInterface
         $match = false;
 
         // Don't create a ViolationPath instance for empty property paths
-        if (\strlen($violation->getPropertyPath()) > 0) {
+        if ('' !== $violation->getPropertyPath()) {
             $violationPath = new ViolationPath($violation->getPropertyPath());
             $relativePath = $this->reconstructPath($violationPath, $form);
         }
@@ -206,7 +206,7 @@ class ViolationMapper implements ViolationMapperInterface
                 if ($childPath === $chunk) {
                     $target = $child;
                     $foundAtIndex = $it->key();
-                } elseif (0 === strpos($childPath, $chunk)) {
+                } elseif (str_starts_with($childPath, $chunk)) {
                     continue;
                 }
 

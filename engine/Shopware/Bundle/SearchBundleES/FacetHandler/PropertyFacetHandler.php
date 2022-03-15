@@ -32,6 +32,7 @@ use ONGR\ElasticsearchDSL\Query\TermLevel\IdsQuery;
 use ONGR\ElasticsearchDSL\Query\TermLevel\TermQuery;
 use ONGR\ElasticsearchDSL\Search;
 use ONGR\ElasticsearchDSL\Sort\FieldSort;
+use PDO;
 use Shopware\Bundle\ESIndexingBundle\EsSearch;
 use Shopware\Bundle\ESIndexingBundle\IndexFactoryInterface;
 use Shopware\Bundle\ESIndexingBundle\Property\PropertyMapping;
@@ -56,30 +57,15 @@ class PropertyFacetHandler implements HandlerInterface, ResultHydratorInterface
 {
     public const AGGREGATION_SIZE = 5000;
 
-    /**
-     * @var QueryAliasMapper
-     */
-    private $queryAliasMapper;
+    private QueryAliasMapper $queryAliasMapper;
 
-    /**
-     * @var Client
-     */
-    private $client;
+    private Client $client;
 
-    /**
-     * @var Connection
-     */
-    private $connection;
+    private Connection $connection;
 
-    /**
-     * @var StructHydrator
-     */
-    private $hydrator;
+    private StructHydrator $hydrator;
 
-    /**
-     * @var IndexFactoryInterface
-     */
-    private $indexFactory;
+    private IndexFactoryInterface $indexFactory;
 
     public function __construct(
         QueryAliasMapper $queryAliasMapper,
@@ -207,7 +193,7 @@ class PropertyFacetHandler implements HandlerInterface, ResultHydratorInterface
      *
      * @return int[]
      */
-    private function getGroupIds($optionIds)
+    private function getGroupIds(array $optionIds): array
     {
         $query = $this->connection->createQueryBuilder();
         $query->select('DISTINCT optionID')
@@ -215,22 +201,18 @@ class PropertyFacetHandler implements HandlerInterface, ResultHydratorInterface
             ->where('options.id IN (:ids)')
             ->setParameter(':ids', $optionIds, Connection::PARAM_INT_ARRAY);
 
-        return $query->execute()->fetchAll(\PDO::FETCH_COLUMN);
+        return $query->execute()->fetchAll(PDO::FETCH_COLUMN);
     }
 
     /**
      * @param Group[] $groups
      * @param int[]   $actives
-     *
-     * @return FacetResultGroup
      */
-    private function createCollectionResult(array $groups, $actives)
+    private function createCollectionResult(array $groups, array $actives): FacetResultGroup
     {
         $results = [];
 
-        if (!$fieldName = $this->queryAliasMapper->getShortAlias('sFilterProperties')) {
-            $fieldName = 'sFilterProperties';
-        }
+        $fieldName = $this->queryAliasMapper->getShortAlias('sFilterProperties') ?? 'sFilterProperties';
 
         foreach ($groups as $group) {
             $items = [];
@@ -276,9 +258,9 @@ class PropertyFacetHandler implements HandlerInterface, ResultHydratorInterface
     }
 
     /**
-     * @return array
+     * @return array<int>
      */
-    private function getFilteredValues(Criteria $criteria)
+    private function getFilteredValues(Criteria $criteria): array
     {
         $values = [];
         foreach ($criteria->getConditions() as $condition) {

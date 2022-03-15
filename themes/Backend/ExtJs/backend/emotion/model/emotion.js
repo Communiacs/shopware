@@ -59,7 +59,7 @@ Ext.define('Shopware.apps.Emotion.model.Emotion', {
 
         { name: 'position', type: 'int', useNull: false, defaultValue: 1 },
         { name: 'device', type: 'string' },
-        { name: 'fullscreen', type: 'int' },
+        { name: 'fullscreen', type: 'boolean' },
 
         { name: 'rows', type: 'int', defaultValue: 20 },
         { name: 'cols', type: 'int', defaultValue: 4 },
@@ -91,8 +91,8 @@ Ext.define('Shopware.apps.Emotion.model.Emotion', {
     ],
 
     associations: [
-        { type: 'hasMany', model: 'Shopware.apps.Emotion.model.EmotionElement', name: 'getElements', associationKey: 'elements'},
-        { type: 'hasMany', model: 'Shopware.apps.Emotion.model.EmotionShop', name:'getShops', associationKey:'shops'}
+        { type: 'hasMany', model: 'Shopware.apps.Emotion.model.EmotionElement', name: 'getElements', associationKey: 'elements' },
+        { type: 'hasMany', model: 'Shopware.apps.Emotion.model.EmotionShop', name: 'getShops', associationKey: 'shops' }
     ],
 
     /**

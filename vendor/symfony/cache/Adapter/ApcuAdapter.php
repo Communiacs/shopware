@@ -25,7 +25,7 @@ class ApcuAdapter extends AbstractAdapter
     /**
      * @throws CacheException if APCu is not enabled
      */
-    public function __construct(string $namespace = '', int $defaultLifetime = 0, string $version = null, ?MarshallerInterface $marshaller = null)
+    public function __construct(string $namespace = '', int $defaultLifetime = 0, string $version = null, MarshallerInterface $marshaller = null)
     {
         if (!static::isSupported()) {
             throw new CacheException('APCu is not enabled.');
@@ -122,7 +122,7 @@ class ApcuAdapter extends AbstractAdapter
         } catch (\Throwable $e) {
             if (1 === \count($values)) {
                 // Workaround https://github.com/krakjoe/apcu/issues/170
-                apcu_delete(key($values));
+                apcu_delete(array_key_first($values));
             }
 
             throw $e;

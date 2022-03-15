@@ -308,7 +308,7 @@ abstract class NumberFormatter
      *
      * @param string $currency The 3-letter ISO 4217 currency code indicating the currency to use
      *
-     * @return string The formatted currency value
+     * @return string
      *
      * @see https://php.net/numberformatter.formatcurrency
      * @see https://en.wikipedia.org/wiki/ISO_4217#Active_codes
@@ -345,7 +345,7 @@ abstract class NumberFormatter
      * @param int       $type  Type of the formatting, one of the format type constants.
      *                         Only type NumberFormatter::TYPE_DEFAULT is currently supported.
      *
-     * @return bool|string The formatted value or false on error
+     * @return bool|string
      *
      * @see https://php.net/numberformatter.format
      *
@@ -533,7 +533,7 @@ abstract class NumberFormatter
             // value is not valid if grouping is used, but digits are not grouped in groups of three
             if ($error = isset($matches['grouping']) && !preg_match('/^-?(?:\d{1,3}+)?(?:(?:,\d{3})++|\d*+)(?:\.\d*+)?$/', $value)) {
                 // the position on error is 0 for positive and 1 for negative numbers
-                $position = 0 === strpos($value, '-') ? 1 : 0;
+                $position = str_starts_with($value, '-') ? 1 : 0;
             }
         } else {
             $error = true;

@@ -24,7 +24,14 @@
 
 namespace Shopware\Components\Api\Resource;
 
-use Shopware\Components\Api\Exception as ApiException;
+use Exception;
+use Shopware\Components\Api\Exception\CustomValidationException;
+use Shopware\Components\Api\Exception\NotFoundException;
+use Shopware\Components\Api\Exception\ParameterMissingException;
+use Shopware\Components\Api\Exception\ValidationException;
+use Shopware\Components\Model\ModelRepository;
+use Shopware\Models\Customer\Discount;
+use Shopware\Models\Customer\Group;
 
 /**
  * CustomerGroup API Resource
@@ -32,27 +39,27 @@ use Shopware\Components\Api\Exception as ApiException;
 class CustomerGroup extends Resource
 {
     /**
-     * @return \Shopware\Models\Customer\Repository
+     * @return ModelRepository<Group>
      */
     public function getRepository()
     {
-        return $this->getManager()->getRepository(\Shopware\Models\Customer\Group::class);
+        return $this->getManager()->getRepository(Group::class);
     }
 
     /**
      * @param int $id
      *
-     * @throws \Shopware\Components\Api\Exception\ParameterMissingException
-     * @throws \Shopware\Components\Api\Exception\NotFoundException
+     * @throws NotFoundException
+     * @throws ParameterMissingException
      *
-     * @return array|\Shopware\Models\Customer\Group
+     * @return array|Group
      */
     public function getOne($id)
     {
         $this->checkPrivilege('read');
 
         if (empty($id)) {
-            throw new ApiException\ParameterMissingException('id');
+            throw new ParameterMissingException('id');
         }
 
         $builder = $this->getRepository()->createQueryBuilder('customerGroup')
@@ -65,11 +72,11 @@ class CustomerGroup extends Resource
         $query = $builder->getQuery();
         $query->setHydrationMode($this->getResultMode());
 
-        /** @var \Shopware\Models\Customer\Group|null $result */
+        /** @var Group|null $result */
         $result = $query->getOneOrNullResult($this->getResultMode());
 
         if (!$result) {
-            throw new ApiException\NotFoundException(sprintf('CustomerGroup by id %d not found', $id));
+            throw new NotFoundException(sprintf('CustomerGroup by id %d not found', $id));
         }
 
         return $result;
@@ -108,10 +115,10 @@ class CustomerGroup extends Resource
     }
 
     /**
-     * @throws \Shopware\Components\Api\Exception\ValidationException
-     * @throws \Exception
+     * @throws ValidationException
+     * @throws Exception
      *
-     * @return \Shopware\Models\Customer\Group
+     * @return Group
      */
     public function create(array $params)
     {
@@ -119,7 +126,7 @@ class CustomerGroup extends Resource
 
         $params = $this->prepareCustomerGroupData($params);
 
-        $result = new \Shopware\Models\Customer\Group();
+        $result = new Group();
 
         $discounts = $params['discounts'];
         unset($params['discounts']);
@@ -128,7 +135,7 @@ class CustomerGroup extends Resource
 
         $violations = $this->getManager()->validate($result);
         if ($violations->count() > 0) {
-            throw new ApiException\ValidationException($violations);
+            throw new ValidationException($violations);
         }
 
         $this->getManager()->persist($result);
@@ -143,25 +150,25 @@ class CustomerGroup extends Resource
     /**
      * @param int $id
      *
-     * @throws \Shopware\Components\Api\Exception\ValidationException
-     * @throws \Shopware\Components\Api\Exception\NotFoundException
-     * @throws \Shopware\Components\Api\Exception\ParameterMissingException
+     * @throws ValidationException
+     * @throws NotFoundException
+     * @throws ParameterMissingException
      *
-     * @return \Shopware\Models\Customer\Group
+     * @return Group
      */
     public function update($id, array $params)
     {
         $this->checkPrivilege('update');
 
         if (empty($id)) {
-            throw new ApiException\ParameterMissingException('id');
+            throw new ParameterMissingException('id');
         }
 
-        /** @var \Shopware\Models\Customer\Group|null $result */
+        /** @var Group|null $result */
         $result = $this->getRepository()->find($id);
 
         if (!$result) {
-            throw new ApiException\NotFoundException(sprintf('CustomerGroup by id %d not found', $id));
+            throw new NotFoundException(sprintf('CustomerGroup by id %d not found', $id));
         }
 
         $params = $this->prepareCustomerGroupData($params, $result);
@@ -173,7 +180,7 @@ class CustomerGroup extends Resource
 
         $violations = $this->getManager()->validate($result);
         if ($violations->count() > 0) {
-            throw new ApiException\ValidationException($violations);
+            throw new ValidationException($violations);
         }
 
         $this->saveDiscounts($discounts, $result);
@@ -186,24 +193,24 @@ class CustomerGroup extends Resource
     /**
      * @param int $id
      *
-     * @throws \Shopware\Components\Api\Exception\ParameterMissingException
-     * @throws \Shopware\Components\Api\Exception\NotFoundException
+     * @throws ParameterMissingException
+     * @throws NotFoundException
      *
-     * @return \Shopware\Models\Customer\Group
+     * @return Group
      */
     public function delete($id)
     {
         $this->checkPrivilege('delete');
 
         if (empty($id)) {
-            throw new ApiException\ParameterMissingException('id');
+            throw new ParameterMissingException('id');
         }
 
-        /** @var \Shopware\Models\Customer\Group|null $result */
+        /** @var Group|null $result */
         $result = $this->getRepository()->find($id);
 
         if (!$result) {
-            throw new ApiException\NotFoundException(sprintf('CustomerGroup by id %d not found', $id));
+            throw new NotFoundException(sprintf('CustomerGroup by id %d not found', $id));
         }
 
         $this->getManager()->remove($result);
@@ -215,7 +222,7 @@ class CustomerGroup extends Resource
     /**
      * Helper function to save discounts for a given group.
      *
-     * @param \Shopware\Models\Customer\Group $group
+     * @param Group $group
      */
     private function saveDiscounts(array $discounts, $group)
     {
@@ -226,7 +233,7 @@ class CustomerGroup extends Resource
             }
         }
         $this->getManager()->flush();
-        /** @var \Shopware\Models\Customer\Discount $discount */
+        /** @var Discount $discount */
         foreach ($discounts as $discount) {
             $discount->setGroup($group);
             $this->getManager()->persist($discount);
@@ -234,9 +241,9 @@ class CustomerGroup extends Resource
     }
 
     /**
-     * @param \Shopware\Models\Customer\Group|null $customerGroup
+     * @param Group|null $customerGroup
      *
-     * @throws \Shopware\Components\Api\Exception\CustomValidationException
+     * @throws CustomValidationException
      *
      * @return array
      */
@@ -262,23 +269,23 @@ class CustomerGroup extends Resource
             }
 
             if (empty($params['name'])) {
-                throw new ApiException\CustomValidationException(sprintf("Parameter '%s' is missing", 'name'));
+                throw new CustomValidationException(sprintf("Parameter '%s' is missing", 'name'));
             }
 
             if (empty($params['key'])) {
-                throw new ApiException\CustomValidationException(sprintf("Parameter '%s' is missing", 'key'));
+                throw new CustomValidationException(sprintf("Parameter '%s' is missing", 'key'));
             }
         }
 
         if (isset($params['name']) && empty($params['name'])) {
-            throw new ApiException\CustomValidationException(sprintf("Parameter '%s' is missing", 'name'));
+            throw new CustomValidationException(sprintf("Parameter '%s' is missing", 'name'));
         }
 
         if (isset($params['key']) && empty($params['key'])) {
-            throw new ApiException\CustomValidationException(sprintf("Parameter '%s' is missing", 'key'));
+            throw new CustomValidationException(sprintf("Parameter '%s' is missing", 'key'));
         }
 
-        $discountRepository = $this->getManager()->getRepository(\Shopware\Models\Customer\Discount::class);
+        $discountRepository = $this->getManager()->getRepository(Discount::class);
 
         if (isset($params['discounts'])) {
             $discounts = [];
@@ -293,7 +300,7 @@ class CustomerGroup extends Resource
                 }
 
                 if ($discountModel === null) {
-                    $discountModel = new \Shopware\Models\Customer\Discount();
+                    $discountModel = new Discount();
                 }
                 $discountModel->setDiscount($discount['discount']);
                 $discountModel->setValue($discount['value']);

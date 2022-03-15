@@ -35,19 +35,11 @@ use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
 class VariantConditionHandler implements PartialConditionHandlerInterface
 {
-    /**
-     * Validates if the criteria part can be handled by this handler
-     *
-     * @return bool
-     */
     public function supports(CriteriaPartInterface $criteriaPart)
     {
         return $criteriaPart instanceof VariantCondition;
     }
 
-    /**
-     * Handles the criteria part and adds the provided condition as post filter.
-     */
     public function handleFilter(
         CriteriaPartInterface $criteriaPart,
         Criteria $criteria,
@@ -57,9 +49,6 @@ class VariantConditionHandler implements PartialConditionHandlerInterface
         $this->handle($criteriaPart, $criteria, $search);
     }
 
-    /**
-     * Handles the criteria part and extends the provided search.
-     */
     public function handlePostFilter(
         CriteriaPartInterface $criteriaPart,
         Criteria $criteria,
@@ -69,14 +58,13 @@ class VariantConditionHandler implements PartialConditionHandlerInterface
         $this->handle($criteriaPart, $criteria, $search);
     }
 
-    private function handle(CriteriaPartInterface $criteriaPart, Criteria $criteria, Search $search)
+    private function handle(VariantCondition $criteriaPart, Criteria $criteria, Search $search): void
     {
         $groupBy = $this->buildGroupBy($criteria);
 
         if ($groupBy) {
             $search->addPostFilter(new TermQuery($groupBy, true));
 
-            /* @var VariantCondition $criteriaPart */
             $search->addPostFilter(
                 new TermsQuery(
                     'filterConfiguration.options.id',
@@ -89,7 +77,6 @@ class VariantConditionHandler implements PartialConditionHandlerInterface
 
         $search->addPostFilter(new TermQuery('isMainVariant', true));
 
-        /* @var VariantCondition $criteriaPart */
         $search->addPostFilter(
             new TermsQuery(
                 'filterConfiguration.options.id',
@@ -98,7 +85,7 @@ class VariantConditionHandler implements PartialConditionHandlerInterface
         );
     }
 
-    private function buildGroupBy(Criteria $criteria)
+    private function buildGroupBy(Criteria $criteria): ?string
     {
         $conditions = $criteria->getConditionsByClass(VariantCondition::class);
 

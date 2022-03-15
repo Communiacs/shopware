@@ -24,7 +24,7 @@
 
 namespace Shopware\Bundle\SearchBundleDBAL\ConditionHandler;
 
-use Shopware\Bundle\SearchBundle\Condition\ProductAttributeCondition as Condition;
+use Shopware\Bundle\SearchBundle\Condition\ProductAttributeCondition;
 use Shopware\Bundle\SearchBundle\ConditionInterface;
 use Shopware\Bundle\SearchBundleDBAL\ConditionHandlerInterface;
 use Shopware\Bundle\SearchBundleDBAL\QueryBuilder;
@@ -39,26 +39,23 @@ class ProductAttributeConditionHandler implements ConditionHandlerInterface
      */
     public function supportsCondition(ConditionInterface $condition)
     {
-        return $condition instanceof Condition;
+        return $condition instanceof ProductAttributeCondition;
     }
 
     /**
      * {@inheritdoc}
-     *
-     * @see \
-     *
-     * @throws \InvalidArgumentException
-     * @throws \RuntimeException
      */
     public function generateCondition(
         ConditionInterface $condition,
         QueryBuilder $query,
         ShopContextInterface $context
     ) {
-        /*
-         * $this->parse method is Imported from DynamicConditionParserTrait
-         */
-        return $this->parse(
+        $this->addCondition($condition, $query);
+    }
+
+    private function addCondition(ProductAttributeCondition $condition, QueryBuilder $query): void
+    {
+        $this->parse(
             $query,
             's_articles_attributes',
             'productAttribute',

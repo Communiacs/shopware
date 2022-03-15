@@ -27,9 +27,10 @@ declare(strict_types=1);
 namespace Shopware\Bundle\CookieBundle;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use JsonSerializable;
 use Shopware\Bundle\CookieBundle\Structs\CookieStruct;
 
-class CookieCollection extends ArrayCollection implements \JsonSerializable
+class CookieCollection extends ArrayCollection implements JsonSerializable
 {
     public function isValid(): bool
     {
@@ -63,6 +64,9 @@ class CookieCollection extends ArrayCollection implements \JsonSerializable
         return null;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function jsonSerialize(): array
     {
         return $this->toArray();

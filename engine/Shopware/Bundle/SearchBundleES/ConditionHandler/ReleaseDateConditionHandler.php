@@ -24,9 +24,12 @@
 
 namespace Shopware\Bundle\SearchBundleES\ConditionHandler;
 
+use DateInterval;
+use DateTime;
 use ONGR\ElasticsearchDSL\Query\Compound\BoolQuery;
 use ONGR\ElasticsearchDSL\Query\TermLevel\RangeQuery;
 use ONGR\ElasticsearchDSL\Search;
+use RuntimeException;
 use Shopware\Bundle\SearchBundle\Condition\ReleaseDateCondition;
 use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundle\CriteriaPartInterface;
@@ -52,11 +55,7 @@ class ReleaseDateConditionHandler implements PartialConditionHandlerInterface
         Search $search,
         ShopContextInterface $context
     ) {
-        /* @var ReleaseDateCondition $criteriaPart */
-        $search->addQuery(
-            $this->createQuery($criteriaPart),
-            BoolQuery::FILTER
-        );
+        $search->addQuery($this->getQuery($criteriaPart), BoolQuery::FILTER);
     }
 
     /**
@@ -68,21 +67,15 @@ class ReleaseDateConditionHandler implements PartialConditionHandlerInterface
         Search $search,
         ShopContextInterface $context
     ) {
-        /* @var ReleaseDateCondition $criteriaPart */
-        $search->addPostFilter(
-            $this->createQuery($criteriaPart)
-        );
+        $search->addPostFilter($this->getQuery($criteriaPart));
     }
 
-    /**
-     * @return RangeQuery
-     */
-    private function createQuery(ReleaseDateCondition $criteriaPart)
+    private function getQuery(ReleaseDateCondition $criteriaPart): RangeQuery
     {
-        $date = new \DateTime();
+        $date = new DateTime();
         $intervalSpec = 'P' . $criteriaPart->getDays() . 'D';
-        $interval = new \DateInterval($intervalSpec);
-        $dateNow = new \DateTime();
+        $interval = new DateInterval($intervalSpec);
+        $dateNow = new DateTime();
 
         switch ($criteriaPart->getDirection()) {
             case ReleaseDateCondition::DIRECTION_FUTURE:
@@ -102,7 +95,7 @@ class ReleaseDateConditionHandler implements PartialConditionHandlerInterface
                 ]);
 
             default:
-                throw new \RuntimeException(sprintf('Provided release date direction %s not supported', $criteriaPart->getDirection()));
+                throw new RuntimeException(sprintf('Provided release date direction %s not supported', $criteriaPart->getDirection()));
         }
     }
 }

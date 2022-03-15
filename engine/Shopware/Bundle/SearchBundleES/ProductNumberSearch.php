@@ -26,6 +26,7 @@
 namespace Shopware\Bundle\SearchBundleES;
 
 use Elasticsearch\Client;
+use Exception;
 use ONGR\ElasticsearchDSL\Sort\FieldSort;
 use Shopware\Bundle\ESIndexingBundle\EsSearch;
 use Shopware\Bundle\ESIndexingBundle\IndexFactoryInterface;
@@ -81,9 +82,7 @@ class ProductNumberSearch implements ProductNumberSearchInterface
             'track_total_hits' => true,
         ];
 
-        $data = $this->client->search(
-            $arguments
-        );
+        $data = $this->client->search($arguments);
 
         $products = $this->createProducts($data);
 
@@ -207,7 +206,7 @@ class ProductNumberSearch implements ProductNumberSearchInterface
 
             // Filter mode active and handler doesn't supports the filter mode?
             if (!$handler instanceof PartialConditionHandlerInterface && $criteria->generatePartialFacets()) {
-                throw new \Exception(sprintf('New filter mode activated, handler class %s doesn\'t support this mode', \get_class($handler)));
+                throw new Exception(sprintf('New filter mode activated, handler class %s doesn\'t support this mode', \get_class($handler)));
             }
 
             // Filter mode active and handler supports new filter mode?

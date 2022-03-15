@@ -24,8 +24,13 @@
 
 namespace Shopware\Bundle\PluginInstallerBundle\Struct;
 
-class BasketStruct implements \JsonSerializable
+use JsonSerializable;
+use Shopware\Components\ObjectJsonSerializeTraitDeprecated;
+
+class BasketStruct implements JsonSerializable
 {
+    use ObjectJsonSerializeTraitDeprecated;
+
     /**
      * @var DomainStruct[]
      */
@@ -91,14 +96,6 @@ class BasketStruct implements \JsonSerializable
         $this->grossPrice = $grossPrice;
         $this->taxRate = $taxRate;
         $this->taxPrice = $taxPrice;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function jsonSerialize()
-    {
-        return get_object_vars($this);
     }
 
     /**

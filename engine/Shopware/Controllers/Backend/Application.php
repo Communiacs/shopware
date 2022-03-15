@@ -25,6 +25,7 @@
 use Doctrine\ORM\AbstractQuery;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
 use Doctrine\ORM\Tools\Pagination\Paginator;
+use Shopware\Components\Model\ModelEntity;
 use Shopware\Components\Model\ModelManager;
 use Shopware\Components\Model\ModelRepository;
 use Shopware\Components\Model\QueryBuilder;
@@ -60,13 +61,17 @@ use Shopware\Components\Model\QueryBuilder;
  *  - For example you can limit the sortable fields by using the $sortFields property
  *  - Or you can limit the filterable fields by using the $filterFields property.
  */
+
+/**
+ * @template TEntityClass of ModelEntity
+ */
 abstract class Shopware_Controllers_Backend_Application extends Shopware_Controllers_Backend_ExtJs
 {
     /**
      * Contains the repository class of the configured
      * doctrine model.
      *
-     * @var ModelRepository
+     * @var ModelRepository<TEntityClass>
      */
     protected $repository;
 
@@ -80,7 +85,7 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
 
     /**
      * The model property is the only required class property.
-     * If this property isn't set, the whole backend application don't works.
+     * If this property isn't set, the whole backend application don't work.
      * To configure this property you have only to set the whole model class name into this parameter.
      *
      * @example
@@ -88,7 +93,7 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      *
      * @required
      *
-     * @var string model
+     * @var class-string model
      */
     protected $model;
 
@@ -152,6 +157,8 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
     /**
      * Allows to set the repository property of this class.
      * The repository is used for find queries for the configured model.
+     *
+     * @param ModelRepository<TEntityClass> $repository
      */
     public function setRepository(ModelRepository $repository)
     {
@@ -176,7 +183,7 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
     public function getManager()
     {
         if ($this->manager === null) {
-            $this->manager = Shopware()->Models();
+            $this->manager = $this->get('models');
         }
 
         return $this->manager;
@@ -345,7 +352,7 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
 
         $paginator = $this->getQueryPaginator($builder);
         $data = $paginator->getIterator()->current();
-        if (!$data) {
+        if (!\is_array($data)) {
             $data = [];
         }
         $data = $this->getAdditionalDetailData($data);
@@ -389,7 +396,6 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      */
     public function save($data)
     {
-        /* @var \Shopware\Components\Model\ModelEntity $model */
         if (!empty($data['id'])) {
             $model = $this->getRepository()->find($data['id']);
         } else {
@@ -599,12 +605,16 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
     /**
      * Helper function to get the repository of the configured model.
      *
-     * @return ModelRepository
+     * @return ModelRepository<TEntityClass>
      */
     protected function getRepository()
     {
         if ($this->repository === null) {
-            $this->repository = $this->getManager()->getRepository($this->model);
+            $repo = $this->getManager()->getRepository($this->model);
+            if (!$repo instanceof ModelRepository) {
+                throw new RuntimeException('ModelRepository not correctly initialised');
+            }
+            $this->repository = $repo;
         }
 
         return $this->repository;
@@ -1093,7 +1103,7 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      *
      * @param int $hydrationMode
      *
-     * @return Paginator
+     * @return Paginator<TEntityClass|array>
      */
     protected function getQueryPaginator(QueryBuilder $builder, $hydrationMode = AbstractQuery::HYDRATE_ARRAY)
     {
@@ -1205,7 +1215,7 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      */
     private function getReferencedColumnName($association)
     {
-        $metaData = Shopware()->Models()->getClassMetadata($this->model);
+        $metaData = $this->get('models')->getClassMetadata($this->model);
         $mappings = $metaData->getAssociationMappings();
 
         if (!isset($mappings[$association])) {

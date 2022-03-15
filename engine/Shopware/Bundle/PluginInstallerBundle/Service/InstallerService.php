@@ -24,7 +24,10 @@
 
 namespace Shopware\Bundle\PluginInstallerBundle\Service;
 
+use DateTimeImmutable;
+use Exception;
 use Shopware\Components\Model\ModelManager;
+use Shopware\Components\Model\ModelRepository;
 use Shopware\Components\Plugin\ConfigReader;
 use Shopware\Components\Plugin\ConfigWriter;
 use Shopware\Components\Plugin\Context\ActivateContext;
@@ -34,22 +37,19 @@ use Shopware\Components\Plugin\Context\UninstallContext;
 use Shopware\Components\Plugin\Context\UpdateContext;
 use Shopware\Components\ShopwareReleaseStruct;
 use Shopware\Models\Plugin\Plugin;
+use Shopware\Models\Shop\Repository as ShopRepository;
 use Shopware\Models\Shop\Shop;
+use Shopware_Components_Plugin_Bootstrap;
 
 class InstallerService
 {
     /**
-     * @var ModelManager
-     */
-    private $em;
-
-    /**
-     * @var \Shopware\Components\Model\ModelRepository
+     * @var ModelRepository<Plugin>
      */
     private $pluginRepository;
 
     /**
-     * @var \Shopware\Models\Shop\Repository
+     * @var ShopRepository
      */
     private $shopRepository;
 
@@ -86,20 +86,19 @@ class InstallerService
         ConfigReader $configReader,
         ShopwareReleaseStruct $release
     ) {
-        $this->em = $em;
         $this->pluginInstaller = $pluginInstaller;
         $this->legacyPluginInstaller = $legacyPluginInstaller;
         $this->configWriter = $configWriter;
         $this->configReader = $configReader;
-        $this->pluginRepository = $this->em->getRepository(Plugin::class);
-        $this->shopRepository = $this->em->getRepository(Shop::class);
+        $this->pluginRepository = $em->getRepository(Plugin::class);
+        $this->shopRepository = $em->getRepository(Shop::class);
         $this->release = $release;
     }
 
     /**
      * @param string $pluginName
      *
-     * @throws \Exception
+     * @throws Exception
      *
      * @return string
      */
@@ -117,7 +116,7 @@ class InstallerService
     /**
      * @param string $pluginName
      *
-     * @throws \Exception
+     * @throws Exception
      *
      * @return Plugin
      */
@@ -130,7 +129,7 @@ class InstallerService
         ]);
 
         if ($plugin === null) {
-            throw new \Exception(sprintf('Unknown plugin "%s".', $pluginName));
+            throw new Exception(sprintf('Unknown plugin "%s".', $pluginName));
         }
 
         return $plugin;
@@ -139,7 +138,7 @@ class InstallerService
     /**
      * Returns a certain plugin by plugin id.
      *
-     * @return \Shopware_Components_Plugin_Bootstrap|null
+     * @return Shopware_Components_Plugin_Bootstrap|null
      */
     public function getPluginBootstrap(Plugin $plugin)
     {
@@ -147,7 +146,7 @@ class InstallerService
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      *
      * @return InstallContext
      */
@@ -171,7 +170,7 @@ class InstallerService
     /**
      * @param bool $removeData
      *
-     * @throws \Exception
+     * @throws Exception
      *
      * @return UninstallContext
      */
@@ -193,7 +192,7 @@ class InstallerService
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      *
      * @return UpdateContext
      */
@@ -215,7 +214,7 @@ class InstallerService
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      *
      * @return ActivateContext
      */
@@ -227,7 +226,7 @@ class InstallerService
         }
 
         if (!$plugin->getInstalled()) {
-            throw new \Exception(sprintf('Plugin "%s" has to be installed first before it can be activated.', $plugin->getName()));
+            throw new Exception(sprintf('Plugin "%s" has to be installed first before it can be activated.', $plugin->getName()));
         }
 
         if (!$plugin->isLegacyPlugin()) {
@@ -241,7 +240,7 @@ class InstallerService
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      *
      * @return DeactivateContext
      */
@@ -290,7 +289,7 @@ class InstallerService
      * @param string $name
      * @param Shop   $shop
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function saveConfigElement(Plugin $plugin, $name, $value, Shop $shop = null)
     {
@@ -304,7 +303,7 @@ class InstallerService
 
     public function refreshPluginList()
     {
-        $refreshDate = new \DateTimeImmutable();
+        $refreshDate = new DateTimeImmutable();
 
         $this->pluginInstaller->refreshPluginList($refreshDate);
         $this->legacyPluginInstaller->refreshPluginList($refreshDate);

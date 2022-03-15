@@ -25,6 +25,8 @@
 namespace Shopware\Components;
 
 use Doctrine\DBAL\Connection;
+use PDO;
+use PDOStatement;
 use Shopware\Bundle\StoreFrontBundle\Gateway\DBAL\FieldHelper;
 use Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface;
 use Shopware\Components\Routing\RouterInterface;
@@ -62,8 +64,8 @@ class SitePageMenu
     /**
      * Returns a shop page tree for the provided shop id.
      *
-     * @param int $shopId
-     * @param int $activeId
+     * @param int      $shopId
+     * @param int|null $activeId
      *
      * @return array
      */
@@ -71,10 +73,10 @@ class SitePageMenu
     {
         $query = $this->getQuery($shopId);
 
-        /** @var \PDOStatement $statement */
+        /** @var PDOStatement $statement */
         $statement = $query->execute();
 
-        $data = $statement->fetchAll(\PDO::FETCH_ASSOC);
+        $data = $statement->fetchAll(PDO::FETCH_ASSOC);
 
         $menu = [];
         $links = [];
@@ -151,9 +153,9 @@ class SitePageMenu
     }
 
     /**
-     * @param int   $parentId
-     * @param array $sites
-     * @param int   $activeId
+     * @param int      $parentId
+     * @param array    $sites
+     * @param int|null $activeId
      *
      * @return array
      */

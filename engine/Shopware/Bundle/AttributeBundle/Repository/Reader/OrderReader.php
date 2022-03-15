@@ -26,6 +26,7 @@ namespace Shopware\Bundle\AttributeBundle\Repository\Reader;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\Query\Expr\Join;
+use Enlight_Components_Snippet_Manager;
 use PDO;
 use Shopware\Components\Model\ModelManager;
 use Shopware\Models\Article\Article;
@@ -34,14 +35,14 @@ use Shopware\Models\Order\Order;
 class OrderReader extends GenericReader
 {
     /**
-     * @var \Enlight_Components_Snippet_Manager
+     * @var Enlight_Components_Snippet_Manager
      */
     private $snippets;
 
     /**
      * @param string $entity
      */
-    public function __construct($entity, ModelManager $entityManager, \Enlight_Components_Snippet_Manager $snippets)
+    public function __construct($entity, ModelManager $entityManager, Enlight_Components_Snippet_Manager $snippets)
     {
         parent::__construct($entity, $entityManager);
         $this->snippets = $snippets;
@@ -61,6 +62,7 @@ class OrderReader extends GenericReader
             $row['orderStateName'] = $namespace->get($row['orderStateKey']);
             $row['orderDocuments'] = $this->getOrderDocuments($documents, $row);
             $row['supplierId'] = explode(',', $row['supplierId']);
+            $row['articleNumber'] = explode(',', $row['articleNumber']);
         }
 
         return $data;
@@ -82,6 +84,7 @@ class OrderReader extends GenericReader
             'entity.transactionId',
             'entity.orderTime',
             'entity.cleared',
+            'GroupConcat(DISTINCT orderDetails.articleNumber) as articleNumber',
             'GroupConcat(DISTINCT supplier.id) as supplierId',
             'customer.id as customerId',
             'customer.email as email',

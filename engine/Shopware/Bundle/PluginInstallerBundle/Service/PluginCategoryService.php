@@ -25,7 +25,7 @@
 namespace Shopware\Bundle\PluginInstallerBundle\Service;
 
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Driver\PDOStatement;
+use PDO;
 use Shopware\Bundle\PluginInstallerBundle\Struct\CategoryStruct;
 use Shopware\Bundle\PluginInstallerBundle\Struct\StructHydrator;
 
@@ -188,24 +188,17 @@ class PluginCategoryService
      */
     private function getCategoryDataForLocale($locale)
     {
-        $query = $this->connection->createQueryBuilder();
-
-        $query->select(
-            [
+        return $this->connection->createQueryBuilder()
+            ->select([
                 'categories.parent_id',
                 'categories.name',
                 'categories.id as categoryId',
                 'categories.parent_id as parentId',
-            ]
-        );
-
-        $query->from('s_core_plugin_categories', 'categories')
+            ])
+            ->from('s_core_plugin_categories', 'categories')
             ->where('categories.locale = :locale')
-            ->setParameter(':locale', $locale);
-
-        /** @var PDOStatement $statement */
-        $statement = $query->execute();
-
-        return $statement->fetchAll(\PDO::FETCH_GROUP);
+            ->setParameter(':locale', $locale)
+            ->execute()
+            ->fetchAll(PDO::FETCH_GROUP);
     }
 }

@@ -25,6 +25,7 @@
 namespace Shopware\Bundle\EmotionBundle\ComponentHandler;
 
 use Doctrine\DBAL\Connection;
+use PDO;
 use Shopware\Bundle\EmotionBundle\Struct\Collection\PrepareDataCollection;
 use Shopware\Bundle\EmotionBundle\Struct\Collection\ResolvedDataCollection;
 use Shopware\Bundle\EmotionBundle\Struct\Element;
@@ -39,15 +40,9 @@ class ManufacturerSliderComponentHandler implements ComponentHandlerInterface
     public const LEGACY_CONVERT_FUNCTION = 'getManufacturerSlider';
     public const COMPONENT_NAME = 'emotion-components-manufacturer-slider';
 
-    /**
-     * @var ManufacturerServiceInterface
-     */
-    private $manufacturerService;
+    private ManufacturerServiceInterface $manufacturerService;
 
-    /**
-     * @var Connection
-     */
-    private $connection;
+    private Connection $connection;
 
     public function __construct(ManufacturerServiceInterface $manufacturerService, Connection $connection)
     {
@@ -102,11 +97,9 @@ class ManufacturerSliderComponentHandler implements ComponentHandlerInterface
     }
 
     /**
-     * @param int $categoryId
-     *
      * @return int[]
      */
-    private function getManufacturerIdsByCategoryId($categoryId, ShopContextInterface $context)
+    private function getManufacturerIdsByCategoryId(int $categoryId, ShopContextInterface $context): array
     {
         $builder = $this->connection->createQueryBuilder();
         $builder->select('manufacturer.id')
@@ -124,6 +117,6 @@ class ManufacturerSliderComponentHandler implements ComponentHandlerInterface
                 ->setParameter('customerGroupId', $context->getCurrentCustomerGroup()->getId())
         ;
 
-        return $builder->execute()->fetchAll(\PDO::FETCH_COLUMN);
+        return $builder->execute()->fetchAll(PDO::FETCH_COLUMN);
     }
 }

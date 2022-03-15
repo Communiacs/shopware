@@ -22,6 +22,8 @@
  * our trademarks remain entirely with us.
  */
 
+use Shopware\Models\Payment\RuleSet;
+
 /**
  * This controller handles all actions made by the user in the premium module.
  * It reads all premium-articles, creates new ones, edits and deletes them.
@@ -53,7 +55,7 @@ class Shopware_Controllers_Backend_RiskManagement extends Shopware_Controllers_B
     public function getPaymentsAction()
     {
         try {
-            $builder = Shopware()->Models()->createQueryBuilder();
+            $builder = $this->get('models')->createQueryBuilder();
             $builder->select(['payment', 'ruleSets'])
                     ->from('Shopware\Models\Payment\Payment', 'payment');
             $builder->leftJoin('payment.ruleSets', 'ruleSets');
@@ -61,10 +63,10 @@ class Shopware_Controllers_Backend_RiskManagement extends Shopware_Controllers_B
             $builder->addOrderBy('payment.id');
 
             $result = $builder->getQuery()->getArrayResult();
-            $total = Shopware()->Models()->getQueryCount($builder->getQuery());
+            $total = $this->get('models')->getQueryCount($builder->getQuery());
 
             // Translate the payment methods
-            $translationComponent = $this->get(\Shopware_Components_Translation::class);
+            $translationComponent = $this->get(Shopware_Components_Translation::class);
             $result = $translationComponent->translatePaymentMethods($result);
 
             $this->View()->assign(['success' => true, 'data' => $result, 'total' => $total]);
@@ -82,10 +84,10 @@ class Shopware_Controllers_Backend_RiskManagement extends Shopware_Controllers_B
         try {
             $params = $this->Request()->getParams();
 
-            $ruleModel = Shopware()->Models()->find('\Shopware\Models\Payment\RuleSet', $params['id']);
+            $ruleModel = $this->get('models')->find(RuleSet::class, $params['id']);
 
-            Shopware()->Models()->remove($ruleModel);
-            Shopware()->Models()->flush();
+            $this->get('models')->remove($ruleModel);
+            $this->get('models')->flush();
 
             $this->View()->assign(['success' => true, 'data' => $params]);
         } catch (Exception $e) {
@@ -112,30 +114,24 @@ class Shopware_Controllers_Backend_RiskManagement extends Shopware_Controllers_B
             if ($params[0]) {
                 $data = [];
                 foreach ($params as $values) {
-                    /**
-                     * @var Shopware\Models\Payment\RuleSet
-                     */
-                    $ruleModel = Shopware()->Models()->find('\Shopware\Models\Payment\RuleSet', $values['id']);
+                    $ruleModel = $this->get('models')->find(RuleSet::class, $values['id']);
 
                     $ruleModel->fromArray($values);
 
-                    Shopware()->Models()->persist($ruleModel);
-                    Shopware()->Models()->flush();
-                    $data[] = Shopware()->Models()->toArray($ruleModel);
+                    $this->get('models')->persist($ruleModel);
+                    $this->get('models')->flush();
+                    $data[] = $this->get('models')->toArray($ruleModel);
                 }
                 $this->View()->assign(['success' => true, 'data' => $data]);
             } else {
-                /**
-                 * @var Shopware\Models\Payment\RuleSet
-                 */
-                $ruleModel = Shopware()->Models()->find('\Shopware\Models\Payment\RuleSet', $params['id']);
+                $ruleModel = $this->get('models')->find(RuleSet::class, $params['id']);
 
                 $ruleModel->fromArray($params);
 
-                Shopware()->Models()->persist($ruleModel);
-                Shopware()->Models()->flush();
+                $this->get('models')->persist($ruleModel);
+                $this->get('models')->flush();
 
-                $data = Shopware()->Models()->toArray($ruleModel);
+                $data = $this->get('models')->toArray($ruleModel);
 
                 $this->View()->assign(['success' => true, 'data' => $data]);
             }
@@ -153,13 +149,13 @@ class Shopware_Controllers_Backend_RiskManagement extends Shopware_Controllers_B
         try {
             $params = $this->Request()->getParams();
 
-            $ruleModel = new Shopware\Models\Payment\RuleSet();
+            $ruleModel = new RuleSet();
             $ruleModel->fromArray($params);
 
-            Shopware()->Models()->persist($ruleModel);
-            Shopware()->Models()->flush();
+            $this->get('models')->persist($ruleModel);
+            $this->get('models')->flush();
 
-            $this->View()->assign(['success' => true, 'data' => Shopware()->Models()->toArray($ruleModel)]);
+            $this->View()->assign(['success' => true, 'data' => $this->get('models')->toArray($ruleModel)]);
         } catch (Exception $e) {
             $this->View()->assign(['success' => false, 'errorMsg' => $e->getMessage()]);
         }

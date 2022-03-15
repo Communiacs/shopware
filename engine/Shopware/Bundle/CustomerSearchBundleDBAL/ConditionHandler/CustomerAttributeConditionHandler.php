@@ -25,11 +25,12 @@
 namespace Shopware\Bundle\CustomerSearchBundleDBAL\ConditionHandler;
 
 use Shopware\Bundle\CustomerSearchBundle\Condition\CustomerAttributeCondition;
+use Shopware\Bundle\CustomerSearchBundleDBAL\ConditionHandlerInterface;
 use Shopware\Bundle\SearchBundle\ConditionInterface;
 use Shopware\Bundle\SearchBundleDBAL\ConditionHandler\DynamicConditionParserTrait;
 use Shopware\Bundle\SearchBundleDBAL\QueryBuilder;
 
-class CustomerAttributeConditionHandler
+class CustomerAttributeConditionHandler implements ConditionHandlerInterface
 {
     use DynamicConditionParserTrait;
 
@@ -40,10 +41,12 @@ class CustomerAttributeConditionHandler
 
     public function handle(ConditionInterface $condition, QueryBuilder $query)
     {
-        /*
-         * $this->parse method is Imported from DynamicConditionParserTrait
-         */
-        return $this->parse(
+        $this->addCondition($condition, $query);
+    }
+
+    private function addCondition(CustomerAttributeCondition $condition, QueryBuilder $query): void
+    {
+        $this->parse(
             $query,
             's_user_attributes',
             'customerAttribute',

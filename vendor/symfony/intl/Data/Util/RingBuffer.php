@@ -22,12 +22,23 @@ use Symfony\Component\Intl\Exception\OutOfBoundsException;
  *
  * @author Bernhard Schussek <bschussek@gmail.com>
  *
+ * @template TKey of array-key
+ * @template TValue
+ *
+ * @implements \ArrayAccess<TKey, TValue>
+ *
  * @internal
  */
 class RingBuffer implements \ArrayAccess
 {
+    /**
+     * @var array<int, TValue>
+     */
     private $values = [];
 
+    /**
+     * @var array<TKey, int>
+     */
     private $indices = [];
 
     private $cursor = 0;
@@ -49,7 +60,10 @@ class RingBuffer implements \ArrayAccess
 
     /**
      * {@inheritdoc}
+     *
+     * @return mixed
      */
+    #[\ReturnTypeWillChange]
     public function offsetGet($key)
     {
         if (!isset($this->indices[$key])) {
@@ -62,7 +76,7 @@ class RingBuffer implements \ArrayAccess
     /**
      * {@inheritdoc}
      */
-    public function offsetSet($key, $value)
+    public function offsetSet($key, $value): void
     {
         if (false !== ($keyToRemove = array_search($this->cursor, $this->indices))) {
             unset($this->indices[$keyToRemove]);
@@ -77,7 +91,7 @@ class RingBuffer implements \ArrayAccess
     /**
      * {@inheritdoc}
      */
-    public function offsetUnset($key)
+    public function offsetUnset($key): void
     {
         if (isset($this->indices[$key])) {
             $this->values[$this->indices[$key]] = null;

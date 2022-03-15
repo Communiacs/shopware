@@ -24,8 +24,13 @@
 
 namespace Shopware\Bundle\PluginInstallerBundle\Struct;
 
-class PriceStruct implements \JsonSerializable
+use JsonSerializable;
+use Shopware\Components\ObjectJsonSerializeTraitDeprecated;
+
+class PriceStruct implements JsonSerializable
 {
+    use ObjectJsonSerializeTraitDeprecated;
+
     public const TYPE_RENT = 'rent';
     public const TYPE_BUY = 'buy';
     public const TYPE_TEST = 'test';
@@ -77,14 +82,6 @@ class PriceStruct implements \JsonSerializable
     public function __construct($type)
     {
         $this->type = $type;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function jsonSerialize()
-    {
-        return get_object_vars($this);
     }
 
     /**

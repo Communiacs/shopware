@@ -22,12 +22,21 @@
  * our trademarks remain entirely with us.
  */
 
+use Shopware\Bundle\AttributeBundle\Repository\ProductRepository;
 use Shopware\Bundle\AttributeBundle\Repository\SearchCriteria;
+use Shopware\Bundle\StoreFrontBundle\Service\AdditionalTextServiceInterface;
+use Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface;
 use Shopware\Bundle\StoreFrontBundle\Service\Core\ContextService;
 use Shopware\Bundle\StoreFrontBundle\Struct\ListProduct;
 use Shopware\Components\Api\Resource\Article as ArticleResource;
+use Shopware\Components\Model\ModelManager;
+use Shopware\Components\MultiEdit\Resource\ResourceInterface;
 use Shopware\Models\Article\Article;
 use Shopware\Models\Article\Detail;
+use Shopware\Models\Article\Repository as ProductModelRepository;
+use Shopware\Models\MultiEdit\Filter;
+use Shopware\Models\Shop\Repository;
+use Shopware\Models\Shop\Shop;
 
 /**
  * Shopware SwagMultiEdit Plugin - MultiEdit Backend Controller
@@ -39,7 +48,7 @@ class Shopware_Controllers_Backend_ArticleList extends Shopware_Controllers_Back
     /**
      * Reference to the SwagMultiEdit repository
      *
-     * @var Shopware\Models\MultiEdit\Repository
+     * @var \Shopware\Models\MultiEdit\Repository
      */
     protected $multiEditRepository;
 
@@ -68,7 +77,7 @@ class Shopware_Controllers_Backend_ArticleList extends Shopware_Controllers_Back
     public function getMultiEditRepository()
     {
         if (!isset($this->multiEditRepository)) {
-            $this->multiEditRepository = Shopware()->Models()->getRepository('Shopware\Models\MultiEdit\Filter');
+            $this->multiEditRepository = $this->get('models')->getRepository('Shopware\Models\MultiEdit\Filter');
         }
 
         return $this->multiEditRepository;
@@ -81,7 +90,7 @@ class Shopware_Controllers_Backend_ArticleList extends Shopware_Controllers_Back
     {
         $resourceName = $this->Request()->getParam('resource');
 
-        /** @var \Shopware\Components\MultiEdit\Resource\ResourceInterface $resource */
+        /** @var ResourceInterface $resource */
         $resource = $this->container->get('multi_edit.' . $resourceName);
         $data = $resource->getColumnConfig();
 
@@ -109,7 +118,7 @@ class Shopware_Controllers_Backend_ArticleList extends Shopware_Controllers_Back
             $value = ['entity' => $entity, 'field' => $field, 'value' => $value];
         }
 
-        /** @var \Shopware\Components\MultiEdit\Resource\ResourceInterface $resource */
+        /** @var ResourceInterface $resource */
         $resource = $this->container->get('multi_edit.' . $resource);
         $data = $resource->save($params);
 
@@ -131,7 +140,7 @@ class Shopware_Controllers_Backend_ArticleList extends Shopware_Controllers_Back
         $resource = $this->Request()->getParam('resource');
         $id = $this->Request()->getParam('id');
 
-        /** @var \Shopware\Components\MultiEdit\Resource\ResourceInterface $resource */
+        /** @var ResourceInterface $resource */
         $resource = $this->container->get('multi_edit.' . $resource);
         $success = $resource->deleteBackup($id);
 
@@ -149,7 +158,7 @@ class Shopware_Controllers_Backend_ArticleList extends Shopware_Controllers_Back
         $id = $this->Request()->getParam('id');
         $offset = $this->Request()->getParam('offset');
 
-        /** @var \Shopware\Components\MultiEdit\Resource\ResourceInterface $resource */
+        /** @var ResourceInterface $resource */
         $resource = $this->container->get('multi_edit.' . $resource);
         $data = $resource->restoreBackup($id, $offset);
 
@@ -168,7 +177,7 @@ class Shopware_Controllers_Backend_ArticleList extends Shopware_Controllers_Back
         $limit = $this->Request()->getParam('limit', 25);
         $offset = ($this->Request()->getParam('page', 1) - 1) * $limit;
 
-        /** @var \Shopware\Components\MultiEdit\Resource\ResourceInterface $resource */
+        /** @var ResourceInterface $resource */
         $resource = $this->container->get('multi_edit.' . $resource);
         $result = $resource->listBackups($offset, $limit);
         $result['success'] = true;
@@ -204,7 +213,7 @@ class Shopware_Controllers_Backend_ArticleList extends Shopware_Controllers_Back
     {
         $resource = $this->Request()->getParam('resource');
 
-        /** @var \Shopware\Components\MultiEdit\Resource\ResourceInterface $resource */
+        /** @var ResourceInterface $resource */
         $resource = $this->container->get('multi_edit.' . $resource);
         $columns = $resource->getBatchColumns();
 
@@ -233,7 +242,7 @@ class Shopware_Controllers_Backend_ArticleList extends Shopware_Controllers_Back
     {
         $resource = $this->Request()->getParam('resource');
 
-        /** @var \Shopware\Components\MultiEdit\Resource\ResourceInterface $resource */
+        /** @var ResourceInterface $resource */
         $resource = $this->container->get('multi_edit.' . $resource);
         $columns = $resource->getBatchColumns();
 
@@ -273,7 +282,7 @@ class Shopware_Controllers_Backend_ArticleList extends Shopware_Controllers_Back
 
         $queueId = $this->Request()->getParam('queueId');
 
-        /** @var \Shopware\Components\MultiEdit\Resource\ResourceInterface $resource */
+        /** @var ResourceInterface $resource */
         $resource = $this->container->get('multi_edit.' . $resource);
         $data = $resource->batchProcess($queueId);
 
@@ -296,7 +305,7 @@ class Shopware_Controllers_Backend_ArticleList extends Shopware_Controllers_Back
     {
         $resource = $this->Request()->getParam('resource');
 
-        /** @var \Shopware\Components\MultiEdit\Resource\ResourceInterface $resource */
+        /** @var ResourceInterface $resource */
         $resource = $this->container->get('multi_edit.' . $resource);
         $grammar = $resource->getGrammar();
 
@@ -326,7 +335,7 @@ class Shopware_Controllers_Backend_ArticleList extends Shopware_Controllers_Back
             $filter = $this->Request()->getParam('query');
         }
 
-        /** @var \Shopware\Components\MultiEdit\Resource\ResourceInterface $resource */
+        /** @var ResourceInterface $resource */
         $resource = $this->container->get('multi_edit.' . $resource);
         $data = $resource->getValuesFor(
             $attribute,
@@ -369,7 +378,7 @@ class Shopware_Controllers_Backend_ArticleList extends Shopware_Controllers_Back
             return;
         }
 
-        /** @var \Shopware\Components\MultiEdit\Resource\ResourceInterface $resource */
+        /** @var ResourceInterface $resource */
         $resource = $this->container->get('multi_edit.' . $resource);
         $result = $resource->filter($ast, $offset, $limit, $sort);
 
@@ -415,16 +424,18 @@ class Shopware_Controllers_Backend_ArticleList extends Shopware_Controllers_Back
         $data = $this->Request()->getParams();
         $id = $this->Request()->getParam('id', null);
 
+        $filter = null;
         if ($id) {
             $filter = $this->getMultiEditRepository()->find((int) $id);
-        } else {
-            $filter = new Shopware\Models\MultiEdit\Filter();
+        }
+        if (!$filter instanceof Filter) {
+            $filter = new Filter();
         }
 
         $filter->fromArray($data);
 
-        Shopware()->Models()->persist($filter);
-        Shopware()->Models()->flush();
+        $this->get('models')->persist($filter);
+        $this->get('models')->flush();
 
         $this->View()->assign(
             [
@@ -440,11 +451,11 @@ class Shopware_Controllers_Backend_ArticleList extends Shopware_Controllers_Back
     {
         $id = $this->Request()->get('id');
 
-        $filter = Shopware()->Models()->find('Shopware\Models\MultiEdit\Filter', $id);
+        $filter = $this->get('models')->find(Filter::class, $id);
 
         if ($filter) {
-            Shopware()->Models()->remove($filter);
-            Shopware()->Models()->flush();
+            $this->get('models')->remove($filter);
+            $this->get('models')->flush();
         }
 
         $this->View()->assign(
@@ -482,7 +493,7 @@ class Shopware_Controllers_Backend_ArticleList extends Shopware_Controllers_Back
             throw new RuntimeException(sprintf('Could not decode "%s"', $this->Request()->getParam('operations')));
         }
 
-        /** @var \Shopware\Components\MultiEdit\Resource\ResourceInterface $resource */
+        /** @var ResourceInterface $resource */
         $resource = $this->container->get('multi_edit.' . $resource);
         $return = $resource->createQueue($filterArray, $operations, $offset, $limit, $queueId);
 
@@ -509,15 +520,15 @@ class Shopware_Controllers_Backend_ArticleList extends Shopware_Controllers_Back
             ]);
         } else {
             $articleResource = new ArticleResource();
-            $articleResource->setManager($this->get(\Shopware\Components\Model\ModelManager::class));
+            $articleResource->setManager($this->get(ModelManager::class));
 
             if ($variant->getKind() == 1) {
                 $articleResource->delete($variant->getArticle()->getId());
             } else {
-                Shopware()->Models()->remove($variant);
+                $this->get('models')->remove($variant);
             }
 
-            Shopware()->Models()->flush();
+            $this->get('models')->flush();
 
             $this->View()->assign([
                 'success' => true,
@@ -534,7 +545,7 @@ class Shopware_Controllers_Backend_ArticleList extends Shopware_Controllers_Back
      */
     private function normalizeFilter($filter)
     {
-        return strtolower(preg_replace('/[^\da-z]/i', '_', strip_tags($filter)));
+        return strtolower((string) preg_replace('/[^\da-z]/i', '_', strip_tags($filter)));
     }
 
     /**
@@ -557,11 +568,11 @@ class Shopware_Controllers_Backend_ArticleList extends Shopware_Controllers_Back
     /**
      * Internal helper function to get access to the product repository.
      *
-     * @return \Shopware\Components\Model\ModelRepository
+     * @return ProductModelRepository
      */
     private function getDetailRepository()
     {
-        return Shopware()->Models()->getRepository(Detail::class);
+        return $this->get('models')->getRepository(Detail::class);
     }
 
     /**
@@ -599,7 +610,7 @@ class Shopware_Controllers_Backend_ArticleList extends Shopware_Controllers_Back
         foreach ($result as $item) {
             $number = $item['Detail_number'];
 
-            $product = new \Shopware\Bundle\StoreFrontBundle\Struct\ListProduct(
+            $product = new ListProduct(
                 $item['Article_id'],
                 $item['Detail_id'],
                 $item['Detail_number']
@@ -633,23 +644,19 @@ class Shopware_Controllers_Backend_ArticleList extends Shopware_Controllers_Back
     }
 
     /**
-     * @param \Shopware\Bundle\StoreFrontBundle\Struct\ListProduct[] $products
+     * @param ListProduct[] $products
      *
-     * @return \Shopware\Bundle\StoreFrontBundle\Struct\ListProduct[]
+     * @return ListProduct[]
      */
-    private function getAdditionalTexts($products)
+    private function getAdditionalTexts(array $products): array
     {
-        /** @var \Shopware\Bundle\StoreFrontBundle\Service\AdditionalTextServiceInterface $service */
-        $service = $this->get(\Shopware\Bundle\StoreFrontBundle\Service\AdditionalTextServiceInterface::class);
+        $service = $this->get(AdditionalTextServiceInterface::class);
 
-        /** @var \Shopware\Models\Shop\Repository $shopRepo */
-        $shopRepo = $this->get(\Shopware\Components\Model\ModelManager::class)->getRepository(\Shopware\Models\Shop\Shop::class);
+        $shopRepo = $this->get(ModelManager::class)->getRepository(Shop::class);
 
-        /** @var \Shopware\Models\Shop\Shop $shop */
         $shop = $shopRepo->getActiveDefault();
 
-        /** @var \Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface $contextService */
-        $contextService = $this->get(\Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface::class);
+        $contextService = $this->get(ContextServiceInterface::class);
 
         $context = $contextService->createShopContext(
             $shop->getId(),
@@ -660,7 +667,10 @@ class Shopware_Controllers_Backend_ArticleList extends Shopware_Controllers_Back
         return $service->buildAdditionalTextLists($products, $context);
     }
 
-    private function filterByRepository()
+    /**
+     * @return array{data: array, total: int}
+     */
+    private function filterByRepository(): array
     {
         $criteria = $this->createCriteria($this->Request());
 
@@ -671,7 +681,7 @@ class Shopware_Controllers_Backend_ArticleList extends Shopware_Controllers_Back
             ];
         }
 
-        $repository = $this->container->get(\Shopware\Bundle\AttributeBundle\Repository\ProductRepository::class);
+        $repository = $this->container->get(ProductRepository::class);
 
         $result = $repository->search($criteria);
 

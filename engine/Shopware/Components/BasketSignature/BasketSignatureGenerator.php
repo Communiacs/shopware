@@ -24,6 +24,9 @@
 
 namespace Shopware\Components\BasketSignature;
 
+use Shopware\Bundle\CartBundle\CartKey;
+use Shopware\Bundle\CartBundle\CheckoutKey;
+
 class BasketSignatureGenerator implements BasketSignatureGeneratorInterface
 {
     /**
@@ -34,50 +37,58 @@ class BasketSignatureGenerator implements BasketSignatureGeneratorInterface
         $items = array_map(
             function (array $item) {
                 return [
-                    'ordernumber' => $item['ordernumber'],
+                    'ordernumber' => (string) $item['ordernumber'],
                     'quantity' => (float) $item['quantity'],
                     'tax_rate' => (float) $item['tax_rate'],
                     'price' => (float) $item['price'],
                 ];
             },
-            $basket['content']
+            $basket[CartKey::POSITIONS]
         );
 
         $items = $this->sortItems($items);
 
         $data = [
-            'amount' => (float) $basket['sAmount'],
-            'taxAmount' => (float) $basket['sAmountTax'],
+            'amount' => (float) $basket[CheckoutKey::AMOUNT],
+            'taxAmount' => (float) $basket[CheckoutKey::AMOUNT_TAX],
             'items' => $items,
-            'currencyId' => (int) $basket['sCurrencyId'],
+            'currencyId' => (int) $basket[CheckoutKey::CURRENCY_ID],
         ];
 
         return hash('sha256', json_encode($data) . $customerId);
     }
 
     /**
-     * @return array
+     * @param array<array{ordernumber: string, quantity: float, tax_rate: float, price: float}> $items
+     *
+     * @return array<array{ordernumber: string, quantity: float, tax_rate: float, price: float}>
      */
-    private function sortItems(array $items)
+    private function sortItems(array $items): array
     {
         usort(
             $items,
             function (array $a, array $b) {
                 if ($a['price'] < $b['price']) {
                     return 1;
-                } elseif ($a['price'] > $b['price']) {
+                }
+
+                if ($a['price'] > $b['price']) {
                     return -1;
                 }
 
                 if ($a['quantity'] < $b['quantity']) {
                     return 1;
-                } elseif ($a['quantity'] > $b['quantity']) {
+                }
+
+                if ($a['quantity'] > $b['quantity']) {
                     return -1;
                 }
 
                 if ($a['tax_rate'] < $b['tax_rate']) {
                     return 1;
-                } elseif ($a['tax_rate'] > $b['tax_rate']) {
+                }
+
+                if ($a['tax_rate'] > $b['tax_rate']) {
                     return -1;
                 }
 

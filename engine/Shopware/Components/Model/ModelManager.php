@@ -35,9 +35,12 @@ use Doctrine\ORM\ORMException;
 use Doctrine\ORM\Proxy\Proxy;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\Tools\Pagination\Paginator;
+use InvalidArgumentException;
+use ReflectionProperty;
 use Shopware\Components\Model\Query\SqlWalker;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Traversable;
 
 /**
  * Global Manager which is responsible for initializing the adapter classes.
@@ -107,13 +110,13 @@ class ModelManager extends EntityManager
     /**
      * Serialize an entity or an array of entities to an array
      *
-     * @param \Traversable|array|ModelEntity $entity
+     * @param Traversable|array|ModelEntity $entity
      *
      * @return array
      */
     public function toArray($entity)
     {
-        if ($entity instanceof \Traversable) {
+        if ($entity instanceof Traversable) {
             $entity = iterator_to_array($entity);
         }
 
@@ -208,7 +211,6 @@ class ModelManager extends EntityManager
         $proxyFactory = $this->getProxyFactory();
 
         $attributeMetaData = [];
-        /** @var ClassMetadata $metaData */
         foreach ($allMetaData as $metaData) {
             $tableName = $metaData->getTableName();
             if (strpos($tableName, '_attributes') === false) {
@@ -318,7 +320,6 @@ class ModelManager extends EntityManager
         }
 
         if ($entity instanceof Proxy) {
-            /* @var Proxy $entity */
             $entity->__load();
             $className = get_parent_class($entity);
         } else {
@@ -329,16 +330,16 @@ class ModelManager extends EntityManager
         $inflector = new Inflector(new NoopWordInflector(), new NoopWordInflector());
 
         foreach ($metadata->fieldMappings as $field => $mapping) {
-            if (!($metadata->reflFields[$field] instanceof \ReflectionProperty)) {
-                throw new \InvalidArgumentException(sprintf('Expected an instance of %s', \ReflectionProperty::class));
+            if (!($metadata->reflFields[$field] instanceof ReflectionProperty)) {
+                throw new InvalidArgumentException(sprintf('Expected an instance of %s', ReflectionProperty::class));
             }
 
             $data[$field] = $metadata->reflFields[$field]->getValue($entity);
         }
 
         foreach ($metadata->associationMappings as $field => $mapping) {
-            if (!($metadata->reflFields[$field] instanceof \ReflectionProperty)) {
-                throw new \InvalidArgumentException(sprintf('Expected an instance of %s', \ReflectionProperty::class));
+            if (!($metadata->reflFields[$field] instanceof ReflectionProperty)) {
+                throw new InvalidArgumentException(sprintf('Expected an instance of %s', ReflectionProperty::class));
             }
 
             $key = $inflector->tableize($field);

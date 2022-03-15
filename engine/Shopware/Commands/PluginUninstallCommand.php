@@ -24,8 +24,9 @@
 
 namespace Shopware\Commands;
 
+use Exception;
 use Shopware\Bundle\PluginInstallerBundle\Service\InstallerService;
-use Shopware\Components\Model\ModelRepository;
+use Shopware\Components\Model\ModelManager;
 use Shopware\Models\Plugin\Plugin;
 use Stecman\Component\Symfony\Console\BashCompletion\Completion\CompletionAwareInterface;
 use Stecman\Component\Symfony\Console\BashCompletion\CompletionContext;
@@ -50,8 +51,7 @@ class PluginUninstallCommand extends PluginCommand implements CompletionAwareInt
     public function completeArgumentValues($argumentName, CompletionContext $context)
     {
         if ($argumentName === 'plugin') {
-            /** @var ModelRepository $repository */
-            $repository = $this->getContainer()->get(\Shopware\Components\Model\ModelManager::class)->getRepository(Plugin::class);
+            $repository = $this->getContainer()->get(ModelManager::class)->getRepository(Plugin::class);
             $queryBuilder = $repository->createQueryBuilder('plugin');
             $result = $queryBuilder->andWhere($queryBuilder->expr()->eq('plugin.capabilityEnable', 'true'))
                 ->andWhere($queryBuilder->expr()->isNotNull('plugin.installed'))
@@ -99,12 +99,12 @@ EOF
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         /** @var InstallerService $pluginManager */
-        $pluginManager = $this->container->get(\Shopware\Bundle\PluginInstallerBundle\Service\InstallerService::class);
+        $pluginManager = $this->container->get(InstallerService::class);
         $pluginName = $input->getArgument('plugin');
 
         try {
             $plugin = $pluginManager->getPluginByName($pluginName);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $output->writeln(sprintf('Plugin by name "%s" was not found.', $pluginName));
 
             return 1;

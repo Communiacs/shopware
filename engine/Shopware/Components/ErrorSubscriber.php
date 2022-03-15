@@ -24,9 +24,16 @@
 
 namespace Shopware\Components;
 
+use ArrayObject;
 use Enlight\Event\SubscriberInterface;
+use Enlight_Controller_EventArgs;
+use Enlight_Controller_Exception;
+use Enlight_Controller_Request_Request as ShopwareRequest;
 use Enlight_Event_EventManager as EnlightEventManager;
+use Exception;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 /**
  * Subscriber to catch possibly occurring exceptions in the controller.
@@ -36,35 +43,28 @@ class ErrorSubscriber implements SubscriberInterface
 {
     /**
      * Are we already inside the error handler loop?
-     *
-     * @var bool
      */
-    private $isInsideErrorHandlerLoop = false;
+    private bool $isInsideErrorHandlerLoop = false;
 
     /**
      * Exception count logged at first invocation of plugin
-     *
-     * @var int
      */
-    private $exceptionCountAtFirstEncounter = 0;
+    private int $exceptionCountAtFirstEncounter = 0;
+
+    private LoggerInterface $logger;
+
+    private EnlightEventManager $eventManager;
 
     /**
-     * @var LoggerInterface
+     * @var array<int,string>
      */
-    private $logger;
+    private array $ignoredExceptionClasses;
 
-    /**
-     * @var EnlightEventManager
-     */
-    private $eventManager;
-
-    /**
-     * @var string[]
-     */
-    private $ignoredExceptionClasses;
-
-    public function __construct(LoggerInterface $logger, EnlightEventManager $eventManager, array $ignoredExceptionClasses = [])
-    {
+    public function __construct(
+        LoggerInterface $logger,
+        EnlightEventManager $eventManager,
+        array $ignoredExceptionClasses = []
+    ) {
         $this->logger = $logger;
         $this->eventManager = $eventManager;
         $this->ignoredExceptionClasses = $ignoredExceptionClasses;
@@ -82,9 +82,9 @@ class ErrorSubscriber implements SubscriberInterface
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
-    public function handleError(\Enlight_Controller_EventArgs $args)
+    public function handleError(Enlight_Controller_EventArgs $args)
     {
         $front = $args->getSubject();
         $request = $args->getRequest();
@@ -113,16 +113,16 @@ class ErrorSubscriber implements SubscriberInterface
                 }
 
                 // Make sure this is an Exception and also no minor one
-                if ($last instanceof \Exception
+                if ($last instanceof Exception
                     && !\in_array($last->getCode(), [
-                    \Enlight_Controller_Exception::ActionNotFound,
-                    \Enlight_Controller_Exception::Controller_Dispatcher_Controller_Not_Found,
-                    \Enlight_Controller_Exception::Controller_Dispatcher_Controller_No_Route,
-                    \Enlight_Controller_Exception::NO_ROUTE,
+                        Enlight_Controller_Exception::ActionNotFound,
+                        Enlight_Controller_Exception::Controller_Dispatcher_Controller_Not_Found,
+                        Enlight_Controller_Exception::Controller_Dispatcher_Controller_No_Route,
+                        Enlight_Controller_Exception::NO_ROUTE,
                     ], true)
                     && !\in_array(\get_class($last), $this->ignoredExceptionClasses, true) // Check for exceptions to be ignored
                 ) {
-                    if ($last instanceof CSRFTokenValidationException) {
+                    if ($last instanceof CSRFTokenValidationException || $this->isBotSession($request)) {
                         $this->logger->warning($last->getMessage());
                     } else {
                         $this->logger->critical($last->getMessage());
@@ -140,13 +140,13 @@ class ErrorSubscriber implements SubscriberInterface
         $this->isInsideErrorHandlerLoop = true;
 
         // Get exception information
-        $error = new \ArrayObject([], \ArrayObject::ARRAY_AS_PROPS);
+        $error = new ArrayObject([], ArrayObject::ARRAY_AS_PROPS);
         $exceptions = $response->getException();
         $exception = $exceptions[0];
-        $error->exception = $exception;
+        $error->offsetSet('exception', $exception);
 
         // Keep a copy of the original request
-        $error->request = clone $request;
+        $error->offsetSet('request', clone $request);
 
         // Get a count of the number of exceptions encountered
         $this->exceptionCountAtFirstEncounter = \count($exceptions);
@@ -156,5 +156,19 @@ class ErrorSubscriber implements SubscriberInterface
             ->setControllerName('error')
             ->setActionName('error')
             ->setDispatched(false);
+    }
+
+    private function isBotSession(ShopwareRequest $request): bool
+    {
+        if (!$request instanceof SymfonyRequest) {
+            return false;
+        }
+
+        $session = $request->getSession();
+        if (!$session instanceof SessionInterface) {
+            return false;
+        }
+
+        return (bool) $session->get('Bot');
     }
 }

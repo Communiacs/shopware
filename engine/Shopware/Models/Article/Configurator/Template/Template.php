@@ -24,6 +24,8 @@
 
 namespace Shopware\Models\Article\Configurator\Template;
 
+use DateTime;
+use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
@@ -41,10 +43,10 @@ class Template extends ModelEntity
     /**
      * OWNING SIDE
      *
-     * @var Product|null
+     * @var Product
      *
      * @ORM\OneToOne(targetEntity="Shopware\Models\Article\Article", inversedBy="configuratorTemplate")
-     * @ORM\JoinColumn(name="article_id", referencedColumnName="id")
+     * @ORM\JoinColumn(name="article_id", referencedColumnName="id", nullable=false)
      */
     protected $article;
 
@@ -86,7 +88,7 @@ class Template extends ModelEntity
     private $id;
 
     /**
-     * @var int|null
+     * @var int
      *
      * @ORM\Column(name="article_id", type="integer", nullable=false)
      */
@@ -124,9 +126,9 @@ class Template extends ModelEntity
     private $additionalText;
 
     /**
-     * @var int
+     * @var bool
      *
-     * @ORM\Column(name="active", type="integer", nullable=false)
+     * @ORM\Column(name="active", type="boolean", nullable=false)
      */
     private $active = false;
 
@@ -145,37 +147,37 @@ class Template extends ModelEntity
     private $stockMin;
 
     /**
-     * @var int
+     * @var bool
      *
      * @ORM\Column(name="laststock", type="boolean", nullable=false)
      */
     private $lastStock;
 
     /**
-     * @var float|null
+     * @var string|null
      *
-     * @ORM\Column(name="weight", type="decimal", nullable=true, precision=3)
+     * @ORM\Column(name="weight", type="decimal", precision=10, scale=3, nullable=true)
      */
     private $weight;
 
     /**
-     * @var float|null
+     * @var string|null
      *
-     * @ORM\Column(name="width", type="decimal", nullable=true, precision=3)
+     * @ORM\Column(name="width", type="decimal", precision=10, scale=3, nullable=true)
      */
     private $width;
 
     /**
-     * @var float|null
+     * @var string|null
      *
-     * @ORM\Column(name="length", type="decimal", nullable=true, precision=3)
+     * @ORM\Column(name="length", type="decimal", precision=10, scale=3, nullable=true)
      */
     private $len;
 
     /**
-     * @var float|null
+     * @var string|null
      *
-     * @ORM\Column(name="height", type="decimal", nullable=true, precision=3)
+     * @ORM\Column(name="height", type="decimal", precision=10, scale=3, nullable=true)
      */
     private $height;
 
@@ -189,9 +191,9 @@ class Template extends ModelEntity
     /**
      * @var float
      *
-     * @ORM\Column(name="purchaseprice", type="decimal", nullable=false)
+     * @ORM\Column(name="purchaseprice", type="float", nullable=false)
      */
-    private $purchasePrice = 0;
+    private $purchasePrice = 0.0;
 
     /**
      * @var int
@@ -222,16 +224,16 @@ class Template extends ModelEntity
     private $maxPurchase;
 
     /**
-     * @var float|null
+     * @var string|null
      *
-     * @ORM\Column(name="purchaseunit", type="decimal", nullable=true)
+     * @ORM\Column(name="purchaseunit", type="decimal", precision=11, scale=4, nullable=true)
      */
     private $purchaseUnit;
 
     /**
-     * @var float|null
+     * @var string|null
      *
-     * @ORM\Column(name="referenceunit", type="decimal", nullable=true)
+     * @ORM\Column(name="referenceunit", type="decimal", precision=10, scale=3, nullable=true)
      */
     private $referenceUnit;
 
@@ -250,7 +252,7 @@ class Template extends ModelEntity
     private $shippingFree = false;
 
     /**
-     * @var \DateTimeInterface|null
+     * @var DateTimeInterface|null
      *
      * @ORM\Column(name="releasedate", type="date", nullable=true)
      */
@@ -337,7 +339,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * @param int $active
+     * @param bool $active
      *
      * @return Template
      */
@@ -349,7 +351,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * @return int
+     * @return bool
      */
     public function getActive()
     {
@@ -397,17 +399,17 @@ class Template extends ModelEntity
     }
 
     /**
-     * @param int $lastStock
+     * @param bool $lastStock
      */
     public function setLastStock($lastStock)
     {
-        $this->lastStock = (int) $lastStock;
+        $this->lastStock = $lastStock;
     }
 
     /**
      * Get last stock
      *
-     * @return int
+     * @return bool
      */
     public function getLastStock()
     {
@@ -415,7 +417,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * @param float $weight
+     * @param string|null $weight
      *
      * @return Template
      */
@@ -427,7 +429,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * @return float|null
+     * @return string|null
      */
     public function getWeight()
     {
@@ -463,7 +465,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * @param Product|null $article
+     * @param Product $article
      *
      * @return Template
      */
@@ -511,7 +513,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * @return float|null
+     * @return string|null
      */
     public function getWidth()
     {
@@ -519,7 +521,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * @param float|null $width
+     * @param string|null $width
      */
     public function setWidth($width)
     {
@@ -527,7 +529,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * @return float|null
+     * @return string|null
      */
     public function getLen()
     {
@@ -535,7 +537,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * @param float|null $length
+     * @param string|null $length
      */
     public function setLen($length)
     {
@@ -543,7 +545,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * @return float|null
+     * @return string|null
      */
     public function getHeight()
     {
@@ -551,7 +553,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * @param float|null $height
+     * @param string|null $height
      */
     public function setHeight($height)
     {
@@ -643,14 +645,14 @@ class Template extends ModelEntity
     }
 
     /**
-     * @param \DateTimeInterface|string|null $releaseDate
+     * @param DateTimeInterface|string|null $releaseDate
      *
      * @return Template
      */
     public function setReleaseDate($releaseDate = null)
     {
-        if ($releaseDate !== null && !($releaseDate instanceof \DateTimeInterface)) {
-            $this->releaseDate = new \DateTime($releaseDate);
+        if ($releaseDate !== null && !($releaseDate instanceof DateTimeInterface)) {
+            $this->releaseDate = new DateTime($releaseDate);
         } else {
             $this->releaseDate = $releaseDate;
         }
@@ -659,7 +661,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * @return \DateTimeInterface|null
+     * @return DateTimeInterface|null
      */
     public function getReleaseDate()
     {
@@ -727,7 +729,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * @param float $purchaseUnit
+     * @param string|null $purchaseUnit
      *
      * @return Template
      */
@@ -739,7 +741,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * @return float|null
+     * @return string|null
      */
     public function getPurchaseUnit()
     {
@@ -747,7 +749,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * @param float $referenceUnit
+     * @param string|null $referenceUnit
      *
      * @return Template
      */
@@ -759,7 +761,7 @@ class Template extends ModelEntity
     }
 
     /**
-     * @return float|null
+     * @return string|null
      */
     public function getReferenceUnit()
     {

@@ -25,10 +25,14 @@
 namespace Shopware\Bundle\SearchBundle\Condition;
 
 use Assert\Assertion;
+use JsonSerializable;
 use Shopware\Bundle\SearchBundle\ConditionInterface;
+use Shopware\Components\ObjectJsonSerializeTraitDeprecated;
 
-class CategoryCondition implements ConditionInterface, \JsonSerializable
+class CategoryCondition implements ConditionInterface, JsonSerializable
 {
+    use ObjectJsonSerializeTraitDeprecated;
+
     private const NAME = 'category';
 
     /**
@@ -60,13 +64,5 @@ class CategoryCondition implements ConditionInterface, \JsonSerializable
     public function getName()
     {
         return self::NAME;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function jsonSerialize()
-    {
-        return get_object_vars($this);
     }
 }

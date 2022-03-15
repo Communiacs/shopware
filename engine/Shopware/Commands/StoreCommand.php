@@ -24,7 +24,8 @@
 
 namespace Shopware\Commands;
 
-use Shopware\Bundle\PluginInstallerBundle\Service\AccountManagerService;
+use Exception;
+use RuntimeException;
 use Shopware\Bundle\PluginInstallerBundle\Struct\AccessTokenStruct;
 use Shopware\Components\HttpClient\HttpClientInterface;
 use Symfony\Component\Console\Helper\QuestionHelper;
@@ -85,7 +86,7 @@ abstract class StoreCommand extends ShopwareCommand
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     protected function handleError(array $input)
     {
@@ -93,7 +94,7 @@ abstract class StoreCommand extends ShopwareCommand
             $this->output->writeln(print_r($input, true));
         }
 
-        throw new \Exception($input['message']);
+        throw new Exception($input['message']);
     }
 
     /**
@@ -110,7 +111,7 @@ abstract class StoreCommand extends ShopwareCommand
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      *
      * @return AccessTokenStruct
      */
@@ -147,7 +148,7 @@ abstract class StoreCommand extends ShopwareCommand
         }
 
         if (empty($username) || empty($password)) {
-            throw new \Exception('Username and password are required');
+            throw new Exception('Username and password are required');
         }
 
         $output->writeln(sprintf('Connect to Store with username: %s...', $username));
@@ -159,7 +160,7 @@ abstract class StoreCommand extends ShopwareCommand
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      *
      * @return string
      */
@@ -174,7 +175,7 @@ abstract class StoreCommand extends ShopwareCommand
         }
 
         if (empty($hostname)) {
-            throw new \Exception('Hostname is required');
+            throw new Exception('Hostname is required');
         }
 
         return $hostname;
@@ -187,10 +188,9 @@ abstract class StoreCommand extends ShopwareCommand
      */
     protected function completeLicensedDomain($input)
     {
-        /* @var AccountManagerService $accountManagerService */
         try {
             $accountManagerService = $this->container->get('shopware_plugininstaller.account_manager_service');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return [];
         }
 
@@ -211,7 +211,7 @@ abstract class StoreCommand extends ShopwareCommand
             /** @var HttpClientInterface $guzzle */
             $guzzle = $this->container->get('http_client');
             $response = $guzzle->get('https://api.shopware.com/pluginstatics/softwareVersions');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return [];
         }
 
@@ -227,7 +227,7 @@ abstract class StoreCommand extends ShopwareCommand
         $shopwareVersion = $this->container->getParameter('shopware.release.version');
 
         if (!\is_string($shopwareVersion)) {
-            throw new \RuntimeException('Parameter shopware.release.version has to be an string');
+            throw new RuntimeException('Parameter shopware.release.version has to be an string');
         }
 
         return $shopwareVersion;
