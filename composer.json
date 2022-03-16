@@ -4,7 +4,7 @@
     "keywords": ["shopware", "shop"],
     "version": "5.7.7",
     "homepage": "http://www.shopware.com",
-    "type": "project",
+    "type": "shopware-core",
     "license": [
         "AGPL-3.0",
         "proprietary"
