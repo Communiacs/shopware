@@ -52,7 +52,7 @@
         "fig/link-util": "1.1.1",
         "friendsofphp/proxy-manager-lts": "1.0.5",
         "guzzlehttp/guzzle": "7.3.0",
-        "guzzlehttp/psr7": "1.8.2",
+        "guzzlehttp/psr7": "1.8.4",
         "laminas/laminas-code": "4.5.0",
         "laminas/laminas-escaper": "2.9.0",
         "league/flysystem": "~1.1.4",
