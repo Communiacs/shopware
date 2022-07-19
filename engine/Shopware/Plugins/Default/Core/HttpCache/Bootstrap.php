@@ -321,25 +321,21 @@ class Shopware_Plugins_Core_HttpCache_Bootstrap extends Shopware_Components_Plug
                    . $request->getBaseUrl() . '/';
         }
 
-        /** @var ModelManager $em */
         $em = $this->get(ModelManager::class);
         $repository = $em->getRepository(Shop::class);
 
-        /** @var \Shopware\Models\Shop\Shop $shop */
         $shop = $repository->findOneBy(['default' => true]);
 
         if (!$shop->getHost()) {
             return null;
         }
 
-        $url = sprintf(
+        return sprintf(
             '%s://%s%s/',
             $shop->getSecure() ? 'https' : 'http',
             $shop->getHost(),
             $shop->getBasePath()
         );
-
-        return $url;
     }
 
     /**
@@ -392,7 +388,7 @@ class Shopware_Plugins_Core_HttpCache_Bootstrap extends Shopware_Components_Plug
             $params['nocache'] = 1;
         }
 
-        $url = sprintf('%s/?%s', $request->getBaseUrl(), http_build_query($params, null, '&'));
+        $url = sprintf('%s/?%s', $request->getBaseUrl(), http_build_query($params, '', '&'));
 
         return '<esi:include src="' . $url . '" />';
     }

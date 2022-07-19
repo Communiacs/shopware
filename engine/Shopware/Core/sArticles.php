@@ -28,9 +28,11 @@ use Shopware\Bundle\MediaBundle\MediaServiceInterface;
 use Shopware\Bundle\SearchBundle;
 use Shopware\Bundle\SearchBundle\Condition\VariantCondition;
 use Shopware\Bundle\SearchBundle\Criteria;
+use Shopware\Bundle\SearchBundle\FacetResultInterface;
 use Shopware\Bundle\SearchBundle\ProductNumberSearchInterface;
 use Shopware\Bundle\SearchBundle\ProductNumberSearchResult;
 use Shopware\Bundle\SearchBundle\ProductSearchInterface;
+use Shopware\Bundle\SearchBundle\ProductSearchResult;
 use Shopware\Bundle\SearchBundle\Sorting\PopularitySorting;
 use Shopware\Bundle\SearchBundle\Sorting\ReleaseDateSorting;
 use Shopware\Bundle\SearchBundle\SortingInterface;
@@ -64,6 +66,7 @@ use Shopware\Models\Media\Media;
 use Shopware\Models\Media\Repository as MediaRepository;
 
 /**
+ * @phpstan-type ListingArray array{sArticles: array<string, array<string, mixed>>, criteria: Criteria, facets: array<FacetResultInterface>, sPage: int, pageIndex: int, pageSizes: array<int>, sPerPage: int|null, sNumberArticles: int, shortParameters: array<string, string>, sTemplate: string|null, sSort: int}
  * Shopware Class that handle products
  */
 class sArticles implements Enlight_Hook
@@ -444,24 +447,24 @@ class sArticles implements Enlight_Hook
     }
 
     /**
-     * @deprecated in 5.6, will be removed in 5.7 without replacement
+     * @deprecated in 5.6, will be removed in 5.8 without replacement
      *
      * Get id from all products, that belongs to a specific supplier
      *
      * @param int $supplierID Supplier id (s_articles.supplierID)
      *
-     * @return array|void
+     * @return array
      */
     public function sGetArticlesBySupplier($supplierID = null)
     {
-        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be removed with 5.7. Will be removed without replacement.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be removed with 5.8. Will be removed without replacement.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
 
         if (!empty($supplierID)) {
             $this->frontController->Request()->setQuery('sSearch', $supplierID);
         }
 
         if (!$this->frontController->Request()->getQuery('sSearch')) {
-            return;
+            return [];
         }
         $sSearch = (int) $this->frontController->Request()->getQuery('sSearch');
 
@@ -472,11 +475,12 @@ class sArticles implements Enlight_Hook
     }
 
     /**
+     * @param int|null $categoryId
      * @param Criteria $criteria
      *
      * @throws Enlight_Exception
      *
-     * @return array|bool|mixed
+     * @return ListingArray|false
      */
     public function sGetArticlesByCategory($categoryId = null, Criteria $criteria = null)
     {
@@ -490,20 +494,21 @@ class sArticles implements Enlight_Hook
         $context = $this->contextService->getShopContext();
 
         $request = Shopware()->Container()->get('front')->Request();
+        if (!$request instanceof Enlight_Controller_Request_Request) {
+            throw new RuntimeException('Required request not available');
+        }
 
-        if (!$criteria) {
+        if (!$criteria instanceof Criteria) {
             $criteria = $this->storeFrontCriteriaFactory->createListingCriteria($request, $context);
         }
 
         $result = $this->getListing($categoryId, $context, $request, $criteria);
 
-        $result = $this->legacyEventManager->fireArticlesByCategoryEvents($result, $categoryId, $this);
-
-        return $result;
+        return $this->legacyEventManager->fireArticlesByCategoryEvents($result, $categoryId, $this);
     }
 
     /**
-     * @deprecated in 5.6, will be removed in 5.7 without replacement
+     * @deprecated in 5.6, will be removed in 5.8 without replacement
      *
      * Get supplier by id
      *
@@ -517,7 +522,7 @@ class sArticles implements Enlight_Hook
      */
     public function sGetSupplierById($id)
     {
-        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be removed with 5.7. Will be removed without replacement.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
+        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be removed with 5.8. Will be removed without replacement.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
 
         $id = (int) $id;
         $categoryId = (int) $this->frontController->Request()->getQuery('sCategory');
@@ -1047,7 +1052,7 @@ class sArticles implements Enlight_Hook
 
         $getGroups = $this->db->fetchAll($sql, [$pricegroup, $this->sSYSTEM->sUSERGROUP]);
 
-        //if there are no discounts for this customergroup don't show "ab:"
+        // if there are no discounts for this customergroup don't show "ab:"
         if (empty($getGroups)) {
             return $cheapestPrice;
         }
@@ -1153,7 +1158,7 @@ class sArticles implements Enlight_Hook
              * 2. $number is equals to $productNumber (if the order number is invalid or inactive fallback to main variant)
              * 3. $configuration is empty (Customer hasn't not set an own configuration)
              */
-            if ($providedNumber && $providedNumber == $productNumber && empty($configuration) || $type === 0) {
+            if ($providedNumber && $providedNumber == $productNumber && empty($selection) || $type === 0) {
                 $selection = $product->getSelectedOptions();
             }
         }
@@ -1163,21 +1168,19 @@ class sArticles implements Enlight_Hook
             $categoryId = Shopware()->Modules()->Categories()->sGetCategoryIdByArticleId($id);
         }
 
-        $legacyProduct = $this->getLegacyProduct(
+        return $this->getLegacyProduct(
             $product,
             $categoryId,
             $selection
         );
-
-        return $legacyProduct;
     }
 
     /**
      * calculates the reference price with the base price data
      *
-     * @param string $price         | the final price which will be shown
-     * @param float  $purchaseUnit
-     * @param float  $referenceUnit
+     * @param string|float $price         | the final price which will be shown
+     * @param string|float $purchaseUnit
+     * @param string|float $referenceUnit
      *
      * @return float
      */
@@ -1186,9 +1189,13 @@ class sArticles implements Enlight_Hook
         $purchaseUnit = (float) $purchaseUnit;
         $referenceUnit = (float) $referenceUnit;
 
-        $price = (float) str_replace(',', '.', $price);
+        if (\is_string($price)) {
+            $price = (float) str_replace(',', '.', $price);
+        } elseif (!\is_float($price)) {
+            throw new UnexpectedValueException('Parameter price needs to be of type "float" or a numeric string');
+        }
 
-        if ($purchaseUnit == 0 || $referenceUnit == 0) {
+        if ($purchaseUnit === 0.0 || $referenceUnit === 0.0) {
             return 0;
         }
 
@@ -1240,7 +1247,7 @@ class sArticles implements Enlight_Hook
         if (is_numeric($moneyfloat)) {
             $moneyfloat = sprintf('%F', $moneyfloat);
         }
-        $money_str = explode('.', $moneyfloat);
+        $money_str = explode('.', (string) $moneyfloat);
         if (empty($money_str[1])) {
             $money_str[1] = 0;
         }
@@ -1270,15 +1277,11 @@ class sArticles implements Enlight_Hook
             return false;
         }
 
-        $getPromotionResult = $this->getPromotion(null, $ordernumber);
-
-        $getPromotionResult = Shopware()->Events()->filter(
+        return Shopware()->Events()->filter(
             'Shopware_Modules_Articles_sGetProductByOrdernumber_FilterResult',
-            $getPromotionResult,
+            $this->getPromotion(null, $ordernumber),
             ['subject' => $this, 'value' => $ordernumber]
         );
-
-        return $getPromotionResult;
     }
 
     /**
@@ -1313,7 +1316,7 @@ class sArticles implements Enlight_Hook
             return false;
         }
 
-        $result = $this->getPromotion($category, $value);
+        $result = $this->getPromotion((int) $category, $value);
 
         if (!$result) {
             return false;
@@ -1335,9 +1338,8 @@ class sArticles implements Enlight_Hook
         $text = preg_replace('@<(script|style)[^>]*?>.*?</\\1>@si', '', $text);
         $text = preg_replace('!<[^>]*?>!u', ' ', $text);
         $text = preg_replace('/\s\s+/u', ' ', $text);
-        $text = trim($text);
 
-        return $text;
+        return trim((string) $text);
     }
 
     /**
@@ -1942,7 +1944,6 @@ class sArticles implements Enlight_Hook
                 unset($sArticle['image']);
 
                 $positions = [];
-                $debug = false;
 
                 foreach ($sArticle['images'] as $imageKey => $image) {
                     if (empty($image['src']['original']) || empty($image['relations'])) {
@@ -1973,18 +1974,12 @@ class sArticles implements Enlight_Hook
                         }
                     }
                     if ($relation === '||' && \count($imageFailedCheck) && \count($imageFailedCheck) >= 1 && \count($available) >= 1) { // OR combination
-                        if (!empty($debug)) {
-                            echo $string . " matching combination\n";
-                        }
                         $sArticle['images'][$imageKey]['relations'] = '';
                         $positions[$image['position']] = $imageKey;
                     } elseif ($relation === '&' && \count($imageFailedCheck) === \count($available)) { // AND combination
                         $sArticle['images'][$imageKey]['relations'] = '';
                         $positions[$image['position']] = $imageKey;
                     } else {
-                        if (!empty($debug)) {
-                            echo $string . " doesnt match combination\n";
-                        }
                         unset($sArticle['images'][$imageKey]);
                     }
                 }
@@ -2383,12 +2378,9 @@ class sArticles implements Enlight_Hook
      * Returns a minified product which can be used for listings,
      * sliders or emotions.
      *
-     * @param int|null $category
-     * @param string   $number
-     *
-     * @return array|bool
+     * @return array|false
      */
-    private function getPromotion($category, $number)
+    private function getPromotion(?int $category, string $number)
     {
         $context = $this->contextService->getShopContext();
 
@@ -2406,8 +2398,8 @@ class sArticles implements Enlight_Hook
             $promotion['linkDetails'] .= "&sCategory=$category";
         }
 
-        //check if the product has a configured property set which stored in s_filter.
-        //the mini product doesn't contains this data so we have to load this lazy.
+        // check if the product has a configured property set which stored in s_filter.
+        // the mini product doesn't contains this data so we have to load this lazy.
         if (!$product->hasProperties()) {
             return $promotion;
         }
@@ -2431,16 +2423,14 @@ class sArticles implements Enlight_Hook
      * Returns a listing of products. Used for the backward compatibility category listings.
      * This function calls the new shopware core and converts the result to the old listing structure.
      *
-     * @param int $categoryId
-     *
-     * @return array
+     * @return ListingArray
      */
     private function getListing(
-        $categoryId,
+        ?int $categoryId,
         ShopContextInterface $context,
         Enlight_Controller_Request_Request $request,
         Criteria $criteria
-    ) {
+    ): array {
         $conditions = $criteria->getConditionsByClass(VariantCondition::class);
         $conditions = array_filter($conditions, function (VariantCondition $condition) {
             return $condition->expandVariants();
@@ -2470,6 +2460,7 @@ class sArticles implements Enlight_Hook
         $products = $this->listingLinkRewriteService->rewriteLinks($criteria, $products, $context);
 
         $pageSizes = explode('|', $this->config->get('numberArticlesToShow'));
+        $pageSizes = array_map('\intval', $pageSizes);
         $sPage = (int) $request->getParam('sPage', 1);
 
         return [
@@ -2482,8 +2473,8 @@ class sArticles implements Enlight_Hook
             'sPerPage' => $criteria->getLimit(),
             'sNumberArticles' => $searchResult->getTotalCount(),
             'shortParameters' => $this->queryAliasMapper->getQueryAliases(),
-            'sTemplate' => $request->getParam('sTemplate'),
-            'sSort' => $request->getParam('sSort', $this->config->get('defaultListingSorting')),
+            'sTemplate' => $request->getParam('sTemplate') ? (string) $request->getParam('sTemplate') : null,
+            'sSort' => (int) $request->getParam('sSort', $this->config->get('defaultListingSorting')),
         ];
     }
 
@@ -2491,11 +2482,11 @@ class sArticles implements Enlight_Hook
      * Helper function which loads a full product struct and converts the product struct
      * to the shopware 3 array structure.
      *
-     * @param int $categoryId
+     * @param array<int, int> $selection
      *
-     * @return array
+     * @return array<string, mixed>
      */
-    private function getLegacyProduct(Product $product, $categoryId, array $selection)
+    private function getLegacyProduct(Product $product, int $categoryId, array $selection): array
     {
         $data = $this->legacyStructConverter->convertProductStruct($product);
         $data['categoryID'] = $categoryId;
@@ -2570,7 +2561,7 @@ class sArticles implements Enlight_Hook
 
         $service = Shopware()->Container()->get(VariantListingPriceServiceInterface::class);
 
-        $result = new SearchBundle\ProductSearchResult(
+        $result = new ProductSearchResult(
             [$product->getNumber() => $product],
             1,
             [],
@@ -2586,9 +2577,7 @@ class sArticles implements Enlight_Hook
 
         $data['price'] = $product->getListingPrice()->getCalculatedPrice();
 
-        $data = $this->legacyEventManager->fireArticleByIdEvents($data, $this);
-
-        return $data;
+        return $this->legacyEventManager->fireArticleByIdEvents($data, $this);
     }
 
     /**
@@ -2638,10 +2627,13 @@ class sArticles implements Enlight_Hook
      */
     private function getDescriptionKeywords($longDescription)
     {
-        //sDescriptionKeywords
+        // sDescriptionKeywords
         $string = strip_tags(html_entity_decode($longDescription, ENT_COMPAT | ENT_HTML401, 'UTF-8'));
         $string = str_replace(',', '', $string);
         $words = preg_split('/ /', $string, -1, PREG_SPLIT_NO_EMPTY);
+        if (!\is_array($words)) {
+            $words = [];
+        }
         $badWords = explode(',', $this->config->get('badwords'));
         $words = array_count_values(array_diff($words, $badWords));
         foreach (array_keys($words) as $word) {
@@ -2668,9 +2660,11 @@ class sArticles implements Enlight_Hook
      * Array elements of the configuration selection can be empty, if the user resets the
      * different group selections.
      *
-     * @return array
+     * @param array<int|string, int|string> $selection
+     *
+     * @return array<int, int>
      */
-    private function getCurrentSelection(array $selection)
+    private function getCurrentSelection(array $selection): array
     {
         if (empty($selection) && $this->frontController->Request()->has('group')) {
             $selection = $this->frontController->Request()->getParam('group');

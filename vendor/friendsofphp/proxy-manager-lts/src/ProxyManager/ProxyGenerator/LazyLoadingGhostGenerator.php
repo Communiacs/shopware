@@ -49,12 +49,12 @@ class LazyLoadingGhostGenerator implements ProxyGeneratorInterface
     /**
      * {@inheritDoc}
      *
+     * @psalm-param array{skippedProperties?: array<int, string>, skipDestructor?: bool} $proxyOptions
+     *
      * @return void
      *
      * @throws InvalidProxiedClassException
      * @throws InvalidArgumentException
-     *
-     * @psalm-param array{skippedProperties?: array<int, string>, skipDestructor?: bool} $proxyOptions
      */
     public function generate(ReflectionClass $originalClass, ClassGenerator $classGenerator, array $proxyOptions = [])
     {
@@ -63,7 +63,7 @@ class LazyLoadingGhostGenerator implements ProxyGeneratorInterface
         $filteredProperties = Properties::fromReflectionClass($originalClass)
             ->filter($proxyOptions['skippedProperties'] ?? []);
 
-        $publicProperties    = new PublicPropertiesMap($filteredProperties);
+        $publicProperties    = new PublicPropertiesMap($filteredProperties, true);
         $privateProperties   = new PrivatePropertiesMap($filteredProperties);
         $protectedProperties = new ProtectedPropertiesMap($filteredProperties);
         $skipDestructor      = ($proxyOptions['skipDestructor'] ?? false) && $originalClass->hasMethod('__destruct');

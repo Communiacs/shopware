@@ -1,35 +1,20 @@
 <?php
 
-/*
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * This software consists of voluntary contributions made by many individuals
- * and is licensed under the MIT license. For more information, see
- * <http://www.doctrine-project.org>.
- */
+declare(strict_types=1);
 
 namespace Doctrine\ORM\Query;
 
 use Doctrine\Common\Lexer\AbstractLexer;
+use Doctrine\Deprecations\Deprecation;
 
 use function constant;
 use function ctype_alpha;
 use function defined;
 use function is_numeric;
+use function str_contains;
 use function str_replace;
 use function stripos;
 use function strlen;
-use function strpos;
 use function strtoupper;
 use function substr;
 
@@ -60,6 +45,7 @@ class Lexer extends AbstractLexer
     public const T_CLOSE_CURLY_BRACE = 19;
 
     // All tokens that are identifiers or keywords that could be considered as identifiers should be >= 100
+    /** @deprecated No Replacement planned. */
     public const T_ALIASED_NAME         = 100;
     public const T_FULLY_QUALIFIED_NAME = 101;
     public const T_IDENTIFIER           = 102;
@@ -165,7 +151,7 @@ class Lexer extends AbstractLexer
         switch (true) {
             // Recognize numeric values
             case is_numeric($value):
-                if (strpos($value, '.') !== false || stripos($value, 'e') !== false) {
+                if (str_contains($value, '.') || stripos($value, 'e') !== false) {
                     return self::T_FLOAT;
                 }
 
@@ -189,11 +175,18 @@ class Lexer extends AbstractLexer
                     }
                 }
 
-                if (strpos($value, ':') !== false) {
+                if (str_contains($value, ':')) {
+                    Deprecation::trigger(
+                        'doctrine/orm',
+                        'https://github.com/doctrine/orm/issues/8818',
+                        'Short namespace aliases such as "%s" are deprecated and will be removed in Doctrine ORM 3.0.',
+                        $value
+                    );
+
                     return self::T_ALIASED_NAME;
                 }
 
-                if (strpos($value, '\\') !== false) {
+                if (str_contains($value, '\\')) {
                     return self::T_FULLY_QUALIFIED_NAME;
                 }
 

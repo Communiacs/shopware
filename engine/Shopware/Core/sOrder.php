@@ -40,7 +40,7 @@ use Shopware\Models\Shop\Shop;
 use ShopwarePlugin\PaymentMethods\Components\BasePaymentMethod;
 
 /**
- * Deprecated Shopware Class that handles frontend orders
+ * Shopware Class that handles frontend orders
  */
 class sOrder implements Enlight_Hook
 {
@@ -659,7 +659,7 @@ class sOrder implements Enlight_Hook
                 );
             }
         } catch (Exception $e) {
-            //Payment method code failure
+            // Payment method code failure
         }
 
         $attributeData = $this->eventManager->filter(
@@ -733,7 +733,7 @@ class sOrder implements Enlight_Hook
 
             // Check for individual voucher - code
             if ($basketRow['modus'] == CartPositionsMode::VOUCHER) {
-                //reserve the basket voucher for the current user.
+                // reserve the basket voucher for the current user.
                 $this->reserveVoucher(
                     $basketRow['ordernumber'],
                     $this->sUserData['additional']['user']['id'],
@@ -1287,11 +1287,11 @@ class sOrder implements Enlight_Hook
     /**
      * Create status mail
      *
-     * @param int    $orderId
-     * @param int    $statusId
-     * @param string $templateName
+     * @param int         $orderId
+     * @param int         $statusId
+     * @param string|null $templateName
      *
-     * @return Enlight_Components_Mail|void
+     * @return Enlight_Components_Mail|null
      */
     public function createStatusMail($orderId, $statusId, $templateName = null)
     {
@@ -1304,7 +1304,7 @@ class sOrder implements Enlight_Hook
         }
 
         if (empty($orderId) || !is_numeric($statusId)) {
-            return;
+            return null;
         }
 
         $order = $this->getOrderForStatusMail($orderId);
@@ -1320,7 +1320,7 @@ class sOrder implements Enlight_Hook
         $user = $this->getCustomerInformationByOrderId($orderId);
 
         if (empty($order) || empty($orderDetails) || empty($user)) {
-            return;
+            return null;
         }
 
         $repository = $this->modelManager->getRepository(Shop::class);
@@ -1353,7 +1353,7 @@ class sOrder implements Enlight_Hook
         );
 
         if (!$mailModel) {
-            return;
+            return null;
         }
 
         $context = [
@@ -1380,8 +1380,8 @@ class sOrder implements Enlight_Hook
         $mail = Shopware()->TemplateMail()->createMail($templateName, $context, $shop);
 
         $return = [
-            'content' => $mail->getPlainBodyText(),
-            'subject' => $mail->getPlainSubject(),
+            'content' => $mail->getPlainBodyText() ?? '',
+            'subject' => $mail->getPlainSubject() ?? '',
             'email' => trim($user['email']),
             'frommail' => $mail->getFrom(),
             'fromname' => $mail->getFromName(),

@@ -330,7 +330,6 @@ class Shopware_Controllers_Backend_Performance extends Shopware_Controllers_Back
             $findBy['form'] = $form;
         }
 
-        /** @var Element $element */
         $element = $elementRepository->findOneBy($findBy);
 
         // If the element is empty, the given setting does not exists. This might be the case for some plugins
@@ -391,7 +390,6 @@ class Shopware_Controllers_Backend_Performance extends Shopware_Controllers_Back
             return $defaultValue;
         }
 
-        /** @var Element|null $element */
         $element = $elementRepository->findOneBy(['name' => $config, 'form' => $form]);
 
         if (!$element) {
@@ -399,7 +397,7 @@ class Shopware_Controllers_Backend_Performance extends Shopware_Controllers_Back
         }
 
         $values = $element->getValues();
-        if (empty($values) || empty($values[0])) {
+        if ($values->count() === 0 || empty($values[0])) {
             return $element->getValue();
         }
 
@@ -621,13 +619,13 @@ class Shopware_Controllers_Backend_Performance extends Shopware_Controllers_Back
                 'id' => 1,
                 'name' => Shopware()->Snippets()->getNamespace('backend/performance/main')->get('cache/apc'),
                 'value' => \extension_loaded('apcu'),
-                'valid' => \extension_loaded('apcu') === true && ini_get('apc.enabled') ? self::PERFORMANCE_VALID : self::PERFORMANCE_INVALID,
+                'valid' => \extension_loaded('apcu') === true && \ini_get('apc.enabled') ? self::PERFORMANCE_VALID : self::PERFORMANCE_INVALID,
             ],
             [
                 'id' => 3,
                 'name' => Shopware()->Snippets()->getNamespace('backend/performance/main')->get('cache/zend'),
                 'value' => \extension_loaded('Zend OPcache'),
-                'valid' => \extension_loaded('Zend OPcache') === true && ini_get('opcache.enable') ? self::PERFORMANCE_VALID : self::PERFORMANCE_INVALID,
+                'valid' => \extension_loaded('Zend OPcache') === true && \ini_get('opcache.enable') ? self::PERFORMANCE_VALID : self::PERFORMANCE_INVALID,
             ],
             [
                 'id' => 4,

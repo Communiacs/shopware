@@ -39,6 +39,7 @@ use Shopware\Components\Cart\CartOrderNumberProviderInterface;
 use Shopware\Components\Cart\CartPersistServiceInterface;
 use Shopware\Components\Cart\ConditionalLineItemServiceInterface;
 use Shopware\Components\Compatibility\LegacyStructConverter;
+use Shopware\Components\CSRFTokenValidator;
 use Shopware\Components\HolidayTableUpdater;
 use Shopware\Components\Model\ModelManager;
 use Shopware\Components\Password\Manager;
@@ -48,15 +49,28 @@ use Shopware\Components\Validator\EmailValidator;
 use Shopware\Components\Validator\EmailValidatorInterface;
 use Shopware\Models\Customer\Address;
 use Shopware\Models\Customer\Customer;
+use Shopware\Models\Dispatch\Dispatch;
 use Shopware\Models\Mail\Mail;
 use ShopwarePlugin\PaymentMethods\Components\BasePaymentMethod;
 
 /**
  * Shopware Class that handles several
  * functions around customer / order related things
+ *
+ * @phpstan-type ShippingCostArray array{value: string, factor: string, brutto: float, surcharge: float, taxMode: string, tax: float, netto: float, shippingfree?: float, difference?: array{float: float, formated: string}}
  */
 class sAdmin implements \Enlight_Hook
 {
+    public const NO_SHIPPING_COSTS = [
+        'value' => '0',
+        'factor' => '0',
+        'brutto' => 0.0,
+        'surcharge' => 0.0,
+        'taxMode' => '0',
+        'tax' => 0.0,
+        'netto' => 0.0,
+    ];
+
     /**
      * Check if current active shop has own registration
      *
@@ -193,6 +207,8 @@ class sAdmin implements \Enlight_Hook
         'payment' => [],
     ];
 
+    private CSRFTokenValidator $csrfTokenValidator;
+
     public function __construct(
         Enlight_Components_Db_Adapter_Pdo_Mysql $db = null,
         Enlight_Event_EventManager $eventManager = null,
@@ -207,7 +223,8 @@ class sAdmin implements \Enlight_Hook
         EmailValidatorInterface $emailValidator = null,
         Shopware_Components_Translation $translationComponent = null,
         Connection $connection = null,
-        OptInLoginServiceInterface $optInLoginService = null
+        OptInLoginServiceInterface $optInLoginService = null,
+        CSRFTokenValidator $csrfTokenValidator = null
     ) {
         $this->db = $db ?: Shopware()->Db();
         $this->eventManager = $eventManager ?: Shopware()->Events();
@@ -231,6 +248,7 @@ class sAdmin implements \Enlight_Hook
         $this->optInLoginService = $optInLoginService ?: Shopware()->Container()->get(OptInLoginService::class);
         $this->conditionalLineItemService = Shopware()->Container()->get(ConditionalLineItemServiceInterface::class);
         $this->cartOrderNumberProvider = Shopware()->Container()->get(CartOrderNumberProviderInterface::class);
+        $this->csrfTokenValidator = $csrfTokenValidator ?: Shopware()->Container()->get(CSRFTokenValidator::class);
     }
 
     /**
@@ -414,7 +432,7 @@ class sAdmin implements \Enlight_Hook
             ORDER BY position, name
         ';
 
-        $paymentMeans = $this->db->fetchAll(
+        $paymentMethods = $this->db->fetchAll(
             $sql,
             [
                 $subShopID,
@@ -422,28 +440,28 @@ class sAdmin implements \Enlight_Hook
             ]
         );
 
-        if ($paymentMeans === false) {
-            $paymentMeans = $this->db->fetchAll(
+        if (empty($paymentMethods)) {
+            $paymentMethods = $this->db->fetchAll(
                 'SELECT id, active, esdactive, mobile_inactive FROM s_core_paymentmeans ORDER BY position, name'
             );
         }
 
-        foreach ($paymentMeans as $payKey => $payValue) {
+        foreach ($paymentMethods as $payKey => $payValue) {
             // Hide payment means which are not active
             if (empty($payValue['active']) && $payValue['id'] != $user['additional']['user']['paymentpreset']) {
-                unset($paymentMeans[$payKey]);
+                unset($paymentMethods[$payKey]);
                 continue;
             }
 
             // If this is an esd order, hide payment means which are not accessible for esd
             if (empty($payValue['esdactive']) && $sEsd) {
-                unset($paymentMeans[$payKey]);
+                unset($paymentMethods[$payKey]);
                 continue;
             }
 
             // Handle blocking for smartphones
             if (!empty($payValue['mobile_inactive']) && $isMobile) {
-                unset($paymentMeans[$payKey]);
+                unset($paymentMethods[$payKey]);
                 continue;
             }
 
@@ -452,30 +470,27 @@ class sAdmin implements \Enlight_Hook
                 $this->sManageRisks($payValue['id'], null, $user)
                 && $payValue['id'] != $user['additional']['user']['paymentpreset']
             ) {
-                unset($paymentMeans[$payKey]);
-                continue;
+                unset($paymentMethods[$payKey]);
             }
         }
 
         // If no payment is left use always the fallback payment no matter if it has any restrictions too
-        if (!\count($paymentMeans)) {
-            $paymentMeans[] = ['id' => $this->config->offsetGet('paymentdefault')];
+        if (!\count($paymentMethods)) {
+            $paymentMethods[] = ['id' => $this->config->offsetGet('paymentdefault')];
         }
 
-        $paymentMeans = Shopware()->Container()->get(PaymentGatewayInterface::class)
-            ->getList(array_column($paymentMeans, 'id'), $this->contextService->getShopContext());
+        $paymentMethods = Shopware()->Container()->get(PaymentGatewayInterface::class)
+            ->getList(array_column($paymentMethods, 'id'), $this->contextService->getShopContext());
 
-        $paymentMeans = array_map(static function ($payment) {
+        $paymentMethods = array_map(static function ($payment) {
             return Shopware()->Container()->get(LegacyStructConverter::class)->convertPaymentStruct($payment);
-        }, $paymentMeans);
+        }, $paymentMethods);
 
-        $paymentMeans = $this->eventManager->filter(
+        return $this->eventManager->filter(
             'Shopware_Modules_Admin_GetPaymentMeans_DataFilter',
-            $paymentMeans,
+            $paymentMethods,
             ['subject' => $this]
         );
-
-        return $paymentMeans;
     }
 
     /**
@@ -489,9 +504,10 @@ class sAdmin implements \Enlight_Hook
      */
     public function sInitiatePaymentClass($paymentData)
     {
+        /** @var array<string, string> $dirs */
         $dirs = [];
 
-        if (substr($paymentData['class'], -\strlen('.php')) === '.php') {
+        if (str_ends_with($paymentData['class'], '.php')) {
             $index = substr($paymentData['class'], 0, (int) strpos($paymentData['class'], '.php'));
         } else {
             $index = $paymentData['class'];
@@ -510,7 +526,7 @@ class sAdmin implements \Enlight_Hook
 
         $sPaymentObject = new $class();
 
-        if (!$sPaymentObject) {
+        if (!$sPaymentObject instanceof BasePaymentMethod) {
             throw new Enlight_Exception('sValidateStep3 #02: Payment class not found');
         }
 
@@ -703,13 +719,15 @@ class sAdmin implements \Enlight_Hook
 
         $this->contextService->initializeContext();
 
+        $this->csrfTokenValidator->clearExistingCookie();
+
         if (!$this->config->get('clearBasketAfterLogout')) {
             $this->moduleManager->Basket()->sRefreshBasket();
 
             $countries = $this->sGetCountryList();
             $country = reset($countries);
 
-            $this->moduleManager->Admin()->sGetPremiumShippingcosts($country);
+            $this->sGetPremiumShippingcosts($country);
 
             $amount = $this->moduleManager->Basket()->sGetAmount();
             $this->session->offsetSet('sBasketAmount', empty($amount) ? 0 : array_shift($amount));
@@ -898,7 +916,7 @@ class sAdmin implements \Enlight_Hook
                 $passwordChangeDate,
                 $userMail,
                 $userId,
-                (int) ini_get('session.gc_maxlifetime'),
+                (int) \ini_get('session.gc_maxlifetime'),
             ]
         );
         $getUser = $getUser ?: [];
@@ -2998,9 +3016,9 @@ class sAdmin implements \Enlight_Hook
      * Get shipping costs
      * Used in sBasket and Checkout controller
      *
-     * @param array $country Array with details for a single country
+     * @param array<string, mixed>|null $country Array with details for a single country
      *
-     * @return array|false Array with shipping costs data, or false on failure
+     * @return ShippingCostArray|false Array with shipping costs data, or false on failure
      */
     public function sGetPremiumShippingcosts($country = null)
     {
@@ -3028,7 +3046,7 @@ class sAdmin implements \Enlight_Hook
         ]);
 
         $basket = $this->sGetDispatchBasket(empty($country['id']) ? null : $country['id']);
-        if (empty($basket) || $basket['count_article'] == 0) {
+        if (empty($basket) || (int) $basket['count_article'] === 0) {
             return false;
         }
         $country = $this->sGetCountry($basket['countryID']);
@@ -3075,7 +3093,7 @@ class sAdmin implements \Enlight_Hook
         );
 
         if (empty($dispatch)) {
-            return ['brutto' => 0, 'netto' => 0];
+            return self::NO_SHIPPING_COSTS;
         }
 
         if (empty($this->sSYSTEM->sUSERGROUPDATA['tax']) && !empty($this->sSYSTEM->sUSERGROUPDATA['id'])) {
@@ -3100,19 +3118,23 @@ class sAdmin implements \Enlight_Hook
                     'brutto' => $payment['surcharge'],
                     'netto' => round($payment['surcharge'] * 100 / (100 + $tax), 2),
                     'tax' => $tax,
+                    'value' => '0',
+                    'factor' => '0',
+                    'surcharge' => 0.0,
+                    'taxMode' => '0',
                 ];
             }
 
-            return ['brutto' => 0, 'netto' => 0];
+            return self::NO_SHIPPING_COSTS;
         }
 
         if (empty($dispatch['calculation'])) {
             $from = round($basket['weight'], 3);
-        } elseif ($dispatch['calculation'] == 1) {
+        } elseif ((int) $dispatch['calculation'] === Dispatch::CALCULATION_PRICE) {
             $from = round($basket['amount'], 2);
-        } elseif ($dispatch['calculation'] == 2) {
+        } elseif ((int) $dispatch['calculation'] === Dispatch::CALCULATION_NUMBER_OF_PRODUCTS) {
             $from = round($basket['count_article']);
-        } elseif ($dispatch['calculation'] == 3) {
+        } elseif ((int) $dispatch['calculation'] === Dispatch::CALCULATION_CUSTOM) {
             $from = round((float) $basket['calculation_value_' . $dispatch['id']], 2);
         } else {
             return false;
@@ -3150,14 +3172,14 @@ class sAdmin implements \Enlight_Hook
         $result['brutto'] = round($result['brutto'], 2);
         if (
             !empty($payment['surcharge'])
-            && $dispatch['surcharge_calculation'] != 2
+            && (int) $dispatch['surcharge_calculation'] !== Dispatch::SURCHARGE_CALCULATION_NEVER
             && (empty($basket['shippingfree']) || empty($dispatch['surcharge_calculation']))
         ) {
             $result['surcharge'] = $payment['surcharge'];
             $result['brutto'] += $result['surcharge'];
         }
         if ($result['brutto'] < 0) {
-            return ['brutto' => 0, 'netto' => 0];
+            return self::NO_SHIPPING_COSTS;
         }
 
         $result['taxMode'] = $dispatch['tax_calculation'];
@@ -3247,7 +3269,7 @@ class sAdmin implements \Enlight_Hook
                 ]
             );
 
-            //destroy cookie
+            // destroy cookie
             $this->front->Response()->setCookie('sUniqueID');
         }
 
@@ -3255,6 +3277,8 @@ class sAdmin implements \Enlight_Hook
         $this->session->offsetSet('sUserPasswordChangeDate', $getUser['password_change_date']);
         $this->session->offsetSet('sUserId', $userId);
         $this->session->offsetSet('sNotesQuantity', $this->moduleManager->Basket()->sCountNotes());
+
+        $this->csrfTokenValidator->clearExistingCookie();
 
         if (!$this->sCheckUser()) {
             return;
@@ -3916,46 +3940,35 @@ SQL;
         );
         $isEmailExists = \count($result) === 0;
 
-        if ($result === false) {
-            $result = [
-                'code' => 10,
-                'message' => $this->snippetManager->getNamespace('frontend/account/internalMessages')
-                    ->get('UnknownError', 'Unknown error'),
-            ];
-
-            return $result;
-        } elseif (\count($result) === 0) {
+        if (\count($result) === 0) {
             $customer = $this->db->fetchOne(
                 'SELECT id FROM s_user WHERE email = ? LIMIT 1',
                 [$email]
             );
 
             $voteConfirmed = $this->front->getParam('voteConfirmed');
-            $now = $this->front->getParam('optinNow');
-            $now = isset($now) ? $now : (new DateTime())->format('Y-m-d H:i:s');
+            $now = $this->front->getParam('optinNow') ?? (new DateTime())->format('Y-m-d H:i:s');
 
             $added = $voteConfirmed ? $this->front->getParam('optinDate') : $now;
             $doubleOptInConfirmed = $voteConfirmed ? $now : null;
 
-            $result = $this->db->insert(
-                's_campaigns_mailaddresses',
-                [
-                    'customer' => (int) !empty($customer),
-                    'groupID' => $groupID,
-                    'email' => $email,
-                    'added' => $added,
-                    'double_optin_confirmed' => $doubleOptInConfirmed,
-                ]
-            );
-
-            if ($result === false) {
-                $result = [
+            try {
+                $this->db->insert(
+                    's_campaigns_mailaddresses',
+                    [
+                        'customer' => (int) !empty($customer),
+                        'groupID' => $groupID,
+                        'email' => $email,
+                        'added' => $added,
+                        'double_optin_confirmed' => $doubleOptInConfirmed,
+                    ]
+                );
+            } catch (Zend_Db_Exception $e) {
+                return [
                     'code' => 10,
                     'message' => $this->snippetManager->getNamespace('frontend/account/internalMessages')
                         ->get('UnknownError', 'Unknown error'),
                 ];
-
-                return $result;
             }
         }
 
@@ -3968,14 +3981,12 @@ SQL;
             ]
         );
 
-        $result = [
+        return [
             'code' => 3,
             'message' => $this->snippetManager->getNamespace('frontend/account/internalMessages')
                 ->get('NewsletterSuccess', 'Thank you for receiving our newsletter'),
             'isNewRegistration' => $isEmailExists,
         ];
-
-        return $result;
     }
 
     /**
@@ -3998,7 +4009,7 @@ SQL;
         foreach ($dispatches as $dispatch) {
             if (empty($dispatch['calculation'])) {
                 $from = round((float) $basket['weight'], 3);
-            } elseif ($dispatch['calculation'] == 1) {
+            } elseif ((int) $dispatch['calculation'] === Dispatch::CALCULATION_PRICE) {
                 if (
                     ($this->config->get('sARTICLESOUTPUTNETTO') && !$this->sSYSTEM->sUSERGROUPDATA['tax'])
                     || (!$this->sSYSTEM->sUSERGROUPDATA['tax'] && $this->sSYSTEM->sUSERGROUPDATA['id'])
@@ -4007,9 +4018,9 @@ SQL;
                 } else {
                     $from = round((float) $basket['amount'], 2);
                 }
-            } elseif ($dispatch['calculation'] == 2) {
+            } elseif ((int) $dispatch['calculation'] === Dispatch::CALCULATION_NUMBER_OF_PRODUCTS) {
                 $from = (int) $basket['count_article'];
-            } elseif ($dispatch['calculation'] == 3) {
+            } elseif ((int) $dispatch['calculation'] === Dispatch::CALCULATION_CUSTOM) {
                 $from = (int) $basket['calculation_value_' . $dispatch['id']];
             } else {
                 continue;
@@ -4043,7 +4054,7 @@ SQL;
             ->getNamespace('backend/static/discounts_surcharges')
             ->get('discount_name', 'Warenkorbrabatt');
 
-        $basket_discount = $this->db->fetchOne(
+        $basket_discount = (float) $this->db->fetchOne(
             'SELECT basketdiscount
                 FROM s_core_customergroups_discounts
                 WHERE groupID = ?
@@ -4137,7 +4148,7 @@ SQL;
         $payment['surcharge'] = round($payment['surcharge'] * $currencyFactor, 2);
 
         // Fixed surcharge
-        if (!empty($payment['surcharge']) && (empty($dispatch) || $dispatch['surcharge_calculation'] == 3)) {
+        if (!empty($payment['surcharge']) && (empty($dispatch) || (int) $dispatch['surcharge_calculation'] === Dispatch::SURCHARGE_CALCULATION_AS_CART_ITEM)) {
             $surcharge = round($payment['surcharge'], 2);
             $payment['surcharge'] = 0;
 
@@ -4161,7 +4172,7 @@ SQL;
         }
 
         // Percentage surcharge
-        if (!empty($payment['debit_percent']) && (empty($dispatch) || $dispatch['surcharge_calculation'] != 2)) {
+        if (!empty($payment['debit_percent']) && (empty($dispatch) || (int) $dispatch['surcharge_calculation'] !== Dispatch::SURCHARGE_CALCULATION_NEVER)) {
             $amount = (float) $this->db->fetchOne(
                 'SELECT SUM(quantity*price) AS amount
                 FROM s_order_basket

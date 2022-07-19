@@ -27,11 +27,6 @@
  * @author shopware AG
  */
 
-/**
- * Shopware Model - Article backend module.
- *
- * todo@all: Documentation
- */
 //{block name="backend/article/model/template"}
 Ext.define('Shopware.apps.Article.model.Template', {
 
@@ -50,7 +45,6 @@ Ext.define('Shopware.apps.Article.model.Template', {
         { name: 'id', type: 'string' },
         { name: 'name', type: 'string' }
     ]
-
 
 });
 //{/block}

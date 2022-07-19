@@ -1,29 +1,13 @@
 <?php
 
-/*
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * This software consists of voluntary contributions made by many individuals
- * and is licensed under the MIT license. For more information, see
- * <http://www.doctrine-project.org>.
- */
+declare(strict_types=1);
 
 namespace Doctrine\ORM\Tools\Pagination;
 
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Platforms\DB2Platform;
 use Doctrine\DBAL\Platforms\OraclePlatform;
-use Doctrine\DBAL\Platforms\PostgreSqlPlatform;
+use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Platforms\SQLAnywherePlatform;
 use Doctrine\DBAL\Platforms\SQLServerPlatform;
 use Doctrine\ORM\EntityManagerInterface;
@@ -32,8 +16,10 @@ use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\Query\AST\OrderByClause;
 use Doctrine\ORM\Query\AST\PartialObjectExpression;
+use Doctrine\ORM\Query\AST\PathExpression;
 use Doctrine\ORM\Query\AST\SelectExpression;
 use Doctrine\ORM\Query\AST\SelectStatement;
+use Doctrine\ORM\Query\Parser;
 use Doctrine\ORM\Query\ParserResult;
 use Doctrine\ORM\Query\QueryException;
 use Doctrine\ORM\Query\ResultSetMapping;
@@ -42,6 +28,7 @@ use RuntimeException;
 
 use function array_diff;
 use function array_keys;
+use function assert;
 use function count;
 use function implode;
 use function in_array;
@@ -61,6 +48,8 @@ use function substr;
  *
  * Works with composite keys but cannot deal with queries that have multiple
  * root entities (e.g. `SELECT f, b from Foo, Bar`)
+ *
+ * @psalm-import-type QueryComponent from Parser
  */
 class LimitSubqueryOutputWalker extends SqlWalker
 {
@@ -71,9 +60,6 @@ class LimitSubqueryOutputWalker extends SqlWalker
 
     /** @var ResultSetMapping */
     private $rsm;
-
-    /** @var mixed[] */
-    private $queryComponents;
 
     /** @var int */
     private $firstResult;
@@ -91,7 +77,7 @@ class LimitSubqueryOutputWalker extends SqlWalker
      */
     private $quoteStrategy;
 
-    /** @var mixed[] */
+    /** @var list<PathExpression> */
     private $orderByPathExpressions = [];
 
     /**
@@ -108,12 +94,12 @@ class LimitSubqueryOutputWalker extends SqlWalker
      * @param Query        $query
      * @param ParserResult $parserResult
      * @param mixed[]      $queryComponents
+     * @psalm-param array<string, QueryComponent> $queryComponents
      */
     public function __construct($query, $parserResult, array $queryComponents)
     {
-        $this->platform        = $query->getEntityManager()->getConnection()->getDatabasePlatform();
-        $this->rsm             = $parserResult->getResultSetMapping();
-        $this->queryComponents = $queryComponents;
+        $this->platform = $query->getEntityManager()->getConnection()->getDatabasePlatform();
+        $this->rsm      = $parserResult->getResultSetMapping();
 
         // Reset limit and offset
         $this->firstResult = $query->getFirstResult();
@@ -131,7 +117,7 @@ class LimitSubqueryOutputWalker extends SqlWalker
      */
     private function platformSupportsRowNumber(): bool
     {
-        return $this->platform instanceof PostgreSqlPlatform
+        return $this->platform instanceof PostgreSQLPlatform
             || $this->platform instanceof SQLServerPlatform
             || $this->platform instanceof OraclePlatform
             || $this->platform instanceof SQLAnywherePlatform
@@ -322,6 +308,7 @@ class LimitSubqueryOutputWalker extends SqlWalker
         // Get a map of referenced identifiers to field names.
         $selects = [];
         foreach ($orderByPathExpressions as $pathExpression) {
+            assert($pathExpression->field !== null);
             $idVar = $pathExpression->identificationVariable;
             $field = $pathExpression->field;
             if (! isset($selects[$idVar])) {
@@ -429,7 +416,7 @@ class LimitSubqueryOutputWalker extends SqlWalker
 
         // Generate DQL alias -> SQL table alias mapping
         foreach (array_keys($this->rsm->aliasMap) as $dqlAlias) {
-            $metadataList[$dqlAlias] = $class = $this->queryComponents[$dqlAlias]['metadata'];
+            $metadataList[$dqlAlias] = $class = $this->getMetadataForDqlAlias($dqlAlias);
             $aliasMap[$dqlAlias]     = $this->getSQLTableAlias($class->getTableName(), $dqlAlias);
         }
 
@@ -476,7 +463,7 @@ class LimitSubqueryOutputWalker extends SqlWalker
     /**
      * getter for $orderByPathExpressions
      *
-     * @return mixed[]
+     * @return list<PathExpression>
      */
     public function getOrderByPathExpressions()
     {
@@ -527,14 +514,14 @@ class LimitSubqueryOutputWalker extends SqlWalker
 
         $fromRoot       = reset($from);
         $rootAlias      = $fromRoot->rangeVariableDeclaration->aliasIdentificationVariable;
-        $rootClass      = $this->queryComponents[$rootAlias]['metadata'];
+        $rootClass      = $this->getMetadataForDqlAlias($rootAlias);
         $rootIdentifier = $rootClass->identifier;
 
         // For every identifier, find out the SQL alias by combing through the ResultSetMapping
         $sqlIdentifier = [];
         foreach ($rootIdentifier as $property) {
             if (isset($rootClass->fieldMappings[$property])) {
-                foreach (array_keys($this->rsm->fieldMappings, $property) as $alias) {
+                foreach (array_keys($this->rsm->fieldMappings, $property, true) as $alias) {
                     if ($this->rsm->columnOwnerMap[$alias] === $rootAlias) {
                         $sqlIdentifier[$property] = $alias;
                     }
@@ -544,7 +531,7 @@ class LimitSubqueryOutputWalker extends SqlWalker
             if (isset($rootClass->associationMappings[$property])) {
                 $joinColumn = $rootClass->associationMappings[$property]['joinColumns'][0]['name'];
 
-                foreach (array_keys($this->rsm->metaMappings, $joinColumn) as $alias) {
+                foreach (array_keys($this->rsm->metaMappings, $joinColumn, true) as $alias) {
                     if ($this->rsm->columnOwnerMap[$alias] === $rootAlias) {
                         $sqlIdentifier[$property] = $alias;
                     }
@@ -571,7 +558,7 @@ class LimitSubqueryOutputWalker extends SqlWalker
      */
     public function walkPathExpression($pathExpr)
     {
-        if (! $this->inSubSelect && ! $this->platformSupportsRowNumber() && ! in_array($pathExpr, $this->orderByPathExpressions)) {
+        if (! $this->inSubSelect && ! $this->platformSupportsRowNumber() && ! in_array($pathExpr, $this->orderByPathExpressions, true)) {
             $this->orderByPathExpressions[] = $pathExpr;
         }
 

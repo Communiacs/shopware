@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Doctrine\ORM\Tools\Console\EntityManagerProvider;
 
 use Doctrine\Deprecations\Deprecation;
@@ -10,6 +12,9 @@ use Symfony\Component\Console\Helper\HelperSet;
 
 use function assert;
 
+/**
+ * @deprecated This class will be removed in ORM 3.0 without replacement.
+ */
 final class HelperSetManagerProvider implements EntityManagerProvider
 {
     /** @var HelperSet */

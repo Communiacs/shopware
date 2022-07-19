@@ -261,10 +261,7 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
      */
     public function getListAction()
     {
-        /** @var string $name */
-        $name = $this->Request()->get('_repositoryClass');
-
-        /** @var QueryBuilder $builder */
+        $name = (string) $this->Request()->get('_repositoryClass');
         $builder = $this->getRepository($name)->createQueryBuilder($name);
 
         switch ($name) {
@@ -397,7 +394,7 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
                     ];
                     $row['data'] = !\is_string($row['data']) ? var_export($row['data'], true) : $row['data'];
                 }
-                //get the total count
+                // get the total count
                 $select->reset(Zend_Db_Select::FROM);
                 $select->reset(Zend_Db_Select::LIMIT_COUNT);
                 $select->reset(Zend_Db_Select::LIMIT_OFFSET);
@@ -458,8 +455,7 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
      */
     public function getValuesAction()
     {
-        $name = $this->Request()->get('_repositoryClass');
-        /** @var QueryBuilder $builder */
+        $name = (string) $this->Request()->get('_repositoryClass');
         $builder = $this->getRepository($name)->createQueryBuilder($name);
 
         switch ($name) {
@@ -1453,7 +1449,7 @@ class Shopware_Controllers_Backend_Config extends Shopware_Controllers_Backend_E
             ]
         );
 
-        $element->setValues($values);
+        $element->setValues(new ArrayCollection($values));
 
         $modelManager->flush($element);
 

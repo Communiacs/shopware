@@ -520,7 +520,7 @@ class Backup
         $backup->setItems($items);
         $backup->setPath($path);
         $backup->setHash(sha1_file($path));
-        $backup->setSize(filesize($path));
+        $backup->setSize((int) filesize($path));
 
         $backup->setDate(new DateTime());
 
@@ -550,6 +550,9 @@ class Backup
         $outFileFooter = $path . $table . '.footersql';
 
         $fileHandle = fopen($outFileData, 'w');
+        if (!\is_resource($fileHandle)) {
+            throw new RuntimeException(sprintf('Could not open stream at "%s"', $outFileData));
+        }
 
         $columns = $this->getAffectedColumns($table);
         $sqlColumns = implode(', ', $columns);

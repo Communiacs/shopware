@@ -120,13 +120,21 @@ class Shopware_Plugins_Core_CronBirthday_Bootstrap extends Shopware_Components_P
                 WHERE id=?
                 AND userID IS NULL
             ';
-            $result = Shopware()->Db()->query($sql, [
-                $user['userID'], $voucher['vouchercodeID'],
-            ]);
-            if (empty($result)) {
+            try {
+                $result = Shopware()->Db()->query($sql, [
+                    $user['userID'],
+                    $voucher['vouchercodeID'],
+                ]);
+            } catch (Zend_Db_Exception $e) {
                 continue;
             }
-            $result = $result->rowCount();
+
+            try {
+                $result = $result->rowCount();
+            } catch (Zend_Db_Exception $e) {
+                continue;
+            }
+
             if (empty($result)) {
                 continue;
             }
@@ -136,7 +144,7 @@ class Shopware_Plugins_Core_CronBirthday_Bootstrap extends Shopware_Components_P
             $shop = $repository->getActiveById($shopId);
             $this->get(ShopRegistrationServiceInterface::class)->registerShop($shop);
 
-            //language subshopID
+            // language subshopID
             $context = [
                 'sUser' => $user,
                 'sVoucher' => $voucher,

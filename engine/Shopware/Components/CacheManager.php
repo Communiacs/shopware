@@ -265,7 +265,7 @@ class CacheManager
         $configuration = $this->emConfig;
 
         $metaDataCache = $configuration->getMetadataCacheImpl();
-        if (method_exists($metaDataCache, 'deleteAll')) {
+        if ($metaDataCache !== null && method_exists($metaDataCache, 'deleteAll')) {
             $metaDataCache->deleteAll();
         }
 
@@ -283,7 +283,7 @@ class CacheManager
 
     public function clearOpCache()
     {
-        if (\extension_loaded('Zend OPcache') && ini_get('opcache.enable')) {
+        if (\extension_loaded('Zend OPcache') && \ini_get('opcache.enable')) {
             opcache_reset();
         }
     }
@@ -414,7 +414,7 @@ class CacheManager
     public function getOpCacheCacheInfo()
     {
         $info = [];
-        if (\extension_loaded('Zend OPcache') && ini_get('opcache.enable')) {
+        if (\extension_loaded('Zend OPcache') && \ini_get('opcache.enable')) {
             $status = opcache_get_status(false);
             $info['files'] = $status['opcache_statistics']['num_cached_scripts'];
             $info['size'] = $this->encodeSize($status['memory_usage']['used_memory']);

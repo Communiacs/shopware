@@ -1,31 +1,20 @@
 <?php
 
-/*
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * This software consists of voluntary contributions made by many individuals
- * and is licensed under the MIT license. For more information, see
- * <http://www.doctrine-project.org>.
- */
+declare(strict_types=1);
 
 namespace Doctrine\ORM;
 
+use BackedEnum;
 use Countable;
+use Doctrine\Common\Cache\Psr6\CacheAdapter;
+use Doctrine\Common\Cache\Psr6\DoctrineProvider;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Util\ClassUtils;
 use Doctrine\DBAL\Cache\QueryCacheProfile;
-use Doctrine\DBAL\Driver\ResultStatement;
+use Doctrine\DBAL\Result;
 use Doctrine\Deprecations\Deprecation;
+use Doctrine\ORM\Cache\Exception\InvalidResultCacheDriver;
 use Doctrine\ORM\Cache\Logging\CacheLogger;
 use Doctrine\ORM\Cache\QueryCacheKey;
 use Doctrine\ORM\Cache\TimestampCacheKey;
@@ -35,18 +24,23 @@ use Doctrine\ORM\Query\Parameter;
 use Doctrine\ORM\Query\QueryException;
 use Doctrine\ORM\Query\ResultSetMapping;
 use Doctrine\Persistence\Mapping\MappingException;
+use LogicException;
+use Psr\Cache\CacheItemPoolInterface;
 use Traversable;
 
 use function array_map;
 use function array_shift;
+use function assert;
 use function count;
 use function is_array;
 use function is_numeric;
 use function is_object;
 use function is_scalar;
+use function is_string;
 use function iterator_count;
 use function iterator_to_array;
 use function ksort;
+use function method_exists;
 use function reset;
 use function serialize;
 use function sha1;
@@ -86,6 +80,11 @@ abstract class AbstractQuery
     public const HYDRATE_SIMPLEOBJECT = 5;
 
     /**
+     * Hydrates scalar column value.
+     */
+    public const HYDRATE_SCALAR_COLUMN = 6;
+
+    /**
      * The parameter map of this query.
      *
      * @var ArrayCollection|Parameter[]
@@ -96,7 +95,7 @@ abstract class AbstractQuery
     /**
      * The user-specified ResultSetMapping to use.
      *
-     * @var ResultSetMapping
+     * @var ResultSetMapping|null
      */
     protected $_resultSetMapping;
 
@@ -118,6 +117,7 @@ abstract class AbstractQuery
      * The hydration mode.
      *
      * @var string|int
+     * @psalm-var string|AbstractQuery::HYDRATE_*
      */
     protected $_hydrationMode = self::HYDRATE_OBJECT;
 
@@ -131,7 +131,7 @@ abstract class AbstractQuery
      */
     protected $_expireResultCache = false;
 
-    /** @var QueryCacheProfile */
+    /** @var QueryCacheProfile|null */
     protected $_hydrationCacheProfile;
 
     /**
@@ -155,6 +155,7 @@ abstract class AbstractQuery
      * Second level query cache mode.
      *
      * @var int|null
+     * @psalm-var Cache::MODE_*|null
      */
     protected $cacheMode;
 
@@ -186,7 +187,7 @@ abstract class AbstractQuery
      *
      * @param bool $cacheable
      *
-     * @return static This query instance.
+     * @return $this
      */
     public function setCacheable($cacheable)
     {
@@ -206,7 +207,7 @@ abstract class AbstractQuery
     /**
      * @param string $cacheRegion
      *
-     * @return static This query instance.
+     * @return $this
      */
     public function setCacheRegion($cacheRegion)
     {
@@ -246,7 +247,7 @@ abstract class AbstractQuery
      *
      * @param int $lifetime
      *
-     * @return static This query instance.
+     * @return $this
      */
     public function setLifetime($lifetime)
     {
@@ -256,7 +257,8 @@ abstract class AbstractQuery
     }
 
     /**
-     * @return int
+     * @return int|null
+     * @psalm-return Cache::MODE_*|null
      */
     public function getCacheMode()
     {
@@ -265,8 +267,9 @@ abstract class AbstractQuery
 
     /**
      * @param int $cacheMode
+     * @psalm-param Cache::MODE_* $cacheMode
      *
-     * @return static This query instance.
+     * @return $this
      */
     public function setCacheMode($cacheMode)
     {
@@ -280,7 +283,7 @@ abstract class AbstractQuery
      * The returned SQL syntax depends on the connection driver that is used
      * by this query object at the time of this method call.
      *
-     * @return string SQL query
+     * @return list<string>|string SQL query
      */
     abstract public function getSQL();
 
@@ -347,11 +350,10 @@ abstract class AbstractQuery
      * @param ArrayCollection|mixed[] $parameters
      * @psalm-param ArrayCollection<int, Parameter>|mixed[] $parameters
      *
-     * @return static This query instance.
+     * @return $this
      */
     public function setParameters($parameters)
     {
-        // BC compatibility with 2.3-
         if (is_array($parameters)) {
             /** @psalm-var ArrayCollection<int, Parameter> $parameterCollection */
             $parameterCollection = new ArrayCollection();
@@ -371,13 +373,13 @@ abstract class AbstractQuery
     /**
      * Sets a query parameter.
      *
-     * @param string|int  $key   The parameter position or name.
-     * @param mixed       $value The parameter value.
-     * @param string|null $type  The parameter type. If specified, the given value will be run through
-     *                           the type conversion of this type. This is usually not needed for
-     *                           strings and numeric types.
+     * @param string|int      $key   The parameter position or name.
+     * @param mixed           $value The parameter value.
+     * @param string|int|null $type  The parameter type. If specified, the given value will be run through
+     *                               the type conversion of this type. This is usually not needed for
+     *                               strings and numeric types.
      *
-     * @return static This query instance.
+     * @return $this
      */
     public function setParameter($key, $value, $type = null)
     {
@@ -399,8 +401,8 @@ abstract class AbstractQuery
      *
      * @param mixed $value
      *
-     * @return mixed[]|string|int|float|bool
-     * @psalm-return array|scalar
+     * @return mixed[]|string|int|float|bool|object|null
+     * @psalm-return array|scalar|object|null
      *
      * @throws ORMInvalidArgumentException
      */
@@ -424,15 +426,20 @@ abstract class AbstractQuery
             return $value->name;
         }
 
+        if ($value instanceof BackedEnum) {
+            return $value->value;
+        }
+
         if (! is_object($value)) {
             return $value;
         }
 
         try {
+            $class = ClassUtils::getClass($value);
             $value = $this->_em->getUnitOfWork()->getSingleIdentifierValue($value);
 
             if ($value === null) {
-                throw ORMInvalidArgumentException::invalidIdentifierBindingEntity();
+                throw ORMInvalidArgumentException::invalidIdentifierBindingEntity($class);
             }
         } catch (MappingException | ORMMappingException $e) {
             /* Silence any mapping exceptions. These can occur if the object in
@@ -484,7 +491,7 @@ abstract class AbstractQuery
     /**
      * Sets the ResultSetMapping that should be used for hydration.
      *
-     * @return static This query instance.
+     * @return $this
      */
     public function setResultSetMapping(Query\ResultSetMapping $rsm)
     {
@@ -497,7 +504,7 @@ abstract class AbstractQuery
     /**
      * Gets the ResultSetMapping used for hydration.
      *
-     * @return ResultSetMapping
+     * @return ResultSetMapping|null
      */
     protected function getResultSetMapping()
     {
@@ -529,7 +536,7 @@ abstract class AbstractQuery
      * some form of caching with UnitOfWork registration you should use
      * {@see AbstractQuery::setResultCacheProfile()}.
      *
-     * @return static This query instance.
+     * @return $this
      *
      * @example
      * $lifetime = 100;
@@ -539,9 +546,25 @@ abstract class AbstractQuery
      */
     public function setHydrationCacheProfile(?QueryCacheProfile $profile = null)
     {
-        if ($profile !== null && ! $profile->getResultCacheDriver()) {
-            $resultCacheDriver = $this->_em->getConfiguration()->getHydrationCacheImpl();
-            $profile           = $profile->setResultCacheDriver($resultCacheDriver);
+        if ($profile === null) {
+            $this->_hydrationCacheProfile = null;
+
+            return $this;
+        }
+
+        // DBAL 2
+        if (! method_exists(QueryCacheProfile::class, 'setResultCache')) {
+            if (! $profile->getResultCacheDriver()) {
+                $defaultHydrationCacheImpl = $this->_em->getConfiguration()->getHydrationCache();
+                if ($defaultHydrationCacheImpl) {
+                    $profile = $profile->setResultCacheDriver(DoctrineProvider::wrap($defaultHydrationCacheImpl));
+                }
+            }
+        } elseif (! $profile->getResultCache()) {
+            $defaultHydrationCacheImpl = $this->_em->getConfiguration()->getHydrationCache();
+            if ($defaultHydrationCacheImpl) {
+                $profile = $profile->setResultCache($defaultHydrationCacheImpl);
+            }
         }
 
         $this->_hydrationCacheProfile = $profile;
@@ -550,7 +573,7 @@ abstract class AbstractQuery
     }
 
     /**
-     * @return QueryCacheProfile
+     * @return QueryCacheProfile|null
      */
     public function getHydrationCacheProfile()
     {
@@ -563,13 +586,29 @@ abstract class AbstractQuery
      * If no result cache driver is set in the QueryCacheProfile, the default
      * result cache driver is used from the configuration.
      *
-     * @return static This query instance.
+     * @return $this
      */
     public function setResultCacheProfile(?QueryCacheProfile $profile = null)
     {
-        if ($profile !== null && ! $profile->getResultCacheDriver()) {
-            $resultCacheDriver = $this->_em->getConfiguration()->getResultCacheImpl();
-            $profile           = $profile->setResultCacheDriver($resultCacheDriver);
+        if ($profile === null) {
+            $this->_queryCacheProfile = null;
+
+            return $this;
+        }
+
+        // DBAL 2
+        if (! method_exists(QueryCacheProfile::class, 'setResultCache')) {
+            if (! $profile->getResultCacheDriver()) {
+                $defaultResultCacheDriver = $this->_em->getConfiguration()->getResultCache();
+                if ($defaultResultCacheDriver) {
+                    $profile = $profile->setResultCacheDriver(DoctrineProvider::wrap($defaultResultCacheDriver));
+                }
+            }
+        } elseif (! $profile->getResultCache()) {
+            $defaultResultCache = $this->_em->getConfiguration()->getResultCache();
+            if ($defaultResultCache) {
+                $profile = $profile->setResultCache($defaultResultCache);
+            }
         }
 
         $this->_queryCacheProfile = $profile;
@@ -580,22 +619,53 @@ abstract class AbstractQuery
     /**
      * Defines a cache driver to be used for caching result sets and implicitly enables caching.
      *
+     * @deprecated Use {@see setResultCache()} instead.
+     *
      * @param \Doctrine\Common\Cache\Cache|null $resultCacheDriver Cache driver
      *
-     * @return static This query instance.
+     * @return $this
      *
-     * @throws ORMException
+     * @throws InvalidResultCacheDriver
      */
     public function setResultCacheDriver($resultCacheDriver = null)
     {
         /** @phpstan-ignore-next-line */
         if ($resultCacheDriver !== null && ! ($resultCacheDriver instanceof \Doctrine\Common\Cache\Cache)) {
-            throw ORMException::invalidResultCacheDriver();
+            throw InvalidResultCacheDriver::create();
+        }
+
+        return $this->setResultCache($resultCacheDriver ? CacheAdapter::wrap($resultCacheDriver) : null);
+    }
+
+    /**
+     * Defines a cache driver to be used for caching result sets and implicitly enables caching.
+     *
+     * @return $this
+     */
+    public function setResultCache(?CacheItemPoolInterface $resultCache = null)
+    {
+        if ($resultCache === null) {
+            if ($this->_queryCacheProfile) {
+                $this->_queryCacheProfile = new QueryCacheProfile($this->_queryCacheProfile->getLifetime(), $this->_queryCacheProfile->getCacheKey());
+            }
+
+            return $this;
+        }
+
+        // DBAL 2
+        if (! method_exists(QueryCacheProfile::class, 'setResultCache')) {
+            $resultCacheDriver = DoctrineProvider::wrap($resultCache);
+
+            $this->_queryCacheProfile = $this->_queryCacheProfile
+                ? $this->_queryCacheProfile->setResultCacheDriver($resultCacheDriver)
+                : new QueryCacheProfile(0, null, $resultCacheDriver);
+
+            return $this;
         }
 
         $this->_queryCacheProfile = $this->_queryCacheProfile
-            ? $this->_queryCacheProfile->setResultCacheDriver($resultCacheDriver)
-            : new QueryCacheProfile(0, null, $resultCacheDriver);
+            ? $this->_queryCacheProfile->setResultCache($resultCache)
+            : new QueryCacheProfile(0, null, $resultCache);
 
         return $this;
     }
@@ -626,7 +696,7 @@ abstract class AbstractQuery
      * @param int    $lifetime      How long the cache entry is valid, in seconds.
      * @param string $resultCacheId ID to use for the cache entry.
      *
-     * @return static This query instance.
+     * @return $this
      */
     public function useResultCache($useCache, $lifetime = null, $resultCacheId = null)
     {
@@ -642,7 +712,7 @@ abstract class AbstractQuery
      * @param int|null    $lifetime      How long the cache entry is valid, in seconds.
      * @param string|null $resultCacheId ID to use for the cache entry.
      *
-     * @return static This query instance.
+     * @return $this
      */
     public function enableResultCache(?int $lifetime = null, ?string $resultCacheId = null): self
     {
@@ -655,7 +725,7 @@ abstract class AbstractQuery
     /**
      * Disables caching of the results of this query.
      *
-     * @return static This query instance.
+     * @return $this
      */
     public function disableResultCache(): self
     {
@@ -669,15 +739,33 @@ abstract class AbstractQuery
      *
      * @param int|null $lifetime How long the cache entry is valid, in seconds.
      *
-     * @return static This query instance.
+     * @return $this
      */
     public function setResultCacheLifetime($lifetime)
     {
-        $lifetime = $lifetime !== null ? (int) $lifetime : 0;
+        $lifetime = (int) $lifetime;
 
-        $this->_queryCacheProfile = $this->_queryCacheProfile
-            ? $this->_queryCacheProfile->setLifetime($lifetime)
-            : new QueryCacheProfile($lifetime, null, $this->_em->getConfiguration()->getResultCacheImpl());
+        if ($this->_queryCacheProfile) {
+            $this->_queryCacheProfile = $this->_queryCacheProfile->setLifetime($lifetime);
+
+            return $this;
+        }
+
+        $this->_queryCacheProfile = new QueryCacheProfile($lifetime);
+
+        $cache = $this->_em->getConfiguration()->getResultCache();
+        if (! $cache) {
+            return $this;
+        }
+
+        // Compatibility for DBAL 2
+        if (! method_exists($this->_queryCacheProfile, 'setResultCache')) {
+            $this->_queryCacheProfile = $this->_queryCacheProfile->setResultCacheDriver(DoctrineProvider::wrap($cache));
+
+            return $this;
+        }
+
+        $this->_queryCacheProfile = $this->_queryCacheProfile->setResultCache($cache);
 
         return $this;
     }
@@ -699,7 +787,7 @@ abstract class AbstractQuery
      *
      * @param bool $expire Whether or not to force resultset cache expiration.
      *
-     * @return static This query instance.
+     * @return $this
      */
     public function expireResultCache($expire = true)
     {
@@ -735,7 +823,7 @@ abstract class AbstractQuery
      * @param string $assocName
      * @param int    $fetchMode
      *
-     * @return static This query instance.
+     * @return $this
      */
     public function setFetchMode($class, $assocName, $fetchMode)
     {
@@ -753,8 +841,9 @@ abstract class AbstractQuery
      *
      * @param string|int $hydrationMode Doctrine processing mode to be used during hydration process.
      *                                  One of the Query::HYDRATE_* constants.
+     * @psalm-param string|AbstractQuery::HYDRATE_* $hydrationMode
      *
-     * @return static This query instance.
+     * @return $this
      */
     public function setHydrationMode($hydrationMode)
     {
@@ -767,6 +856,7 @@ abstract class AbstractQuery
      * Gets the hydration mode currently used by the query.
      *
      * @return string|int
+     * @psalm-return string|AbstractQuery::HYDRATE_*
      */
     public function getHydrationMode()
     {
@@ -779,6 +869,7 @@ abstract class AbstractQuery
      * Alias for execute(null, $hydrationMode = HYDRATE_OBJECT).
      *
      * @param string|int $hydrationMode
+     * @psalm-param string|AbstractQuery::HYDRATE_* $hydrationMode
      *
      * @return mixed
      */
@@ -800,6 +891,18 @@ abstract class AbstractQuery
     }
 
     /**
+     * Gets one-dimensional array of results for the query.
+     *
+     * Alias for execute(null, HYDRATE_SCALAR_COLUMN).
+     *
+     * @return mixed[]
+     */
+    public function getSingleColumnResult()
+    {
+        return $this->execute(null, self::HYDRATE_SCALAR_COLUMN);
+    }
+
+    /**
      * Gets the scalar results for the query.
      *
      * Alias for execute(null, HYDRATE_SCALAR).
@@ -814,7 +917,8 @@ abstract class AbstractQuery
     /**
      * Get exactly one result or null.
      *
-     * @param string|int $hydrationMode
+     * @param string|int|null $hydrationMode
+     * @psalm-param string|AbstractQuery::HYDRATE_*|null $hydrationMode
      *
      * @return mixed
      *
@@ -851,7 +955,8 @@ abstract class AbstractQuery
      * If the result is not unique, a NonUniqueResultException is thrown.
      * If there is no result, a NoResultException is thrown.
      *
-     * @param string|int $hydrationMode
+     * @param string|int|null $hydrationMode
+     * @psalm-param string|AbstractQuery::HYDRATE_*|null $hydrationMode
      *
      * @return mixed
      *
@@ -886,7 +991,6 @@ abstract class AbstractQuery
      *
      * @throws NoResultException        If the query returned no result.
      * @throws NonUniqueResultException If the query result is not unique.
-     * @throws NoResultException        If the query returned no result.
      */
     public function getSingleScalarResult()
     {
@@ -899,7 +1003,7 @@ abstract class AbstractQuery
      * @param string $name  The name of the hint.
      * @param mixed  $value The value of the hint.
      *
-     * @return static This query instance.
+     * @return $this
      */
     public function setHint($name, $value)
     {
@@ -950,6 +1054,7 @@ abstract class AbstractQuery
      *
      * @param ArrayCollection|mixed[]|null $parameters    The query parameters.
      * @param string|int|null              $hydrationMode The hydration mode to use.
+     * @psalm-param string|AbstractQuery::HYDRATE_*|null $hydrationMode The hydration mode to use.
      *
      * @return IterableResult
      */
@@ -970,7 +1075,11 @@ abstract class AbstractQuery
             $this->setParameters($parameters);
         }
 
-        $rsm  = $this->getResultSetMapping();
+        $rsm = $this->getResultSetMapping();
+        if ($rsm === null) {
+            throw new LogicException('Uninitialized result set mapping.');
+        }
+
         $stmt = $this->_doExecute();
 
         return $this->_em->newHydrator($this->_hydrationMode)->iterate($stmt, $rsm, $this->_hints);
@@ -983,6 +1092,7 @@ abstract class AbstractQuery
      * @param ArrayCollection|array|mixed[] $parameters    The query parameters.
      * @param string|int|null               $hydrationMode The hydration mode to use.
      * @psalm-param ArrayCollection<int, Parameter>|mixed[] $parameters
+     * @psalm-param string|AbstractQuery::HYDRATE_*|null    $hydrationMode
      *
      * @return iterable<mixed>
      */
@@ -1000,6 +1110,9 @@ abstract class AbstractQuery
         }
 
         $rsm = $this->getResultSetMapping();
+        if ($rsm === null) {
+            throw new LogicException('Uninitialized result set mapping.');
+        }
 
         if ($rsm->isMixed && count($rsm->scalarMappings) > 0) {
             throw QueryException::iterateWithMixedResultNotAllowed();
@@ -1016,6 +1129,7 @@ abstract class AbstractQuery
      * @param ArrayCollection|mixed[]|null $parameters    Query parameters.
      * @param string|int|null              $hydrationMode Processing mode to be used during the hydration process.
      * @psalm-param ArrayCollection<int, Parameter>|mixed[]|null $parameters
+     * @psalm-param string|AbstractQuery::HYDRATE_*|null         $hydrationMode
      *
      * @return mixed
      */
@@ -1034,6 +1148,7 @@ abstract class AbstractQuery
      * @param ArrayCollection|mixed[]|null $parameters
      * @param string|int|null              $hydrationMode
      * @psalm-param ArrayCollection<int, Parameter>|mixed[]|null $parameters
+     * @psalm-param string|AbstractQuery::HYDRATE_*|null         $hydrationMode
      *
      * @return mixed
      */
@@ -1053,9 +1168,9 @@ abstract class AbstractQuery
         if ($this->_hydrationCacheProfile !== null) {
             [$cacheKey, $realCacheKey] = $this->getHydrationCacheId();
 
-            $queryCacheProfile = $this->getHydrationCacheProfile();
-            $cache             = $queryCacheProfile->getResultCacheDriver();
-            $result            = $cache->fetch($cacheKey);
+            $cache     = $this->getHydrationCache();
+            $cacheItem = $cache->getItem($cacheKey);
+            $result    = $cacheItem->isHit() ? $cacheItem->get() : [];
 
             if (isset($result[$realCacheKey])) {
                 return $result[$realCacheKey];
@@ -1065,10 +1180,8 @@ abstract class AbstractQuery
                 $result = [];
             }
 
-            $setCacheEntry = static function ($data) use ($cache, $result, $cacheKey, $realCacheKey, $queryCacheProfile): void {
-                $result[$realCacheKey] = $data;
-
-                $cache->save($cacheKey, $result, $queryCacheProfile->getLifetime());
+            $setCacheEntry = static function ($data) use ($cache, $result, $cacheItem, $realCacheKey): void {
+                $cache->save($cacheItem->set($result + [$realCacheKey => $data]));
             };
         }
 
@@ -1080,12 +1193,34 @@ abstract class AbstractQuery
             return $stmt;
         }
 
-        $rsm  = $this->getResultSetMapping();
+        $rsm = $this->getResultSetMapping();
+        if ($rsm === null) {
+            throw new LogicException('Uninitialized result set mapping.');
+        }
+
         $data = $this->_em->newHydrator($this->_hydrationMode)->hydrateAll($stmt, $rsm, $this->_hints);
 
         $setCacheEntry($data);
 
         return $data;
+    }
+
+    private function getHydrationCache(): CacheItemPoolInterface
+    {
+        assert($this->_hydrationCacheProfile !== null);
+
+        // Support for DBAL 2
+        if (! method_exists($this->_hydrationCacheProfile, 'getResultCache')) {
+            $cacheDriver = $this->_hydrationCacheProfile->getResultCacheDriver();
+            assert($cacheDriver !== null);
+
+            return CacheAdapter::wrap($cacheDriver);
+        }
+
+        $cache = $this->_hydrationCacheProfile->getResultCache();
+        assert($cache !== null);
+
+        return $cache;
     }
 
     /**
@@ -1094,12 +1229,17 @@ abstract class AbstractQuery
      * @param ArrayCollection|mixed[]|null $parameters
      * @param string|int|null              $hydrationMode
      * @psalm-param ArrayCollection<int, Parameter>|mixed[]|null $parameters
+     * @psalm-param string|AbstractQuery::HYDRATE_*|null         $hydrationMode
      *
      * @return mixed
      */
     private function executeUsingQueryCache($parameters = null, $hydrationMode = null)
     {
-        $rsm        = $this->getResultSetMapping();
+        $rsm = $this->getResultSetMapping();
+        if ($rsm === null) {
+            throw new LogicException('Uninitialized result set mapping.');
+        }
+
         $queryCache = $this->_em->getCache()->getQueryCache($this->cacheRegion);
         $queryKey   = new QueryCacheKey(
             $this->getHash(),
@@ -1134,6 +1274,7 @@ abstract class AbstractQuery
 
     private function getTimestampKey(): ?TimestampCacheKey
     {
+        assert($this->_resultSetMapping !== null);
         $entityName = reset($this->_resultSetMapping->aliasMap);
 
         if (empty($entityName)) {
@@ -1150,7 +1291,8 @@ abstract class AbstractQuery
      * Will return the configured id if it exists otherwise a hash will be
      * automatically generated for you.
      *
-     * @return array<string, string> ($key, $hash)
+     * @return string[] ($key, $hash)
+     * @psalm-return array{string, string} ($key, $hash)
      */
     protected function getHydrationCacheId()
     {
@@ -1160,12 +1302,14 @@ abstract class AbstractQuery
             $parameters[$parameter->getName()] = $this->processParameterValue($parameter->getValue());
         }
 
-        $sql                    = $this->getSQL();
+        $sql = $this->getSQL();
+        assert(is_string($sql));
         $queryCacheProfile      = $this->getHydrationCacheProfile();
         $hints                  = $this->getHints();
         $hints['hydrationMode'] = $this->getHydrationMode();
 
         ksort($hints);
+        assert($queryCacheProfile !== null);
 
         return $queryCacheProfile->generateCacheKeys($sql, $parameters, $hints);
     }
@@ -1175,15 +1319,17 @@ abstract class AbstractQuery
      * If this is not explicitly set by the developer then a hash is automatically
      * generated for you.
      *
-     * @param string $id
+     * @param string|null $id
      *
-     * @return static This query instance.
+     * @return $this
      */
     public function setResultCacheId($id)
     {
-        $this->_queryCacheProfile = $this->_queryCacheProfile
-            ? $this->_queryCacheProfile->setCacheKey($id)
-            : new QueryCacheProfile(0, $id, $this->_em->getConfiguration()->getResultCacheImpl());
+        if (! $this->_queryCacheProfile) {
+            return $this->setResultCacheProfile(new QueryCacheProfile(0, $id));
+        }
+
+        $this->_queryCacheProfile = $this->_queryCacheProfile->setCacheKey($id);
 
         return $this;
     }
@@ -1193,7 +1339,7 @@ abstract class AbstractQuery
      *
      * @deprecated
      *
-     * @return string
+     * @return string|null
      */
     public function getResultCacheId()
     {
@@ -1203,9 +1349,9 @@ abstract class AbstractQuery
     /**
      * Executes the query and returns a the resulting Statement object.
      *
-     * @return ResultStatement|int The executed database statement that holds
-     *                             the results, or an integer indicating how
-     *                             many rows were affected.
+     * @return Result|int The executed database statement that holds
+     *                    the results, or an integer indicating how
+     *                    many rows were affected.
      */
     abstract protected function _doExecute();
 
@@ -1229,7 +1375,8 @@ abstract class AbstractQuery
      */
     protected function getHash()
     {
-        $query  = $this->getSQL();
+        $query = $this->getSQL();
+        assert(is_string($query));
         $hints  = $this->getHints();
         $params = array_map(function (Parameter $parameter) {
             $value = $parameter->getValue();

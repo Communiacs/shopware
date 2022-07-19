@@ -88,7 +88,7 @@ class PluginInstaller extends Shopware_Controllers_Backend_ExtJs
 
         $plugin = $this->getPluginModel($technicalName);
 
-        //disable plugin and save state
+        // disable plugin and save state
         $active = $plugin->getActive();
         $plugin->setActive(false);
         $this->get(ModelManager::class)->flush();
@@ -223,11 +223,11 @@ class PluginInstaller extends Shopware_Controllers_Backend_ExtJs
         }
 
         $information = pathinfo($file->getClientOriginalName());
-
-        if ($information['extension'] !== 'zip') {
+        $extension = $information['extension'] ?? '';
+        if ($extension !== 'zip') {
             $this->View()->assign([
                 'success' => false,
-                'message' => sprintf('Wrong archive extension %s. Zip archive expected', $information['extension']),
+                'message' => sprintf('Wrong archive extension %s. Zip archive expected', $extension),
             ]);
             unlink($file->getPathname());
 

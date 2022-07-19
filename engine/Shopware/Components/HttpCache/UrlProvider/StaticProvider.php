@@ -121,23 +121,23 @@ class StaticProvider implements UrlProviderInterface
             ->andWhere('shop_ids IS NULL OR shop_ids LIKE CONCAT("%|",:shop,"|%")');
     }
 
-    /**
-     * @param string $link
-     *
-     * @return bool
-     */
-    private function isShopwareLink($link)
+    private function isShopwareLink(string $link): bool
     {
-        return strpos($link, 'shopware.php') !== false;
+        return str_contains($link, 'shopware.php');
     }
 
+    /**
+     * @param array<string, mixed> $custom
+     *
+     * @return array<string, mixed>
+     */
     private function createRequestParameters(array $custom): array
     {
         if (empty($custom['link']) || !$this->isShopwareLink($custom['link'])) {
             return ['sViewport' => 'custom', 'sCustom' => $custom['id']];
         }
-        $parts = parse_url($custom['link']);
-        parse_str($parts['query'], $query);
+        $parsedQuery = (string) parse_url($custom['link'], PHP_URL_QUERY);
+        parse_str($parsedQuery, $query);
 
         if (isset($query['sViewport,registerFC'])) {
             unset($query['sViewport,registerFC']);
@@ -147,6 +147,11 @@ class StaticProvider implements UrlProviderInterface
         return $query;
     }
 
+    /**
+     * @param array<string, mixed> $custom
+     *
+     * @return array<string, mixed>|null
+     */
     private function createXhrRequestParameters(array $custom): ?array
     {
         if (empty($custom['link'])) {

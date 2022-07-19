@@ -35,7 +35,7 @@ use Shopware\Models\Article\Article;
 use Shopware\Models\Article\Detail;
 use Shopware\Models\Article\Repository as ProductModelRepository;
 use Shopware\Models\MultiEdit\Filter;
-use Shopware\Models\Shop\Repository;
+use Shopware\Models\MultiEdit\Repository;
 use Shopware\Models\Shop\Shop;
 
 /**
@@ -48,7 +48,7 @@ class Shopware_Controllers_Backend_ArticleList extends Shopware_Controllers_Back
     /**
      * Reference to the SwagMultiEdit repository
      *
-     * @var \Shopware\Models\MultiEdit\Repository
+     * @var Repository|null
      */
     protected $multiEditRepository;
 
@@ -72,7 +72,7 @@ class Shopware_Controllers_Backend_ArticleList extends Shopware_Controllers_Back
     }
 
     /**
-     * @return \Shopware\Models\MultiEdit\Repository
+     * @return Repository
      */
     public function getMultiEditRepository()
     {
@@ -173,12 +173,12 @@ class Shopware_Controllers_Backend_ArticleList extends Shopware_Controllers_Back
      */
     public function listAction()
     {
-        $resource = $this->Request()->getParam('resource');
+        $resourceClass = $this->Request()->getParam('resource');
         $limit = $this->Request()->getParam('limit', 25);
         $offset = ($this->Request()->getParam('page', 1) - 1) * $limit;
 
         /** @var ResourceInterface $resource */
-        $resource = $this->container->get('multi_edit.' . $resource);
+        $resource = $this->container->get('multi_edit.' . $resourceClass);
         $result = $resource->listBackups($offset, $limit);
         $result['success'] = true;
 
@@ -190,7 +190,9 @@ class Shopware_Controllers_Backend_ArticleList extends Shopware_Controllers_Back
      */
 
     /**
-     * Currently returns an array of an hardcoded default operation. Might be use for storing operations in the future
+     * Currently returns an array of a hardcoded default operation. Might be use for storing operations in the future
+     *
+     * @return void
      */
     public function getOperationsAction()
     {

@@ -716,7 +716,7 @@ class Media extends ModelEntity
     public function onRemove()
     {
         $mediaService = Shopware()->Container()->get(MediaServiceInterface::class);
-        //check if file exist and remove it
+        // check if file exist and remove it
         if ($mediaService->has($this->path)) {
             $mediaService->delete($this->path);
         }
@@ -1286,7 +1286,7 @@ class Media extends ModelEntity
     {
         $name = iconv('utf-8', 'ascii//translit', $name);
         $name = preg_replace('#[^A-Za-z0-9\-_]#', '-', $name);
-        $name = preg_replace('#-{2,}#', '-', $name);
+        $name = (string) preg_replace('#-{2,}#', '-', $name);
         $name = trim($name, '-');
 
         return mb_substr($name, 0, 180);
@@ -1294,23 +1294,16 @@ class Media extends ModelEntity
 
     /**
      * Searches all album settings for thumbnail sizes
-     *
-     * @return array
      */
-    private function getAllThumbnailSizes()
+    private function getAllThumbnailSizes(): array
     {
-        /** @var Connection $connection */
-        $connection = Shopware()->Container()->get(Connection::class);
-        $joinedSizes = $connection
-            ->query('SELECT DISTINCT thumbnail_size FROM s_media_album_settings WHERE thumbnail_size != ""')
+        $joinedSizes = Shopware()->Container()->get(Connection::class)
+            ->executeQuery('SELECT DISTINCT thumbnail_size FROM s_media_album_settings WHERE thumbnail_size != ""')
             ->fetchAll(PDO::FETCH_COLUMN);
 
         $sizes = [];
         foreach ($joinedSizes as $sizeItem) {
             $explodedSizes = explode(';', $sizeItem);
-            if (empty($explodedSizes)) {
-                continue;
-            }
 
             $sizes = array_merge($sizes, array_flip($explodedSizes));
         }

@@ -30,14 +30,12 @@ use Shopware\Bundle\StoreFrontBundle\Struct\Customer\Group;
 use Shopware\Bundle\StoreFrontBundle\Struct\ListProduct;
 use Shopware\Bundle\StoreFrontBundle\Struct\Product\PriceDiscount;
 use Shopware\Bundle\StoreFrontBundle\Struct\Product\PriceRule;
-use Shopware\Bundle\StoreFrontBundle\Struct\ProductContextInterface;
+use Shopware\Bundle\StoreFrontBundle\Struct\Product\Unit;
+use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
 class GraduatedPricesService implements GraduatedPricesServiceInterface
 {
-    /**
-     * @var GraduatedPricesGatewayInterface
-     */
-    private $graduatedPricesGateway;
+    private GraduatedPricesGatewayInterface $graduatedPricesGateway;
 
     public function __construct(
         GraduatedPricesGatewayInterface $graduatedPricesGateway
@@ -48,7 +46,7 @@ class GraduatedPricesService implements GraduatedPricesServiceInterface
     /**
      * {@inheritdoc}
      */
-    public function get(ListProduct $product, ProductContextInterface $context)
+    public function get(ListProduct $product, ShopContextInterface $context)
     {
         $prices = $this->getList([$product], $context);
 
@@ -58,7 +56,7 @@ class GraduatedPricesService implements GraduatedPricesServiceInterface
     /**
      * {@inheritdoc}
      */
-    public function getList($products, ProductContextInterface $context)
+    public function getList($products, ShopContextInterface $context)
     {
         $group = $context->getCurrentCustomerGroup();
         $specify = $this->graduatedPricesGateway->getList(
@@ -67,14 +65,14 @@ class GraduatedPricesService implements GraduatedPricesServiceInterface
             $group
         );
 
-        //iterates the passed prices and products and assign the product unit to the prices and the passed customer group
+        // iterates the passed prices and products and assign the product unit to the prices and the passed customer group
         $prices = $this->buildPrices(
             $products,
             $specify,
             $group
         );
 
-        //check if one of the products have no assigned price within the prices variable.
+        // check if one of the products have no assigned price within the prices variable.
         $fallbackProducts = array_filter(
             $products,
             function (ListProduct $product) use ($prices) {
@@ -83,7 +81,7 @@ class GraduatedPricesService implements GraduatedPricesServiceInterface
         );
 
         if (!empty($fallbackProducts)) {
-            //if some product has no price, we have to load the fallback customer group prices for the fallbackProducts.
+            // if some product has no price, we have to load the fallback customer group prices for the fallbackProducts.
             $fallbackPrices = $this->graduatedPricesGateway->getList(
                 $fallbackProducts,
                 $context,
@@ -96,6 +94,7 @@ class GraduatedPricesService implements GraduatedPricesServiceInterface
                 $context->getFallbackCustomerGroup()
             );
 
+            // Do not use array_merge here. Since it will reindex the numbers of fallbackPrices.
             $prices = $prices + $fallbackPrices;
         }
 
@@ -125,6 +124,9 @@ class GraduatedPricesService implements GraduatedPricesServiceInterface
             $priceGroup = $priceGroups[$priceGroupId];
 
             $firstGraduation = array_shift($prices[$product->getNumber()]);
+            if (!$firstGraduation instanceof PriceRule) {
+                continue;
+            }
 
             $prices[$product->getNumber()] = $this->buildDiscountGraduations(
                 $firstGraduation,
@@ -145,18 +147,17 @@ class GraduatedPricesService implements GraduatedPricesServiceInterface
      *
      * @param PriceDiscount[] $discounts
      *
-     * @return array
+     * @return array<PriceRule>
      */
     private function buildDiscountGraduations(
         PriceRule $reference,
         Group $customerGroup,
         array $discounts
-    ) {
+    ): array {
         $prices = [];
 
         $firstDiscount = $discounts[0];
 
-        /** @var PriceRule|null $previous */
         $previous = null;
         if ($firstDiscount->getQuantity() > 1) {
             $firstGraduation = clone $reference;
@@ -198,12 +199,12 @@ class GraduatedPricesService implements GraduatedPricesServiceInterface
      * Helper function which iterates the products and builds a price array which indexed
      * with the product order number.
      *
-     * @param ListProduct[] $products
-     * @param PriceRule[]   $priceRules
+     * @param ListProduct[]                   $products
+     * @param array<string, array<PriceRule>> $priceRules
      *
-     * @return array
+     * @return array<string, array<PriceRule>>
      */
-    private function buildPrices($products, array $priceRules, Group $group)
+    private function buildPrices(array $products, array $priceRules, Group $group): array
     {
         $prices = [];
 
@@ -214,11 +215,12 @@ class GraduatedPricesService implements GraduatedPricesServiceInterface
                 continue;
             }
 
-            /** @var PriceRule[] $productPrices */
             $productPrices = $priceRules[$key];
 
             foreach ($productPrices as $price) {
-                $price->setUnit($product->getUnit());
+                if ($product->getUnit() instanceof Unit) {
+                    $price->setUnit($product->getUnit());
+                }
                 $price->setCustomerGroup($group);
             }
 

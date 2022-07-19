@@ -26,16 +26,14 @@ namespace Shopware\Bundle\StoreFrontBundle\Gateway\DBAL;
 
 use Doctrine\DBAL\Connection;
 use PDO;
-use Shopware\Bundle\StoreFrontBundle\Gateway;
+use Shopware\Bundle\StoreFrontBundle\Gateway\DBAL\Hydrator\ManufacturerHydrator;
+use Shopware\Bundle\StoreFrontBundle\Gateway\ManufacturerGatewayInterface;
 use Shopware\Bundle\StoreFrontBundle\Service\MediaServiceInterface;
-use Shopware\Bundle\StoreFrontBundle\Struct;
+use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
-class ManufacturerGateway implements Gateway\ManufacturerGatewayInterface
+class ManufacturerGateway implements ManufacturerGatewayInterface
 {
-    /**
-     * @var Hydrator\ManufacturerHydrator
-     */
-    private $manufacturerHydrator;
+    private ManufacturerHydrator $manufacturerHydrator;
 
     /**
      * The FieldHelper class is used for the
@@ -47,15 +45,12 @@ class ManufacturerGateway implements Gateway\ManufacturerGatewayInterface
      * Additionally the field helper reduce the work, to
      * select in a second step the different required
      * attribute tables for a parent table.
-     *
-     * @var FieldHelper
      */
-    private $fieldHelper;
+    private FieldHelper $fieldHelper;
 
-    /**
-     * @var Connection
-     */
-    private $connection;
+    private Connection $connection;
+
+    private MediaServiceInterface $mediaService;
 
     public function __construct(
         Connection $connection,
@@ -72,7 +67,7 @@ class ManufacturerGateway implements Gateway\ManufacturerGatewayInterface
     /**
      * {@inheritdoc}
      */
-    public function get($id, Struct\ShopContextInterface $context)
+    public function get($id, ShopContextInterface $context)
     {
         $manufacturers = $this->getList([$id], $context);
 
@@ -82,7 +77,7 @@ class ManufacturerGateway implements Gateway\ManufacturerGatewayInterface
     /**
      * {@inheritdoc}
      */
-    public function getList(array $ids, Struct\ShopContextInterface $context)
+    public function getList(array $ids, ShopContextInterface $context)
     {
         $query = $this->connection->createQueryBuilder();
 
@@ -97,10 +92,7 @@ class ManufacturerGateway implements Gateway\ManufacturerGatewayInterface
 
         $this->fieldHelper->addManufacturerTranslation($query, $context);
 
-        /** @var \Doctrine\DBAL\Driver\ResultStatement $statement */
-        $statement = $query->execute();
-
-        $data = $statement->fetchAll(PDO::FETCH_ASSOC);
+        $data = $query->execute()->fetchAll(PDO::FETCH_ASSOC);
         $medias = $this->mediaService->getList(array_column($data, '__manufacturer_img_id'), $context);
 
         $manufacturers = [];
@@ -113,7 +105,7 @@ class ManufacturerGateway implements Gateway\ManufacturerGatewayInterface
             }
         }
 
-        //sort elements by provided ids, sorting is defined by other queries like `best term match` or `max articles` or `sort alphanumeric`
+        // sort elements by provided ids, sorting is defined by other queries like `best term match` or `max articles` or `sort alphanumeric`
         $sorted = [];
         foreach ($ids as $id) {
             if (!\array_key_exists($id, $manufacturers)) {

@@ -107,9 +107,9 @@ class Kernel extends SymfonyKernel
      * Is available in the DIC as parameter 'shopware.release.*' or a Struct containing all the parameters below.
      */
     protected $release = [
-        'version' => '5.7.7',
+        'version' => '5.7.13',
         'version_text' => '',
-        'revision' => '202201031510',
+        'revision' => '202206221313',
     ];
 
     /**
@@ -289,8 +289,8 @@ class Kernel extends SymfonyKernel
     {
         foreach ($settings as $key => $value) {
             $key = empty($prefix) ? $key : $prefix . $key;
-            if (is_scalar($value)) {
-                ini_set($key, $value);
+            if (\is_scalar($value)) {
+                ini_set($key, (string) $value);
             } elseif (\is_array($value)) {
                 $this->setPhpSettings($value, $key . '.');
             }
@@ -545,11 +545,12 @@ class Kernel extends SymfonyKernel
      */
     protected function initializeContainer()
     {
+        /** @var class-string<Container> $class */
         $class = $this->getContainerClass();
 
         $cache = new ConfigCache(
             $this->config['hook']['proxyDir'] . '/' . $class . '.php',
-            true //always check for file modified time
+            true // always check for file modified time
         );
 
         if (!$cache->isFresh()) {

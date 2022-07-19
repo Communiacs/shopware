@@ -25,6 +25,7 @@
 use Doctrine\ORM\AbstractQuery;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
 use Doctrine\ORM\Tools\Pagination\Paginator;
+use Doctrine\Persistence\Proxy;
 use Shopware\Components\Model\ModelEntity;
 use Shopware\Components\Model\ModelManager;
 use Shopware\Components\Model\ModelRepository;
@@ -93,7 +94,7 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      *
      * @required
      *
-     * @var class-string model
+     * @var class-string<TEntityClass> model
      */
     protected $model;
 
@@ -119,7 +120,7 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      *
      * Please make sure the configured sort fields matches the field names of the Ext JS model.
      *
-     * @var array
+     * @var array<string>
      */
     protected $filterFields = [];
 
@@ -135,7 +136,7 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      *
      * Please make sure the configured sort fields matches the field names of the Ext JS model.
      *
-     * @var array
+     * @var array<string>
      */
     protected $sortFields = [];
 
@@ -159,6 +160,8 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      * The repository is used for find queries for the configured model.
      *
      * @param ModelRepository<TEntityClass> $repository
+     *
+     * @return void
      */
     public function setRepository(ModelRepository $repository)
     {
@@ -168,6 +171,8 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
     /**
      * Allows to set the manager property of this class.
      * The manager is used for each data operation with doctrine models.
+     *
+     * @return void
      */
     public function setManager(ModelManager $manager)
     {
@@ -199,6 +204,8 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      *  association - Doctrine property name of the association
      *  start - Pagination start value
      *  limit - Pagination limit value
+     *
+     * @return void
      */
     public function listAction()
     {
@@ -219,8 +226,10 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      * Shopware use this function as "detail" api call of a single {@link Shopware.data.Model}.
      * This function is only a wrapper function, the {@link #getDetail} function contains the
      * logic to get the detail data of the record.
+     * The function expects the following request parameter:
+     *  id - identifier value of the record
      *
-     * @internalParam $this->Request()->getParam('id')
+     * @return void
      */
     public function detailAction()
     {
@@ -239,6 +248,8 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      * The createAction function pass the request params as function parameter
      * to the save function.
      * The save function return value will be assigned to the template engine.
+     *
+     * @return void
      */
     public function createAction()
     {
@@ -257,6 +268,8 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      * The updateAction function pass the request params as function parameter
      * to the save function.
      * The save function return value will be assigned to the template engine.
+     *
+     * @return void
      */
     public function updateAction()
     {
@@ -275,6 +288,8 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      * The deleteAction pass the request id parameter as function parameter
      * to the delete function.
      * The return value of the delete function will be assigned to the template engine.
+     *
+     * @return void
      */
     public function deleteAction()
     {
@@ -289,6 +304,8 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      * Controller action which called to reload associated data.
      * This function is used to load @ORM\OneToMany() associations
      * which should be displayed in an own listing on the detail page.
+     *
+     * @return void
      */
     public function reloadAssociationAction()
     {
@@ -317,6 +334,8 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      *
      * This function is like the other controller actions only a wrapper function and calls
      * the internal searchAssociation function to find the requested data.
+     *
+     * @return void
      */
     public function searchAssociationAction()
     {
@@ -344,7 +363,7 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      *
      * @param int $id - Identifier of the doctrine model
      *
-     * @return array
+     * @return array{success: true, data: array<string, mixed>}
      */
     public function getDetail($id)
     {
@@ -390,15 +409,14 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      * If the save process was successfully, the function returns a success array with the
      * updated model data.
      *
-     * @param array $data
+     * @param array<string, mixed> $data
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function save($data)
     {
-        if (!empty($data['id'])) {
-            $model = $this->getRepository()->find($data['id']);
-        } else {
+        $model = $this->getRepository()->find((int) ($data['id'] ?? 0));
+        if ($model === null) {
             $model = new $this->model();
             $this->getManager()->persist($model);
         }
@@ -408,7 +426,6 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
 
         $violations = $this->getManager()->validate($model);
         $errors = [];
-        /** @var Symfony\Component\Validator\ConstraintViolation $violation */
         foreach ($violations as $violation) {
             $errors[] = [
                 'message' => $violation->getMessage(),
@@ -421,6 +438,10 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
         }
 
         $this->getManager()->flush();
+
+        if (!method_exists($model, 'getId')) {
+            throw new RuntimeException(sprintf('Model "%s" has no "getId" method', $this->model));
+        }
 
         $detail = $this->getDetail($model->getId());
 
@@ -440,7 +461,7 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      *
      * @param int $id
      *
-     * @return array
+     * @return array{success: bool, error?: string}
      */
     public function delete($id)
     {
@@ -472,14 +493,14 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      * Important: This function works only for associations of the configured {@link #model} property.
      * If you want to reload association listings of other models, you have to override this function.
      *
-     * @param int    $id
-     * @param string $associationKey
-     * @param int    $offset
-     * @param int    $limit
-     * @param array  $sort
-     * @param array  $filter
+     * @param int                                                                                      $id
+     * @param string                                                                                   $associationKey
+     * @param int                                                                                      $offset
+     * @param int                                                                                      $limit
+     * @param array<array{property: string, direction: string}>                                        $sort
+     * @param array<array{property: string, operator: string|null, value: mixed, expression?: string}> $filter
      *
-     * @return array
+     * @return array{success: true, data: array<TEntityClass|array<string, mixed>>, total: int}
      */
     public function reloadAssociation($id, $associationKey, $offset, $limit, $sort = [], $filter = [])
     {
@@ -545,15 +566,15 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      *  start - Pagination start value
      *  limit - Pagination limit value
      *
-     * @param string   $search
-     * @param string   $association
-     * @param int      $offset
-     * @param int      $limit
-     * @param int|null $id
-     * @param array    $filter
-     * @param array    $sort
+     * @param string                                                                                   $search
+     * @param string                                                                                   $association
+     * @param int                                                                                      $offset
+     * @param int                                                                                      $limit
+     * @param int|null                                                                                 $id
+     * @param array<array{property: string, operator: string|null, value: mixed, expression?: string}> $filter
+     * @param array<array{property: string, direction: string}>                                        $sort
      *
-     * @return array
+     * @return array{success: true, data: array<TEntityClass|array<string, mixed>>, total: int}
      */
     public function searchAssociation($search, $association, $offset, $limit, $id = null, $filter = [], $sort = [])
     {
@@ -589,7 +610,7 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
             ->setMaxResults($limit);
 
         if ($id !== null) {
-            $this->addIdentifierCondition($association, $id, $builder);
+            $this->addIdentifierCondition((string) $association, (int) $id, $builder);
         }
 
         $paginator = $this->getQueryPaginator($builder);
@@ -625,13 +646,13 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      * The listing query created in the getListQuery function.
      * The pagination of the listing is handled inside this function.
      *
-     * @param int|null $offset
-     * @param int|null $limit
-     * @param array    $sort        Contains an array of Ext JS sort conditions
-     * @param array    $filter      Contains an array of Ext JS filters
-     * @param array    $wholeParams Contains all passed request parameters
+     * @param int|null                                                                                 $offset
+     * @param int|null                                                                                 $limit
+     * @param array<array{property: string, direction: string}>                                        $sort        Contains an array of Ext JS sort conditions
+     * @param array<array{property: string, operator: string|null, value: mixed, expression?: string}> $filter      Contains an array of Ext JS filters
+     * @param array<string, mixed>                                                                     $wholeParams Contains all passed request parameters
      *
-     * @return array
+     * @return array{success: true, data: array<TEntityClass|array<string, mixed>>, total: int}
      */
     protected function getList($offset, $limit, $sort = [], $filter = [], array $wholeParams = [])
     {
@@ -725,9 +746,9 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      * model and if the $search parameter contains a search value, the function creates an orWhere
      * condition for each model field with a like operation.
      *
-     * @param string $association
-     * @param string $model
-     * @param string $search
+     * @param string                    $association
+     * @param class-string<ModelEntity> $model
+     * @param string                    $search
      *
      * @return QueryBuilder
      */
@@ -796,7 +817,9 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      *      => This function iterates the association property and resolves each foreign key value with the corresponding doctrine model
      *      => 'article' => array('id' => 1, 'categories' => array($this->getManager()->find(Model, 1), $this->getManager()->find(Model, 2), ...)
      *
-     * @param array $data
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
      */
     protected function resolveExtJsData($data)
     {
@@ -859,13 +882,13 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
                 if ($data[$field]) {
                     $associationModel = $this->getManager()->find($mapping['targetEntity'], $data[$field]);
 
-                    //proxies need to be loaded, otherwise the validation will be failed.
-                    if ($associationModel instanceof \Doctrine\Persistence\Proxy && method_exists($associationModel, '__load')) {
+                    // proxies need to be loaded, otherwise the validation will be failed.
+                    if ($associationModel instanceof Proxy && method_exists($associationModel, '__load')) {
                         $associationModel->__load();
                     }
                     $data[$mapping['fieldName']] = $associationModel;
 
-                    //remove the foreign key data.
+                    // remove the foreign key data.
                     if ($field !== $mapping['fieldName']) {
                         unset($data[$field]);
                     }
@@ -924,7 +947,9 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      *          return $data;
      *      }
      *
-     * @return array
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
      */
     protected function getAdditionalDetailData(array $data)
     {
@@ -935,16 +960,17 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      * Helper function which return the model name of an association for
      * the passed model and property name.
      *
-     * @param string $model
-     * @param string $property
+     * @param class-string<TEntityClass> $model
+     * @param string                     $property
      *
-     * @return string
+     * @return class-string<ModelEntity>
      */
     protected function getAssociatedModelByProperty($model, $property)
     {
-        $metaData = $this->getManager()->getClassMetadata($model);
+        /** @var class-string<ModelEntity> $targetClass */
+        $targetClass = $this->getManager()->getClassMetadata($model)->getAssociationTargetClass($property);
 
-        return $metaData->getAssociationTargetClass($property);
+        return $targetClass;
     }
 
     /**
@@ -953,14 +979,15 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      * This function is used to reload association listings over the {@link #reloadAssociation}
      * function.
      *
-     * @param string $model
-     * @param string $property
+     * @param class-string<TEntityClass> $model
+     * @param string                     $property
      *
-     * @return array
+     * @return array<string, mixed>
      */
     protected function getOwningSideAssociation($model, $property)
     {
         $metaData = $this->getManager()->getClassMetadata($model);
+        /** @var array{targetEntity: class-string<ModelEntity>, mappedBy: string, isOwningSide: bool} $mapping */
         $mapping = $metaData->getAssociationMapping($property);
 
         if ($mapping['isOwningSide']) {
@@ -990,25 +1017,25 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      * Shopware resolves the passed Ext JS name over this function and use the alias of the field
      * to sort the query builder.
      *
-     * @param array  $sort
-     * @param string $model
-     * @param string $alias
-     * @param array  $whiteList
+     * @param array<array{property: string, direction: string}> $sort
+     * @param class-string<ModelEntity>                         $model
+     * @param string                                            $alias
+     * @param array<string>                                     $whiteList
      *
-     * @return array
+     * @return array<array{property: string, direction: string}>
      */
     protected function getSortConditions($sort, $model, $alias, $whiteList = [])
     {
         $fields = $this->getModelFields($model, $alias);
         $conditions = [];
         foreach ($sort as $condition) {
-            //check if the passed field is a valid doctrine model field of the configured model.
+            // check if the passed field is a valid doctrine model field of the configured model.
             if (!\array_key_exists($condition['property'], $fields)) {
                 continue;
             }
 
-            //check if the developer limited the sortable fields and the passed property defined in the sort fields parameter.
-            if (!empty($whiteList) && !\in_array($condition['property'], $whiteList)) {
+            // check if the developer limited the sortable fields and the passed property defined in the sort fields parameter.
+            if (!empty($whiteList) && !\in_array($condition['property'], $whiteList, true)) {
                 continue;
             }
             $condition['property'] = $fields[$condition['property']]['alias'];
@@ -1049,12 +1076,12 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      *      ),
      *  )
      *
-     * @param array  $filters   - List of filter conditions in Ext JS format
-     * @param string $model     - Full name of the selected model
-     * @param string $alias     - Query alias of the FROM query path
-     * @param array  $whiteList - Array of filterable fields, or an empty array
+     * @param array<array{property: string, operator: string|null, value: mixed, expression?: string}> $filters   - List of filter conditions in Ext JS format
+     * @param class-string<ModelEntity>                                                                $model     - Full name of the selected model
+     * @param string                                                                                   $alias     - Query alias of the FROM query path
+     * @param array<string>                                                                            $whiteList - Array of filterable fields, or an empty array
      *
-     * @return array
+     * @return array<array{property: string, operator: string|null, value: mixed, expression?: string}>
      */
     protected function getFilterConditions($filters, $model, $alias, $whiteList = [])
     {
@@ -1064,8 +1091,8 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
         foreach ($filters as $condition) {
             if ($condition['property'] === 'search') {
                 foreach ($fields as $name => $field) {
-                    //check if the developer limited the filterable fields and the passed property defined in the filter fields parameter.
-                    if (!empty($whiteList) && !\in_array($name, $whiteList)) {
+                    // check if the developer limited the filterable fields and the passed property defined in the filter fields parameter.
+                    if (!empty($whiteList) && !\in_array($name, $whiteList, true)) {
                         continue;
                     }
 
@@ -1078,20 +1105,23 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
                     ];
                 }
             } elseif (\array_key_exists($condition['property'], $fields)) {
-                //check if the developer limited the filterable fields and the passed property defined in the filter fields parameter.
-                if (!empty($whiteList) && !\in_array($condition['property'], $whiteList)) {
+                // check if the developer limited the filterable fields and the passed property defined in the filter fields parameter.
+                if (!empty($whiteList) && !\in_array($condition['property'], $whiteList, true)) {
                     continue;
                 }
 
                 $field = $fields[$condition['property']];
-                $value = $this->formatSearchValue($condition['value'], $field, $condition['expression']);
+                $value = $this->formatSearchValue($condition['value'], $field, $condition['expression'] ?? null);
 
-                $conditions[] = [
+                $tmpCondition = [
                     'property' => $field['alias'],
-                    'operator' => $condition['operator'] ?: null,
+                    'operator' => $condition['operator'] ?? null,
                     'value' => $value,
-                    'expression' => $condition['expression'],
                 ];
+                if (isset($condition['expression'])) {
+                    $tmpCondition['expression'] = $condition['expression'];
+                }
+                $conditions[] = $tmpCondition;
             }
         }
 
@@ -1101,9 +1131,11 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
     /**
      * Helper function to create the query builder paginator.
      *
+     * @phpstan-param AbstractQuery::HYDRATE_* $hydrationMode
+     *
      * @param int $hydrationMode
      *
-     * @return Paginator<TEntityClass|array>
+     * @return Paginator<TEntityClass|array<string, mixed>>
      */
     protected function getQueryPaginator(QueryBuilder $builder, $hydrationMode = AbstractQuery::HYDRATE_ARRAY)
     {
@@ -1121,8 +1153,9 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      * Additionally this function adds the sql wildcards at the right points of
      * the search value.
      *
-     * @param string      $value
-     * @param string|null $expression
+     * @param string                                   $value
+     * @param array{alias?: string, type: string|null} $field
+     * @param string|null                              $expression
      *
      * @return string
      */
@@ -1133,10 +1166,10 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
                 break;
             case 'date':
             case 'datetime':
-                //validates the date value. If the value is no date value, return
+                // validates the date value. If the value is no date value, return
                 $date = date_parse($value);
 
-                if ($date['error_count'] > 0 || !checkdate($date['month'], $date['day'], $date['year'])) {
+                if ($date['error_count'] > 0 || !checkdate((int) $date['month'], (int) $date['day'], (int) $date['year'])) {
                     $value = '%' . $value . '%';
                     break;
                 }
@@ -1146,7 +1179,7 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
                     return $value;
                 }
 
-                //search values for date time should added the % wildcards to search for time values.
+                // search values for date time should added the % wildcards to search for time values.
                 if ($field['type'] === 'datetime') {
                     $value = '%' . $value . '%';
                 }
@@ -1173,10 +1206,10 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
      *
      * The returned array is associated with the model field names.
      *
-     * @param string      $model - Model class name
-     * @param string|null $alias - Allows to add an query alias like 'article.name'.
+     * @param class-string<ModelEntity> $model - Model class name
+     * @param string|null               $alias - Allows to add an query alias like 'article.name'.
      *
-     * @return array
+     * @return array<string, array{alias: string, type: string|null}>
      */
     protected function getModelFields($model, $alias = null)
     {
@@ -1196,27 +1229,17 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
         return $fields;
     }
 
-    /**
-     * @param string|null $expression
-     *
-     * @return bool
-     */
-    private function isSearchExpression($expression)
+    private function isSearchExpression(?string $expression): bool
     {
         return $expression === 'LIKE' || $expression === null;
     }
 
     /**
      * Returns the reference column for the provided association property
-     *
-     * @param string $association
-     *
-     * @return string|null
      */
-    private function getReferencedColumnName($association)
+    private function getReferencedColumnName(string $association): ?string
     {
-        $metaData = $this->get('models')->getClassMetadata($this->model);
-        $mappings = $metaData->getAssociationMappings();
+        $mappings = $this->get('models')->getClassMetadata($this->model)->getAssociationMappings();
 
         if (!isset($mappings[$association])) {
             return null;
@@ -1224,19 +1247,15 @@ abstract class Shopware_Controllers_Backend_Application extends Shopware_Control
 
         $mapping = $mappings[$association];
         $column = array_shift($mapping['joinColumns']);
-        $column = $column['referencedColumnName'];
 
-        return $column;
+        return $column['referencedColumnName'];
     }
 
     /**
      * Filters the search association query by the identifier field.
      * Used for form loading if the raw value is set to the value.
-     *
-     * @param string $association
-     * @param int    $id
      */
-    private function addIdentifierCondition($association, $id, QueryBuilder $builder)
+    private function addIdentifierCondition(string $association, int $id, QueryBuilder $builder): void
     {
         $column = $this->getReferencedColumnName($association);
 

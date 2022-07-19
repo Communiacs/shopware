@@ -31,6 +31,8 @@ use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
 interface ComponentHandlerInterface
 {
+    public const CRITERIA_KEY = 'emotion-element--';
+
     /**
      * @return bool
      */

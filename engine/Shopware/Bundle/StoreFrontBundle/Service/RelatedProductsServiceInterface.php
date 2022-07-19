@@ -25,16 +25,19 @@
 namespace Shopware\Bundle\StoreFrontBundle\Service;
 
 use Shopware\Bundle\StoreFrontBundle\Struct\BaseProduct;
+use Shopware\Bundle\StoreFrontBundle\Struct\ListProduct;
 use Shopware\Bundle\StoreFrontBundle\Struct\ProductContextInterface;
+use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
 interface RelatedProductsServiceInterface
 {
     /**
      * @see \Shopware\Bundle\StoreFrontBundle\Service\RelatedProductsServiceInterface::get()
+     * @deprecated 5.7, interface will require a ShopContextInterface in 5.8
      *
      * @param BaseProduct[] $products
      *
-     * @return array indexed with the product number, each array element contains a BaseProduct array
+     * @return array<string, array<string, ListProduct>> indexed with the product number, each array element contains a BaseProduct array
      */
     public function getList($products, ProductContextInterface $context);
 
@@ -49,8 +52,9 @@ interface RelatedProductsServiceInterface
      * please refer to the linked classes.
      *
      * @see \Shopware\Bundle\StoreFrontBundle\Service\ListProductServiceInterface::get()
+     * @deprecated 5.7, interface will require a ShopContextInterface in 5.8
      *
-     * @return BaseProduct[] indexed by the product order number
+     * @return array<string, BaseProduct>|null indexed by the product order number
      */
     public function get(BaseProduct $product, ProductContextInterface $context);
 }

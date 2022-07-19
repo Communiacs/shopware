@@ -1,22 +1,6 @@
 <?php
 
-/*
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * This software consists of voluntary contributions made by many individuals
- * and is licensed under the MIT license. For more information, see
- * <http://www.doctrine-project.org>.
- */
+declare(strict_types=1);
 
 namespace Doctrine\ORM\Tools\Pagination;
 
@@ -44,7 +28,7 @@ use function is_array;
 use function reset;
 
 /**
- * Replaces the whereClause of the AST with a WHERE id IN (:foo_1, :foo_2) equivalent.
+ * Appends a condition "id IN (:foo_1, :foo_2)" to the whereClause of the AST.
  */
 class WhereInWalker extends TreeWalkerAdapter
 {
@@ -59,9 +43,7 @@ class WhereInWalker extends TreeWalkerAdapter
     public const PAGINATOR_ID_ALIAS = 'dpid';
 
     /**
-     * Replaces the whereClause in the AST.
-     *
-     * Generates a clause equivalent to WHERE IN (:dpid_1, :dpid_2, ...)
+     * Appends a condition equivalent to "WHERE IN (:dpid_1, :dpid_2, ...)" to the whereClause of the AST.
      *
      * The parameter namespace (dpid) is defined by
      * the PAGINATOR_ID_ALIAS

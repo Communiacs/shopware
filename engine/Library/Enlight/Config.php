@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Enlight
  *
@@ -20,11 +22,6 @@
 /**
  * The Enlight_Config capsules the configuration parameter,
  * which can be used to initialize the different enlight components
- *
- * @category   Enlight
- *
- * @copyright  Copyright (c) 2011, shopware AG (http://www.shopware.de)
- * @license    http://enlight.de/license     New BSD License
  */
 class Enlight_Config extends Enlight_Config_BaseConfig implements ArrayAccess
 {
@@ -50,7 +47,7 @@ class Enlight_Config extends Enlight_Config_BaseConfig implements ArrayAccess
     /**
      * The dirty fields list.
      *
-     * @var bool
+     * @var array<string>
      */
     protected $_dirtyFields = [];
 
@@ -64,17 +61,17 @@ class Enlight_Config extends Enlight_Config_BaseConfig implements ArrayAccess
     /**
      * The section separator.
      *
-     * @var string
+     * @var non-empty-string
      */
     protected $_sectionSeparator = ':';
 
     /**
-     * @var Enlight_Config_Adapter
+     * @var Enlight_Config_Adapter|null
      */
     protected static $_defaultAdapter;
 
     /**
-     * @var Enlight_Config_Adapter
+     * @var Enlight_Config_Adapter|null
      */
     protected $_adapter;
 
@@ -83,12 +80,10 @@ class Enlight_Config extends Enlight_Config_BaseConfig implements ArrayAccess
      * the internal properties. The config adapter can be set in options["adapter"] but have to be an instance of
      * the Enlight_Config_Adapter.
      *
-     * @param array|string|null $config
-     * @param array|bool        $options
+     * @param array|string|null              $config
+     * @param array<string, mixed>|bool|null $options
      *
      * @throws Enlight_Config_Exception
-     *
-     * @return \Enlight_Config
      */
     public function __construct($config, $options = null)
     {
@@ -137,9 +132,12 @@ class Enlight_Config extends Enlight_Config_BaseConfig implements ArrayAccess
     /**
      * Sets value method
      *
-     * @param string $name
+     * @param string|null $name
+     * @param mixed|null  $value
      *
      * @throws Enlight_Config_Exception
+     *
+     * @return void
      */
     public function __set($name, $value)
     {
@@ -162,7 +160,7 @@ class Enlight_Config extends Enlight_Config_BaseConfig implements ArrayAccess
     /**
      * Returns the config name.
      *
-     * @return Enlight_Config
+     * @return string
      */
     public function getName()
     {
@@ -173,7 +171,9 @@ class Enlight_Config extends Enlight_Config_BaseConfig implements ArrayAccess
      * Resets the internal data property and sets the given data array elements into the internal properties.
      * If one of the data array elements is an array the function will capsule this value into a new config class.
      *
-     * @param array $data
+     * @param array<string, mixed> $data
+     *
+     * @return void
      */
     public function setData($data)
     {
@@ -193,7 +193,10 @@ class Enlight_Config extends Enlight_Config_BaseConfig implements ArrayAccess
     /**
      * Retrieves a value and returns $default if there is no element set.
      *
-     * @param string $name
+     * @param string     $name
+     * @param mixed|null $default
+     *
+     * @return mixed|null
      */
     public function get($name, $default = null)
     {
@@ -211,7 +214,8 @@ class Enlight_Config extends Enlight_Config_BaseConfig implements ArrayAccess
     /**
      * Sets value method
      *
-     * @param string $name
+     * @param string     $name
+     * @param mixed|null $value
      *
      * @return Enlight_Config
      */
@@ -224,6 +228,8 @@ class Enlight_Config extends Enlight_Config_BaseConfig implements ArrayAccess
 
     /**
      * Defined by Iterator interface
+     *
+     * @return void
      */
     public function rewind()
     {
@@ -282,6 +288,8 @@ class Enlight_Config extends Enlight_Config_BaseConfig implements ArrayAccess
      *
      * @param string|mixed $name config name
      *
+     * @return mixed|null
+     *
      * @deprecated - Native return and parameter type will be added with Shopware 5.8
      */
     #[\ReturnTypeWillChange]
@@ -325,9 +333,9 @@ class Enlight_Config extends Enlight_Config_BaseConfig implements ArrayAccess
     }
 
     /**
-     * Returns the dirty field list as an array.
+     * Set the dirty field list
      *
-     * @param array $fields
+     * @param array<string> $fields
      *
      * @return Enlight_Config
      */
@@ -339,7 +347,7 @@ class Enlight_Config extends Enlight_Config_BaseConfig implements ArrayAccess
     }
 
     /**
-     * Returns the dirty field list as an array.
+     * Indicates if the config is dirty
      *
      * @return bool
      */
@@ -437,7 +445,7 @@ class Enlight_Config extends Enlight_Config_BaseConfig implements ArrayAccess
     /**
      * Returns the current config adapter.
      *
-     * @return Enlight_Config_Adapter
+     * @return Enlight_Config_Adapter|null
      */
     public function getAdapter()
     {
@@ -447,7 +455,7 @@ class Enlight_Config extends Enlight_Config_BaseConfig implements ArrayAccess
     /**
      * Returns the default config adapter.
      *
-     * @return Enlight_Config_Adapter
+     * @return Enlight_Config_Adapter|null
      */
     public static function getDefaultAdapter()
     {
@@ -456,6 +464,8 @@ class Enlight_Config extends Enlight_Config_BaseConfig implements ArrayAccess
 
     /**
      * Sets the default config adapter.
+     *
+     * @return void
      */
     public static function setDefaultAdapter(Enlight_Config_Adapter $adapter)
     {
@@ -489,7 +499,7 @@ class Enlight_Config extends Enlight_Config_BaseConfig implements ArrayAccess
     }
 
     /**
-     * @return string
+     * @return non-empty-string
      */
     public function getSectionSeparator()
     {

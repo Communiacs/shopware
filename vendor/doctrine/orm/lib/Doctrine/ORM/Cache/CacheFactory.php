@@ -1,22 +1,6 @@
 <?php
 
-/*
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * This software consists of voluntary contributions made by many individuals
- * and is licensed under the MIT license. For more information, see
- * <http://www.doctrine-project.org>.
- */
+declare(strict_types=1);
 
 namespace Doctrine\ORM\Cache;
 
@@ -47,9 +31,7 @@ interface CacheFactory
     /**
      * Build a collection persister for the given relation mapping.
      *
-     * @param EntityManagerInterface $em        The entity manager.
-     * @param CollectionPersister    $persister The collection persister that will be cached.
-     * @param mixed[]                $mapping   The association mapping.
+     * @param mixed[] $mapping The association mapping.
      *
      * @return CachedCollectionPersister
      */
@@ -58,8 +40,7 @@ interface CacheFactory
     /**
      * Build a query cache based on the given region name
      *
-     * @param EntityManagerInterface $em         The Entity manager.
-     * @param string                 $regionName The region name.
+     * @param string|null $regionName The region name.
      *
      * @return QueryCache The built query cache.
      */
@@ -68,9 +49,6 @@ interface CacheFactory
     /**
      * Build an entity hydrator
      *
-     * @param EntityManagerInterface $em       The Entity manager.
-     * @param ClassMetadata          $metadata The entity metadata.
-     *
      * @return EntityHydrator The built entity hydrator.
      */
     public function buildEntityHydrator(EntityManagerInterface $em, ClassMetadata $metadata);
@@ -78,8 +56,7 @@ interface CacheFactory
     /**
      * Build a collection hydrator
      *
-     * @param EntityManagerInterface $em      The Entity manager.
-     * @param mixed[]                $mapping The association mapping.
+     * @param mixed[] $mapping The association mapping.
      *
      * @return CollectionHydrator The built collection hydrator.
      */

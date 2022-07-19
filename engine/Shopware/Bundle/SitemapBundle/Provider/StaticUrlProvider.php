@@ -30,27 +30,19 @@ use PDO;
 use Shopware\Bundle\SitemapBundle\Struct\Url;
 use Shopware\Bundle\SitemapBundle\UrlProviderInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
-use Shopware\Components\Routing;
+use Shopware\Components\Routing\Context;
+use Shopware\Components\Routing\RouterInterface;
 use Shopware\Models\Site\Site;
 
 class StaticUrlProvider implements UrlProviderInterface
 {
-    /**
-     * @var Routing\RouterInterface
-     */
-    private $router;
+    private RouterInterface $router;
 
-    /**
-     * @var ConnectionInterface
-     */
-    private $connection;
+    private ConnectionInterface $connection;
 
-    /**
-     * @var bool
-     */
-    private $allExported;
+    private bool $allExported = false;
 
-    public function __construct(Routing\RouterInterface $router, ConnectionInterface $connection)
+    public function __construct(RouterInterface $router, ConnectionInterface $connection)
     {
         $this->router = $router;
         $this->connection = $connection;
@@ -59,10 +51,10 @@ class StaticUrlProvider implements UrlProviderInterface
     /**
      * {@inheritdoc}
      */
-    public function getUrls(Routing\Context $routingContext, ShopContextInterface $shopContext)
+    public function getUrls(Context $routingContext, ShopContextInterface $shopContext)
     {
         if ($this->allExported) {
-            return null;
+            return [];
         }
 
         $shopId = $shopContext->getShop()->getId();
@@ -88,7 +80,7 @@ class StaticUrlProvider implements UrlProviderInterface
         $this->allExported = true;
 
         if (\count($sites) === 0) {
-            return null;
+            return [];
         }
 
         $routes = $this->router->generateList(array_column($sites, 'urlParams'), $routingContext);
@@ -112,12 +104,8 @@ class StaticUrlProvider implements UrlProviderInterface
 
     /**
      * Helper function to read all static pages of a shop from the database
-     *
-     * @param int $shopId
-     *
-     * @return array
      */
-    private function getSitesByShopId($shopId)
+    private function getSitesByShopId(int $shopId): array
     {
         $keys = $this->connection->createQueryBuilder()
             ->select('shopGroups.key')
@@ -168,20 +156,17 @@ class StaticUrlProvider implements UrlProviderInterface
      * Helper function to filter predefined links, which should not be in the sitemap (external links, sitemap links itself)
      * Returns false, if the link is not allowed
      *
-     * @param string $link
-     * @param array  $userParams
-     *
-     * @return bool
+     * @param array<string, mixed> $userParams
      */
-    private function filterLink($link, &$userParams)
+    private function filterLink(?string $link, array &$userParams): bool
     {
         if (empty($link)) {
             return true;
         }
-        $userParams = parse_url($link, PHP_URL_QUERY);
-        parse_str($userParams, $userParams);
+        $parsedUserParams = (string) parse_url($link, PHP_URL_QUERY);
+        parse_str($parsedUserParams, $userParams);
         $blacklist = ['', 'sitemap', 'sitemapXml'];
-        if (\in_array($userParams['sViewport'], $blacklist)) {
+        if (\in_array($userParams['sViewport'], $blacklist, true)) {
             return false;
         }
 

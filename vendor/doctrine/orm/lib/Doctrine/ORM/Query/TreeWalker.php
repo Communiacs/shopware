@@ -1,30 +1,15 @@
 <?php
 
-/*
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * This software consists of voluntary contributions made by many individuals
- * and is licensed under the MIT license. For more information, see
- * <http://www.doctrine-project.org>.
- */
+declare(strict_types=1);
 
 namespace Doctrine\ORM\Query;
 
 use Doctrine\ORM\AbstractQuery;
-use Doctrine\ORM\Mapping\ClassMetadata;
 
 /**
  * Interface for walkers of DQL ASTs (abstract syntax trees).
+ *
+ * @psalm-import-type QueryComponent from Parser
  */
 interface TreeWalker
 {
@@ -34,6 +19,7 @@ interface TreeWalker
      * @param AbstractQuery $query           The parsed Query.
      * @param ParserResult  $parserResult    The result of the parsing process.
      * @param mixed[]       $queryComponents The query components (symbol table).
+     * @psalm-param array<string, QueryComponent> $queryComponents The query components (symbol table).
      */
     public function __construct($query, $parserResult, array $queryComponents);
 
@@ -41,14 +27,7 @@ interface TreeWalker
      * Returns internal queryComponents array.
      *
      * @return array<string, array<string, mixed>>
-     * @psalm-return array<string, array{
-     *                   metadata: ClassMetadata,
-     *                   parent: string,
-     *                   relation: mixed[],
-     *                   map: mixed,
-     *                   nestingLevel: int,
-     *                   token: array
-     *               }>
+     * @psalm-return array<string, QueryComponent>
      */
     public function getQueryComponents();
 
@@ -57,6 +36,7 @@ interface TreeWalker
      *
      * @param string               $dqlAlias       The DQL alias.
      * @param array<string, mixed> $queryComponent
+     * @psalm-param QueryComponent $queryComponent
      *
      * @return void
      */
@@ -355,7 +335,7 @@ interface TreeWalker
     /**
      * Walks down a literal that represents an AST node, thereby generating the appropriate SQL.
      *
-     * @param mixed $literal
+     * @param AST\Literal $literal
      *
      * @return string The SQL.
      */
@@ -454,7 +434,7 @@ interface TreeWalker
     /**
      * Walks down a PathExpression AST node, thereby generating the appropriate SQL.
      *
-     * @param mixed $pathExpr
+     * @param AST\PathExpression $pathExpr
      *
      * @return string The SQL.
      */

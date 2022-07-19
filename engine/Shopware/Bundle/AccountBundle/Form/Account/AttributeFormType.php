@@ -75,6 +75,11 @@ class AttributeFormType extends AbstractType
         $resolver->setDefaults(['allow_extra_fields' => true]);
     }
 
+    /**
+     * @param array{data_class: class-string<ModelEntity>} $options
+     *
+     * @return void
+     */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $metaData = $this->entityManager->getClassMetadata($options['data_class']);
@@ -90,7 +95,7 @@ class AttributeFormType extends AbstractType
             $builder->add($field);
         }
 
-        //set default value for all attribute fields to prevent null override if a field isn't in the submit data
+        // set default value for all attribute fields to prevent null override if a field isn't in the submit data
         $builder->addEventListener(FormEvents::POST_SET_DATA, function (FormEvent $event) use ($attributes, $metaData) {
             try {
                 $form = $event->getForm();

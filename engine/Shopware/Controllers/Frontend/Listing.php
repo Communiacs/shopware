@@ -22,34 +22,96 @@
  * our trademarks remain entirely with us.
  */
 
+use Enlight_Controller_Request_RequestHttp as Request;
 use Shopware\Bundle\ControllerBundle\Exceptions\ResourceNotFoundException;
 use Shopware\Bundle\EmotionBundle\Service\StoreFrontEmotionDeviceConfigurationInterface;
 use Shopware\Bundle\SearchBundle\Criteria;
+use Shopware\Bundle\SearchBundle\FacetInterface;
 use Shopware\Bundle\SearchBundle\FacetResultInterface;
 use Shopware\Bundle\SearchBundle\ProductNumberSearchInterface;
-use Shopware\Bundle\SearchBundle\ProductNumberSearchResult;
 use Shopware\Bundle\SearchBundle\StoreFrontCriteriaFactoryInterface;
 use Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface;
 use Shopware\Bundle\StoreFrontBundle\Service\CustomFacetServiceInterface;
 use Shopware\Bundle\StoreFrontBundle\Service\CustomSortingServiceInterface;
 use Shopware\Bundle\StoreFrontBundle\Service\ManufacturerServiceInterface;
-use Shopware\Bundle\StoreFrontBundle\Struct\BaseProduct;
 use Shopware\Bundle\StoreFrontBundle\Struct\Product\Manufacturer;
 use Shopware\Bundle\StoreFrontBundle\Struct\Search\CustomSorting;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 use Shopware\Components\ProductStream\CriteriaFactoryInterface;
-use Shopware\Components\ProductStream\Repository;
+use Shopware\Components\ProductStream\FacetFilterInterface;
+use Shopware\Components\ProductStream\RepositoryInterface as ProductStreamRepositoryInterface;
 use Shopware\Models\Category\Category;
+use Shopware\Models\Category\Repository as CategoryRepository;
 use Shopware\Models\CustomerStream\CustomerStreamRepositoryInterface;
 use Shopware\Models\Emotion\Emotion;
+use Symfony\Component\HttpFoundation\Response;
 
 class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
 {
-    public function indexAction()
-    {
-        $requestCategoryId = $this->Request()->getParam('sCategory');
+    private CustomerStreamRepositoryInterface $customerStreamRepository;
 
-        $categoryContent = $this->loadCategoryContent($requestCategoryId);
+    private ContextServiceInterface $contextService;
+
+    private StoreFrontEmotionDeviceConfigurationInterface $storeFrontEmotionDeviceConfiguration;
+
+    private Shopware_Components_Config $config;
+
+    private StoreFrontCriteriaFactoryInterface $storeFrontCriteriaFactory;
+
+    private ProductNumberSearchInterface $productNumberSearch;
+
+    private CustomSortingServiceInterface $customSortingService;
+
+    private CriteriaFactoryInterface $criteriaFactory;
+
+    private CustomFacetServiceInterface $customFacetService;
+
+    private FacetFilterInterface $facetFilter;
+
+    private ManufacturerServiceInterface $manufacturerService;
+
+    private CategoryRepository $categoryRepository;
+
+    private ProductStreamRepositoryInterface $productStreamRepository;
+
+    public function __construct(
+        CustomerStreamRepositoryInterface $customerStreamRepository,
+        ContextServiceInterface $contextService,
+        StoreFrontEmotionDeviceConfigurationInterface $storeFrontEmotionDeviceConfiguration,
+        Shopware_Components_Config $config,
+        StoreFrontCriteriaFactoryInterface $storeFrontCriteriaFactory,
+        ProductNumberSearchInterface $productNumberSearch,
+        CustomSortingServiceInterface $customSortingService,
+        CriteriaFactoryInterface $criteriaFactory,
+        CustomFacetServiceInterface $customFacetService,
+        FacetFilterInterface $facetFilter,
+        ManufacturerServiceInterface $manufacturerService,
+        CategoryRepository $categoryRepository,
+        ProductStreamRepositoryInterface $productStreamRepository
+    ) {
+        $this->customerStreamRepository = $customerStreamRepository;
+        $this->contextService = $contextService;
+        $this->storeFrontEmotionDeviceConfiguration = $storeFrontEmotionDeviceConfiguration;
+        $this->config = $config;
+        $this->storeFrontCriteriaFactory = $storeFrontCriteriaFactory;
+        $this->productNumberSearch = $productNumberSearch;
+        $this->customSortingService = $customSortingService;
+        $this->criteriaFactory = $criteriaFactory;
+        $this->customFacetService = $customFacetService;
+        $this->facetFilter = $facetFilter;
+        $this->manufacturerService = $manufacturerService;
+        $this->categoryRepository = $categoryRepository;
+        $this->productStreamRepository = $productStreamRepository;
+    }
+
+    /**
+     * @return void
+     */
+    public function indexAction(Request $request, ShopContextInterface $shopContext)
+    {
+        $requestCategoryId = (int) $request->getParam('sCategory');
+
+        $categoryContent = $this->loadCategoryContent($requestCategoryId, $request);
 
         $emotionConfiguration = $this->getEmotionConfiguration(
             $requestCategoryId,
@@ -57,17 +119,17 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
             $categoryContent['streamId']
         );
 
-        $location = $this->getRedirectLocation($categoryContent, $emotionConfiguration['hasEmotion']);
-        if ($location) {
-            $this->redirect($location, ['code' => 301]);
+        $location = $this->getRedirectLocation($categoryContent, $emotionConfiguration['hasEmotion'], $shopContext);
+        if (\is_string($location)) {
+            $this->redirect($location, ['code' => Response::HTTP_MOVED_PERMANENTLY]);
 
             return;
         }
 
-        $hasCustomerStreamEmotions = $this->container->get(CustomerStreamRepositoryInterface::class)
+        $hasCustomerStreamEmotions = $this->customerStreamRepository
             ->hasCustomerStreamEmotions($requestCategoryId);
 
-        if ($hasCustomerStreamEmotions && !$this->Request()->getParam('sPage')) {
+        if ($hasCustomerStreamEmotions && !$request->getParam('sPage')) {
             $assign = $this->View()->getAssign();
             $this->View()->loadTemplate('frontend/listing/customer_stream.tpl');
             $this->View()->assign($assign);
@@ -78,22 +140,25 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
         $this->View()->assign($emotionConfiguration);
 
         // Only show the listing if an emotion viewport is empty or the showListing option is active
-        if (!$this->loadListing($emotionConfiguration)) {
+        if (!$this->loadListing($emotionConfiguration, $request)) {
             return;
         }
 
-        $this->loadCategoryListing($requestCategoryId, $categoryContent);
+        $this->loadCategoryListing($requestCategoryId, $categoryContent, $shopContext);
     }
 
-    public function layoutAction()
+    /**
+     * @return void
+     */
+    public function layoutAction(Request $request)
     {
         $this->View()->loadTemplate('frontend/listing/customer_stream/layout.tpl');
 
-        $categoryId = (int) $this->Request()->getParam('sCategory');
+        $categoryId = (int) $request->getParam('sCategory');
 
         $categoryContent = Shopware()->Modules()->Categories()->sGetCategoryContent($categoryId);
 
-        $config = $this->getEmotionConfiguration($categoryId, true, $categoryContent['streamId']);
+        $config = $this->getEmotionConfiguration($categoryId, true, $categoryContent['streamId'] ?? null);
 
         $config = array_merge($config, [
             'sBanner' => Shopware()->Modules()->Marketing()->sBanner($categoryId),
@@ -105,39 +170,37 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
         $this->View()->assign($config);
     }
 
-    public function listingAction()
+    /**
+     * @return void
+     */
+    public function listingAction(Request $request, ShopContextInterface $context)
     {
         $this->View()->loadTemplate('frontend/listing/customer_stream/listing.tpl');
 
-        $requestCategoryId = $this->Request()->getParam('sCategory');
+        $requestCategoryId = (int) $request->getParam('sCategory');
 
-        $categoryContent = $this->loadCategoryContent($requestCategoryId);
+        $categoryContent = $this->loadCategoryContent($requestCategoryId, $request);
 
-        $this->loadCategoryListing($requestCategoryId, $categoryContent);
+        $this->loadCategoryListing($requestCategoryId, $categoryContent, $context);
     }
 
     /**
      * Listing of all manufacturer products.
      * Templates extends from the normal listing template.
+     *
+     * @return void
      */
-    public function manufacturerAction()
+    public function manufacturerAction(ShopContextInterface $context)
     {
         $manufacturerId = $this->Request()->getParam('sSupplier');
 
-        /** @var ShopContextInterface $context */
-        $context = $this->get(ContextServiceInterface::class)->getShopContext();
-
         if (!$this->Request()->getParam('sCategory')) {
-            /** @var CustomSortingServiceInterface $sortingService */
-            $sortingService = $this->get(CustomSortingServiceInterface::class);
-
             $categoryId = $context->getShop()->getCategory()->getId();
 
             $this->Request()->setParam('sCategory', $categoryId);
 
-            $sortings = $sortingService->getSortingsOfCategories([$categoryId], $context);
+            $sortings = $this->customSortingService->getSortingsOfCategories([$categoryId], $context);
 
-            /** @var CustomSorting[] $sortings */
             $sortings = array_shift($sortings);
 
             $this->setDefaultSorting($sortings);
@@ -145,12 +208,10 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
             $this->view->assign('sortings', $sortings);
         }
 
-        /** @var Criteria $criteria */
-        $criteria = $this->get(StoreFrontCriteriaFactoryInterface::class)
+        $criteria = $this->storeFrontCriteriaFactory
             ->createListingCriteria($this->Request(), $context);
 
-        if ($criteria->hasCondition('manufacturer')) {
-            $condition = $criteria->getCondition('manufacturer');
+        if ($condition = $criteria->getCondition('manufacturer')) {
             $criteria->removeCondition('manufacturer');
             $criteria->addBaseCondition($condition);
         }
@@ -159,11 +220,13 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
             $context->getShop()->getCategory()->getId(),
             $criteria
         );
+        if (!\is_array($categoryProducts)) {
+            $categoryProducts = ['facets' => []];
+        }
 
-        /** @var Manufacturer|null $manufacturer */
-        $manufacturer = $this->get(ManufacturerServiceInterface::class)->get(
+        $manufacturer = $this->manufacturerService->get(
             $manufacturerId,
-            $this->get(ContextServiceInterface::class)->getShopContext()
+            $context
         );
 
         if ($manufacturer === null) {
@@ -196,11 +259,9 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
      *
      * @param int $categoryId
      *
-     * @return array
+     * @return array<array{id: int, name: string, blog: bool, link: string}> listing breadcrumb
      *
      * @deprecated in 5.6, will be private in 5.8
-     *
-     * Returns listing breadcrumb
      */
     public function getBreadcrumb($categoryId)
     {
@@ -210,19 +271,19 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
     }
 
     /**
+     * @deprecated in 5.7, will be private in 5.8
+     *
      * @param int  $categoryId
      * @param bool $withStreams
      * @param int  $streamId
      *
-     * @return array
+     * @return array{emotions: array<array<string, mixed>>, hasEmotion: bool, showListing: bool, isHomePage: bool, showListingButton: bool}
      */
     protected function getEmotionConfiguration($categoryId, $withStreams = false, $streamId = null)
     {
-        $context = $this->container->get(ContextServiceInterface::class)->getShopContext();
+        $context = $this->contextService->getShopContext();
 
-        $service = $this->container->get(StoreFrontEmotionDeviceConfigurationInterface::class);
-
-        $emotions = $service->getCategoryConfiguration($categoryId, $context, $withStreams);
+        $emotions = $this->storeFrontEmotionDeviceConfiguration->getCategoryConfiguration($categoryId, $context, $withStreams);
 
         $emotions = $this->filterListingEmotions($emotions);
 
@@ -243,23 +304,16 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
         ];
     }
 
-    /**
-     * @param int $categoryId
-     * @param int $streamId
-     *
-     * @return bool
-     */
-    private function hasProducts($categoryId, ShopContextInterface $context, $streamId)
+    private function hasProducts(int $categoryId, ShopContextInterface $context, ?int $streamId): bool
     {
         if ($this->Request()->getParam('sPage')) {
             return false;
         }
 
         if ($streamId) {
-            $criteria = $this->createCategoryStreamCriteria($categoryId, $streamId);
+            $criteria = $this->createCategoryStreamCriteria($categoryId, $streamId, $context);
         } else {
-            /** @var Criteria $criteria */
-            $criteria = $this->get(StoreFrontCriteriaFactoryInterface::class)
+            $criteria = $this->storeFrontCriteriaFactory
                 ->createListingCriteria($this->Request(), $context);
         }
 
@@ -271,58 +325,49 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
         $criteria->resetFacets();
         $criteria->limit(1);
 
-        $numberResult = $this->get(ProductNumberSearchInterface::class)->search($criteria, $context);
+        $numberResult = $this->productNumberSearch->search($criteria, $context);
 
         return $numberResult->getTotalCount() > 0;
     }
 
     /**
-     * @param array $categoryContent
-     * @param bool  $hasEmotion
-     *
-     * @throws Enlight_Controller_Exception
-     *
-     * @return array|bool
+     * @param array<string, mixed> $categoryContent
      */
-    private function getRedirectLocation($categoryContent, $hasEmotion)
+    private function getRedirectLocation(array $categoryContent, bool $hasEmotion, ShopContextInterface $context): ?string
     {
-        $location = false;
+        if (\is_string($categoryContent['external']) && $categoryContent['external'] !== '') {
+            return $categoryContent['external'];
+        }
+
+        if ($this->isShopsBaseCategoryPage($categoryContent['id'])) {
+            return $this->Front()->Router()->assemble(['controller' => 'index']);
+        }
 
         $checkRedirect = ($hasEmotion && $this->Request()->getParam('sPage')) || (!$hasEmotion);
 
-        if (!empty($categoryContent['external'])) {
-            $location = $categoryContent['external'];
-        } elseif (empty($categoryContent)) {
-            throw new ResourceNotFoundException('Category not found', $this->Request());
-        } elseif ($this->isShopsBaseCategoryPage($categoryContent['id'])) {
-            $location = ['controller' => 'index'];
-        } elseif ($checkRedirect && $this->get(Shopware_Components_Config::class)->get('categoryDetailLink')) {
-            /** @var ShopContextInterface $context */
-            $context = $this->get(ContextServiceInterface::class)->getShopContext();
-
-            /** @var StoreFrontCriteriaFactoryInterface $factory */
-            $factory = $this->get(StoreFrontCriteriaFactoryInterface::class);
-            $criteria = $factory->createListingCriteria($this->Request(), $context);
-
-            $criteria->resetFacets()
-                ->resetConditions()
-                ->resetSorting()
-                ->offset(0)
-                ->limit(2)
-                ->setFetchCount(false);
-
-            /** @var ProductNumberSearchResult $result */
-            $result = $this->get(ProductNumberSearchInterface::class)->search($criteria, $context);
-
-            if (\count($result->getProducts()) === 1) {
-                $products = $result->getProducts();
-                /** @var BaseProduct $first */
-                $first = array_shift($products);
-                $location = ['controller' => 'detail', 'sArticle' => $first->getId()];
-            }
+        if (!$checkRedirect || !$this->config->get('categoryDetailLink')) {
+            return null;
         }
 
-        return $location;
+        $criteria = $this->storeFrontCriteriaFactory->createListingCriteria($this->Request(), $context);
+        $criteria->resetFacets()
+            ->resetConditions()
+            ->resetSorting()
+            ->offset(0)
+            ->limit(2)
+            ->setFetchCount(false);
+        $result = $this->productNumberSearch->search($criteria, $context);
+        if (\count($result->getProducts()) !== 1) {
+            return null;
+        }
+
+        $products = $result->getProducts();
+        $firstProducts = array_shift($products);
+
+        return $this->Front()->Router()->assemble([
+            'controller' => 'detail',
+            'sArticle' => $firstProducts->getId(),
+        ]);
     }
 
     /**
@@ -330,9 +375,9 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
      * Result can be merged with "sCategoryContent" to override relevant seo category data with
      * manufacturer data.
      *
-     * @return array
+     * @return array{metaDescription: string, metaKeywords: string, canonicalParams: array{sViewport: string, sAction: string, sSupplier: int}, metaTitle: string, title: string, productBoxLayout: string}
      */
-    private function getSeoDataOfManufacturer(Manufacturer $manufacturer)
+    private function getSeoDataOfManufacturer(Manufacturer $manufacturer): array
     {
         $content = [];
 
@@ -348,28 +393,32 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
         $content['canonicalParams'] = $canonicalParams;
         $content['metaTitle'] = $manufacturer->getMetaTitle();
         $content['title'] = $manufacturer->getName();
-        $content['productBoxLayout'] = $this->get(Shopware_Components_Config::class)->get('manufacturerProductBoxLayout');
+        $content['productBoxLayout'] = $this->config->get('manufacturerProductBoxLayout');
 
         return $content;
     }
 
     /**
      * Checks if the provided $categoryId is in the current shop's category tree
-     *
-     * @param int $categoryId
-     *
-     * @return bool
      */
-    private function isValidCategoryPath($categoryId)
+    private function isValidCategoryPath(int $categoryId): bool
     {
-        $defaultShopCategoryId = Shopware()->Shop()->getCategory()->getId();
+        $category = $this->get('shop')->getCategory();
+        if (!$category instanceof Category) {
+            return false;
+        }
 
-        $categoryRepository = $this->get('models')->getRepository(Category::class);
-        $categoryPath = $categoryRepository->getPathById($categoryId);
+        $defaultShopCategoryId = $category->getId();
+
+        $categoryPath = $this->categoryRepository->getPathById($categoryId);
+
+        if (\is_string($categoryPath)) {
+            return true;
+        }
 
         if (!\array_key_exists($defaultShopCategoryId, $categoryPath)) {
             $this->Request()->setQuery('sCategory', $defaultShopCategoryId);
-            $this->Response()->setStatusCode(404);
+            $this->Response()->setStatusCode(Response::HTTP_NOT_FOUND);
 
             return false;
         }
@@ -380,24 +429,28 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
     /**
      * Helper function used in the listing action to detect if
      * the user is trying to open the page matching the shop's root category
-     *
-     * @param int $categoryId
-     *
-     * @return bool
      */
-    private function isShopsBaseCategoryPage($categoryId)
+    private function isShopsBaseCategoryPage(int $categoryId): bool
     {
-        $defaultShopCategoryId = Shopware()->Shop()->getCategory()->getId();
+        $category = $this->get('shop')->getCategory();
+        if (!$category instanceof Category) {
+            return false;
+        }
+
+        $defaultShopCategoryId = $category->getId();
 
         $queryParamsWhiteList = ['controller', 'action', 'sCategory', 'sViewport', 'rewriteUrl', 'module'];
         $queryParamsNames = array_keys($this->Request()->getParams());
         $paramsDiff = array_diff($queryParamsNames, $queryParamsWhiteList);
 
-        return $defaultShopCategoryId === (int) $categoryId && !$paramsDiff;
+        return $defaultShopCategoryId === $categoryId && !$paramsDiff;
     }
 
     /**
      * Determines if the product listing has to be loaded/shown at all
+     *
+     * @param array<array<string, mixed>> $emotions
+     * @param array<int>                  $devicesWithEmotion
      */
     private function hasListing(array $emotions, array $devicesWithEmotion): bool
     {
@@ -437,7 +490,9 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
     /**
      * Filters the device types down to which have to show the product listing
      *
-     * @return int[]
+     * @param array<string, mixed> $emotions
+     *
+     * @return array<int>
      */
     private function getDevicesWithListing(array $emotions): array
     {
@@ -463,11 +518,15 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
     }
 
     /**
-     * @param CustomSorting[] $sortings
+     * @param ?CustomSorting[] $sortings
      */
-    private function setDefaultSorting($sortings)
+    private function setDefaultSorting(?array $sortings): void
     {
         if ($this->Request()->has('sSort')) {
+            return;
+        }
+
+        if (!\is_array($sortings)) {
             return;
         }
 
@@ -480,33 +539,29 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
         $this->Request()->setParam('sSort', $default->getId());
     }
 
-    /**
-     * @param int $categoryId
-     * @param int $streamId
-     *
-     * @return Criteria
-     */
-    private function createCategoryStreamCriteria($categoryId, $streamId)
+    private function createCategoryStreamCriteria(int $categoryId, int $streamId, ShopContextInterface $context): Criteria
     {
-        $contextService = $this->get(ContextServiceInterface::class);
-        $context = $contextService->getShopContext();
+        $criteria = $this->criteriaFactory->createCriteria($this->Request(), $context);
 
-        $factory = $this->get(CriteriaFactoryInterface::class);
-        $criteria = $factory->createCriteria($this->Request(), $context);
+        $this->productStreamRepository->prepareCriteria($criteria, $streamId);
 
-        $streamRepository = $this->get(Repository::class);
-        $streamRepository->prepareCriteria($criteria, $streamId);
-
-        $facetService = $this->get(CustomFacetServiceInterface::class);
-        $facets = $facetService->getFacetsOfCategories([$categoryId], $context);
+        $facets = $this->customFacetService->getFacetsOfCategories([$categoryId], $context);
 
         $facets = array_shift($facets);
-        foreach ($facets as $facet) {
-            $criteria->addFacet($facet->getFacet());
+
+        if (!\is_array($facets)) {
+            $facets = [];
         }
 
-        $facetFilter = $this->get('shopware_product_stream.facet_filter');
-        $facetFilter->add($criteria);
+        foreach ($facets as $facet) {
+            $customFacet = $facet->getFacet();
+
+            if ($customFacet instanceof FacetInterface) {
+                $criteria->addFacet($customFacet);
+            }
+        }
+
+        $this->facetFilter->add($criteria);
 
         $criteria->removeFacet('category');
 
@@ -514,27 +569,19 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
     }
 
     /**
-     * @param int $categoryId
-     *
-     * @throws Enlight_Exception
+     * @param array<string, mixed> $categoryContent
      */
-    private function loadCategoryListing($categoryId, array $categoryContent)
+    private function loadCategoryListing(int $categoryId, array $categoryContent, ShopContextInterface $context): void
     {
-        $context = $this->get(ContextServiceInterface::class)->getShopContext();
-
-        $service = $this->get(CustomSortingServiceInterface::class);
-
-        $sortings = $service->getSortingsOfCategories([$categoryId], $context);
-
+        $sortings = $this->customSortingService->getSortingsOfCategories([$categoryId], $context);
         $sortings = array_shift($sortings);
 
         $this->setDefaultSorting($sortings);
 
         if ($categoryContent['streamId']) {
-            $criteria = $this->createCategoryStreamCriteria($categoryId, $categoryContent['streamId']);
+            $criteria = $this->createCategoryStreamCriteria($categoryId, $categoryContent['streamId'], $context);
         } else {
-            $criteria = $this->get(StoreFrontCriteriaFactoryInterface::class)
-                ->createListingCriteria($this->Request(), $context);
+            $criteria = $this->storeFrontCriteriaFactory->createListingCriteria($this->Request(), $context);
         }
 
         if ($categoryContent['hideFilter']) {
@@ -543,7 +590,7 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
 
         $categoryProducts = Shopware()->Modules()->Articles()->sGetArticlesByCategory($categoryId, $criteria);
 
-        if ($categoryProducts['sPage'] > 1 && empty($categoryProducts['sArticles'])) {
+        if (!$categoryProducts || ($categoryProducts['sPage'] > 1 && empty($categoryProducts['sArticles']))) {
             throw new Enlight_Controller_Exception('Listing page is empty', Enlight_Controller_Exception::Controller_Dispatcher_Controller_Not_Found);
         }
 
@@ -555,8 +602,7 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
             $this->View()->assign($viewData);
         }
 
-        $facetFilter = $this->get('shopware_product_stream.facet_filter');
-        $facets = $facetFilter->filter($categoryProducts['facets'], $criteria);
+        $facets = $this->facetFilter->filter($categoryProducts['facets'], $criteria);
         $categoryProducts['facets'] = $facets;
 
         $this->View()->assign($categoryProducts);
@@ -564,33 +610,34 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
     }
 
     /**
-     * @param int $requestCategoryId
-     *
-     * @throws Enlight_Controller_Exception
-     *
-     * @return array
+     * @return array<string, mixed>
      */
-    private function loadCategoryContent($requestCategoryId)
+    private function loadCategoryContent(int $requestCategoryId, Request $request): array
     {
         if (empty($requestCategoryId) || !$this->isValidCategoryPath($requestCategoryId)) {
             throw new Enlight_Controller_Exception('Listing category missing, non-existent or invalid for the current shop', 404);
         }
 
         $categoryContent = Shopware()->Modules()->Categories()->sGetCategoryContent($requestCategoryId);
+
+        if (!\is_array($categoryContent)) {
+            throw new ResourceNotFoundException('Category not found', $this->Request());
+        }
+
         // Check if the requested category-id belongs to a blog category
         if ($categoryContent['blog']) {
             throw new Enlight_Controller_Exception('Listing category missing, non-existent or invalid for the current shop', 404);
         }
 
-        Shopware()->System()->_GET['sCategory'] = $requestCategoryId;
+        $request->query->set('sCategory', $requestCategoryId);
 
         $this->View()->assign([
             'sBanner' => Shopware()->Modules()->Marketing()->sBanner($requestCategoryId),
             'sBreadcrumb' => $this->getBreadcrumb($requestCategoryId),
             'sCategoryContent' => $categoryContent,
-            'activeFilterGroup' => $this->request->getQuery('sFilterGroup'),
+            'activeFilterGroup' => $request->getQuery('sFilterGroup'),
             'ajaxCountUrlParams' => ['sCategory' => $categoryContent['id']],
-            'params' => $this->Request()->getParams(),
+            'params' => $request->getParams(),
         ]);
 
         if (!empty($categoryContent['template'])) {
@@ -613,11 +660,19 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
         return $categoryContent;
     }
 
-    private function loadListing(array $emotionConfiguration): bool
+    /**
+     * @param array{showListing: bool} $emotionConfiguration
+     */
+    private function loadListing(array $emotionConfiguration, Request $request): bool
     {
-        return $emotionConfiguration['showListing'] || $this->Request()->getParam('sPage');
+        return $emotionConfiguration['showListing'] || $request->getParam('sPage');
     }
 
+    /**
+     * @param array<array<string, mixed>> $emotions
+     *
+     * @return array<array<string, mixed>>
+     */
     private function filterListingEmotions(array $emotions): array
     {
         if ((int) $this->Request()->getParam('sPage') > 0) {
@@ -637,6 +692,9 @@ class Shopware_Controllers_Frontend_Listing extends Enlight_Controller_Action
         });
     }
 
+    /**
+     * @param array<string, mixed> $emotions
+     */
     private function haveAllViewportsEmotions(array $emotions): bool
     {
         $devices = [];

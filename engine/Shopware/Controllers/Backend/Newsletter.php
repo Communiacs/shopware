@@ -360,11 +360,14 @@ class Shopware_Controllers_Backend_Newsletter extends Enlight_Controller_Action 
         }
 
         $this->Response()->headers->set('content-type', 'image/gif');
-        $bild = imagecreate(1, 1);
-        $white = imagecolorallocate($bild, 255, 255, 255);
-        imagefill($bild, 1, 1, $white);
-        imagegif($bild);
-        imagedestroy($bild);
+        $image = imagecreate(1, 1);
+        if ($image === false) {
+            return;
+        }
+        $white = (int) imagecolorallocate($image, 255, 255, 255);
+        imagefill($image, 1, 1, $white);
+        imagegif($image);
+        imagedestroy($image);
     }
 
     /**
@@ -570,7 +573,7 @@ class Shopware_Controllers_Backend_Newsletter extends Enlight_Controller_Action 
      *
      * @param int $id
      *
-     * @return array|bool
+     * @return array|false
      */
     public function getMailingEmails($id)
     {
@@ -583,8 +586,8 @@ class Shopware_Controllers_Backend_Newsletter extends Enlight_Controller_Action 
             return false;
         }
 
-        $customerGroups = null;
-        $recipientGroups = null;
+        $customerGroups = [];
+        $recipientGroups = [];
         $mailing['groups'] = unserialize($mailing['groups'], ['allowed_classes' => false]);
 
         // The first element holds the selected customer groups for the current newsletter
@@ -802,7 +805,7 @@ class Shopware_Controllers_Backend_Newsletter extends Enlight_Controller_Action 
 
         $source = preg_replace('#<a.+href="(.*)".*>#Umsi', '$1', $source);
         $source = str_replace(['<br />', '</p>', '&nbsp;'], ["\n", "\n", ' '], $source);
-        $source = trim(strip_tags(preg_replace('/<(head|title|style|script)[^>]*>.*?<\/\\1>/s', '', $source)));
+        $source = trim(strip_tags((string) preg_replace('/<(head|title|style|script)[^>]*>.*?<\/\\1>/s', '', $source)));
 
         return html_entity_decode($source);
     }

@@ -1,22 +1,6 @@
 <?php
 
-/*
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * This software consists of voluntary contributions made by many individuals
- * and is licensed under the MIT license. For more information, see
- * <http://www.doctrine-project.org>.
- */
+declare(strict_types=1);
 
 namespace Doctrine\ORM\Cache;
 
@@ -28,38 +12,38 @@ use Doctrine\ORM\Cache;
 class QueryCacheKey extends CacheKey
 {
     /**
-     * READ-ONLY: Public only for performance reasons, it should be considered immutable.
+     * Cache key lifetime
      *
-     * @var int Cache key lifetime
+     * @readonly Public only for performance reasons, it should be considered immutable.
+     * @var int
      */
     public $lifetime;
 
     /**
-     * READ-ONLY: Public only for performance reasons, it should be considered immutable.
+     * Cache mode
      *
-     * @var int Cache mode (Doctrine\ORM\Cache::MODE_*)
+     * @readonly Public only for performance reasons, it should be considered immutable.
+     * @var int
+     * @psalm-var Cache::MODE_*
      */
     public $cacheMode;
 
     /**
-     * READ-ONLY: Public only for performance reasons, it should be considered immutable.
-     *
+     * @readonly Public only for performance reasons, it should be considered immutable.
      * @var TimestampCacheKey|null
      */
     public $timestampKey;
 
     /**
-     * @param string $hash      Result cache id
-     * @param int    $lifetime  Query lifetime
-     * @param int    $cacheMode Query cache mode
+     * @psalm-param Cache::MODE_* $cacheMode
      */
     public function __construct(
-        $hash,
-        $lifetime = 0,
-        $cacheMode = Cache::MODE_NORMAL,
+        string $cacheId,
+        int $lifetime = 0,
+        int $cacheMode = Cache::MODE_NORMAL,
         ?TimestampCacheKey $timestampKey = null
     ) {
-        $this->hash         = $hash;
+        $this->hash         = $cacheId;
         $this->lifetime     = $lifetime;
         $this->cacheMode    = $cacheMode;
         $this->timestampKey = $timestampKey;

@@ -37,6 +37,7 @@ use Doctrine\ORM\Query;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use InvalidArgumentException;
 use ReflectionProperty;
+use RuntimeException;
 use Shopware\Components\Model\Query\SqlWalker;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -63,7 +64,7 @@ class ModelManager extends EntityManager
         Connection $conn,
         Configuration $config,
         QueryOperatorValidator $operatorValidator,
-        EventManager $eventManager = null
+        EventManager $eventManager
     ) {
         $this->operatorValidator = $operatorValidator;
         parent::__construct($conn, $config, $eventManager);
@@ -203,7 +204,7 @@ class ModelManager extends EntityManager
     {
         $metaDataCache = $this->getConfiguration()->getMetadataCacheImpl();
 
-        if (method_exists($metaDataCache, 'deleteAll')) {
+        if ($metaDataCache !== null && method_exists($metaDataCache, 'deleteAll')) {
             $metaDataCache->deleteAll();
         }
 
@@ -325,6 +326,9 @@ class ModelManager extends EntityManager
         } else {
             $className = \get_class($entity);
         }
+        if (!\is_string($className)) {
+            throw new RuntimeException('Could not get class name');
+        }
         $metadata = $this->getClassMetadata($className);
         $data = [];
         $inflector = new Inflector(new NoopWordInflector(), new NoopWordInflector());
@@ -349,13 +353,11 @@ class ModelManager extends EntityManager
                     $data[$key] = $this->serializeEntity($data[$key]);
                 }
             } elseif ($mapping['isOwningSide'] && $mapping['type'] & ClassMetadata::TO_ONE) {
-                if ($metadata->reflFields[$field]->getValue($entity) !== null) {
-                    $data[$key] = $this->getUnitOfWork()->getEntityIdentifier(
-                        $metadata->reflFields[$field]->getValue($entity)
-                    );
+                $association = $metadata->reflFields[$field]->getValue($entity);
+                if (\is_object($association) && $this->getUnitOfWork()->isInIdentityMap($association)) {
+                    $data[$key] = $this->getUnitOfWork()->getEntityIdentifier($association);
                 } else {
-                    // In some case the relationship may not exist, but we want
-                    // to know about it
+                    // In some case the relationship may not exist, but we want to know about it
                     $data[$key] = null;
                 }
             }

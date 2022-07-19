@@ -26,6 +26,7 @@ namespace Shopware\Bundle\AttributeBundle\Repository\Reader;
 
 use Doctrine\DBAL\Connection;
 use Shopware\Components\Model\ModelManager;
+use Shopware\Components\Model\QueryBuilder;
 
 class GenericReader implements ReaderInterface
 {
@@ -39,20 +40,12 @@ class GenericReader implements ReaderInterface
      */
     protected $entityManager;
 
-    /**
-     * @param string $entity
-     */
-    public function __construct($entity, ModelManager $entityManager)
+    public function __construct(string $entity, ModelManager $entityManager)
     {
         $this->entity = $entity;
         $this->entityManager = $entityManager;
     }
 
-    /**
-     * @param int[]|string[] $identifiers
-     *
-     * @return array[]
-     */
     public function getList($identifiers)
     {
         $query = $this->createListQuery();
@@ -61,7 +54,9 @@ class GenericReader implements ReaderInterface
         $data = $query->getQuery()->getArrayResult();
         $result = [];
 
-        $identifiers = array_map('strtolower', $identifiers);
+        $identifiers = array_map(function ($identifier): string {
+            return strtolower((string) $identifier);
+        }, $identifiers);
         $data = array_change_key_case($data, CASE_LOWER);
         $identifierFields = explode('.', $this->getIdentifierField());
         $identifierField = array_pop($identifierFields);
@@ -84,11 +79,6 @@ class GenericReader implements ReaderInterface
         return $result;
     }
 
-    /**
-     * @param int|string $identifier
-     *
-     * @return array
-     */
     public function get($identifier)
     {
         $query = $this->createDetailQuery();
@@ -100,7 +90,7 @@ class GenericReader implements ReaderInterface
     }
 
     /**
-     * @return \Shopware\Components\Model\QueryBuilder
+     * @return QueryBuilder
      */
     protected function createDetailQuery()
     {
@@ -108,7 +98,7 @@ class GenericReader implements ReaderInterface
     }
 
     /**
-     * @return \Shopware\Components\Model\QueryBuilder
+     * @return QueryBuilder
      */
     protected function createListQuery()
     {

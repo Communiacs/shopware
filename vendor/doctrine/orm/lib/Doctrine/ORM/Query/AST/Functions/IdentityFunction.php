@@ -1,22 +1,6 @@
 <?php
 
-/*
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * This software consists of voluntary contributions made by many individuals
- * and is licensed under the MIT license. For more information, see
- * <http://www.doctrine-project.org>.
- */
+declare(strict_types=1);
 
 namespace Doctrine\ORM\Query\AST\Functions;
 
@@ -26,6 +10,7 @@ use Doctrine\ORM\Query\Parser;
 use Doctrine\ORM\Query\QueryException;
 use Doctrine\ORM\Query\SqlWalker;
 
+use function assert;
 use function reset;
 use function sprintf;
 
@@ -39,7 +24,7 @@ class IdentityFunction extends FunctionNode
     /** @var PathExpression */
     public $pathExpression;
 
-    /** @var string */
+    /** @var string|null */
     public $fieldMapping;
 
     /**
@@ -47,14 +32,14 @@ class IdentityFunction extends FunctionNode
      */
     public function getSql(SqlWalker $sqlWalker)
     {
-        $platform      = $sqlWalker->getEntityManager()->getConnection()->getDatabasePlatform();
-        $quoteStrategy = $sqlWalker->getEntityManager()->getConfiguration()->getQuoteStrategy();
+        assert($this->pathExpression->field !== null);
+        $entityManager = $sqlWalker->getEntityManager();
+        $platform      = $entityManager->getConnection()->getDatabasePlatform();
+        $quoteStrategy = $entityManager->getConfiguration()->getQuoteStrategy();
         $dqlAlias      = $this->pathExpression->identificationVariable;
         $assocField    = $this->pathExpression->field;
-        $qComp         = $sqlWalker->getQueryComponent($dqlAlias);
-        $class         = $qComp['metadata'];
-        $assoc         = $class->associationMappings[$assocField];
-        $targetEntity  = $sqlWalker->getEntityManager()->getClassMetadata($assoc['targetEntity']);
+        $assoc         = $sqlWalker->getMetadataForDqlAlias($dqlAlias)->associationMappings[$assocField];
+        $targetEntity  = $entityManager->getClassMetadata($assoc['targetEntity']);
         $joinColumn    = reset($assoc['joinColumns']);
 
         if ($this->fieldMapping !== null) {
@@ -79,7 +64,7 @@ class IdentityFunction extends FunctionNode
         }
 
         // The table with the relation may be a subclass, so get the table name from the association definition
-        $tableName = $sqlWalker->getEntityManager()->getClassMetadata($assoc['sourceEntity'])->getTableName();
+        $tableName = $entityManager->getClassMetadata($assoc['sourceEntity'])->getTableName();
 
         $tableAlias = $sqlWalker->getSQLTableAlias($tableName, $dqlAlias);
         $columnName = $quoteStrategy->getJoinColumnName($joinColumn, $targetEntity, $platform);

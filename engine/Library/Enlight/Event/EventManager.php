@@ -41,15 +41,14 @@ use Enlight\Event\SubscriberInterface;
 class Enlight_Event_EventManager extends Enlight_Class
 {
     /**
-     * @var Enlight_Event_Handler[] Contains all registered event listeners. A listener can be registered by the
-     *                              registerListener(Enlight_Event_Handler $handler) function.
+     * @var array<string, array<Enlight_Event_Handler>> Contains all registered event listeners. A listener can be registered by the registerListener(Enlight_Event_Handler) function.
      */
     protected $listeners = [];
 
     /**
      * Returns all event listeners of the Enlight_Event_EventManager
      *
-     * @return Enlight_Event_Handler[]
+     * @return array<string, array<Enlight_Event_Handler>>
      */
     public function getAllListeners()
     {
@@ -128,8 +127,8 @@ class Enlight_Event_EventManager extends Enlight_Class
         }
 
         $listenerToRemove = $handler->getListener();
-        foreach ($this->listeners[$eventName] as $i => $handler) {
-            if ($listenerToRemove === $handler->getListener()) {
+        foreach ($this->listeners[$eventName] as $i => $listener) {
+            if ($listenerToRemove === $listener->getListener()) {
                 unset($this->listeners[$eventName][$i]);
             }
         }
@@ -267,10 +266,15 @@ class Enlight_Event_EventManager extends Enlight_Class
      *
      * The return value of the execute method will be set in the event arguments return value.
      *
+     * @template TValue of mixed
+     *
      * @param string                             $event
+     * @param TValue                             $value
      * @param Enlight_Event_EventArgs|array|null $eventArgs
      *
      * @throws Enlight_Event_Exception
+     *
+     * @return TValue
      */
     public function filter($event, $value, $eventArgs = null)
     {
@@ -302,7 +306,7 @@ class Enlight_Event_EventManager extends Enlight_Class
      *
      * @throws Enlight_Event_Exception
      *
-     * @return ArrayCollection|null
+     * @return ArrayCollection
      */
     public function collect($event, ArrayCollection $collection, $eventArgs = null)
     {
@@ -329,16 +333,25 @@ class Enlight_Event_EventManager extends Enlight_Class
         return $collection;
     }
 
+    /**
+     * @return void
+     */
     public function addSubscriber(SubscriberInterface $subscriber)
     {
-        foreach ($subscriber->getSubscribedEvents() as $eventName => $params) {
+        foreach ($subscriber::getSubscribedEvents() as $eventName => $params) {
             if (\is_string($params)) {
                 $this->addListener($eventName, [$subscriber, $params]);
-            } elseif (\is_string($params[0])) {
-                $this->addListener($eventName, [$subscriber, $params[0]], isset($params[1]) ? $params[1] : 0);
-            } else {
-                foreach ($params as $listener) {
-                    $this->addListener($eventName, [$subscriber, $listener[0]], isset($listener[1]) ? $listener[1] : 0);
+                continue;
+            }
+
+            if (\is_string($params[0])) {
+                $this->addListener($eventName, [$subscriber, $params[0]], (int) ($params[1] ?? 0));
+                continue;
+            }
+
+            foreach ($params as $listener) {
+                if (\is_array($listener)) {
+                    $this->addListener($eventName, [$subscriber, $listener[0]], $listener[1] ?? 0);
                 }
             }
         }

@@ -1,25 +1,10 @@
 <?php
 
-/*
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * This software consists of voluntary contributions made by many individuals
- * and is licensed under the MIT license. For more information, see
- * <http://www.doctrine-project.org>.
- */
+declare(strict_types=1);
 
 namespace Doctrine\ORM\Tools\Console\Command;
 
+use Doctrine\DBAL\Connection;
 use Doctrine\ORM\Mapping\Driver\DatabaseDriver;
 use Doctrine\ORM\Tools\Console\MetadataFilter;
 use Doctrine\ORM\Tools\DisconnectedClassMetadataFactory;
@@ -37,6 +22,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use function file_exists;
 use function is_dir;
 use function is_writable;
+use function method_exists;
 use function mkdir;
 use function realpath;
 use function sprintf;
@@ -44,6 +30,8 @@ use function strtolower;
 
 /**
  * Command to convert your mapping information between the various formats.
+ *
+ * @deprecated 2.7 This class is being removed from the ORM and won't have any replacement
  *
  * @link    www.doctrine-project.org
  */
@@ -100,12 +88,15 @@ EOT
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $ui = new SymfonyStyle($input, $output);
+        $ui->warning('Command ' . $this->getName() . ' is deprecated and will be removed in Doctrine ORM 3.0.');
 
         $em = $this->getEntityManager($input);
 
         if ($input->getOption('from-database') === true) {
             $databaseDriver = new DatabaseDriver(
-                $em->getConnection()->getSchemaManager()
+                method_exists(Connection::class, 'createSchemaManager')
+                    ? $em->getConnection()->createSchemaManager()
+                    : $em->getConnection()->getSchemaManager()
             );
 
             $em->getConfiguration()->setMetadataDriverImpl(
@@ -163,7 +154,7 @@ EOT
         if (empty($metadata)) {
             $ui->success('No Metadata Classes to process.');
 
-            return;
+            return 0;
         }
 
         foreach ($metadata as $class) {

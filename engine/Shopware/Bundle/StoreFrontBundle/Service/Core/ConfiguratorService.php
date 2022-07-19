@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Shopware 5
  * Copyright (c) shopware AG
@@ -24,38 +26,35 @@
 
 namespace Shopware\Bundle\StoreFrontBundle\Service\Core;
 
-use Shopware\Bundle\StoreFrontBundle\Gateway;
-use Shopware\Bundle\StoreFrontBundle\Service;
-use Shopware\Bundle\StoreFrontBundle\Struct;
+use Shopware\Bundle\StoreFrontBundle\Gateway\ConfiguratorGatewayInterface;
+use Shopware\Bundle\StoreFrontBundle\Gateway\ProductConfigurationGatewayInterface;
+use Shopware\Bundle\StoreFrontBundle\Service\ConfiguratorServiceInterface;
+use Shopware\Bundle\StoreFrontBundle\Struct\BaseProduct;
+use Shopware\Bundle\StoreFrontBundle\Struct\Configurator\Group;
+use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
-class ConfiguratorService implements Service\ConfiguratorServiceInterface
+class ConfiguratorService implements ConfiguratorServiceInterface
 {
     public const CONFIGURATOR_TYPE_STANDARD = 0;
     public const CONFIGURATOR_TYPE_SELECTION = 1;
     public const CONFIGURATOR_TYPE_PICTURE = 2;
 
-    /**
-     * @var Gateway\ProductConfigurationGatewayInterface
-     */
-    private $productConfigurationGateway;
+    private ProductConfigurationGatewayInterface $productConfigurationGateway;
 
-    /**
-     * @var Gateway\ConfiguratorGatewayInterface
-     */
-    private $configuratorGateway;
+    private ConfiguratorGatewayInterface $configuratorGateway;
 
     public function __construct(
-        Gateway\ProductConfigurationGatewayInterface $productConfigurationGateway,
-        Gateway\ConfiguratorGatewayInterface $configuratorGateway
+        ProductConfigurationGatewayInterface $productConfigurationGateway,
+        ConfiguratorGatewayInterface $configuratorGateway
     ) {
-        $this->configuratorGateway = $configuratorGateway;
         $this->productConfigurationGateway = $productConfigurationGateway;
+        $this->configuratorGateway = $configuratorGateway;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function getProductConfiguration(Struct\BaseProduct $product, Struct\ShopContextInterface $context)
+    public function getProductConfiguration(BaseProduct $product, ShopContextInterface $context)
     {
         $configuration = $this->getProductsConfigurations([$product], $context);
 
@@ -65,7 +64,7 @@ class ConfiguratorService implements Service\ConfiguratorServiceInterface
     /**
      * {@inheritdoc}
      */
-    public function getProductsConfigurations($products, Struct\ShopContextInterface $context)
+    public function getProductsConfigurations($products, ShopContextInterface $context)
     {
         return $this->productConfigurationGateway->getList($products, $context);
     }
@@ -74,8 +73,8 @@ class ConfiguratorService implements Service\ConfiguratorServiceInterface
      * {@inheritdoc}
      */
     public function getProductConfigurator(
-        Struct\BaseProduct $product,
-        Struct\ShopContextInterface $context,
+        BaseProduct $product,
+        ShopContextInterface $context,
         array $selection
     ) {
         $configurator = $this->configuratorGateway->get($product, $context);
@@ -127,13 +126,10 @@ class ConfiguratorService implements Service\ConfiguratorServiceInterface
      * Checks if the passed combination is compatible with the provided customer configurator
      * selection.
      *
-     * @param \Shopware\Bundle\StoreFrontBundle\Struct\Configurator\Group $group
-     * @param array                                                       $combinations
-     * @param array                                                       $selection
-     *
-     * @return bool
+     * @param array<string>|null $combinations
+     * @param array<int, int>    $selection
      */
-    private function isCombinationValid(Struct\Configurator\Group $group, $combinations, $selection)
+    private function isCombinationValid(Group $group, ?array $combinations, array $selection): bool
     {
         if (empty($combinations)) {
             return false;

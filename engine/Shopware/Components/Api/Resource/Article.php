@@ -25,7 +25,6 @@
 namespace Shopware\Components\Api\Resource;
 
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\ORMException;
 use Exception;
 use RuntimeException;
@@ -658,11 +657,6 @@ class Article extends Resource implements BatchInterface
         }
     }
 
-    /**
-     * Returns the primary ID of any data set.
-     *
-     * {@inheritdoc}
-     */
     public function getIdByData($data)
     {
         $id = null;
@@ -1067,7 +1061,7 @@ class Article extends Resource implements BatchInterface
 
                     if ($oldMain instanceof Detail) {
                         $oldMain->setKind(2);
-                        if ($oldMain->getNumber() && !empty($oldMain->getConfiguratorOptions())) {
+                        if ($oldMain->getNumber() && $oldMain->getConfiguratorOptions()->count() > 0) {
                             $variant = $oldMain;
                         } else {
                             $this->getManager()->remove($oldMain);
@@ -1395,7 +1389,7 @@ class Article extends Resource implements BatchInterface
             'seoCategories',
             true
         );
-        /** @var Collection<array-key, Category> $categories */
+        /** @var ArrayCollection<array-key, Category> $categories */
         $categories = $data['categories'];
 
         foreach ($data['seoCategories'] as $categoryData) {
@@ -1531,7 +1525,7 @@ class Article extends Resource implements BatchInterface
                 );
             }
 
-            //no valid entity found, throw exception!
+            // no valid entity found, throw exception!
             if ($relatedProduct === null) {
                 $property = $relatedData['number'] ?: $relatedData['id'];
                 throw new CustomValidationException(sprintf('Related product by number/id "%s" not found', $property));
@@ -1678,8 +1672,8 @@ class Article extends Resource implements BatchInterface
                         $query = $propertyRepository->getPropertyRelationQuery($filters, null, 1, 0);
                         $relation = $query->getOneOrNullResult(self::HYDRATE_OBJECT);
                         if (!$relation instanceof Relation) {
-                            //checks if a new option was created
-                            //because the new option is not written to the database at this point
+                            // checks if a new option was created
+                            // because the new option is not written to the database at this point
                             $groupOption = $this->getCollectionElementByProperty(
                                 $propertyGroup->getOptions(),
                                 'name',
@@ -1843,7 +1837,7 @@ class Article extends Resource implements BatchInterface
                 $options->add($available);
             }
 
-            if (empty($options)) {
+            if ($options->count() === 0) {
                 throw new CustomValidationException('No available option exists');
             }
 
@@ -2250,7 +2244,7 @@ class Article extends Resource implements BatchInterface
                     $media->setDescription($downloadData['name']);
                 }
 
-                try { //persist the model into the model manager
+                try { // persist the model into the model manager
                     $this->getManager()->persist($media);
                 } catch (ORMException $e) {
                     throw new CustomValidationException(sprintf('Some error occurred while loading your image from link "%s"', $downloadData['link']));
@@ -2356,15 +2350,17 @@ class Article extends Resource implements BatchInterface
             }
         }
 
-        $hasMain = $this->getCollectionElementByProperty(
+        $mainImage = $this->getCollectionElementByProperty(
             $images,
             'main',
             1
         );
 
-        if (!$hasMain) {
+        if (!$mainImage instanceof Image) {
             $image = $images->get(0);
-            $image->setMain(1);
+            if ($image instanceof Image) {
+                $image->setMain(1);
+            }
         }
         unset($data['images']);
 

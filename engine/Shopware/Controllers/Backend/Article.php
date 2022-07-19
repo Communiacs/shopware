@@ -72,6 +72,7 @@ use Shopware\Models\Shop\Repository as ShopRepository;
 use Shopware\Models\Shop\Shop;
 use Shopware\Models\Tax\Tax;
 use Symfony\Component\HttpFoundation\Cookie;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Validator\ConstraintViolationList;
 
 class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_ExtJs implements CSRFWhitelistAware
@@ -751,7 +752,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
     public function setPropertyListAction()
     {
         if (!$this->Request()->isPost()) {
-            //don't save the property list on a get request. This will only occur when there is an ext js problem
+            // don't save the property list on a get request. This will only occur when there is an ext js problem
             return;
         }
         $models = $this->get('models');
@@ -793,7 +794,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
                     $propertyValueModel = $propertyValueRepository->find($value['id']);
                 }
                 if ($propertyValueModel === null) {
-                    //search for property value
+                    // search for property value
                     $propertyValueModel = $propertyValueRepository->findOneBy(
                         [
                             'value' => $value['value'],
@@ -806,7 +807,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
                     $models->persist($propertyValueModel);
                 }
                 if (!$propertyValues->contains($propertyValueModel)) {
-                    //add only new values
+                    // add only new values
                     $propertyValues->add($propertyValueModel);
                 }
             }
@@ -1594,10 +1595,10 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
             $query->setHydrationMode(AbstractQuery::HYDRATE_ARRAY);
             $paginator = $this->getModelManager()->createPaginator($query);
 
-            //returns the total count of the query
+            // returns the total count of the query
             $totalResult = $paginator->count();
 
-            //returns the customer data
+            // returns the customer data
             $result = $paginator->getIterator()->getArrayCopy();
 
             $products = $this->buildListProducts($result);
@@ -1625,13 +1626,13 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
 
         $paginator = $this->getModelManager()->createPaginator($query);
 
-        //returns the total count of the query
+        // returns the total count of the query
         $totalResult = $paginator->count();
 
-        //returns the customer data
+        // returns the customer data
         $result = $paginator->getIterator()->getArrayCopy();
 
-        //inserts esd attributes into the result
+        // inserts esd attributes into the result
         $result = $this->getEsdListingAttributes($result);
 
         $this->View()->assign([
@@ -1659,10 +1660,10 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
 
         $paginator = $this->getModelManager()->createPaginator($query);
 
-        //returns the total count of the query
+        // returns the total count of the query
         $totalResult = $paginator->count();
 
-        //returns the customer data
+        // returns the customer data
         $result = $paginator->getIterator()->getArrayCopy();
 
         $this->View()->assign([
@@ -1872,7 +1873,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
         }
 
         // Trim every serial number
-        array_walk($serials, 'trim');
+        $serials = array_map('trim', $serials);
 
         // Remove empty serial numbers
         $serials = array_filter($serials);
@@ -1944,7 +1945,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
         $overwriteMode = $this->Request()->query->get('uploadMode');
         $file = $this->Request()->files->get('fileId');
 
-        if ($file === null) {
+        if (!$file instanceof UploadedFile) {
             $this->View()->assign(['success' => false]);
 
             return;
@@ -1999,7 +2000,11 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
             }
         }
 
-        $upstream = fopen($file->getRealPath(), 'rb');
+        $filePath = (string) $file->getRealPath();
+        $upstream = fopen($filePath, 'rb');
+        if (!\is_resource($upstream)) {
+            throw new RuntimeException(sprintf('Could not open file at: %s', $filePath));
+        }
         $filesystem->writeStream($destinationPath, $upstream);
         fclose($upstream);
 
@@ -2044,12 +2049,22 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
         $response->sendResponse();
 
         $upstream = $filesystem->readStream($path);
+        if (!\is_resource($upstream)) {
+            throw new RuntimeException(sprintf('Could not open file from: %s', $path));
+        }
         $downstream = fopen('php://output', 'wb');
+        if (!\is_resource($downstream)) {
+            throw new RuntimeException('Could not open temporary stream');
+        }
 
         ob_end_clean();
 
         while (!feof($upstream)) {
-            fwrite($downstream, fread($upstream, 4096));
+            $read = fread($upstream, 4096);
+            if (!\is_string($read)) {
+                continue;
+            }
+            fwrite($downstream, $read);
             flush();
         }
     }
@@ -2166,7 +2181,8 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
             return $this->getChartData();
         }
 
-        $startDate = $this->Request()->getParam('fromDate', date('Y-m-d', mktime(0, 0, 0, (int) date('m'), 1, (int) date('Y'))));
+        $timeStamp = (int) mktime(0, 0, 0, (int) date('m'), 1, (int) date('Y'));
+        $startDate = $this->Request()->getParam('fromDate', date('Y-m-d', $timeStamp));
         $endDate = $this->Request()->getParam('toDate', date('Y-m-d'));
 
         $sql = "
@@ -3217,6 +3233,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
             if ($customerGroup['taxInput']) {
                 $price['price'] = $price['price'] / 100 * (100 + $tax['tax']);
                 $price['pseudoPrice'] = $price['pseudoPrice'] / 100 * (100 + $tax['tax']);
+                $price['regulationPrice'] = $price['regulationPrice'] / 100 * (100 + $tax['tax']);
             }
             $prices[$key] = $price;
         }
@@ -3396,7 +3413,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
      * @param Product $article
      * @param int     $mergeType
      *
-     * @return array|bool
+     * @return array|false
      */
     protected function prepareVariantData($variant, $detailData, &$counter, $dependencies, $priceVariations, $allOptions, $originals, $article, $mergeType)
     {
@@ -3418,6 +3435,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
         foreach ($dependencies as $dependency) {
             if (\in_array($dependency['parentId'], $optionIds) && \in_array($dependency['childId'], $optionIds)) {
                 $abortVariant = true;
+                break;
             }
         }
 
@@ -3432,7 +3450,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
             return false;
         }
 
-        //create the new variant data
+        // create the new variant data
         $variantData = [
             'active' => 1,
             'configuratorOptions' => $optionsModels,
@@ -3939,7 +3957,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
                 throw new ModelNotFoundException(Product::class, $relatedData['id']);
             }
 
-            //if the user select the cross
+            // if the user select the cross
             if ($relatedData['cross'] && !$relatedProduct->getRelated()->contains($article)) {
                 $relatedProduct->getRelated()->add($article);
                 $this->get('models')->persist($relatedProduct);
@@ -3996,7 +4014,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
                 throw new ModelNotFoundException(Product::class, $similarData['id']);
             }
 
-            //if the user select the cross
+            // if the user select the cross
             if ($similarData['cross'] && !$similarProduct->getSimilar()->contains($article)) {
                 $similarProduct->getSimilar()->add($article);
                 $this->get('models')->persist($similarProduct);
@@ -4081,6 +4099,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
             if ($customerGroup->getTaxInput()) {
                 $priceData['price'] = $priceData['price'] / (100 + (float) $tax->getTax()) * 100;
                 $priceData['pseudoPrice'] = $priceData['pseudoPrice'] / (100 + (float) $tax->getTax()) * 100;
+                $priceData['regulationPrice'] = $priceData['regulationPrice'] / (100 + (float) $tax->getTax()) * 100;
             }
 
             // Resolve the oneToMany association of ExtJs to an oneToOne association for doctrine.
@@ -4401,24 +4420,24 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
      */
     protected function getCommandMapping($syntax)
     {
-        //we have to explode the current command to resolve the multiple properties.
+        // we have to explode the current command to resolve the multiple properties.
         $paths = explode('.', $syntax);
 
-        //we have to map the different properties to define the start cursor object.
+        // we have to map the different properties to define the start cursor object.
         switch ($paths[0]) {
-            //options are only available for the different product variants
+            // options are only available for the different product variants
             case 'options':
                 $cursor = 'detail';
                 $paths[0] = 'configuratorOptions';
                 break;
-            //all other commands will rout to the product
+            // all other commands will rout to the product
             default:
                 $cursor = 'article';
         }
 
         $commands = [];
 
-        //now we convert the property names to the getter functions.
+        // now we convert the property names to the getter functions.
         foreach ($paths as $path) {
             $commands[] = ['origin' => $path, 'command' => 'get' . ucfirst($path)];
         }

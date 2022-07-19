@@ -1,28 +1,14 @@
 <?php
 
-/*
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * This software consists of voluntary contributions made by many individuals
- * and is licensed under the MIT license. For more information, see
- * <http://www.doctrine-project.org>.
- */
+declare(strict_types=1);
 
 namespace Doctrine\ORM\Tools\Pagination;
 
 use Doctrine\DBAL\Platforms\AbstractPlatform;
+use Doctrine\DBAL\Platforms\SQLServerPlatform;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\Query\AST\SelectStatement;
+use Doctrine\ORM\Query\Parser;
 use Doctrine\ORM\Query\ParserResult;
 use Doctrine\ORM\Query\ResultSetMapping;
 use Doctrine\ORM\Query\SqlWalker;
@@ -43,6 +29,8 @@ use function sprintf;
  *
  * Works with composite keys but cannot deal with queries that have multiple
  * root entities (e.g. `SELECT f, b from Foo, Bar`)
+ *
+ * @psalm-import-type QueryComponent from Parser
  */
 class CountOutputWalker extends SqlWalker
 {
@@ -52,9 +40,6 @@ class CountOutputWalker extends SqlWalker
     /** @var ResultSetMapping */
     private $rsm;
 
-    /** @var mixed[] */
-    private $queryComponents;
-
     /**
      * Stores various parameters that are otherwise unavailable
      * because Doctrine\ORM\Query\SqlWalker keeps everything private without
@@ -63,12 +48,12 @@ class CountOutputWalker extends SqlWalker
      * @param Query        $query
      * @param ParserResult $parserResult
      * @param mixed[]      $queryComponents
+     * @psalm-param array<string, QueryComponent> $queryComponents
      */
     public function __construct($query, $parserResult, array $queryComponents)
     {
-        $this->platform        = $query->getEntityManager()->getConnection()->getDatabasePlatform();
-        $this->rsm             = $parserResult->getResultSetMapping();
-        $this->queryComponents = $queryComponents;
+        $this->platform = $query->getEntityManager()->getConnection()->getDatabasePlatform();
+        $this->rsm      = $parserResult->getResultSetMapping();
 
         parent::__construct($query, $parserResult, $queryComponents);
     }
@@ -86,7 +71,7 @@ class CountOutputWalker extends SqlWalker
      */
     public function walkSelectStatement(SelectStatement $AST)
     {
-        if ($this->platform->getName() === 'mssql') {
+        if ($this->platform instanceof SQLServerPlatform) {
             $AST->orderByClause = null;
         }
 
@@ -94,8 +79,7 @@ class CountOutputWalker extends SqlWalker
 
         if ($AST->groupByClause) {
             return sprintf(
-                'SELECT %s AS dctrn_count FROM (%s) dctrn_table',
-                $this->platform->getCountExpression('*'),
+                'SELECT COUNT(*) AS dctrn_count FROM (%s) dctrn_table',
                 $sql
             );
         }
@@ -113,14 +97,14 @@ class CountOutputWalker extends SqlWalker
 
         $fromRoot       = reset($from);
         $rootAlias      = $fromRoot->rangeVariableDeclaration->aliasIdentificationVariable;
-        $rootClass      = $this->queryComponents[$rootAlias]['metadata'];
+        $rootClass      = $this->getMetadataForDqlAlias($rootAlias);
         $rootIdentifier = $rootClass->identifier;
 
         // For every identifier, find out the SQL alias by combing through the ResultSetMapping
         $sqlIdentifier = [];
         foreach ($rootIdentifier as $property) {
             if (isset($rootClass->fieldMappings[$property])) {
-                foreach (array_keys($this->rsm->fieldMappings, $property) as $alias) {
+                foreach (array_keys($this->rsm->fieldMappings, $property, true) as $alias) {
                     if ($this->rsm->columnOwnerMap[$alias] === $rootAlias) {
                         $sqlIdentifier[$property] = $alias;
                     }
@@ -130,7 +114,7 @@ class CountOutputWalker extends SqlWalker
             if (isset($rootClass->associationMappings[$property])) {
                 $joinColumn = $rootClass->associationMappings[$property]['joinColumns'][0]['name'];
 
-                foreach (array_keys($this->rsm->metaMappings, $joinColumn) as $alias) {
+                foreach (array_keys($this->rsm->metaMappings, $joinColumn, true) as $alias) {
                     if ($this->rsm->columnOwnerMap[$alias] === $rootAlias) {
                         $sqlIdentifier[$property] = $alias;
                     }
@@ -147,8 +131,7 @@ class CountOutputWalker extends SqlWalker
 
         // Build the counter query
         return sprintf(
-            'SELECT %s AS dctrn_count FROM (SELECT DISTINCT %s FROM (%s) dctrn_result) dctrn_table',
-            $this->platform->getCountExpression('*'),
+            'SELECT COUNT(*) AS dctrn_count FROM (SELECT DISTINCT %s FROM (%s) dctrn_result) dctrn_table',
             implode(', ', $sqlIdentifier),
             $sql
         );

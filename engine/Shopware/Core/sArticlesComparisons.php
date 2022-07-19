@@ -25,17 +25,12 @@
 use Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface;
 use Shopware\Components\DependencyInjection\Container;
 
-class sArticlesComparisons implements \Enlight_Hook
+class sArticlesComparisons implements Enlight_Hook
 {
     /**
      * @var sArticles
      */
     private $articleModule;
-
-    /**
-     * @var \sSystem
-     */
-    private $systemModule;
 
     /**
      * @var Enlight_Components_Db_Adapter_Pdo_Mysql
@@ -60,12 +55,11 @@ class sArticlesComparisons implements \Enlight_Hook
     public function __construct(sArticles $articleModule, Container $container)
     {
         $this->articleModule = $articleModule;
-        $this->systemModule = $articleModule->sSYSTEM;
 
         $this->db = $container->get('db');
-        $this->config = $container->get(\Shopware_Components_Config::class);
+        $this->config = $container->get(Shopware_Components_Config::class);
         $this->session = $container->get('session');
-        $this->contextService = $container->get(\Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface::class);
+        $this->contextService = $container->get(ContextServiceInterface::class);
     }
 
     /**
@@ -242,7 +236,7 @@ class sArticlesComparisons implements \Enlight_Hook
         $properties = [];
 
         foreach ($articles as $product) {
-            //get all properties in the right order
+            // get all properties in the right order
             $sql = "SELECT
                       options.id,
                       options.name,
@@ -275,7 +269,7 @@ class sArticlesComparisons implements \Enlight_Hook
 
             foreach ($productProperties as $productProperty) {
                 if (!\array_key_exists($productProperty['id'], $properties)) {
-                    //the key is not part of the array so add it to the end
+                    // the key is not part of the array so add it to the end
                     $properties[$productProperty['id']] = $this->extractPropertyTranslation($productProperty);
                 }
             }

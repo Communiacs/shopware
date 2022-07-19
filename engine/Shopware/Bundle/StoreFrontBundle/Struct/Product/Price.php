@@ -48,7 +48,7 @@ class Price extends Extendable
      * The reference unit price is calculated over the price value
      * and the pack and reference unit of the product.
      *
-     * @var float
+     * @var float|null
      */
     protected $calculatedReferencePrice;
 
@@ -64,6 +64,8 @@ class Price extends Extendable
      * @var float
      */
     protected $calculatedPseudoPrice;
+
+    protected ?float $calculatedRegulationPrice = null;
 
     /**
      * @var PriceRule
@@ -117,7 +119,7 @@ class Price extends Extendable
     }
 
     /**
-     * @return float
+     * @return float|null
      */
     public function getCalculatedReferencePrice()
     {
@@ -125,7 +127,7 @@ class Price extends Extendable
     }
 
     /**
-     * @return \Shopware\Bundle\StoreFrontBundle\Struct\Product\PriceRule
+     * @return PriceRule
      */
     public function getRule()
     {
@@ -138,7 +140,7 @@ class Price extends Extendable
     }
 
     /**
-     * @return \Shopware\Bundle\StoreFrontBundle\Struct\Product\Unit|null
+     * @return Unit|null
      */
     public function getUnit()
     {
@@ -167,5 +169,15 @@ class Price extends Extendable
     public function getTo()
     {
         return $this->rule->getTo();
+    }
+
+    public function getCalculatedRegulationPrice(): ?float
+    {
+        return $this->calculatedRegulationPrice;
+    }
+
+    public function setCalculatedRegulationPrice(?float $calculatedRegulationPrice): void
+    {
+        $this->calculatedRegulationPrice = $calculatedRegulationPrice;
     }
 }

@@ -138,7 +138,6 @@ Ext.define('Shopware.apps.ProductStream.view.condition_list.ConditionPanel', {
             var singleton = conditionHandler.isSingleton();
             var name = item.getName();
 
-
             if (singleton && me.conditions.indexOf(name) > -1) {
                 Shopware.Notification.createGrowlMessage(
                     '{s name="singleton_filter_title"}Unique filter{/s}',
@@ -204,9 +203,12 @@ Ext.define('Shopware.apps.ProductStream.view.condition_list.ConditionPanel', {
     createAddButton: function() {
         var me = this;
 
-        me.addButton =Ext.create('Ext.button.Split', {
+        me.addButton = Ext.create('Ext.button.Split', {
             text: '{s name="add_condition"}Add condition{/s}',
             iconCls: 'sprite-plus-circle-frame',
+            handler: function(btn) {
+                btn.menu.showBy(btn);
+            },
             menu: me.createMenu()
         });
         return me.addButton;

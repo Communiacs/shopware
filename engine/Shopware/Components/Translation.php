@@ -59,7 +59,7 @@ class Shopware_Components_Translation
         // Determine how to query the current language
         if ($container->initialized('auth') && $container->get('auth')->hasIdentity()) {
             $locale = $container->get('auth')->getIdentity()->locale;
-        } elseif ($container->has('shop')) {
+        } elseif ($container->initialized('shop')) {
             $locale = $container->get('shop')->getLocale();
         }
 
@@ -366,7 +366,7 @@ class Shopware_Components_Translation
             $type = 'article';
             $data = array_merge(
                 $this->read($language, $type, $key),
-                $data
+                $data ?? []
             );
         }
 
@@ -681,15 +681,15 @@ class Shopware_Components_Translation
         );
 
         foreach ($fallbacks as $id) {
-            //check if fallback ids contains an individual translation
+            // check if fallback ids contains an individual translation
             $existQuery->execute([':language' => $id, ':articleId' => $articleId]);
             $exist = $existQuery->fetch(PDO::FETCH_COLUMN);
 
-            //if shop translation of fallback exists, skip
+            // if shop translation of fallback exists, skip
             if ($exist) {
                 continue;
             }
-            //add fallback translation to s_articles_translation for search requests.
+            // add fallback translation to s_articles_translation for search requests.
             $this->addProductTranslation($articleId, $id, $data);
         }
     }

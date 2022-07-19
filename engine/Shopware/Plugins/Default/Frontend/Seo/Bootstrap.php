@@ -22,6 +22,7 @@
  * our trademarks remain entirely with us.
  */
 
+use Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface;
 use Shopware\Components\QueryAliasMapper;
 
 /**
@@ -76,7 +77,7 @@ class Shopware_Plugins_Frontend_Seo_Bootstrap extends Shopware_Components_Plugin
             return;
         }
 
-        $config = $this->get(\Shopware_Components_Config::class);
+        $config = $this->get(Shopware_Components_Config::class);
 
         /** @var QueryAliasMapper $mapper */
         $mapper = $this->get(QueryAliasMapper::class);
@@ -88,20 +89,20 @@ class Shopware_Plugins_Frontend_Seo_Bootstrap extends Shopware_Components_Plugin
         $queryBlacklist = explode(',', $queryBlacklist);
 
         if (!empty($config['sSEOMETADESCRIPTION'])) {
-            if (!empty($view->sArticle['metaDescription'])) {
-                $metaDescription = $view->sArticle['metaDescription'];
-            } elseif (!empty($view->sArticle['description'])) {
-                $metaDescription = $view->sArticle['description'];
-            } elseif (!empty($view->sArticle['description_long'])) {
-                $metaDescription = $view->sArticle['description_long'];
-            } elseif (!empty($view->sCategoryContent['metaDescription'])) {
-                $metaDescription = $view->sCategoryContent['metaDescription'];
-            } elseif (!empty($view->sCategoryContent['cmstext'])) {
-                $metaDescription = $view->sCategoryContent['cmstext'];
+            if (!empty($view->getAssign('sArticle')['metaDescription'])) {
+                $metaDescription = $view->getAssign('sArticle')['metaDescription'];
+            } elseif (!empty($view->getAssign('sArticle')['description'])) {
+                $metaDescription = $view->getAssign('sArticle')['description'];
+            } elseif (!empty($view->getAssign('sArticle')['description_long'])) {
+                $metaDescription = $view->getAssign('sArticle')['description_long'];
+            } elseif (!empty($view->getAssign('sCategoryContent')['metaDescription'])) {
+                $metaDescription = $view->getAssign('sCategoryContent')['metaDescription'];
+            } elseif (!empty($view->getAssign('sCategoryContent')['cmstext'])) {
+                $metaDescription = $view->getAssign('sCategoryContent')['cmstext'];
             }
             if (!empty($metaDescription)) {
                 $metaDescription = html_entity_decode($metaDescription, ENT_COMPAT, 'UTF-8');
-                $metaDescription = trim(preg_replace('/\s\s+/', ' ', strip_tags($metaDescription)));
+                $metaDescription = trim((string) preg_replace('/\s\s+/', ' ', strip_tags($metaDescription)));
                 $metaDescription = htmlspecialchars($metaDescription, ENT_COMPAT);
             }
         }
@@ -127,7 +128,7 @@ class Shopware_Plugins_Frontend_Seo_Bootstrap extends Shopware_Components_Plugin
             }
         }
 
-        if (!empty($controllerBlacklist) && \in_array($controller, $controllerBlacklist)) {
+        if (\in_array($controller, $controllerBlacklist, true)) {
             $metaRobots = 'noindex,follow';
         } elseif (!empty($queryBlacklist)) {
             foreach ($queryBlacklist as $queryKey) {
@@ -147,8 +148,8 @@ class Shopware_Plugins_Frontend_Seo_Bootstrap extends Shopware_Components_Plugin
             $view->assign('SeoMetaDescription', $metaDescription);
         }
 
-        if (!$request->getParam('error_handler') && $this->get(\Shopware_Components_Config::class)->get('hrefLangEnabled')) {
-            $context = $this->get(\Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface::class)->getShopContext();
+        if (!$request->getParam('error_handler') && $this->get(Shopware_Components_Config::class)->get('hrefLangEnabled')) {
+            $context = $this->get(ContextServiceInterface::class)->getShopContext();
 
             $params = $request->getParams();
             $sCategoryContent = $view->getAssign('sCategoryContent');
@@ -160,7 +161,7 @@ class Shopware_Plugins_Frontend_Seo_Bootstrap extends Shopware_Components_Plugin
             $view->assign('sHrefLinks', $this->get('shopware_storefront.cached_href_lang_service')->getUrls($params, $context));
         }
 
-        $view->assign('SeoDescriptionMaxLength', (int) $this->get(\Shopware_Components_Config::class)->get('metaDescriptionLength'));
+        $view->assign('SeoDescriptionMaxLength', (int) $this->get(Shopware_Components_Config::class)->get('metaDescriptionLength'));
     }
 
     /**
@@ -171,7 +172,7 @@ class Shopware_Plugins_Frontend_Seo_Bootstrap extends Shopware_Components_Plugin
     public function onFilterRender(Enlight_Event_EventArgs $args)
     {
         $source = $args->getReturn();
-        $config = $this->get(\Shopware_Components_Config::class);
+        $config = $this->get(Shopware_Components_Config::class);
 
         /** @var Enlight_Controller_Action $controller */
         $controller = $args->get('subject')->Action();

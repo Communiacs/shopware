@@ -37,60 +37,29 @@ use Shopware\Bundle\StoreFrontBundle\Service\SimilarProductsServiceInterface;
 use Shopware\Bundle\StoreFrontBundle\Service\VoteServiceInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\ListProduct;
 use Shopware\Bundle\StoreFrontBundle\Struct\Product;
-use Shopware\Bundle\StoreFrontBundle\Struct\ProductContextInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
 class ProductService implements ProductServiceInterface
 {
-    /**
-     * @var MediaServiceInterface
-     */
-    private $mediaService;
+    private MediaServiceInterface $mediaService;
 
-    /**
-     * @var VoteServiceInterface
-     */
-    private $voteService;
+    private VoteServiceInterface $voteService;
 
-    /**
-     * @var RelatedProductsServiceInterface
-     */
-    private $relatedProductsService;
+    private RelatedProductsServiceInterface $relatedProductsService;
 
-    /**
-     * @var RelatedProductStreamsServiceInterface
-     */
-    private $relatedProductStreamsService;
+    private RelatedProductStreamsServiceInterface $relatedProductStreamsService;
 
-    /**
-     * @var SimilarProductsServiceInterface
-     */
-    private $similarProductsService;
+    private SimilarProductsServiceInterface $similarProductsService;
 
-    /**
-     * @var ProductDownloadServiceInterface
-     */
-    private $downloadService;
+    private ProductDownloadServiceInterface $downloadService;
 
-    /**
-     * @var ProductLinkServiceInterface
-     */
-    private $linkService;
+    private ProductLinkServiceInterface $linkService;
 
-    /**
-     * @var PropertyServiceInterface
-     */
-    private $propertyService;
+    private PropertyServiceInterface $propertyService;
 
-    /**
-     * @var ConfiguratorServiceInterface
-     */
-    private $configuratorService;
+    private ConfiguratorServiceInterface $configuratorService;
 
-    /**
-     * @var ListProductServiceInterface
-     */
-    private $listProductService;
+    private ListProductServiceInterface $listProductService;
 
     public function __construct(
         ListProductServiceInterface $listProductService,
@@ -119,7 +88,7 @@ class ProductService implements ProductServiceInterface
     /**
      * {@inheritdoc}
      */
-    public function get($number, ProductContextInterface $context)
+    public function get($number, ShopContextInterface $context)
     {
         $products = $this->getList([$number], $context);
 
@@ -129,7 +98,7 @@ class ProductService implements ProductServiceInterface
     /**
      * {@inheritdoc}
      */
-    public function getList(array $numbers, ProductContextInterface $context)
+    public function getList(array $numbers, ShopContextInterface $context)
     {
         $listProducts = $this->listProductService->getList($numbers, $context);
 
@@ -137,11 +106,11 @@ class ProductService implements ProductServiceInterface
     }
 
     /**
-     * @param ListProduct[] $listProducts
+     * @param array<string, ListProduct> $listProducts
      *
-     * @return Product[] indexed by order number
+     * @return array<string, Product> indexed by order number
      */
-    private function createFromListProducts(array $listProducts, ShopContextInterface $context)
+    private function createFromListProducts(array $listProducts, ShopContextInterface $context): array
     {
         $votes = $this->voteService->getList($listProducts, $context);
 

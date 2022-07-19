@@ -226,7 +226,7 @@ class ProductProvider implements ProviderInterface
 
             $product->setHasStock($product->getStock() >= $product->getUnit()->getMinPurchase());
 
-            if ($variantFacet) {
+            if ($variantFacet && $variantConfiguration) {
                 $this->addVariantSearchDetails($product, $configurations, $variantFacet, $variantConfiguration, $combinations, $listingPrices, $availability);
             } elseif (!$product->isMainVariant()) {
                 continue;
@@ -418,10 +418,7 @@ class ProductProvider implements ProviderInterface
         $this->fieldHelper->addPropertyOptionTranslation($query, $context);
         $this->fieldHelper->addMediaTranslation($query, $context);
 
-        /** @var \Doctrine\DBAL\Driver\ResultStatement $statement */
-        $statement = $query->execute();
-
-        $data = $statement->fetchAll(PDO::FETCH_GROUP);
+        $data = $query->execute()->fetchAll(PDO::FETCH_GROUP);
         $properties = [];
 
         $hydrator = $this->propertyHydrator;

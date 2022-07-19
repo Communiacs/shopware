@@ -24,7 +24,6 @@
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Driver\ResultStatement;
 use Doctrine\ORM\AbstractQuery;
 use Doctrine\ORM\ORMException;
 use Doctrine\ORM\Query;
@@ -32,6 +31,7 @@ use Doctrine\ORM\Tools\Pagination\Paginator;
 use Shopware\Bundle\AttributeBundle\Service\DataPersister;
 use Shopware\Bundle\MediaBundle\MediaServiceInterface;
 use Shopware\Components\Api\Exception\NotFoundException;
+use Shopware\Components\ContainerAwareEventManager;
 use Shopware\Components\CSRFWhitelistAware;
 use Shopware\Components\Emotion\Exception\MappingRequiredException;
 use Shopware\Components\Model\Exception\ModelNotFoundException;
@@ -69,6 +69,16 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
 
     private ?Shopware_Components_Translation $translation = null;
 
+    private MediaServiceInterface $mediaService;
+
+    private ContainerAwareEventManager $eventManager;
+
+    public function __construct(MediaServiceInterface $mediaService, ContainerAwareEventManager $eventManager)
+    {
+        $this->mediaService = $mediaService;
+        $this->eventManager = $eventManager;
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -82,6 +92,8 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
     /**
      * Event listener function of the listing store of the emotion backend module.
      * Returns an array of all defined emotions.
+     *
+     * @return void
      */
     public function listAction()
     {
@@ -96,9 +108,7 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
         $query->setFirstResult($offset)
             ->setMaxResults($limit);
 
-        /** @var ResultStatement $statement */
-        $statement = $query->execute();
-        $emotions = $statement->fetchAll(PDO::FETCH_ASSOC);
+        $emotions = $query->execute()->fetchAll(PDO::FETCH_ASSOC);
 
         $query->select('COUNT(DISTINCT emotions.id) as count')
             ->resetQueryPart('groupBy')
@@ -106,9 +116,7 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
             ->setFirstResult(0)
             ->setMaxResults(1);
 
-        /** @var ResultStatement $statement */
-        $statement = $query->execute();
-        $count = $statement->fetch(PDO::FETCH_COLUMN);
+        $count = $query->execute()->fetch(PDO::FETCH_COLUMN);
 
         $this->View()->assign([
             'success' => true,
@@ -119,6 +127,8 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
 
     /**
      * Returns all master landing pages.
+     *
+     * @return void
      */
     public function getMasterLandingPagesAction()
     {
@@ -151,16 +161,15 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
      * Event listener function of the emotion detail store of the backend module.
      * Fired when the user clicks the edit button in the listing. The function returns
      * all data for a single emotion.
+     *
+     * @return void
      */
     public function detailAction()
     {
         $id = $this->Request()->getParam('id');
         $repository = $this->getRepository();
 
-        $query = $repository->getEmotionDetailQuery($id);
-        $mediaService = Shopware()->Container()->get(MediaServiceInterface::class);
-
-        $emotion = $query->getArrayResult();
+        $emotion = $repository->getEmotionDetailQuery($id)->getArrayResult();
         $emotion = $emotion[0];
 
         if (!empty($emotion['categories'])) {
@@ -195,7 +204,7 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
             $element['component']['fieldLabel'] = $snippets->get($name, $element['component']['name']);
 
             foreach ($componentData as $entry) {
-                $filterResult = $this->container->get('events')->filter(
+                $filterResult = $this->eventManager->filter(
                     'Shopware_Controllers_Backend_Emotion_Detail_Filter_Values',
                     $entry,
                     ['subject' => $this]
@@ -204,34 +213,31 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
                 $entry = $filterResult;
 
                 switch (strtolower($entry['valueType'])) {
-                    case 'json':
+                    case Field::VALUE_TYPE_JSON:
                         if ($entry['value'] !== '') {
                             $value = Zend_Json::decode($entry['value']);
                         } else {
                             $value = null;
                         }
                         break;
-                    case 'string':
+                    case Field::VALUE_TYPE_STRING:
                     default:
                         $value = $entry['value'];
                         break;
                 }
 
-                if ($entry['name'] === 'file'
-                    || $entry['name'] === 'image'
-                    || $entry['name'] === 'fallback_picture'
-                ) {
+                if (\in_array($entry['name'], ['file', 'image', 'fallback_picture'], true)) {
                     $scheme = parse_url($value, PHP_URL_SCHEME);
 
                     if (!\in_array($scheme, ['http', 'https'], true) && !\is_int($value)) {
-                        $value = $mediaService->getUrl($value);
+                        $value = $this->mediaService->getUrl($value);
                     }
                 }
 
-                if (\in_array($entry['name'], ['selected_manufacturers', 'banner_slider'])) {
+                if (\in_array($entry['name'], ['selected_manufacturers', 'banner_slider'], true)) {
                     foreach ($value as $k => $v) {
                         if (isset($v['path'])) {
-                            $value[$k]['path'] = $mediaService->getUrl($v['path']);
+                            $value[$k]['path'] = $this->mediaService->getUrl($v['path']);
                         }
                     }
                 }
@@ -274,6 +280,8 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
 
     /**
      * Exports emotion data and assets to zip archive
+     *
+     * @return void
      */
     public function exportAction()
     {
@@ -311,6 +319,8 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
      * Uploads emotion zip archive to shopware file system
      *
      * @throws Exception
+     *
+     * @return void
      */
     public function uploadAction()
     {
@@ -358,6 +368,8 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
 
     /**
      * Execute emotion import on uploaded zip archive.
+     *
+     * @return void
      */
     public function importAction()
     {
@@ -382,6 +394,8 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
      * Execute cleanup on imported emotion files.
      *
      * @throws InvalidArgumentException If the passed filePath is empty (code: 1)
+     *
+     * @return void
      */
     public function afterImportAction()
     {
@@ -413,6 +427,9 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
         }
     }
 
+    /**
+     * @return void
+     */
     public function importTranslationsAction()
     {
         $request = $this->Request();
@@ -454,6 +471,8 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
 
     /**
      * Event listener function of the library store.
+     *
+     * @return void
      */
     public function libraryAction()
     {
@@ -483,6 +502,8 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
     /**
      * Model event listener function which fired when the user configure an emotion over the backend
      * module and clicks the save button.
+     *
+     * @return void
      */
     public function saveAction()
     {
@@ -524,6 +545,8 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
     /**
      * Model event listener function which fired when the user configure an emotion over the backend
      * module and clicks the save button.
+     *
+     * @return void
      */
     public function savePreviewAction()
     {
@@ -580,7 +603,7 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
         }
     }
 
-    /***
+    /**
      * Function for only updating active status and position
      * of an emotion.
      *
@@ -634,6 +657,8 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
     /**
      * Model event listener function which fired when the user select an emotion row
      * in the backend listing and clicks the remove button or the action column.
+     *
+     * @return void
      */
     public function deleteAction()
     {
@@ -679,6 +704,9 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
         }
     }
 
+    /**
+     * @return void
+     */
     public function duplicateAction()
     {
         $emotionId = (int) $this->Request()->getParam('emotionId');
@@ -733,6 +761,8 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
      * Controller action  to create a new template.
      * Use the internal "saveTemplate" function.
      * The request parameters are used as template/model data.
+     *
+     * @return void
      */
     public function createTemplateAction()
     {
@@ -749,6 +779,8 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
      * The request parameters are used as template/model data.
      * The updateTemplateAction should have an "id" request parameter which
      * contains the id of the existing template.
+     *
+     * @return void
      */
     public function updateTemplateAction()
     {
@@ -763,6 +795,8 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
      * Controller action to delete a single template.
      * Use the internal "deleteTemplate" function.
      * Expects the template id as request parameter "id".
+     *
+     * @return void
      */
     public function deleteTemplateAction()
     {
@@ -773,6 +807,9 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
         );
     }
 
+    /**
+     * @return void
+     */
     public function deleteManyTemplatesAction()
     {
         $this->View()->assign(
@@ -786,6 +823,8 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
      * Controller action to duplicate a single template.
      * Use the internal "duplicateTemplate" function.
      * Expects the template id as request parameter "id".
+     *
+     * @return void
      */
     public function duplicateTemplateAction()
     {
@@ -801,6 +840,8 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
      * You can paginate the list over the request parameters
      * "start" and "limit".
      * Use the internal "getTemplates" function.
+     *
+     * @return void
      */
     public function getTemplatesAction()
     {
@@ -1315,22 +1356,22 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
     /**
      * Method for processing the different value types of the data fields.
      *
-     * @param array|string $value
-     *
-     * @return string
+     * @param array<array<string, mixed>>|string|null $value
      */
-    private function processDataFieldValue(Field $field, $value)
+    private function processDataFieldValue(Field $field, $value): ?string
     {
         $valueType = strtolower($field->getValueType());
         $xType = $field->getXType();
 
-        $mediaService = Shopware()->Container()->get(MediaServiceInterface::class);
         $mediaFields = $this->getMediaXTypes();
 
-        if ($valueType === 'json') {
+        if ($valueType === Field::VALUE_TYPE_JSON) {
             if (\is_array($value)) {
                 foreach ($value as &$val) {
-                    $val['path'] = $mediaService->normalize($val['path']);
+                    if (!isset($val['path'])) {
+                        continue;
+                    }
+                    $val['path'] = $this->mediaService->normalize($val['path']);
                 }
                 unset($val);
             }
@@ -1338,8 +1379,12 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
             $value = Zend_Json::encode($value);
         }
 
-        if (\in_array($xType, $mediaFields) && $mediaService->isEncoded($value)) {
-            $value = $mediaService->normalize($value);
+        if (\is_string($value) && \in_array($xType, $mediaFields, true) && $this->mediaService->isEncoded($value)) {
+            $value = $this->mediaService->normalize($value);
+        }
+
+        if (\is_array($value)) {
+            throw new \UnexpectedValueException(sprintf('Use field value type "%s" if arrays should be saved. Got value type "%s" instead', Field::VALUE_TYPE_JSON, $valueType));
         }
 
         return $value;
@@ -1429,15 +1474,17 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
     /**
      * @return Paginator<Template>
      */
-    private function getQueryPaginator(Query $query, int $hydrationMode = AbstractQuery::HYDRATE_ARRAY): Paginator
+    private function getQueryPaginator(Query $query): Paginator
     {
-        $query->setHydrationMode($hydrationMode);
+        $query->setHydrationMode(AbstractQuery::HYDRATE_ARRAY);
 
         return $this->getModelManager()->createPaginator($query);
     }
 
     /**
      * Collects all media related x_types which needs to be normalized
+     *
+     * @return array<string>
      */
     private function getMediaXTypes(): array
     {
@@ -1446,7 +1493,7 @@ class Shopware_Controllers_Backend_Emotion extends Shopware_Controllers_Backend_
             'mediatextfield',
         ]);
 
-        $mediaFields = $this->get('events')->collect('Shopware_Plugin_Collect_MediaXTypes', $mediaFields);
+        $mediaFields = $this->eventManager->collect('Shopware_Plugin_Collect_MediaXTypes', $mediaFields);
 
         return $mediaFields->toArray();
     }

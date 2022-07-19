@@ -576,23 +576,19 @@ class Shopware_Controllers_Backend_MediaManager extends Shopware_Controllers_Bac
     }
 
     /**
-     * Empty albumId -13
-     *
      * @throws ORMException
      * @throws OptimisticLockException
      * @throws ORMInvalidArgumentException
+     *
+     * @return void
      */
     public function emptyTrashAction()
     {
         $em = $this->get(ModelManager::class);
-        $repository = $em->getRepository(Media::class);
-
-        $query = $repository->getAlbumMediaQuery(-13);
+        $query = $em->getRepository(Media::class)->getAlbumMediaQuery(Album::ALBUM_GARBAGE);
         $query->setHydrationMode(AbstractQuery::HYDRATE_OBJECT);
 
-        $iterableResult = $query->iterate();
-        foreach ($iterableResult as $key => $row) {
-            $media = $row[0];
+        foreach ($query->toIterable() as $key => $media) {
             $em->remove($media);
             if ($key % 100 === 0) {
                 $em->flush();
@@ -862,7 +858,7 @@ class Shopware_Controllers_Backend_MediaManager extends Shopware_Controllers_Bac
     {
         $name = iconv('utf-8', 'ascii//translit', $name);
         $name = preg_replace('#[^A-Za-z0-9\-_]#', '-', $name);
-        $name = preg_replace('#-{2,}#', '-', $name);
+        $name = (string) preg_replace('#-{2,}#', '-', $name);
         $name = trim($name, '-');
 
         return mb_substr($name, 0, 180);
@@ -910,13 +906,12 @@ class Shopware_Controllers_Backend_MediaManager extends Shopware_Controllers_Bac
             return false;
         }
 
-        /** @var Album|null $album */
         $album = $this->get('models')->find(Album::class, $albumId);
         $repo = $this->get('models')->getRepository(Settings::class);
         $settings = $repo->findOneBy(['albumId' => $albumId]);
 
         // Album can't be found
-        if ($album === null || empty($album)) {
+        if ($album === null) {
             $this->View()->assign(['success' => false, 'message' => 'Album not found']);
 
             return false;

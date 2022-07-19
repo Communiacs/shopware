@@ -1,22 +1,6 @@
 <?php
 
-/*
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * This software consists of voluntary contributions made by many individuals
- * and is licensed under the MIT license. For more information, see
- * <http://www.doctrine-project.org>.
- */
+declare(strict_types=1);
 
 namespace Doctrine\ORM\Cache\Logging;
 
@@ -34,6 +18,8 @@ interface CacheLogger
      *
      * @param string         $regionName The name of the cache region.
      * @param EntityCacheKey $key        The cache key of the entity.
+     *
+     * @return void
      */
     public function entityCachePut($regionName, EntityCacheKey $key);
 
@@ -42,6 +28,8 @@ interface CacheLogger
      *
      * @param string         $regionName The name of the cache region.
      * @param EntityCacheKey $key        The cache key of the entity.
+     *
+     * @return void
      */
     public function entityCacheHit($regionName, EntityCacheKey $key);
 
@@ -50,15 +38,19 @@ interface CacheLogger
      *
      * @param string         $regionName The name of the cache region.
      * @param EntityCacheKey $key        The cache key of the entity.
+     *
+     * @return void
      */
     public function entityCacheMiss($regionName, EntityCacheKey $key);
 
-     /**
-      * Log an entity put into second level cache.
-      *
-      * @param string             $regionName The name of the cache region.
-      * @param CollectionCacheKey $key        The cache key of the collection.
-      */
+    /**
+     * Log an entity put into second level cache.
+     *
+     * @param string             $regionName The name of the cache region.
+     * @param CollectionCacheKey $key        The cache key of the collection.
+     *
+     * @return void
+     */
     public function collectionCachePut($regionName, CollectionCacheKey $key);
 
     /**
@@ -66,6 +58,8 @@ interface CacheLogger
      *
      * @param string             $regionName The name of the cache region.
      * @param CollectionCacheKey $key        The cache key of the collection.
+     *
+     * @return void
      */
     public function collectionCacheHit($regionName, CollectionCacheKey $key);
 
@@ -74,6 +68,8 @@ interface CacheLogger
      *
      * @param string             $regionName The name of the cache region.
      * @param CollectionCacheKey $key        The cache key of the collection.
+     *
+     * @return void
      */
     public function collectionCacheMiss($regionName, CollectionCacheKey $key);
 
@@ -82,6 +78,8 @@ interface CacheLogger
      *
      * @param string        $regionName The name of the cache region.
      * @param QueryCacheKey $key        The cache key of the query.
+     *
+     * @return void
      */
     public function queryCachePut($regionName, QueryCacheKey $key);
 
@@ -90,6 +88,8 @@ interface CacheLogger
      *
      * @param string        $regionName The name of the cache region.
      * @param QueryCacheKey $key        The cache key of the query.
+     *
+     * @return void
      */
     public function queryCacheHit($regionName, QueryCacheKey $key);
 
@@ -98,6 +98,8 @@ interface CacheLogger
      *
      * @param string        $regionName The name of the cache region.
      * @param QueryCacheKey $key        The cache key of the query.
+     *
+     * @return void
      */
     public function queryCacheMiss($regionName, QueryCacheKey $key);
 }

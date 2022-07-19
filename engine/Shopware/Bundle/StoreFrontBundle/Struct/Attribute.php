@@ -27,6 +27,7 @@ namespace Shopware\Bundle\StoreFrontBundle\Struct;
 use ArrayAccess;
 use InvalidArgumentException;
 use JsonSerializable;
+use ReturnTypeWillChange;
 
 class Attribute extends Struct implements JsonSerializable, ArrayAccess
 {
@@ -103,7 +104,7 @@ class Attribute extends Struct implements JsonSerializable, ArrayAccess
      *
      * @deprecated - Native return type will be added with Shopware 5.8
      */
-    #[\ReturnTypeWillChange]
+    #[ReturnTypeWillChange]
     public function jsonSerialize()
     {
         return $this->storage;
@@ -114,7 +115,7 @@ class Attribute extends Struct implements JsonSerializable, ArrayAccess
      *
      * @deprecated - Native return and parameter type will be added with Shopware 5.8
      */
-    #[\ReturnTypeWillChange]
+    #[ReturnTypeWillChange]
     public function offsetExists($offset)
     {
         return $this->exists($offset);
@@ -127,7 +128,7 @@ class Attribute extends Struct implements JsonSerializable, ArrayAccess
      *
      * @deprecated - Native return and parameter type will be added with Shopware 5.8
      */
-    #[\ReturnTypeWillChange]
+    #[ReturnTypeWillChange]
     public function offsetGet($offset)
     {
         return $this->get($offset);
@@ -141,7 +142,7 @@ class Attribute extends Struct implements JsonSerializable, ArrayAccess
      *
      * @deprecated - Native return and parameter type will be added with Shopware 5.8
      */
-    #[\ReturnTypeWillChange]
+    #[ReturnTypeWillChange]
     public function offsetSet($offset, $value)
     {
         $this->set($offset, $value);
@@ -154,7 +155,7 @@ class Attribute extends Struct implements JsonSerializable, ArrayAccess
      *
      * @deprecated - Native return and parameter type will be added with Shopware 5.8
      */
-    #[\ReturnTypeWillChange]
+    #[ReturnTypeWillChange]
     public function offsetUnset($offset)
     {
         if ($this->exists($offset)) {
@@ -164,7 +165,7 @@ class Attribute extends Struct implements JsonSerializable, ArrayAccess
 
     private function isValid($value): bool
     {
-        if ($value instanceof JsonSerializable || is_scalar($value) || $value === null) {
+        if ($value instanceof JsonSerializable || \is_scalar($value) || $value === null) {
             return true;
         }
 

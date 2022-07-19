@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Shopware 5
  * Copyright (c) shopware AG
@@ -25,23 +27,37 @@
 namespace Shopware\Bundle\SearchBundleDBAL\ConditionHandler;
 
 use Shopware\Bundle\SearchBundle\Condition\HasPseudoPriceCondition;
+use Shopware\Bundle\SearchBundle\Condition\VariantCondition;
 use Shopware\Bundle\SearchBundle\ConditionInterface;
 use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundleDBAL\ConditionHandlerInterface;
 use Shopware\Bundle\SearchBundleDBAL\CriteriaAwareInterface;
+use Shopware\Bundle\SearchBundleDBAL\ListingPriceHelper;
 use Shopware\Bundle\SearchBundleDBAL\ListingPriceSwitcher;
 use Shopware\Bundle\SearchBundleDBAL\QueryBuilder;
+use Shopware\Bundle\SearchBundleDBAL\VariantHelperInterface;
 use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
 class HasPseudoPriceConditionHandler implements ConditionHandlerInterface, CriteriaAwareInterface
 {
+    private const STATE_INCLUDES_PSEUDO_PRICE_VARIANTS = 'PseudoPriceVariants';
+
     private ListingPriceSwitcher $listingPriceSwitcher;
 
     private Criteria $criteria;
 
-    public function __construct(ListingPriceSwitcher $listingPriceSwitcher)
-    {
+    private VariantHelperInterface $variantHelper;
+
+    private ListingPriceHelper $listingPriceHelper;
+
+    public function __construct(
+        ListingPriceSwitcher $listingPriceSwitcher,
+        VariantHelperInterface $variantHelper,
+        ListingPriceHelper $listingPriceHelper
+    ) {
         $this->listingPriceSwitcher = $listingPriceSwitcher;
+        $this->variantHelper = $variantHelper;
+        $this->listingPriceHelper = $listingPriceHelper;
     }
 
     /**
@@ -60,13 +76,42 @@ class HasPseudoPriceConditionHandler implements ConditionHandlerInterface, Crite
         QueryBuilder $query,
         ShopContextInterface $context
     ) {
-        $this->listingPriceSwitcher->joinPrice($query, $this->criteria, $context);
+        $conditions = $this->criteria->getConditionsByClass(VariantCondition::class);
+        $conditions = array_filter($conditions, function (VariantCondition $condition) {
+            return $condition->expandVariants();
+        });
 
-        $query->andWhere('listing_price.pseudoprice > 0');
+        if (!$query->hasState(self::STATE_INCLUDES_PSEUDO_PRICE_VARIANTS)) {
+            if (empty($conditions)) {
+                $this->variantHelper->joinVariants($query);
+                $this->joinPrices($query, $context);
+                $query->andWhere('variantPrices.pseudoprice > 0');
+            } else {
+                $this->listingPriceSwitcher->joinPrice($query, $this->criteria, $context);
+                $query->andWhere('listing_price.pseudoprice > 0');
+            }
+            $query->addState(self::STATE_INCLUDES_PSEUDO_PRICE_VARIANTS);
+        }
     }
 
     public function setCriteria(Criteria $criteria)
     {
         $this->criteria = $criteria;
+    }
+
+    private function joinPrices(QueryBuilder $query, ShopContextInterface $context): void
+    {
+        $priceTable = $this->listingPriceHelper->getPriceTable($context);
+        $query->innerJoin(
+            'allVariants',
+            '(' . $priceTable->getSQL() . ')',
+            'variantPrices',
+            'variantPrices.articledetailsID = allVariants.id'
+        );
+
+        $query->setParameter(':fallbackCustomerGroup', $context->getFallbackCustomerGroup()->getKey());
+        if ($context->getCurrentCustomerGroup()->getId() !== $context->getFallbackCustomerGroup()->getId()) {
+            $query->setParameter(':currentCustomerGroup', $context->getCurrentCustomerGroup()->getKey());
+        }
     }
 }

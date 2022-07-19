@@ -25,12 +25,12 @@
 
 namespace Shopware\Components\Log\Processor;
 
-class ShopwareEnvironmentProcessor
+use Monolog\Processor\ProcessorInterface;
+
+class ShopwareEnvironmentProcessor implements ProcessorInterface
 {
     /**
      * Adds request, shop and session info
-     *
-     * @return array
      */
     public function __invoke(array $record)
     {
@@ -52,7 +52,7 @@ class ShopwareEnvironmentProcessor
             $record['extra']['request'] = 'Could not process request data';
         }
 
-        if (Shopware()->Container()->has('shop')) {
+        if (Shopware()->Container()->initialized('shop')) {
             $record['extra']['session'] = Shopware()->Session();
             $record['extra']['shopId'] = Shopware()->Shop()->getId() ?: null;
             $record['extra']['shopName'] = Shopware()->Shop()->getName() ?: null;

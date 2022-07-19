@@ -27,7 +27,6 @@ namespace Shopware\Bundle\OrderBundle\Subscriber;
 use Enlight\Event\SubscriberInterface;
 use Enlight_Event_EventArgs;
 use Shopware\Bundle\OrderBundle\Service\CalculationServiceInterface;
-use Shopware\Components\Model\ModelManager;
 use Shopware\Models\Order\Detail;
 use Shopware\Models\Order\Order;
 
@@ -63,10 +62,9 @@ class OrderRecalculationSubscriber implements SubscriberInterface
     {
         /** @var Detail $orderDetail */
         $orderDetail = $arguments->get('entity');
-        /** @var ModelManager $entityManager */
         $entityManager = $arguments->get('entityManager');
 
-        //returns a change set for the model, which contains all changed properties with the old and new value.
+        // returns a change set for the model, which contains all changed properties with the old and new value.
         $changeSet = $entityManager->getUnitOfWork()->getEntityChangeSet($orderDetail);
 
         $productChange = $changeSet['articleNumber'][0] !== $changeSet['articleNumber'][1];

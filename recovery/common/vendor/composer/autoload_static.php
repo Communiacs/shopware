@@ -7,16 +7,18 @@ namespace Composer\Autoload;
 class ComposerStaticInitShopwareRecovery
 {
     public static $files = array (
-        '0d59ee240a4cd96ddbb4ff164fccea4d' => __DIR__ . '/..' . '/symfony/polyfill-php73/bootstrap.php',
+        '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
         'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
         '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
-        '5255c38a0faeba867671b61dfda6d864' => __DIR__ . '/..' . '/paragonie/random_compat/lib/random.php',
+        '0d59ee240a4cd96ddbb4ff164fccea4d' => __DIR__ . '/..' . '/symfony/polyfill-php73/bootstrap.php',
+        '23c18046f52bef3eea034657bafda50f' => __DIR__ . '/..' . '/symfony/polyfill-php81/bootstrap.php',
         '41da55927f7e15e2e05566a733ef4ad4' => __DIR__ . '/../..' . '/functions.php',
     );
 
     public static $prefixLengthsPsr4 = array (
         'S' => 
         array (
+            'Symfony\\Polyfill\\Php81\\' => 23,
             'Symfony\\Polyfill\\Php80\\' => 23,
             'Symfony\\Polyfill\\Php73\\' => 23,
             'Symfony\\Polyfill\\Mbstring\\' => 26,
@@ -27,10 +29,6 @@ class ComposerStaticInitShopwareRecovery
             'Shopware\\Recovery\\Install\\' => 26,
             'Shopware\\Recovery\\Common\\' => 25,
         ),
-        'R' => 
-        array (
-            'Ramsey\\Uuid\\' => 12,
-        ),
         'P' => 
         array (
             'Psr\\Container\\' => 14,
@@ -38,6 +36,10 @@ class ComposerStaticInitShopwareRecovery
     );
 
     public static $prefixDirsPsr4 = array (
+        'Symfony\\Polyfill\\Php81\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/symfony/polyfill-php81',
+        ),
         'Symfony\\Polyfill\\Php80\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-php80',
@@ -74,10 +76,6 @@ class ComposerStaticInitShopwareRecovery
         array (
             0 => __DIR__ . '/../..' . '/src',
         ),
-        'Ramsey\\Uuid\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/ramsey/uuid/src',
-        ),
         'Psr\\Container\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/container/src',
@@ -112,35 +110,28 @@ class ComposerStaticInitShopwareRecovery
         'Attribute' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
         'Gaufrette\\Adapter' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter.php',
-        'Gaufrette\\Adapter\\AclAwareAmazonS3' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/AclAwareAmazonS3.php',
-        'Gaufrette\\Adapter\\AmazonS3' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/AmazonS3.php',
-        'Gaufrette\\Adapter\\Apc' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/Apc.php',
+        'Gaufrette\\Adapter\\AsyncAwsS3' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/AsyncAwsS3.php',
         'Gaufrette\\Adapter\\AwsS3' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/AwsS3.php',
         'Gaufrette\\Adapter\\AzureBlobStorage' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/AzureBlobStorage.php',
         'Gaufrette\\Adapter\\AzureBlobStorage\\BlobProxyFactory' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/AzureBlobStorage/BlobProxyFactory.php',
         'Gaufrette\\Adapter\\AzureBlobStorage\\BlobProxyFactoryInterface' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/AzureBlobStorage/BlobProxyFactoryInterface.php',
-        'Gaufrette\\Adapter\\Cache' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/Cache.php',
         'Gaufrette\\Adapter\\ChecksumCalculator' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/ChecksumCalculator.php',
         'Gaufrette\\Adapter\\DoctrineDbal' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/DoctrineDbal.php',
-        'Gaufrette\\Adapter\\Dropbox' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/Dropbox.php',
         'Gaufrette\\Adapter\\FileFactory' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/FileFactory.php',
         'Gaufrette\\Adapter\\Flysystem' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/Flysystem.php',
         'Gaufrette\\Adapter\\Ftp' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/Ftp.php',
         'Gaufrette\\Adapter\\GoogleCloudStorage' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/GoogleCloudStorage.php',
         'Gaufrette\\Adapter\\GridFS' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/GridFS.php',
         'Gaufrette\\Adapter\\InMemory' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/InMemory.php',
-        'Gaufrette\\Adapter\\LazyOpenCloud' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/LazyOpenCloud.php',
         'Gaufrette\\Adapter\\ListKeysAware' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/ListKeysAware.php',
         'Gaufrette\\Adapter\\Local' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/Local.php',
         'Gaufrette\\Adapter\\MetadataSupporter' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/MetadataSupporter.php',
         'Gaufrette\\Adapter\\MimeTypeProvider' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/MimeTypeProvider.php',
-        'Gaufrette\\Adapter\\MogileFS' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/MogileFS.php',
         'Gaufrette\\Adapter\\OpenCloud' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/OpenCloud.php',
         'Gaufrette\\Adapter\\OpenStackCloudFiles\\ObjectStoreFactory' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/OpenStackCloudFiles/ObjectStoreFactory.php',
         'Gaufrette\\Adapter\\OpenStackCloudFiles\\ObjectStoreFactoryInterface' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/OpenStackCloudFiles/ObjectStoreFactoryInterface.php',
         'Gaufrette\\Adapter\\PhpseclibSftp' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/PhpseclibSftp.php',
         'Gaufrette\\Adapter\\SafeLocal' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/SafeLocal.php',
-        'Gaufrette\\Adapter\\Sftp' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/Sftp.php',
         'Gaufrette\\Adapter\\SizeCalculator' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/SizeCalculator.php',
         'Gaufrette\\Adapter\\StreamFactory' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/StreamFactory.php',
         'Gaufrette\\Adapter\\Zip' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Adapter/Zip.php',
@@ -153,6 +144,7 @@ class ComposerStaticInitShopwareRecovery
         'Gaufrette\\Filesystem' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Filesystem.php',
         'Gaufrette\\FilesystemInterface' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/FilesystemInterface.php',
         'Gaufrette\\FilesystemMap' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/FilesystemMap.php',
+        'Gaufrette\\FilesystemMapInterface' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/FilesystemMapInterface.php',
         'Gaufrette\\Stream' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/Stream.php',
         'Gaufrette\\StreamMode' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/StreamMode.php',
         'Gaufrette\\StreamWrapper' => __DIR__ . '/..' . '/knplabs/gaufrette/src/Gaufrette/StreamWrapper.php',
@@ -183,51 +175,7 @@ class ComposerStaticInitShopwareRecovery
         'Psr\\Container\\ContainerExceptionInterface' => __DIR__ . '/..' . '/psr/container/src/ContainerExceptionInterface.php',
         'Psr\\Container\\ContainerInterface' => __DIR__ . '/..' . '/psr/container/src/ContainerInterface.php',
         'Psr\\Container\\NotFoundExceptionInterface' => __DIR__ . '/..' . '/psr/container/src/NotFoundExceptionInterface.php',
-        'Ramsey\\Uuid\\BinaryUtils' => __DIR__ . '/..' . '/ramsey/uuid/src/BinaryUtils.php',
-        'Ramsey\\Uuid\\Builder\\DefaultUuidBuilder' => __DIR__ . '/..' . '/ramsey/uuid/src/Builder/DefaultUuidBuilder.php',
-        'Ramsey\\Uuid\\Builder\\DegradedUuidBuilder' => __DIR__ . '/..' . '/ramsey/uuid/src/Builder/DegradedUuidBuilder.php',
-        'Ramsey\\Uuid\\Builder\\UuidBuilderInterface' => __DIR__ . '/..' . '/ramsey/uuid/src/Builder/UuidBuilderInterface.php',
-        'Ramsey\\Uuid\\Codec\\CodecInterface' => __DIR__ . '/..' . '/ramsey/uuid/src/Codec/CodecInterface.php',
-        'Ramsey\\Uuid\\Codec\\GuidStringCodec' => __DIR__ . '/..' . '/ramsey/uuid/src/Codec/GuidStringCodec.php',
-        'Ramsey\\Uuid\\Codec\\OrderedTimeCodec' => __DIR__ . '/..' . '/ramsey/uuid/src/Codec/OrderedTimeCodec.php',
-        'Ramsey\\Uuid\\Codec\\StringCodec' => __DIR__ . '/..' . '/ramsey/uuid/src/Codec/StringCodec.php',
-        'Ramsey\\Uuid\\Codec\\TimestampFirstCombCodec' => __DIR__ . '/..' . '/ramsey/uuid/src/Codec/TimestampFirstCombCodec.php',
-        'Ramsey\\Uuid\\Codec\\TimestampLastCombCodec' => __DIR__ . '/..' . '/ramsey/uuid/src/Codec/TimestampLastCombCodec.php',
-        'Ramsey\\Uuid\\Converter\\NumberConverterInterface' => __DIR__ . '/..' . '/ramsey/uuid/src/Converter/NumberConverterInterface.php',
-        'Ramsey\\Uuid\\Converter\\Number\\BigNumberConverter' => __DIR__ . '/..' . '/ramsey/uuid/src/Converter/Number/BigNumberConverter.php',
-        'Ramsey\\Uuid\\Converter\\Number\\DegradedNumberConverter' => __DIR__ . '/..' . '/ramsey/uuid/src/Converter/Number/DegradedNumberConverter.php',
-        'Ramsey\\Uuid\\Converter\\TimeConverterInterface' => __DIR__ . '/..' . '/ramsey/uuid/src/Converter/TimeConverterInterface.php',
-        'Ramsey\\Uuid\\Converter\\Time\\BigNumberTimeConverter' => __DIR__ . '/..' . '/ramsey/uuid/src/Converter/Time/BigNumberTimeConverter.php',
-        'Ramsey\\Uuid\\Converter\\Time\\DegradedTimeConverter' => __DIR__ . '/..' . '/ramsey/uuid/src/Converter/Time/DegradedTimeConverter.php',
-        'Ramsey\\Uuid\\Converter\\Time\\PhpTimeConverter' => __DIR__ . '/..' . '/ramsey/uuid/src/Converter/Time/PhpTimeConverter.php',
-        'Ramsey\\Uuid\\DegradedUuid' => __DIR__ . '/..' . '/ramsey/uuid/src/DegradedUuid.php',
-        'Ramsey\\Uuid\\Exception\\UnsatisfiedDependencyException' => __DIR__ . '/..' . '/ramsey/uuid/src/Exception/UnsatisfiedDependencyException.php',
-        'Ramsey\\Uuid\\Exception\\UnsupportedOperationException' => __DIR__ . '/..' . '/ramsey/uuid/src/Exception/UnsupportedOperationException.php',
-        'Ramsey\\Uuid\\FeatureSet' => __DIR__ . '/..' . '/ramsey/uuid/src/FeatureSet.php',
-        'Ramsey\\Uuid\\Generator\\CombGenerator' => __DIR__ . '/..' . '/ramsey/uuid/src/Generator/CombGenerator.php',
-        'Ramsey\\Uuid\\Generator\\DefaultTimeGenerator' => __DIR__ . '/..' . '/ramsey/uuid/src/Generator/DefaultTimeGenerator.php',
-        'Ramsey\\Uuid\\Generator\\MtRandGenerator' => __DIR__ . '/..' . '/ramsey/uuid/src/Generator/MtRandGenerator.php',
-        'Ramsey\\Uuid\\Generator\\OpenSslGenerator' => __DIR__ . '/..' . '/ramsey/uuid/src/Generator/OpenSslGenerator.php',
-        'Ramsey\\Uuid\\Generator\\PeclUuidRandomGenerator' => __DIR__ . '/..' . '/ramsey/uuid/src/Generator/PeclUuidRandomGenerator.php',
-        'Ramsey\\Uuid\\Generator\\PeclUuidTimeGenerator' => __DIR__ . '/..' . '/ramsey/uuid/src/Generator/PeclUuidTimeGenerator.php',
-        'Ramsey\\Uuid\\Generator\\RandomBytesGenerator' => __DIR__ . '/..' . '/ramsey/uuid/src/Generator/RandomBytesGenerator.php',
-        'Ramsey\\Uuid\\Generator\\RandomGeneratorFactory' => __DIR__ . '/..' . '/ramsey/uuid/src/Generator/RandomGeneratorFactory.php',
-        'Ramsey\\Uuid\\Generator\\RandomGeneratorInterface' => __DIR__ . '/..' . '/ramsey/uuid/src/Generator/RandomGeneratorInterface.php',
-        'Ramsey\\Uuid\\Generator\\RandomLibAdapter' => __DIR__ . '/..' . '/ramsey/uuid/src/Generator/RandomLibAdapter.php',
-        'Ramsey\\Uuid\\Generator\\SodiumRandomGenerator' => __DIR__ . '/..' . '/ramsey/uuid/src/Generator/SodiumRandomGenerator.php',
-        'Ramsey\\Uuid\\Generator\\TimeGeneratorFactory' => __DIR__ . '/..' . '/ramsey/uuid/src/Generator/TimeGeneratorFactory.php',
-        'Ramsey\\Uuid\\Generator\\TimeGeneratorInterface' => __DIR__ . '/..' . '/ramsey/uuid/src/Generator/TimeGeneratorInterface.php',
-        'Ramsey\\Uuid\\Provider\\NodeProviderInterface' => __DIR__ . '/..' . '/ramsey/uuid/src/Provider/NodeProviderInterface.php',
-        'Ramsey\\Uuid\\Provider\\Node\\FallbackNodeProvider' => __DIR__ . '/..' . '/ramsey/uuid/src/Provider/Node/FallbackNodeProvider.php',
-        'Ramsey\\Uuid\\Provider\\Node\\RandomNodeProvider' => __DIR__ . '/..' . '/ramsey/uuid/src/Provider/Node/RandomNodeProvider.php',
-        'Ramsey\\Uuid\\Provider\\Node\\SystemNodeProvider' => __DIR__ . '/..' . '/ramsey/uuid/src/Provider/Node/SystemNodeProvider.php',
-        'Ramsey\\Uuid\\Provider\\TimeProviderInterface' => __DIR__ . '/..' . '/ramsey/uuid/src/Provider/TimeProviderInterface.php',
-        'Ramsey\\Uuid\\Provider\\Time\\FixedTimeProvider' => __DIR__ . '/..' . '/ramsey/uuid/src/Provider/Time/FixedTimeProvider.php',
-        'Ramsey\\Uuid\\Provider\\Time\\SystemTimeProvider' => __DIR__ . '/..' . '/ramsey/uuid/src/Provider/Time/SystemTimeProvider.php',
-        'Ramsey\\Uuid\\Uuid' => __DIR__ . '/..' . '/ramsey/uuid/src/Uuid.php',
-        'Ramsey\\Uuid\\UuidFactory' => __DIR__ . '/..' . '/ramsey/uuid/src/UuidFactory.php',
-        'Ramsey\\Uuid\\UuidFactoryInterface' => __DIR__ . '/..' . '/ramsey/uuid/src/UuidFactoryInterface.php',
-        'Ramsey\\Uuid\\UuidInterface' => __DIR__ . '/..' . '/ramsey/uuid/src/UuidInterface.php',
+        'ReturnTypeWillChange' => __DIR__ . '/..' . '/symfony/polyfill-php81/Resources/stubs/ReturnTypeWillChange.php',
         'Shopware\\Recovery\\Common\\Archive\\Adapter' => __DIR__ . '/../..' . '/src/Archive/Adapter.php',
         'Shopware\\Recovery\\Common\\Archive\\Entry\\Zip' => __DIR__ . '/../..' . '/src/Archive/Entry/Zip.php',
         'Shopware\\Recovery\\Common\\Archive\\Zip' => __DIR__ . '/../..' . '/src/Archive/Zip.php',
@@ -399,6 +347,7 @@ class ComposerStaticInitShopwareRecovery
         'Symfony\\Component\\Console\\Output\\Output' => __DIR__ . '/..' . '/symfony/console/Output/Output.php',
         'Symfony\\Component\\Console\\Output\\OutputInterface' => __DIR__ . '/..' . '/symfony/console/Output/OutputInterface.php',
         'Symfony\\Component\\Console\\Output\\StreamOutput' => __DIR__ . '/..' . '/symfony/console/Output/StreamOutput.php',
+        'Symfony\\Component\\Console\\Output\\TrimmedBufferOutput' => __DIR__ . '/..' . '/symfony/console/Output/TrimmedBufferOutput.php',
         'Symfony\\Component\\Console\\Question\\ChoiceQuestion' => __DIR__ . '/..' . '/symfony/console/Question/ChoiceQuestion.php',
         'Symfony\\Component\\Console\\Question\\ConfirmationQuestion' => __DIR__ . '/..' . '/symfony/console/Question/ConfirmationQuestion.php',
         'Symfony\\Component\\Console\\Question\\Question' => __DIR__ . '/..' . '/symfony/console/Question/Question.php',
@@ -424,6 +373,7 @@ class ComposerStaticInitShopwareRecovery
         'Symfony\\Component\\Finder\\Iterator\\FileTypeFilterIterator' => __DIR__ . '/..' . '/symfony/finder/Iterator/FileTypeFilterIterator.php',
         'Symfony\\Component\\Finder\\Iterator\\FilecontentFilterIterator' => __DIR__ . '/..' . '/symfony/finder/Iterator/FilecontentFilterIterator.php',
         'Symfony\\Component\\Finder\\Iterator\\FilenameFilterIterator' => __DIR__ . '/..' . '/symfony/finder/Iterator/FilenameFilterIterator.php',
+        'Symfony\\Component\\Finder\\Iterator\\LazyIterator' => __DIR__ . '/..' . '/symfony/finder/Iterator/LazyIterator.php',
         'Symfony\\Component\\Finder\\Iterator\\MultiplePcreFilterIterator' => __DIR__ . '/..' . '/symfony/finder/Iterator/MultiplePcreFilterIterator.php',
         'Symfony\\Component\\Finder\\Iterator\\PathFilterIterator' => __DIR__ . '/..' . '/symfony/finder/Iterator/PathFilterIterator.php',
         'Symfony\\Component\\Finder\\Iterator\\RecursiveDirectoryIterator' => __DIR__ . '/..' . '/symfony/finder/Iterator/RecursiveDirectoryIterator.php',
@@ -431,6 +381,7 @@ class ComposerStaticInitShopwareRecovery
         'Symfony\\Component\\Finder\\Iterator\\SortableIterator' => __DIR__ . '/..' . '/symfony/finder/Iterator/SortableIterator.php',
         'Symfony\\Component\\Finder\\SplFileInfo' => __DIR__ . '/..' . '/symfony/finder/SplFileInfo.php',
         'Symfony\\Contracts\\Service\\Attribute\\Required' => __DIR__ . '/..' . '/symfony/service-contracts/Attribute/Required.php',
+        'Symfony\\Contracts\\Service\\Attribute\\SubscribedService' => __DIR__ . '/..' . '/symfony/service-contracts/Attribute/SubscribedService.php',
         'Symfony\\Contracts\\Service\\ResetInterface' => __DIR__ . '/..' . '/symfony/service-contracts/ResetInterface.php',
         'Symfony\\Contracts\\Service\\ServiceLocatorTrait' => __DIR__ . '/..' . '/symfony/service-contracts/ServiceLocatorTrait.php',
         'Symfony\\Contracts\\Service\\ServiceProviderInterface' => __DIR__ . '/..' . '/symfony/service-contracts/ServiceProviderInterface.php',
@@ -440,6 +391,7 @@ class ComposerStaticInitShopwareRecovery
         'Symfony\\Polyfill\\Mbstring\\Mbstring' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/Mbstring.php',
         'Symfony\\Polyfill\\Php73\\Php73' => __DIR__ . '/..' . '/symfony/polyfill-php73/Php73.php',
         'Symfony\\Polyfill\\Php80\\Php80' => __DIR__ . '/..' . '/symfony/polyfill-php80/Php80.php',
+        'Symfony\\Polyfill\\Php81\\Php81' => __DIR__ . '/..' . '/symfony/polyfill-php81/Php81.php',
         'UnhandledMatchError' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/UnhandledMatchError.php',
         'ValueError' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/ValueError.php',
     );

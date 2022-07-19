@@ -34,20 +34,12 @@ class FieldHelper
     /**
      * Contains the selection for the s_articles_attributes table.
      * This table contains dynamically columns.
-     *
-     * @var array
      */
-    private $attributeFields = [];
+    private array $attributeFields = [];
 
-    /**
-     * @var Connection
-     */
-    private $connection;
+    private Connection $connection;
 
-    /**
-     * @var CacheInterface
-     */
-    private $cache;
+    private CacheInterface $cache;
 
     public function __construct(Connection $connection, CacheInterface $cache)
     {
@@ -301,6 +293,7 @@ class FieldHelper
             'price.price as __price_price',
             'price.pseudoprice as __price_pseudoprice',
             'price.percent as __price_percent',
+            'price.regulation_price as __price_regulation_price',
         ];
 
         $fields = array_merge(

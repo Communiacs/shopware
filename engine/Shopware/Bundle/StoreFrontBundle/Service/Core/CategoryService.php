@@ -24,18 +24,16 @@
 
 namespace Shopware\Bundle\StoreFrontBundle\Service\Core;
 
-use Shopware\Bundle\StoreFrontBundle\Gateway;
-use Shopware\Bundle\StoreFrontBundle\Service;
-use Shopware\Bundle\StoreFrontBundle\Struct;
+use Shopware\Bundle\StoreFrontBundle\Gateway\CategoryGatewayInterface;
+use Shopware\Bundle\StoreFrontBundle\Service\CategoryServiceInterface;
+use Shopware\Bundle\StoreFrontBundle\Struct\Category;
+use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
-class CategoryService implements Service\CategoryServiceInterface
+class CategoryService implements CategoryServiceInterface
 {
-    /**
-     * @var Gateway\CategoryGatewayInterface
-     */
-    private $categoryGateway;
+    private CategoryGatewayInterface $categoryGateway;
 
-    public function __construct(Gateway\CategoryGatewayInterface $categoryGateway)
+    public function __construct(CategoryGatewayInterface $categoryGateway)
     {
         $this->categoryGateway = $categoryGateway;
     }
@@ -43,7 +41,7 @@ class CategoryService implements Service\CategoryServiceInterface
     /**
      * {@inheritdoc}
      */
-    public function get($id, Struct\ShopContextInterface $context)
+    public function get($id, ShopContextInterface $context)
     {
         $categories = $this->getList([$id], $context);
 
@@ -53,7 +51,7 @@ class CategoryService implements Service\CategoryServiceInterface
     /**
      * {@inheritdoc}
      */
-    public function getList($ids, Struct\ShopContextInterface $context)
+    public function getList($ids, ShopContextInterface $context)
     {
         $categories = $this->categoryGateway->getList($ids, $context);
 
@@ -63,7 +61,7 @@ class CategoryService implements Service\CategoryServiceInterface
     /**
      * {@inheritdoc}
      */
-    public function getProductsCategories(array $products, Struct\ShopContextInterface $context)
+    public function getProductsCategories(array $products, ShopContextInterface $context)
     {
         $categories = $this->categoryGateway->getProductsCategories($products, $context);
 
@@ -76,15 +74,15 @@ class CategoryService implements Service\CategoryServiceInterface
     }
 
     /**
-     * @param Struct\Category[] $categories
+     * @param Category[] $categories
      *
-     * @return Struct\Category[] $categories Indexed by the category id
+     * @return Category[] $categories Indexed by the category id
      */
-    private function filterValidCategories($categories, Struct\ShopContextInterface $context)
+    private function filterValidCategories(array $categories, ShopContextInterface $context): array
     {
         $customerGroup = $context->getCurrentCustomerGroup();
 
-        return array_filter($categories, function (Struct\Category $category) use ($customerGroup) {
+        return array_filter($categories, function (Category $category) use ($customerGroup) {
             return !(\in_array($customerGroup->getId(), $category->getBlockedCustomerGroupIds()));
         });
     }

@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Enlight
  *
@@ -55,7 +57,7 @@ class Enlight_Config_BaseConfig implements Countable, Iterator
     /**
      * Contains array of configuration data
      *
-     * @var array
+     * @var array<string|int, mixed>
      */
     protected $_data;
 
@@ -102,8 +104,6 @@ class Enlight_Config_BaseConfig implements Countable, Iterator
      * facilitate easy access to the data.
      *
      * @param bool $allowModifications
-     *
-     * @return void
      */
     public function __construct(array $array, $allowModifications = false)
     {
@@ -122,24 +122,11 @@ class Enlight_Config_BaseConfig implements Countable, Iterator
     }
 
     /**
-     * Retrieve a value and return $default if there is no element set.
-     *
-     * @param string $name
-     */
-    public function get($name, $default = null)
-    {
-        $result = $default;
-        if (\array_key_exists($name, $this->_data)) {
-            $result = $this->_data[$name];
-        }
-
-        return $result;
-    }
-
-    /**
      * Magic function so that $obj->value will work.
      *
      * @param string $name
+     *
+     * @return mixed|null
      */
     public function __get($name)
     {
@@ -150,7 +137,8 @@ class Enlight_Config_BaseConfig implements Countable, Iterator
      * Only allow setting of a property if $allowModifications
      * was set to true on construction. Otherwise, throw an exception.
      *
-     * @param string $name
+     * @param string     $name
+     * @param mixed|null $value
      *
      * @throws Enlight_Config_Exception
      *
@@ -190,26 +178,6 @@ class Enlight_Config_BaseConfig implements Countable, Iterator
     }
 
     /**
-     * Return an associative array of the stored data.
-     *
-     * @return array
-     */
-    public function toArray()
-    {
-        $array = [];
-        $data = $this->_data;
-        foreach ($data as $key => $value) {
-            if ($value instanceof Enlight_Config_BaseConfig) {
-                $array[$key] = $value->toArray();
-            } else {
-                $array[$key] = $value;
-            }
-        }
-
-        return $array;
-    }
-
-    /**
      * Support isset() overloading on PHP 5.1
      *
      * @param string $name
@@ -239,6 +207,44 @@ class Enlight_Config_BaseConfig implements Countable, Iterator
         } else {
             throw new Enlight_Config_Exception('Enlight_Config_BaseConfig is read only');
         }
+    }
+
+    /**
+     * Retrieve a value and return $default if there is no element set.
+     *
+     * @param string     $name
+     * @param mixed|null $default
+     *
+     * @return mixed|null
+     */
+    public function get($name, $default = null)
+    {
+        $result = $default;
+        if (\array_key_exists($name, $this->_data)) {
+            $result = $this->_data[$name];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Return an associative array of the stored data.
+     *
+     * @return array
+     */
+    public function toArray()
+    {
+        $array = [];
+        $data = $this->_data;
+        foreach ($data as $key => $value) {
+            if ($value instanceof Enlight_Config_BaseConfig) {
+                $array[$key] = $value->toArray();
+            } else {
+                $array[$key] = $value;
+            }
+        }
+
+        return $array;
     }
 
     /**
@@ -385,11 +391,13 @@ class Enlight_Config_BaseConfig implements Countable, Iterator
      * Prevent any more modifications being made to this instance. Useful
      * after merge() has been used to merge multiple Enlight_Config_BaseConfig objects
      * into one object which should then not be modified again.
+     *
+     * @return void
      */
     public function setReadOnly()
     {
         $this->_allowModifications = false;
-        foreach ($this->_data as $key => $value) {
+        foreach ($this->_data as $value) {
             if ($value instanceof Enlight_Config_BaseConfig) {
                 $value->setReadOnly();
             }
@@ -465,6 +473,8 @@ class Enlight_Config_BaseConfig implements Countable, Iterator
      * @param string $errstr
      * @param string $errfile
      * @param int    $errline
+     *
+     * @return void
      */
     protected function _loadFileErrorHandler($errno, $errstr, $errfile, $errline)
     {

@@ -1330,9 +1330,13 @@ tests/Functional/Components/NumberRangeManagerTest.php
 tests/Functional/Components/Plugin/NamespaceTest.php
 tests/Functional/Components/Theme/PathResolverTest.php
 tests/Functional/Controllers/Backend/ImportExport.php
+tests/Functional/Controllers/Backend/SysteminfoTest.php
 tests/Functional/Controllers/Backend/testdata/Lock.xml
+tests/Functional/Controllers/Backend/testdata/lock.sql
+tests/Functional/Controllers/Frontend/CsrftokenTest.php
 tests/Functional/Controllers/Frontend/RegisterTest.php
 tests/Functional/Controllers/Frontend/fixtures/UserAgent.php
+tests/Functional/Core/sAdminSGetUserDataTest.php
 tests/Functional/Core/sAdminTest.php
 tests/Functional/Core/sBasketTest.php
 tests/Functional/Core/sExportTest.php
@@ -1350,7 +1354,9 @@ tests/Functional/Models/Category/ListQueryTest.php
 tests/Functional/Models/Customer/BillingTest.php
 tests/Functional/Models/Customer/ShippingTest.php
 tests/Functional/Models/Esd.php
+tests/Functional/Modules/Articles/TestBasePriceCalculation.php
 tests/Functional/Plugins/Core/Debug
+tests/Functional/Recovery/Update/TestUpdateHtaccess.php
 tests/Functional/Regressions/Ticket4375Test.php
 tests/Functional/Regressions/Ticket4668Test.php
 tests/Functional/Regressions/Ticket5202Test.php
@@ -1657,6 +1663,10 @@ themes/Frontend/Responsive/frontend/_public/vendors/js/masonry
 themes/Frontend/Responsive/frontend/_public/vendors/js/picturefill/picturefill.js
 themes/Frontend/Responsive/frontend/_public/vendors/less/open-sans-fontface
 themes/Frontend/Responsive/frontend/_public/vendors/less/pocketgrid/LICENCE
+themes/Frontend/Responsive/karma.conf.js
+themes/Frontend/Responsive/tests/lib
+themes/Frontend/Responsive/tests/spec
+themes/Frontend/Responsive/tests/specrunner.html
 web/cache/.gitignore
 vendor/aws/aws-sdk-php/LICENSE.md
 vendor/aws/aws-sdk-php/NOTICE.md
@@ -1708,6 +1718,8 @@ vendor/elasticsearch/elasticsearch/src/Elasticsearch/Endpoints/SearchExists.php
 vendor/elasticsearch/elasticsearch/src/Elasticsearch/Endpoints/Suggest.php
 vendor/google/auth/.editorconfig
 vendor/google/auth/.php_cs
+vendor/google/auth/CHANGELOG.md
+vendor/google/auth/CODE_OF_CONDUCT.md
 vendor/google/auth/CONTRIBUTING.md
 vendor/google/auth/phpunit.xml.dist
 vendor/guzzlehttp/guzzle/src/BatchResults.php
@@ -1726,6 +1738,8 @@ vendor/guzzlehttp/guzzle/src/ToArrayInterface.php
 vendor/guzzlehttp/guzzle/src/Transaction.php
 vendor/guzzlehttp/guzzle/src/UriTemplate.php
 vendor/guzzlehttp/guzzle/src/Url.php
+vendor/guzzlehttp/psr7/src/functions.php
+vendor/guzzlehttp/psr7/src/functions_include.php
 vendor/league/flysystem-aws-s3-v3/LICENCE
 vendor/monolog/monolog/.php_cs
 vendor/monolog/monolog/src/Monolog/Handler/ElasticSearchHandler.php

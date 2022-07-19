@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Shopware 5
  * Copyright (c) shopware AG
@@ -29,11 +31,31 @@ use DateTimeInterface;
 use Doctrine\DBAL\Connection;
 use Enlight_Event_EventManager;
 use Shopware\Bundle\MediaBundle\MediaServiceInterface;
-use Shopware\Bundle\StoreFrontBundle;
 use Shopware\Bundle\StoreFrontBundle\Service\CategoryServiceInterface;
 use Shopware\Bundle\StoreFrontBundle\Service\ContextServiceInterface;
+use Shopware\Bundle\StoreFrontBundle\Struct\Blog\Blog;
+use Shopware\Bundle\StoreFrontBundle\Struct\Category;
+use Shopware\Bundle\StoreFrontBundle\Struct\Configurator\Group;
+use Shopware\Bundle\StoreFrontBundle\Struct\Configurator\Option;
+use Shopware\Bundle\StoreFrontBundle\Struct\Configurator\Set as ConfiguratorSet;
+use Shopware\Bundle\StoreFrontBundle\Struct\Country;
+use Shopware\Bundle\StoreFrontBundle\Struct\Country\State;
 use Shopware\Bundle\StoreFrontBundle\Struct\ListProduct;
+use Shopware\Bundle\StoreFrontBundle\Struct\Media;
+use Shopware\Bundle\StoreFrontBundle\Struct\Payment;
+use Shopware\Bundle\StoreFrontBundle\Struct\Product;
+use Shopware\Bundle\StoreFrontBundle\Struct\Product\Manufacturer;
+use Shopware\Bundle\StoreFrontBundle\Struct\Product\MarketingAttribute;
 use Shopware\Bundle\StoreFrontBundle\Struct\Product\Price;
+use Shopware\Bundle\StoreFrontBundle\Struct\Product\Unit;
+use Shopware\Bundle\StoreFrontBundle\Struct\Product\Vote;
+use Shopware\Bundle\StoreFrontBundle\Struct\Product\VoteAverage;
+use Shopware\Bundle\StoreFrontBundle\Struct\ProductStream;
+use Shopware\Bundle\StoreFrontBundle\Struct\Property\Group as PropertyGroup;
+use Shopware\Bundle\StoreFrontBundle\Struct\Property\Option as PropertyOption;
+use Shopware\Bundle\StoreFrontBundle\Struct\Property\Set;
+use Shopware\Bundle\StoreFrontBundle\Struct\ShopPage;
+use Shopware\Bundle\StoreFrontBundle\Struct\Thumbnail;
 use Shopware\Components\Model\ModelManager;
 use Shopware\Models\Emotion\Emotion;
 use Shopware_Components_Config;
@@ -41,45 +63,21 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class LegacyStructConverter
 {
-    /**
-     * @var Shopware_Components_Config
-     */
-    private $config;
+    private Shopware_Components_Config $config;
 
-    /**
-     * @var ContextServiceInterface
-     */
-    private $contextService;
+    private ContextServiceInterface $contextService;
 
-    /**
-     * @var Enlight_Event_EventManager
-     */
-    private $eventManager;
+    private Enlight_Event_EventManager $eventManager;
 
-    /**
-     * @var MediaServiceInterface
-     */
-    private $mediaService;
+    private MediaServiceInterface $mediaService;
 
-    /**
-     * @var Connection
-     */
-    private $connection;
+    private Connection $connection;
 
-    /**
-     * @var ModelManager
-     */
-    private $modelManager;
+    private ModelManager $modelManager;
 
-    /**
-     * @var ContainerInterface
-     */
-    private $container;
+    private ContainerInterface $container;
 
-    /**
-     * @var CategoryServiceInterface
-     */
-    private $categoryService;
+    private CategoryServiceInterface $categoryService;
 
     public function __construct(
         Shopware_Components_Config $config,
@@ -102,7 +100,7 @@ class LegacyStructConverter
     }
 
     /**
-     * @param StoreFrontBundle\Struct\Country[] $countries
+     * @param Country[] $countries
      *
      * @return array
      */
@@ -114,7 +112,7 @@ class LegacyStructConverter
     /**
      * @return array
      */
-    public function convertCountryStruct(StoreFrontBundle\Struct\Country $country)
+    public function convertCountryStruct(Country $country)
     {
         $data = json_decode(json_encode($country), true);
         $data = array_merge($data, [
@@ -154,7 +152,7 @@ class LegacyStructConverter
     }
 
     /**
-     * @param StoreFrontBundle\Struct\Country\State[]|null $states
+     * @param State[]|null $states
      *
      * @return array
      */
@@ -168,10 +166,11 @@ class LegacyStructConverter
     }
 
     /**
-     * @return array
+     * @return array<string, mixed>
      */
-    public function convertStateStruct(StoreFrontBundle\Struct\Country\State $state)
+    public function convertStateStruct(State $state)
     {
+        /** @var array<string, mixed> $data */
         $data = json_decode(json_encode($state), true);
         $data += ['shortcode' => $state->getCode(), 'attributes' => $state->getAttributes()];
 
@@ -189,7 +188,7 @@ class LegacyStructConverter
      *
      * @return array
      */
-    public function convertConfiguratorGroupStruct(StoreFrontBundle\Struct\Configurator\Group $group)
+    public function convertConfiguratorGroupStruct(Group $group)
     {
         $data = [
             'groupID' => $group->getId(),
@@ -213,7 +212,7 @@ class LegacyStructConverter
     /**
      * @return array
      */
-    public function convertCategoryStruct(StoreFrontBundle\Struct\Category $category)
+    public function convertCategoryStruct(Category $category)
     {
         $media = null;
         if ($category->getMedia()) {
@@ -302,10 +301,6 @@ class LegacyStructConverter
      */
     public function convertListProductStruct(ListProduct $product)
     {
-        if (!$product instanceof ListProduct) {
-            return [];
-        }
-
         $cheapestPrice = $product->getListingPrice();
 
         $promotion = $this->getListProductData($product);
@@ -342,7 +337,7 @@ class LegacyStructConverter
         $promotion['linkVariant'] = $this->config->get('baseFile') .
             '?sViewport=detail&sArticle=' . $promotion['articleID'] . '&number=' . $promotion['ordernumber'];
 
-        if ($this->config->get('useShortDescriptionInListing') && \strlen($promotion['description']) > 5) {
+        if ($this->config->get('useShortDescriptionInListing') && \strlen($promotion['description'] ?? '') > 5) {
             $promotion['description_long'] = $promotion['description'];
         }
 
@@ -358,14 +353,15 @@ class LegacyStructConverter
     {
         $data = $this->convertPriceStruct($price);
         $data['pseudopricePercent'] = null;
-        $data['price'] = $this->sFormatPrice($price->getCalculatedPrice());
-        $data['pseudoprice'] = $this->sFormatPrice($price->getCalculatedPseudoPrice());
-        $data['referenceprice'] = $this->sFormatPrice($price->getCalculatedReferencePrice());
+        $data['price'] = $this->formatPrice($price->getCalculatedPrice());
+        $data['pseudoprice'] = $this->formatPrice($price->getCalculatedPseudoPrice());
+        $data['referenceprice'] = $this->formatPrice($price->getCalculatedReferencePrice());
         $data['has_pseudoprice'] = $price->getCalculatedPseudoPrice() > $price->getCalculatedPrice();
         $data['price_numeric'] = $price->getCalculatedPrice();
         $data['pseudoprice_numeric'] = $price->getCalculatedPseudoPrice();
         $data['price_attributes'] = $price->getAttributes();
         $data['pricegroup'] = $price->getCustomerGroup()->getKey();
+        $data['regulationPrice'] = $price->getCalculatedRegulationPrice();
 
         if ($price->getCalculatedPseudoPrice()) {
             $discount = 0;
@@ -390,7 +386,7 @@ class LegacyStructConverter
         $data['sUnit'] = ['unit' => '', 'description' => ''];
         $data['unit_attributes'] = [];
 
-        if ($price->getUnit()) {
+        if ($price->getUnit() instanceof Unit) {
             $data = array_merge($data, $this->convertUnitStruct($price->getUnit()));
         }
 
@@ -404,12 +400,8 @@ class LegacyStructConverter
      *
      * @return array
      */
-    public function convertRelatedProductStreamStruct(StoreFrontBundle\Struct\ProductStream $productStream)
+    public function convertRelatedProductStreamStruct(ProductStream $productStream)
     {
-        if (!$productStream instanceof StoreFrontBundle\Struct\ProductStream) {
-            return [];
-        }
-
         $data = [
             'id' => $productStream->getId(),
             'name' => $productStream->getName(),
@@ -430,12 +422,8 @@ class LegacyStructConverter
     /**
      * @return array
      */
-    public function convertProductStruct(StoreFrontBundle\Struct\Product $product)
+    public function convertProductStruct(Product $product)
     {
-        if (!$product instanceof StoreFrontBundle\Struct\Product) {
-            return [];
-        }
-
         $data = $this->getListProductData($product);
 
         if ($product->getUnit()) {
@@ -453,7 +441,6 @@ class LegacyStructConverter
             );
         }
 
-        /** @var Price $variantPrice */
         $variantPrice = $product->getVariantPrice();
         $data = array_merge($data, $this->convertProductPriceStruct($variantPrice));
         $data['referenceprice'] = $variantPrice->getCalculatedReferencePrice();
@@ -553,7 +540,7 @@ class LegacyStructConverter
     /**
      * @return array
      */
-    public function convertVoteAverageStruct(StoreFrontBundle\Struct\Product\VoteAverage $average)
+    public function convertVoteAverageStruct(VoteAverage $average)
     {
         $data = [
             'average' => round($average->getAverage(), 1),
@@ -574,7 +561,7 @@ class LegacyStructConverter
     /**
      * @return array
      */
-    public function convertVoteStruct(StoreFrontBundle\Struct\Product\Vote $vote)
+    public function convertVoteStruct(Vote $vote)
     {
         $data = [
             'id' => $vote->getId(),
@@ -628,13 +615,11 @@ class LegacyStructConverter
     }
 
     /**
-     * @param StoreFrontBundle\Struct\Media $media
-     *
      * @return array
      */
-    public function convertMediaStruct(StoreFrontBundle\Struct\Media $media = null)
+    public function convertMediaStruct(?Media $media = null)
     {
-        if (!$media instanceof StoreFrontBundle\Struct\Media) {
+        if (!$media instanceof Media) {
             return [];
         }
 
@@ -685,7 +670,7 @@ class LegacyStructConverter
     /**
      * @return array
      */
-    public function convertUnitStruct(StoreFrontBundle\Struct\Product\Unit $unit)
+    public function convertUnitStruct(Unit $unit)
     {
         $data = [
             'minpurchase' => $unit->getMinPurchase(),
@@ -714,7 +699,7 @@ class LegacyStructConverter
     /**
      * @return string
      */
-    public function getSupplierListingLink(StoreFrontBundle\Struct\Product\Manufacturer $manufacturer)
+    public function getSupplierListingLink(Manufacturer $manufacturer)
     {
         return 'controller=listing&action=manufacturer&sSupplier=' . (int) $manufacturer->getId();
     }
@@ -751,7 +736,7 @@ class LegacyStructConverter
      *
      * @return array
      */
-    public function convertPropertySetStruct(StoreFrontBundle\Struct\Property\Set $set)
+    public function convertPropertySetStruct(Set $set)
     {
         $result = [];
         foreach ($set->getGroups() as $group) {
@@ -764,7 +749,6 @@ class LegacyStructConverter
 
             $mediaValues = [];
             foreach ($group->getOptions() as $option) {
-                /** @var StoreFrontBundle\Struct\Property\Option $option */
                 if ($option->getMedia()) {
                     $mediaValues[$option->getId()] = array_merge(['valueId' => $option->getId()], $this->convertMediaStruct($option->getMedia()));
                 }
@@ -798,7 +782,7 @@ class LegacyStructConverter
     /**
      * @return array
      */
-    public function convertPropertyGroupStruct(StoreFrontBundle\Struct\Property\Group $group)
+    public function convertPropertyGroupStruct(PropertyGroup $group)
     {
         $data = [
             'id' => $group->getId(),
@@ -824,7 +808,7 @@ class LegacyStructConverter
     /**
      * @return array
      */
-    public function convertPropertyOptionStruct(StoreFrontBundle\Struct\Property\Option $option)
+    public function convertPropertyOptionStruct(PropertyOption $option)
     {
         $data = [
             'id' => $option->getId(),
@@ -844,7 +828,7 @@ class LegacyStructConverter
     /**
      * @return array
      */
-    public function convertManufacturerStruct(StoreFrontBundle\Struct\Product\Manufacturer $manufacturer)
+    public function convertManufacturerStruct(Manufacturer $manufacturer)
     {
         $data = [
             'id' => $manufacturer->getId(),
@@ -871,10 +855,8 @@ class LegacyStructConverter
     /**
      * @return array
      */
-    public function convertConfiguratorStruct(
-        ListProduct $product,
-        StoreFrontBundle\Struct\Configurator\Set $set
-    ) {
+    public function convertConfiguratorStruct(ListProduct $product, ConfiguratorSet $set)
+    {
         $groups = [];
         foreach ($set->getGroups() as $group) {
             $groupData = $this->convertConfiguratorGroupStruct($group);
@@ -914,10 +896,8 @@ class LegacyStructConverter
     /**
      * @return array
      */
-    public function convertConfiguratorPrice(
-        ListProduct $product,
-        StoreFrontBundle\Struct\Configurator\Set $set
-    ) {
+    public function convertConfiguratorPrice(ListProduct $product, ConfiguratorSet $set)
+    {
         if ($set->isSelectionSpecified()) {
             return [];
         }
@@ -928,11 +908,11 @@ class LegacyStructConverter
         $cheapestPrice = $product->getListingPrice();
 
         if (\count($product->getPrices()) > 1 || $product->hasDifferentPrices()) {
-            $data['priceStartingFrom'] = $this->sFormatPrice($cheapestPrice->getCalculatedPrice());
+            $data['priceStartingFrom'] = $this->formatPrice($cheapestPrice->getCalculatedPrice());
         }
 
         $data = array_merge($data, $this->convertProductPriceStruct($cheapestPrice));
-        $data['price'] = $data['priceStartingFrom'] ?: $this->sFormatPrice($variantPrice->getCalculatedPrice());
+        $data['price'] = $data['priceStartingFrom'] ?: $this->formatPrice($variantPrice->getCalculatedPrice());
         $data['sBlockPrices'] = [];
 
         return $this->eventManager->filter('Legacy_Struct_Converter_Convert_Configurator_Price', $data, [
@@ -946,10 +926,8 @@ class LegacyStructConverter
      *
      * @return array
      */
-    public function getConfiguratorSettings(
-        StoreFrontBundle\Struct\Configurator\Set $set,
-        ListProduct $product
-    ) {
+    public function getConfiguratorSettings(ConfiguratorSet $set, ListProduct $product)
+    {
         $settings = [
             'instock' => $product->isCloseouts(),
             'articleID' => $product->getId(),
@@ -984,10 +962,8 @@ class LegacyStructConverter
      *
      * @return array
      */
-    public function convertConfiguratorOptionStruct(
-        StoreFrontBundle\Struct\Configurator\Group $group,
-        StoreFrontBundle\Struct\Configurator\Option $option
-    ) {
+    public function convertConfiguratorOptionStruct(Group $group, Option $option)
+    {
         $data = [
             'optionID' => $option->getId(),
             'groupID' => $group->getId(),
@@ -1015,7 +991,7 @@ class LegacyStructConverter
     /**
      * @return array
      */
-    public function convertBlogStruct(StoreFrontBundle\Struct\Blog\Blog $blog)
+    public function convertBlogStruct(Blog $blog)
     {
         $data = [
             'id' => $blog->getId(),
@@ -1052,7 +1028,7 @@ class LegacyStructConverter
      *
      * @return array
      */
-    public function convertPaymentStruct(StoreFrontBundle\Struct\Payment $payment)
+    public function convertPaymentStruct(Payment $payment)
     {
         $data = [
             'id' => $payment->getId(),
@@ -1090,7 +1066,7 @@ class LegacyStructConverter
     /**
      * @return array
      */
-    public function convertShopPageStruct(StoreFrontBundle\Struct\ShopPage $shopPage)
+    public function convertShopPageStruct(ShopPage $shopPage)
     {
         $data = $shopPage->jsonSerialize();
 
@@ -1109,7 +1085,7 @@ class LegacyStructConverter
     }
 
     /**
-     * @param StoreFrontBundle\Struct\ShopPage[] $shopPages
+     * @param ShopPage[] $shopPages
      *
      * @return array
      */
@@ -1120,12 +1096,8 @@ class LegacyStructConverter
 
     /**
      * Returns the count of children categories of the provided category
-     *
-     * @param int $id
-     *
-     * @return int
      */
-    private function getCategoryChildrenCount($id)
+    private function getCategoryChildrenCount(int $id): int
     {
         return (int) $this->connection->fetchColumn(
             'SELECT count(category.id) FROM s_categories category WHERE parent = :id',
@@ -1133,10 +1105,7 @@ class LegacyStructConverter
         );
     }
 
-    /**
-     * @return string
-     */
-    private function getCategoryLink(StoreFrontBundle\Struct\Category $category)
+    private function getCategoryLink(Category $category): string
     {
         $viewport = $category->isBlog() ? 'blog' : 'cat';
         $params = http_build_query(
@@ -1148,12 +1117,7 @@ class LegacyStructConverter
         return $this->config->get('baseFile') . '?' . $params;
     }
 
-    /**
-     * @param StoreFrontBundle\Struct\Thumbnail $thumbnail
-     *
-     * @return string
-     */
-    private function getSourceSet($thumbnail)
+    private function getSourceSet(Thumbnail $thumbnail): string
     {
         if ($thumbnail->getRetinaSource() !== null) {
             return sprintf('%s, %s 2x', $thumbnail->getSource(), $thumbnail->getRetinaSource());
@@ -1164,16 +1128,12 @@ class LegacyStructConverter
 
     /**
      * Formats article prices
-     *
-     * @param float $price
-     *
-     * @return string
      */
-    private function sFormatPrice($price)
+    private function formatPrice(?float $price): string
     {
         $price = str_replace(',', '.', (string) $price);
-        $price = $this->sRound($price);
-        $price = str_replace('.', ',', (string) $price); // Replaces points with commas
+        $price = $this->round($price);
+        $price = str_replace('.', ',', (string) $price); // Replace points with commas
         $commaPos = strpos($price, ',');
         if ($commaPos) {
             $part = substr($price, $commaPos + 1, \strlen($price) - $commaPos);
@@ -1195,12 +1155,7 @@ class LegacyStructConverter
         return $price;
     }
 
-    /**
-     * @param string|null $amount
-     *
-     * @return float
-     */
-    private function sRound($amount = null)
+    private function round(string $amount): float
     {
         $amountStr = explode('.', $amount);
         if (empty($amountStr[1])) {
@@ -1215,11 +1170,9 @@ class LegacyStructConverter
 
     /**
      * Internal function which converts only the data of a list product.
-     * Associated data won't converted.
-     *
-     * @return array
+     * Associated data won't be converted.
      */
-    private function getListProductData(ListProduct $product)
+    private function getListProductData(ListProduct $product): array
     {
         $createDate = null;
         if ($product->getCreatedAt()) {
@@ -1267,7 +1220,7 @@ class LegacyStructConverter
             'shippingfree' => $product->isShippingFree(),
             'suppliernumber' => $product->getManufacturerNumber(),
             'notification' => $product->allowsNotification(),
-            'ean' => trim($product->getEan()),
+            'ean' => trim((string) $product->getEan()),
             'keywords' => $product->getKeywords(),
             'sReleasedate' => $this->dateToString($product->getReleaseDate()),
             'template' => $product->getTemplate(),
@@ -1295,9 +1248,8 @@ class LegacyStructConverter
             $data['supplier_attributes'] = $product->getManufacturer()->getAttributes();
         }
 
-        if ($product->hasAttribute('marketing')) {
-            /** @var StoreFrontBundle\Struct\Product\MarketingAttribute $marketing */
-            $marketing = $product->getAttribute('marketing');
+        $marketing = $product->getAttribute('marketing');
+        if ($marketing instanceof MarketingAttribute) {
             $data['newArticle'] = $marketing->isNew();
             $data['sUpcoming'] = $marketing->comingSoon();
             $data['topseller'] = $marketing->isTopSeller();
@@ -1315,10 +1267,8 @@ class LegacyStructConverter
 
     /**
      * @param DateTimeInterface|string $date
-     *
-     * @return string
      */
-    private function dateToString($date)
+    private function dateToString($date): string
     {
         if ($date instanceof DateTime) {
             return $date->format('Y-m-d');
@@ -1327,12 +1277,9 @@ class LegacyStructConverter
         return '';
     }
 
-    /**
-     * @return string
-     */
-    private function getProductBoxLayout(StoreFrontBundle\Struct\Category $category = null)
+    private function getProductBoxLayout(?Category $category = null): string
     {
-        if (!$category) {
+        if (!$category instanceof Category) {
             return 'basic';
         }
 
@@ -1346,9 +1293,9 @@ class LegacyStructConverter
     }
 
     /**
-     * @return array
+     * @return array{sViewport: 'blog'|'cat', sCategory: int, sPage?: int}
      */
-    private function getCategoryCanonicalParams(StoreFrontBundle\Struct\Category $category)
+    private function getCategoryCanonicalParams(Category $category): array
     {
         $page = (int) $this->container->get('front')->Request()->getQuery('sPage');
 

@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Shopware 5
  * Copyright (c) shopware AG
@@ -25,7 +27,6 @@
 namespace Shopware\Components\Routing\Matchers;
 
 use Doctrine\DBAL\Connection;
-use PDO;
 use Shopware\Components\QueryAliasMapper;
 use Shopware\Components\Routing\Context;
 use Shopware\Components\Routing\MatcherInterface;
@@ -39,7 +40,7 @@ class RewriteMatcher implements MatcherInterface
     protected $connection;
 
     /**
-     * @var string[]
+     * @var array{module: 'frontend', controller: 'index', action: 'index'}
      */
     protected $defaultRoute = [
         'module' => 'frontend',
@@ -47,15 +48,9 @@ class RewriteMatcher implements MatcherInterface
         'action' => 'index',
     ];
 
-    /**
-     * @var Config
-     */
-    private $config;
+    private Config $config;
 
-    /**
-     * @var QueryAliasMapper
-     */
-    private $queryAliasMapper;
+    private QueryAliasMapper $queryAliasMapper;
 
     public function __construct(Connection $connection, QueryAliasMapper $queryAliasMapper, Config $config)
     {
@@ -69,10 +64,13 @@ class RewriteMatcher implements MatcherInterface
      */
     public function match($pathInfo, Context $context)
     {
-        if (strpos($pathInfo, '/backend/') === 0 || strpos($pathInfo, '/api/') === 0) {
+        if (str_starts_with($pathInfo, '/backend/') || str_starts_with($pathInfo, '/api/')) {
             return $pathInfo;
         }
-        if ($context->getShopId() === null) { // only frontend
+
+        $shopId = $context->getShopId();
+        // Consider SEO URLs only if the shop ID is set, which is the case e.g. for storefront requests
+        if ($shopId === null) {
             return $pathInfo;
         }
 
@@ -91,36 +89,31 @@ class RewriteMatcher implements MatcherInterface
         $context->setParams($params);
 
         // /widgets and /index supports short request queries
-        if ($pathInfo === '/' || strpos($pathInfo, '/widgets/') === 0) {
+        if ($pathInfo === '/' || str_starts_with($pathInfo, '/widgets/')) {
             return $pathInfo;
         }
 
         $pathInfo = ltrim($pathInfo, '/');
-        $statement = $this->getRouteStatement();
-        $statement->bindValue(':shopId', $context->getShopId(), PDO::PARAM_INT);
-        $statement->bindValue(':pathInfo', $pathInfo, PDO::PARAM_STR);
+        $route = $this->getRoute($shopId, $pathInfo);
 
-        if ($statement->execute() && $statement->rowCount() > 0) {
-            $route = $statement->fetch(PDO::FETCH_ASSOC);
-            $query = $this->getQueryFormOrgPath($route['orgPath']);
-            if (empty($route['main']) || $route['shopId'] != $context->getShopId()) {
-                $query['rewriteAlias'] = true;
-            } else {
-                $query['rewriteUrl'] = true;
-            }
-
-            return $query;
+        if (!\is_array($route)) {
+            return $pathInfo;
         }
 
-        return $pathInfo;
+        $query = $this->getQueryFormOrgPath($route['orgPath']);
+        if (empty($route['main']) || (int) $route['shopId'] !== $shopId) {
+            $query['rewriteAlias'] = true;
+        } else {
+            $query['rewriteUrl'] = true;
+        }
+
+        return $query;
     }
 
     /**
-     * @throws \Doctrine\DBAL\DBALException
-     *
-     * @return \Doctrine\DBAL\Driver\Statement
+     * @return array<string, mixed>|false
      */
-    private function getRouteStatement()
+    private function getRoute(int $shopId, string $pathInfo)
     {
         $sql = '
           SELECT subshopID as shopId, path, org_path as orgPath, main
@@ -136,22 +129,23 @@ class RewriteMatcher implements MatcherInterface
                 ) UNION ALL (
                   SELECT subshopID as shopId, path, org_path as orgPath, 0 as main
                   FROM s_core_rewrite_urls
-                  WHERE path LIKE CONCAT(TRIM(TRAILING "/" FROM :pathInfo), "%")
+                  WHERE (path LIKE TRIM(TRAILING "/" FROM :pathInfo)) OR (TRIM(TRAILING "/" FROM path) LIKE :pathInfo)
                   ORDER BY subshopID = :shopId DESC, LENGTH(path), main DESC
                   LIMIT 1
                 )
             ';
         }
 
-        return $this->connection->prepare($sql);
+        return $this->connection->executeQuery($sql, [
+            'shopId' => $shopId,
+            'pathInfo' => $pathInfo,
+        ])->fetchAssociative();
     }
 
     /**
-     * @param string $orgPath
-     *
-     * @return array
+     * @return array<string, mixed>
      */
-    private function getQueryFormOrgPath($orgPath)
+    private function getQueryFormOrgPath(string $orgPath): array
     {
         parse_str($orgPath, $query);
         $query = array_merge($this->defaultRoute, $query);

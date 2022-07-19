@@ -104,7 +104,7 @@ class ShopwareProvider implements BenchmarkProviderInterface
      */
     private function getOs()
     {
-        return PHP_OS ?: '';
+        return PHP_OS;
     }
 
     /**
@@ -152,7 +152,7 @@ class ShopwareProvider implements BenchmarkProviderInterface
      */
     private function getMaxExecutionTime()
     {
-        return (int) ini_get('max_execution_time');
+        return (int) \ini_get('max_execution_time');
     }
 
     /**
@@ -160,7 +160,7 @@ class ShopwareProvider implements BenchmarkProviderInterface
      */
     private function getMemoryLimit()
     {
-        return (int) ini_get('memory_limit');
+        return (int) \ini_get('memory_limit');
     }
 
     /**

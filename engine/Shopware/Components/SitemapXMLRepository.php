@@ -27,10 +27,8 @@ namespace Shopware\Components;
 use DateTime;
 use DateTimeInterface;
 use Doctrine\DBAL\Connection;
-use Doctrine\ORM\QueryBuilder;
 use Exception;
 use PDO;
-use PDOStatement;
 use Shopware\Bundle\SearchBundle\Condition\LastProductIdCondition;
 use Shopware\Bundle\SearchBundle\Criteria;
 use Shopware\Bundle\SearchBundle\ProductNumberSearchInterface;
@@ -40,49 +38,28 @@ use Shopware\Components\Model\ModelManager;
 use Shopware\Models\Category\Category;
 
 /**
- * @deprecated Will be removed in Shopware 5.6
+ * @deprecated Will be removed in Shopware 5.8
  */
 class SitemapXMLRepository
 {
-    /**
-     * @var ModelManager
-     */
-    private $em;
+    private ModelManager $em;
 
-    /**
-     * @var Connection
-     */
-    private $connection;
+    private Connection $connection;
 
-    /**
-     * @var ContextServiceInterface
-     */
-    private $contextService;
+    private ContextServiceInterface $contextService;
 
-    /**
-     * @var ProductNumberSearchInterface
-     */
-    private $productNumberSearch;
+    private ProductNumberSearchInterface $productNumberSearch;
 
-    /**
-     * @var StoreFrontCriteriaFactoryInterface
-     */
-    private $storeFrontCriteriaFactory;
+    private StoreFrontCriteriaFactoryInterface $storeFrontCriteriaFactory;
 
-    /**
-     * @var int
-     */
-    private $batchSize;
+    private int $batchSize;
 
-    /**
-     * @param int $batchSize
-     */
     public function __construct(
         ProductNumberSearchInterface $productNumberSearch,
         StoreFrontCriteriaFactoryInterface $storeFrontCriteriaFactory,
         ModelManager $em,
         ContextServiceInterface $contextService,
-        $batchSize = 10000
+        int $batchSize = 10000
     ) {
         $this->em = $em;
         $this->connection = $this->em->getConnection();
@@ -347,12 +324,12 @@ class SitemapXMLRepository
             return true;
         }
 
-        $userParams = parse_url($link, PHP_URL_QUERY);
-        parse_str($userParams, $userParams);
+        $parsedUserParams = (string) parse_url($link, PHP_URL_QUERY);
+        parse_str($parsedUserParams, $userParams);
 
         $blacklist = ['', 'sitemap', 'sitemapXml'];
 
-        if (\in_array($userParams['sViewport'], $blacklist)) {
+        if (\in_array($userParams['sViewport'], $blacklist, true)) {
             return false;
         }
 
@@ -390,7 +367,6 @@ class SitemapXMLRepository
         $context = $this->contextService->getShopContext();
         $categoryId = $context->getShop()->getCategory()->getId();
 
-        /** @var QueryBuilder $query */
         $query = $this->connection->createQueryBuilder();
         $query->select(['manufacturer.id', 'manufacturer.name']);
 
@@ -401,10 +377,7 @@ class SitemapXMLRepository
 
         $query->groupBy('manufacturer.id');
 
-        /** @var PDOStatement $statement */
-        $statement = $query->execute();
-
-        return $statement->fetchAll(PDO::FETCH_ASSOC);
+        return $query->execute()->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**

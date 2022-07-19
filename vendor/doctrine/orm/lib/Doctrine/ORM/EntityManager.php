@@ -1,34 +1,27 @@
 <?php
 
-/*
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * This software consists of voluntary contributions made by many individuals
- * and is licensed under the MIT license. For more information, see
- * <http://www.doctrine-project.org>.
- */
+declare(strict_types=1);
 
 namespace Doctrine\ORM;
 
+use BackedEnum;
 use BadMethodCallException;
 use Doctrine\Common\Cache\Psr6\CacheAdapter;
-use Doctrine\Common\Cache\Psr6\DoctrineProvider;
 use Doctrine\Common\EventManager;
+use Doctrine\Common\Persistence\PersistentObject;
 use Doctrine\Common\Util\ClassUtils;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\LockMode;
 use Doctrine\Deprecations\Deprecation;
+use Doctrine\ORM\Exception\EntityManagerClosed;
+use Doctrine\ORM\Exception\InvalidHydrationMode;
+use Doctrine\ORM\Exception\MismatchedEventManager;
+use Doctrine\ORM\Exception\MissingIdentifierField;
+use Doctrine\ORM\Exception\MissingMappingDriverImplementation;
+use Doctrine\ORM\Exception\NotSupported;
+use Doctrine\ORM\Exception\ORMException;
+use Doctrine\ORM\Exception\UnrecognizedIdentifierFields;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Mapping\ClassMetadataFactory;
 use Doctrine\ORM\Proxy\ProxyFactory;
@@ -43,15 +36,16 @@ use Throwable;
 
 use function array_keys;
 use function call_user_func;
-use function get_class;
+use function class_exists;
+use function get_debug_type;
 use function gettype;
 use function is_array;
 use function is_callable;
 use function is_object;
 use function is_string;
 use function ltrim;
-use function method_exists;
 use function sprintf;
+use function strpos;
 
 /**
  * The EntityManager is the central access point to ORM functionality.
@@ -71,7 +65,7 @@ use function sprintf;
  *     $entityManager = EntityManager::create($dbParams, $config);
  *
  * For more information see
- * {@link http://docs.doctrine-project.org/projects/doctrine-orm/en/latest/reference/configuration.html}
+ * {@link http://docs.doctrine-project.org/projects/doctrine-orm/en/stable/reference/configuration.html}
  *
  * You should never attempt to inherit from the EntityManager: Inheritance
  * is not a valid extension point for the EntityManager. Instead you
@@ -132,7 +126,7 @@ use function sprintf;
     /**
      * The expression builder instance used to generate query expressions.
      *
-     * @var Expr
+     * @var Expr|null
      */
     private $expressionBuilder;
 
@@ -146,11 +140,15 @@ use function sprintf;
     /**
      * Collection of query filters.
      *
-     * @var FilterCollection
+     * @var FilterCollection|null
      */
     private $filterCollection;
 
-    /** @var Cache The second level cache regions API. */
+    /**
+     * The second level cache regions API.
+     *
+     * @var Cache|null
+     */
     private $cache;
 
     /**
@@ -250,6 +248,28 @@ use function sprintf;
             $this->conn->commit();
 
             return $return ?: true;
+        } catch (Throwable $e) {
+            $this->close();
+            $this->conn->rollBack();
+
+            throw $e;
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function wrapInTransaction(callable $func)
+    {
+        $this->conn->beginTransaction();
+
+        try {
+            $return = $func($this);
+
+            $this->flush();
+            $this->conn->commit();
+
+            return $return;
         } catch (Throwable $e) {
             $this->close();
             $this->conn->rollBack();
@@ -389,6 +409,7 @@ use function sprintf;
      * @param int|null $lockVersion The version of the entity to find when using
      * optimistic locking.
      * @psalm-param class-string<T> $className
+     * @psalm-param LockMode::*|null $lockMode
      *
      * @return object|null The entity instance or NULL if the entity can not be found.
      * @psalm-return ?T
@@ -417,11 +438,14 @@ use function sprintf;
         }
 
         foreach ($id as $i => $value) {
-            if (is_object($value) && $this->metadataFactory->hasMetadataFor(ClassUtils::getClass($value))) {
-                $id[$i] = $this->unitOfWork->getSingleIdentifierValue($value);
+            if (is_object($value)) {
+                $className = ClassUtils::getClass($value);
+                if ($this->metadataFactory->hasMetadataFor($className)) {
+                    $id[$i] = $this->unitOfWork->getSingleIdentifierValue($value);
 
-                if ($id[$i] === null) {
-                    throw ORMInvalidArgumentException::invalidIdentifierBindingEntity();
+                    if ($id[$i] === null) {
+                        throw ORMInvalidArgumentException::invalidIdentifierBindingEntity($className);
+                    }
                 }
             }
         }
@@ -430,15 +454,20 @@ use function sprintf;
 
         foreach ($class->identifier as $identifier) {
             if (! isset($id[$identifier])) {
-                throw ORMException::missingIdentifierField($class->name, $identifier);
+                throw MissingIdentifierField::fromFieldAndClass($identifier, $class->name);
             }
 
-            $sortedId[$identifier] = $id[$identifier];
+            if ($id[$identifier] instanceof BackedEnum) {
+                $sortedId[$identifier] = $id[$identifier]->value;
+            } else {
+                $sortedId[$identifier] = $id[$identifier];
+            }
+
             unset($id[$identifier]);
         }
 
         if ($id) {
-            throw ORMException::unrecognizedIdentifierFields($class->name, array_keys($id));
+            throw UnrecognizedIdentifierFields::fromClassAndFieldNames($class->name, array_keys($id));
         }
 
         $unitOfWork = $this->getUnitOfWork();
@@ -473,7 +502,9 @@ use function sprintf;
             case $lockMode === LockMode::OPTIMISTIC:
                 $entity = $persister->load($sortedId);
 
-                $unitOfWork->lock($entity, $lockMode, $lockVersion);
+                if ($entity !== null) {
+                    $unitOfWork->lock($entity, $lockMode, $lockVersion);
+                }
 
                 return $entity;
 
@@ -501,7 +532,7 @@ use function sprintf;
 
         foreach ($class->identifier as $identifier) {
             if (! isset($id[$identifier])) {
-                throw ORMException::missingIdentifierField($class->name, $identifier);
+                throw MissingIdentifierField::fromFieldAndClass($identifier, $class->name);
             }
 
             $sortedId[$identifier] = $id[$identifier];
@@ -509,7 +540,7 @@ use function sprintf;
         }
 
         if ($id) {
-            throw ORMException::unrecognizedIdentifierFields($class->name, array_keys($id));
+            throw UnrecognizedIdentifierFields::fromClassAndFieldNames($class->name, array_keys($id));
         }
 
         $entity = $this->unitOfWork->tryGetById($sortedId, $class->rootEntityName);
@@ -761,11 +792,39 @@ use function sprintf;
      * @return ObjectRepository|EntityRepository The repository class.
      * @psalm-return EntityRepository<T>
      *
-     * @template T
+     * @template T of object
      */
     public function getRepository($entityName)
     {
-        return $this->repositoryFactory->getRepository($this, $entityName);
+        if (strpos($entityName, ':') !== false) {
+            if (class_exists(PersistentObject::class)) {
+                Deprecation::trigger(
+                    'doctrine/orm',
+                    'https://github.com/doctrine/orm/issues/8818',
+                    'Short namespace aliases such as "%s" are deprecated and will be removed in Doctrine ORM 3.0.',
+                    $entityName
+                );
+            } else {
+                NotSupported::createForPersistence3(sprintf(
+                    'Using short namespace alias "%s" when calling %s',
+                    $entityName,
+                    __METHOD__
+                ));
+            }
+        }
+
+        $repository = $this->repositoryFactory->getRepository($this, $entityName);
+        if (! $repository instanceof EntityRepository) {
+            Deprecation::trigger(
+                'doctrine/orm',
+                'https://github.com/doctrine/orm/pull/9533',
+                'Not returning an instance of %s from %s::getRepository() is deprecated and will cause a TypeError on 3.0.',
+                EntityRepository::class,
+                get_debug_type($this->repositoryFactory)
+            );
+        }
+
+        return $repository;
     }
 
     /**
@@ -801,12 +860,12 @@ use function sprintf;
     /**
      * Throws an exception if the EntityManager is closed or currently not active.
      *
-     * @throws ORMException If the EntityManager is closed.
+     * @throws EntityManagerClosed If the EntityManager is closed.
      */
     private function errorIfClosed(): void
     {
         if ($this->closed) {
-            throw ORMException::entityManagerClosed();
+            throw EntityManagerClosed::create();
         }
     }
 
@@ -855,6 +914,9 @@ use function sprintf;
             case Query::HYDRATE_SIMPLEOBJECT:
                 return new Internal\Hydration\SimpleObjectHydrator($this);
 
+            case Query::HYDRATE_SCALAR_COLUMN:
+                return new Internal\Hydration\ScalarColumnHydrator($this);
+
             default:
                 $class = $this->config->getCustomHydrationMode($hydrationMode);
 
@@ -863,7 +925,7 @@ use function sprintf;
                 }
         }
 
-        throw ORMException::invalidHydrationMode($hydrationMode);
+        throw InvalidHydrationMode::fromMode((string) $hydrationMode);
     }
 
     /**
@@ -898,7 +960,7 @@ use function sprintf;
     public static function create($connection, Configuration $config, ?EventManager $eventManager = null)
     {
         if (! $config->getMetadataDriverImpl()) {
-            throw ORMException::missingMappingDriverImpl();
+            throw MissingMappingDriverImplementation::create();
         }
 
         $connection = static::createConnection($connection, $config, $eventManager);
@@ -929,14 +991,14 @@ use function sprintf;
             throw new InvalidArgumentException(
                 sprintf(
                     'Invalid $connection argument of type %s given%s.',
-                    is_object($connection) ? get_class($connection) : gettype($connection),
+                    get_debug_type($connection),
                     is_object($connection) ? '' : ': "' . $connection . '"'
                 )
             );
         }
 
         if ($eventManager !== null && $connection->getEventManager() !== $eventManager) {
-            throw ORMException::mismatchedEventManager();
+            throw MismatchedEventManager::create();
         }
 
         return $connection;
@@ -971,6 +1033,8 @@ use function sprintf;
     }
 
     /**
+     * @psalm-param LockMode::* $lockMode
+     *
      * @throws OptimisticLockException
      * @throws TransactionRequiredException
      */
@@ -1000,28 +1064,13 @@ use function sprintf;
             return;
         }
 
-        // We have a PSR-6 compatible metadata factory. Use cache directly
-        if (method_exists($this->metadataFactory, 'setCache')) {
-            $this->metadataFactory->setCache($metadataCache);
-
-            return;
-        }
-
-        // Wrap PSR-6 cache to provide doctrine/cache interface
-        $this->metadataFactory->setCacheDriver(DoctrineProvider::wrap($metadataCache));
+        $this->metadataFactory->setCache($metadataCache);
     }
 
     private function configureLegacyMetadataCache(): void
     {
         $metadataCache = $this->config->getMetadataCacheImpl();
         if (! $metadataCache) {
-            return;
-        }
-
-        // Metadata factory is not PSR-6 compatible. Use cache directly
-        if (! method_exists($this->metadataFactory, 'setCache')) {
-            $this->metadataFactory->setCacheDriver($metadataCache);
-
             return;
         }
 

@@ -1,22 +1,6 @@
 <?php
 
-/*
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * This software consists of voluntary contributions made by many individuals
- * and is licensed under the MIT license. For more information, see
- * <http://www.doctrine-project.org>.
- */
+declare(strict_types=1);
 
 namespace Doctrine\ORM\Mapping\Builder;
 
@@ -61,7 +45,7 @@ class FieldBuilder
      *
      * @param int $length
      *
-     * @return static
+     * @return $this
      */
     public function length($length)
     {
@@ -75,7 +59,7 @@ class FieldBuilder
      *
      * @param bool $flag
      *
-     * @return static
+     * @return $this
      */
     public function nullable($flag = true)
     {
@@ -89,7 +73,7 @@ class FieldBuilder
      *
      * @param bool $flag
      *
-     * @return static
+     * @return $this
      */
     public function unique($flag = true)
     {
@@ -103,7 +87,7 @@ class FieldBuilder
      *
      * @param string $name
      *
-     * @return static
+     * @return $this
      */
     public function columnName($name)
     {
@@ -117,7 +101,7 @@ class FieldBuilder
      *
      * @param int $p
      *
-     * @return static
+     * @return $this
      */
     public function precision($p)
     {
@@ -127,11 +111,39 @@ class FieldBuilder
     }
 
     /**
+     * Sets insertable.
+     *
+     * @return $this
+     */
+    public function insertable(bool $flag = true): self
+    {
+        if (! $flag) {
+            $this->mapping['notInsertable'] = true;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Sets updatable.
+     *
+     * @return $this
+     */
+    public function updatable(bool $flag = true): self
+    {
+        if (! $flag) {
+            $this->mapping['notUpdatable'] = true;
+        }
+
+        return $this;
+    }
+
+    /**
      * Sets scale.
      *
      * @param int $s
      *
-     * @return static
+     * @return $this
      */
     public function scale($s)
     {
@@ -155,7 +167,7 @@ class FieldBuilder
     /**
      * Sets field as primary key.
      *
-     * @return static
+     * @return $this
      */
     public function makePrimaryKey()
     {
@@ -170,7 +182,7 @@ class FieldBuilder
      * @param string $name
      * @param mixed  $value
      *
-     * @return static
+     * @return $this
      */
     public function option($name, $value)
     {
@@ -182,7 +194,7 @@ class FieldBuilder
     /**
      * @param string $strategy
      *
-     * @return static
+     * @return $this
      */
     public function generatedValue($strategy = 'AUTO')
     {
@@ -194,7 +206,7 @@ class FieldBuilder
     /**
      * Sets field versioned.
      *
-     * @return static
+     * @return $this
      */
     public function isVersionField()
     {
@@ -210,7 +222,7 @@ class FieldBuilder
      * @param int    $allocationSize
      * @param int    $initialValue
      *
-     * @return static
+     * @return $this
      */
     public function setSequenceGenerator($sequenceName, $allocationSize = 1, $initialValue = 1)
     {
@@ -228,7 +240,7 @@ class FieldBuilder
      *
      * @param string $def
      *
-     * @return static
+     * @return $this
      */
     public function columnDefinition($def)
     {

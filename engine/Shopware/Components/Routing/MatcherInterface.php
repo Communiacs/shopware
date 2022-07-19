@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Shopware 5
  * Copyright (c) shopware AG
@@ -29,7 +31,7 @@ interface MatcherInterface
     /**
      * @param string $pathInfo
      *
-     * @return string|array|false
+     * @return string|array<string, mixed>|false
      */
     public function match($pathInfo, Context $context);
 }

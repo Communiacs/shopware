@@ -24,16 +24,18 @@
 
 namespace Shopware\Components\Api\Resource;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Connection;
+use Doctrine\ORM\AbstractQuery;
 use Exception;
 use RuntimeException;
 use Shopware\Components\Api\BatchInterface;
-use Shopware\Components\Api\Exception as ApiException;
 use Shopware\Components\Api\Exception\BatchInterfaceNotImplementedException;
 use Shopware\Components\Api\Exception\CustomValidationException;
 use Shopware\Components\Api\Exception\OrmException;
 use Shopware\Components\Api\Exception\PrivilegeException;
+use Shopware\Components\Api\Exception\ValidationException;
 use Shopware\Components\DependencyInjection\Container;
 use Shopware\Components\DependencyInjection\ContainerAwareInterface;
 use Shopware\Components\Model\ModelEntity;
@@ -41,6 +43,7 @@ use Shopware\Components\Model\ModelManager;
 use Shopware\Components\Model\ModelRepository;
 use Shopware_Components_Acl as AclComponent;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
+use Symfony\Component\Validator\ConstraintViolationList;
 use Zend_Acl_Role_Interface;
 
 /**
@@ -50,14 +53,14 @@ abstract class Resource implements ContainerAwareInterface
 {
     /* Hydration mode constants */
     /**
-     * Hydrates an object graph. This is the default behavior.
+     * Hydrates an object graph.
      */
-    public const HYDRATE_OBJECT = 1;
+    public const HYDRATE_OBJECT = AbstractQuery::HYDRATE_OBJECT;
 
     /**
-     * Hydrates an array graph.
+     * Hydrates an array graph. This is the default behavior.
      */
-    public const HYDRATE_ARRAY = 2;
+    public const HYDRATE_ARRAY = AbstractQuery::HYDRATE_ARRAY;
 
     /**
      * Contains the Shopware model manager
@@ -72,6 +75,8 @@ abstract class Resource implements ContainerAwareInterface
     protected $autoFlush = true;
 
     /**
+     * @phpstan-var Resource::HYDRATE_*
+     *
      * @var int
      */
     protected $resultMode = self::HYDRATE_ARRAY;
@@ -105,6 +110,9 @@ abstract class Resource implements ContainerAwareInterface
         return $this->container;
     }
 
+    /**
+     * @return void
+     */
     public function setContainer(Container $container = null)
     {
         $this->container = $container;
@@ -114,6 +122,8 @@ abstract class Resource implements ContainerAwareInterface
      * @param string $privilege
      *
      * @throws PrivilegeException
+     *
+     * @return void
      */
     public function checkPrivilege($privilege)
     {
@@ -142,6 +152,9 @@ abstract class Resource implements ContainerAwareInterface
         }
     }
 
+    /**
+     * @return void
+     */
     public function setManager(ModelManager $manager)
     {
         $this->manager = $manager;
@@ -195,6 +208,8 @@ abstract class Resource implements ContainerAwareInterface
 
     /**
      * @param bool $autoFlush
+     *
+     * @return void
      */
     public function setAutoFlush($autoFlush)
     {
@@ -210,7 +225,11 @@ abstract class Resource implements ContainerAwareInterface
     }
 
     /**
+     * @phpstan-param Resource::HYDRATE_* $resultMode
+     *
      * @param int $resultMode
+     *
+     * @return void
      */
     public function setResultMode($resultMode)
     {
@@ -218,6 +237,8 @@ abstract class Resource implements ContainerAwareInterface
     }
 
     /**
+     * @phpstan-return Resource::HYDRATE_*
+     *
      * @return int
      */
     public function getResultMode()
@@ -229,6 +250,8 @@ abstract class Resource implements ContainerAwareInterface
      * @param ModelEntity $entity
      *
      * @throws OrmException
+     *
+     * @return void
      */
     public function flush($entity = null)
     {
@@ -240,7 +263,7 @@ abstract class Resource implements ContainerAwareInterface
                 $this->getManager()->clear();
             } catch (Exception $e) {
                 $this->getManager()->getConnection()->rollBack();
-                throw new OrmException($e->getMessage(), 0, $e);
+                throw new OrmException($e->getMessage(), $e);
             }
         }
     }
@@ -255,7 +278,7 @@ abstract class Resource implements ContainerAwareInterface
     public function batchDelete($data)
     {
         if (!$this instanceof BatchInterface) {
-            throw new BatchInterfaceNotImplementedException('BatchInterface is not implemented by this resource');
+            throw new BatchInterfaceNotImplementedException();
         }
 
         $results = [];
@@ -278,7 +301,7 @@ abstract class Resource implements ContainerAwareInterface
                     $this->resetEntityManager();
                 }
                 $message = $e->getMessage();
-                if ($e instanceof ApiException\ValidationException) {
+                if ($e instanceof ValidationException && $e->getViolations() instanceof ConstraintViolationList) {
                     $message = implode("\n", $e->getViolations()->getIterator()->getArrayCopy());
                 }
 
@@ -306,7 +329,7 @@ abstract class Resource implements ContainerAwareInterface
     public function batch($data)
     {
         if (!$this instanceof BatchInterface) {
-            throw new BatchInterfaceNotImplementedException('BatchInterface is not implemented by this resource');
+            throw new BatchInterfaceNotImplementedException();
         }
 
         $this->setAutoFlush(false);
@@ -347,7 +370,7 @@ abstract class Resource implements ContainerAwareInterface
                     $this->resetEntityManager();
                 }
                 $message = $e->getMessage();
-                if ($e instanceof ApiException\ValidationException) {
+                if ($e instanceof ValidationException && $e->getViolations() instanceof ConstraintViolationList) {
                     $message = implode("\n", $e->getViolations()->getIterator()->getArrayCopy());
                 }
 
@@ -408,12 +431,12 @@ abstract class Resource implements ContainerAwareInterface
      *
      * @template TEntity of ModelEntity
      *
-     * @param Collection<TEntity>                    $collection
+     * @param ArrayCollection<array-key, TEntity>    $collection
      * @param array<array-key, array<string, mixed>> $data
      * @param string                                 $optionName
      * @param bool                                   $defaultReplace
      *
-     * @return Collection<TEntity>
+     * @return ArrayCollection<array-key, TEntity>
      */
     protected function checkDataReplacement(Collection $collection, $data, $optionName, $defaultReplace)
     {
@@ -432,9 +455,9 @@ abstract class Resource implements ContainerAwareInterface
     /**
      * @template TEntity of ModelEntity
      *
-     * @param Collection<TEntity>|TEntity[] $collection
-     * @param string                        $property
-     * @param mixed|null                    $value
+     * @param ArrayCollection<array-key, TEntity>|array<TEntity> $collection
+     * @param string                                             $property
+     * @param mixed|null                                         $value
      *
      * @throws Exception
      *
@@ -459,8 +482,8 @@ abstract class Resource implements ContainerAwareInterface
     /**
      * @template TEntity of ModelEntity
      *
-     * @param Collection<TEntity>  $collection
-     * @param array<string, mixed> $conditions
+     * @param ArrayCollection<array-key, TEntity> $collection
+     * @param array<string, mixed>                $conditions
      *
      * @return TEntity|null
      */
@@ -524,10 +547,10 @@ abstract class Resource implements ContainerAwareInterface
      *
      * @template TEntity of ModelEntity
      *
-     * @param Collection<TEntity>   $collection
-     * @param array<string, mixed>  $data
-     * @param class-string<TEntity> $entityType
-     * @param array<string>         $conditions
+     * @param ArrayCollection<array-key, TEntity> $collection
+     * @param array<string, mixed>                $data
+     * @param class-string<TEntity>               $entityType
+     * @param array<string>                       $conditions
      *
      * @throws CustomValidationException
      *
@@ -571,10 +594,10 @@ abstract class Resource implements ContainerAwareInterface
      *
      * @template TEntity of ModelEntity
      *
-     * @param Collection<TEntity>   $collection
-     * @param array<string, mixed>  $data
-     * @param class-string<TEntity> $entityType
-     * @param array<string>         $conditions
+     * @param ArrayCollection<array-key, TEntity> $collection
+     * @param array<string, mixed>                $data
+     * @param class-string<TEntity>               $entityType
+     * @param array<string>                       $conditions
      *
      * @throws CustomValidationException
      *
@@ -611,6 +634,8 @@ abstract class Resource implements ContainerAwareInterface
      * This helper method will reload the EntityManager.
      *
      * This is useful if the EntityManager was closed due to an error on the PDO connection.
+     *
+     * @return void
      */
     protected function resetEntityManager()
     {
@@ -620,6 +645,6 @@ abstract class Resource implements ContainerAwareInterface
 
         $this->getContainer()->load('dbal_connection');
 
-        $this->setManager($this->container->get(ModelManager::class));
+        $this->setManager($this->getContainer()->get(ModelManager::class));
     }
 }

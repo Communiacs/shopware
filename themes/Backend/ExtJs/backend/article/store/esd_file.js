@@ -27,9 +27,6 @@
  * @author shopware AG
  */
 
-/**
- * Shopware Store - Article Module
- */
 //{block name="backend/article/store/esd_file"}
 Ext.define('Shopware.apps.Article.store.EsdFile', {
     /**
@@ -37,7 +34,6 @@ Ext.define('Shopware.apps.Article.store.EsdFile', {
      * @string
      */
     extend: 'Ext.data.Store',
-
 
     /**
      * Define the used model for this store

@@ -225,7 +225,7 @@ class Shopware_Controllers_Frontend_Forms extends Enlight_Controller_Action
                         case 'basket':
                             $text = Shopware()->Snippets()->getNamespace('frontend/detail/comment')->get('InquiryTextBasket');
                             $getBasket = Shopware()->Modules()->Basket()->sGetBasket();
-                            foreach ($getBasket[CartKey::POSITIONS] as $basketRow) {
+                            foreach ($getBasket[CartKey::POSITIONS] ?? [] as $basketRow) {
                                 if (empty($basketRow['modus'])) {
                                     $text .= sprintf(
                                         "\n%s x %s (%s) - %s %s",
@@ -576,7 +576,12 @@ class Shopware_Controllers_Frontend_Forms extends Enlight_Controller_Action
             if (!empty($value)) {
                 switch ($element['typ']) {
                     case 'date':
-                        $values = preg_split('#[^0-9]#', $inputs[$element['id']], -1, PREG_SPLIT_NO_EMPTY);
+                        $values = preg_split('#\D#', $inputs[$element['id']], -1, PREG_SPLIT_NO_EMPTY);
+                        if (!\is_array($values)) {
+                            unset($value);
+                            $valid = false;
+                            break;
+                        }
                         if (\count($values) !== 3) {
                             unset($value);
                             $valid = false;

@@ -195,8 +195,8 @@ class Shopware_Models_Document_Order extends Enlight_Class implements Enlight_Ho
     private LegacyStructConverter $structConverter;
 
     /**
-     * @param int   $id
-     * @param array $config
+     * @param int                  $id
+     * @param array<string, mixed> $config
      */
     public function __construct($id, $config = [])
     {
@@ -215,7 +215,7 @@ class Shopware_Models_Document_Order extends Enlight_Class implements Enlight_Ho
 
         $this->_id = $id;
         $this->_config = $config;
-        $this->_summaryNet = (bool) $config['summaryNet'];
+        $this->_summaryNet = (bool) ($config['summaryNet'] ?? false);
         $this->_shippingCostsAsPosition = (bool) $config['shippingCostsAsPosition'];
 
         $this->getOrder();
@@ -240,7 +240,7 @@ class Shopware_Models_Document_Order extends Enlight_Class implements Enlight_Ho
     /**
      * Convert this object into an array
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function __toArray()
     {
@@ -521,8 +521,9 @@ class Shopware_Models_Document_Order extends Enlight_Class implements Enlight_Ho
     public function getMaxTaxRate()
     {
         $maxTax = 0;
+
         foreach ($this->_positions as $position) {
-            if ((int) $position['mode'] === CartPositionsMode::PRODUCT) {
+            if ((int) $position['modus'] === CartPositionsMode::PRODUCT) {
                 $getTax = $position['tax_rate'];
                 if (empty($getTax) && $this->_shipping !== null) {
                     $position['tax'] = $this->getTaxRepository()->getTaxRateByConditions(
@@ -803,7 +804,7 @@ class Shopware_Models_Document_Order extends Enlight_Class implements Enlight_Ho
             $this->_shipping['state'] = new ArrayObject($countryState, ArrayObject::ARRAY_AS_PROPS);
         }
 
-        if ($this->_shipping !== null) {
+        if ($this->_shipping !== null && !empty($this->_shipping['id'])) {
             $attributes = Shopware()->Db()->fetchRow(
                 'SELECT * FROM s_order_shippingaddress_attributes WHERE shippingID = ?',
                 [$this->_shipping['id']]
@@ -873,10 +874,7 @@ class Shopware_Models_Document_Order extends Enlight_Class implements Enlight_Ho
              WHERE order_id=?',
             [$this->_id]
         );
-        $this->_paymentInstances = new ArrayObject(
-            \is_array($paymentInstances) ? $paymentInstances : [],
-            ArrayObject::ARRAY_AS_PROPS
-        );
+        $this->_paymentInstances = new ArrayObject($paymentInstances, ArrayObject::ARRAY_AS_PROPS);
     }
 
     private function initializeShopContext(int $shopId): void
@@ -966,14 +964,14 @@ class Shopware_Models_Document_Order extends Enlight_Class implements Enlight_Ho
         $taxRate = Shopware()->Db()->fetchOne($sql, [
                 $approximateTaxRate, // p.e. 19.971195391 (approx. 20% VAT)
                 $approximateTaxRate,
-                $maxDiff, //default: 0.1
+                $maxDiff, // default: 0.1
                 $approximateTaxRate,
                 $approximateTaxRate,
                 $maxDiff,
-                $areaId, //p.e. 3 (Europe)
+                $areaId, // p.e. 3 (Europe)
                 $countryId, // p.e. 23 (AT)
-                $stateId, //p.e. 0
-                $customerGroupId, //p.e. 1 (EK)
+                $stateId, // p.e. 0
+                $customerGroupId, // p.e. 1 (EK)
             ]);
 
         if ($taxRate === false) {
@@ -1012,6 +1010,11 @@ class Shopware_Models_Document_Order extends Enlight_Class implements Enlight_Ho
     /**
      * This method overwrites all attribute values with the translated value
      * in case there is one.
+     *
+     * @param array<string, string> $position
+     * @param array<string, string> $translation
+     *
+     * @return array<string, string>
      */
     private function assignAttributeTranslation(array $position, array $translation): array
     {

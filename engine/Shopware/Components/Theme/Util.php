@@ -29,7 +29,8 @@ use Doctrine\ORM\AbstractQuery;
 use Exception;
 use Shopware\Components\Model\ModelManager;
 use Shopware\Components\Theme;
-use Shopware\Models\Shop;
+use Shopware\Models\Plugin\Plugin;
+use Shopware\Models\Shop\Template;
 
 /**
  * The Theme\Util class is a helper class
@@ -40,17 +41,13 @@ class Util
 {
     /**
      * Required for different path operations.
-     *
-     * @var PathResolver
      */
-    private $pathResolver;
+    private PathResolver $pathResolver;
 
     /**
      * Only used to get all active plugins.
-     *
-     * @var ModelManager
      */
-    private $entityManager;
+    private ModelManager $entityManager;
 
     public function __construct(ModelManager $entityManager, PathResolver $pathResolver)
     {
@@ -64,7 +61,7 @@ class Util
      *
      * @return string|null
      */
-    public function getPreviewImage(Shop\Template $template)
+    public function getPreviewImage(Template $template)
     {
         return $this->getThemeImage($template);
     }
@@ -79,9 +76,10 @@ class Util
      *
      * @return Theme
      */
-    public function getThemeByTemplate(Shop\Template $template)
+    public function getThemeByTemplate(Template $template)
     {
         $namespace = 'Shopware\\Themes\\' . $template->getTemplate();
+        /** @var class-string<Theme> $class */
         $class = $namespace . '\\Theme';
 
         $directory = $this->pathResolver->getDirectory($template);
@@ -108,6 +106,7 @@ class Util
     public function getThemeByDirectory(DirectoryIterator $directory)
     {
         $namespace = 'Shopware\\Themes\\' . $directory->getFilename();
+        /** @var class-string<Theme> $class */
         $class = $namespace . '\\Theme';
 
         $file = $directory->getPathname() . DIRECTORY_SEPARATOR . 'Theme.php';
@@ -130,7 +129,7 @@ class Util
      *
      * @return string
      */
-    public function getSnippetNamespace(Shop\Template $template)
+    public function getSnippetNamespace(Template $template)
     {
         return 'themes/' . strtolower($template->getTemplate()) . '/';
     }
@@ -145,7 +144,7 @@ class Util
         $builder = $this->entityManager->createQueryBuilder();
 
         $builder->select(['plugins'])
-            ->from(\Shopware\Models\Plugin\Plugin::class, 'plugins')
+            ->from(Plugin::class, 'plugins')
             ->where('plugins.active = true')
             ->andWhere('plugins.installed IS NOT NULL');
 
@@ -156,12 +155,8 @@ class Util
 
     /**
      * Returns the theme preview thumbnail.
-     *
-     * @param \Shopware\Models\Shop\Template $theme
-     *
-     * @return string|null
      */
-    private function getThemeImage(Shop\Template $theme)
+    private function getThemeImage(Template $theme): ?string
     {
         $directory = $this->pathResolver->getDirectory($theme);
 
@@ -172,6 +167,9 @@ class Util
         }
 
         $thumbnail = file_get_contents($thumbnail);
+        if (!\is_string($thumbnail)) {
+            return null;
+        }
 
         return 'data:image/png;base64,' . base64_encode($thumbnail);
     }

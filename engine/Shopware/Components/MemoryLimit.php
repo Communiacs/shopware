@@ -28,10 +28,12 @@ class MemoryLimit
 {
     /**
      * @param int $bytes
+     *
+     * @return void
      */
     public static function setMinimumMemoryLimit($bytes)
     {
-        $currentLimit = self::convertToBytes(@ini_get('memory_limit'));
+        $currentLimit = self::convertToBytes((string) @ini_get('memory_limit'));
         if ($currentLimit === -1) {
             return;
         }
@@ -44,7 +46,7 @@ class MemoryLimit
     /**
      * @param string $memoryLimit
      *
-     * @return int|string
+     * @return int
      */
     public static function convertToBytes($memoryLimit)
     {
@@ -54,9 +56,9 @@ class MemoryLimit
 
         $memoryLimit = strtolower($memoryLimit);
         $max = strtolower(ltrim($memoryLimit, '+'));
-        if (strpos($max, '0x') === 0) {
+        if (str_starts_with($max, '0x')) {
             $max = \intval($max, 16);
-        } elseif (strpos($max, '0') === 0) {
+        } elseif (str_starts_with($max, '0')) {
             $max = \intval($max, 8);
         } else {
             $max = (int) $max;

@@ -26,15 +26,17 @@ namespace Shopware\Bundle\StoreFrontBundle\Service;
 
 use Shopware\Bundle\StoreFrontBundle\Struct\ListProduct;
 use Shopware\Bundle\StoreFrontBundle\Struct\ProductContextInterface;
+use Shopware\Bundle\StoreFrontBundle\Struct\ShopContextInterface;
 
 interface SimilarProductsServiceInterface
 {
     /**
-     * @see Shopware\Bundle\StoreFrontBundle\Service\SimilarProductsServiceInterface::get()
+     * @see \Shopware\Bundle\StoreFrontBundle\Service\SimilarProductsServiceInterface::get()
+     * @deprecated 5.7, interface will require a ShopContextInterface in 5.8
      *
      * @param ListProduct[] $products
      *
-     * @return array indexed with the product number, the values are a list of ListProduct structs
+     * @return array<string, array<string, ListProduct>> indexed with the product number, the values are a list of ListProduct structs
      */
     public function getList($products, ProductContextInterface $context);
 
@@ -52,8 +54,9 @@ interface SimilarProductsServiceInterface
      * please refer to the linked classes.
      *
      * @see \Shopware\Bundle\StoreFrontBundle\Service\ListProductServiceInterface::get()
+     * @deprecated 5.7, interface will require a ShopContextInterface in 5.8
      *
-     * @return ListProduct[] indexed by the product order number
+     * @return array<string, ListProduct>|null indexed by the product order number
      */
     public function get(ListProduct $product, ProductContextInterface $context);
 }

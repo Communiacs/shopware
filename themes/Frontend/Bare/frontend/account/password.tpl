@@ -41,9 +41,23 @@
                             {block name="frontend_account_password_reset_content"}
                                 <div class="password-reset--form-content panel--body is--wide is--align-center">
                                     <p>
-                                        <input name="email" type="email" required="required" aria-required="true" class="password-reset--input" placeholder="{s name='PasswordPlaceholderMail'}{/s}" />
+                                        <input name="email"
+                                               type="email"
+                                               required="required"
+                                               aria-required="true"
+                                               class="password-reset--input{if $sErrorFlag.email} has--error{/if}"
+                                               placeholder="{s name='PasswordPlaceholderMail'}{/s}"/>
                                     </p>
                                     <p>{s name="PasswordText"}{/s}</p>
+                                </div>
+                            {/block}
+
+                            {* Captcha *}
+                            {block name='frontend_account_index_form_captcha'}
+                                <div class="is--align-center password-reset--captcha">
+                                    {$captchaName = {config name="passwordResetCaptcha"}}
+                                    {$captchaHasError = $errors.captcha}
+                                    {include file="widgets/captcha/custom_captcha.tpl" captchaName=$captchaName captchaHasError=$captchaHasError}
                                 </div>
                             {/block}
 
