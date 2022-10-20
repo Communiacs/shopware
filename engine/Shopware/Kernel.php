@@ -107,9 +107,9 @@ class Kernel extends SymfonyKernel
      * Is available in the DIC as parameter 'shopware.release.*' or a Struct containing all the parameters below.
      */
     protected $release = [
-        'version' => '5.7.13',
+        'version' => '5.7.15',
         'version_text' => '',
-        'revision' => '202206221313',
+        'revision' => '202209081146',
     ];
 
     /**
