@@ -34,16 +34,38 @@ class TP_yyToken implements ArrayAccess
         return $this->_string;
     }
 
+    /**
+     * @param $offset
+     * @return bool
+     *
+     * @deprecated - Native return and parameter type will be added with Shopware 5.8
+     */
+    #[\ReturnTypeWillChange]
     function offsetExists($offset)
     {
         return isset($this->metadata[$offset]);
     }
 
+    /**
+     * @param $offset
+     * @return mixed|null
+     *
+     * @deprecated - Native return and parameter type will be added with Shopware 5.8
+     */
+    #[\ReturnTypeWillChange]
     function offsetGet($offset)
     {
         return $this->metadata[$offset];
     }
 
+    /**
+     * @param $offset
+     * @param $value
+     * @return void
+     *
+     * @deprecated - Native return and parameter type will be added with Shopware 5.8
+     */
+    #[\ReturnTypeWillChange]
     function offsetSet($offset, $value)
     {
         if ($offset === null) {
@@ -67,6 +89,13 @@ class TP_yyToken implements ArrayAccess
         }
     }
 
+    /**
+     * @param $offset
+     * @return void
+     *
+     * @deprecated - Native return and parameter type will be added with Shopware 5.8
+     */
+    #[\ReturnTypeWillChange]
     function offsetUnset($offset)
     {
         unset($this->metadata[$offset]);
@@ -94,9 +123,23 @@ class Smarty_Internal_Templateparser#line 79 "smarty_internal_templateparser.php
     // states whether the parse was successful or not
     public $successful = true;
     public $retvalue = 0;
+    public $block_nesting_level;
+    public $asp_tags;
+    public $root_buffer;
+    public $current_buffer;
+    public $compiler;
+    public $prefix_number;
+    public $yymajor;
     private $lex;
     private $internalError = false;
     private $strip = false;
+    private $smarty;
+    private $template;
+    private $security;
+    private $php_handling;
+    private $is_xml;
+    private $last_variable;
+    private $last_index;
 
     function __construct($lex, $compiler) {
         $this->lex = $lex;

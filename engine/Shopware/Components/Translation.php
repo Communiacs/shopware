@@ -123,7 +123,7 @@ class Shopware_Components_Translation
     {
         $tmp = unserialize($data, ['allowed_classes' => false]);
         if ($tmp === false) {
-            $tmp = unserialize(utf8_decode($data), ['allowed_classes' => false]);
+            $tmp = unserialize(mb_convert_encoding($data, 'ISO-8859-1', 'UTF-8'), ['allowed_classes' => false]);
         }
         if ($tmp === false) {
             return [];
@@ -417,7 +417,7 @@ class Shopware_Components_Translation
     }
 
     /**
-     * Translates an order by translating it's document types, payment and dispatch methods.
+     * Translates an order by translating its document types, payment and dispatch methods.
      */
     public function translateOrders(array $orders, ?int $language = null, ?int $fallback = null): array
     {

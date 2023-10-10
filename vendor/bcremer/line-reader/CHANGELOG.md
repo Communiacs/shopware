@@ -1,3 +1,15 @@
+## 1.4.0
+
+- Introduced support for PHP 8.3
+- Bumped minimum PHP Version to 7.4
+- Added stricter PHPDoc type definitions
+
+## 1.3.0
+- Introduced support for PHP 8.2
+- Added code style fixer
+- Added PHPStan analysis
+- Drop support for PHP 7.3
+
 ## 1.2.0
 - Introduced support for PHP 8.1
 
@@ -5,7 +17,7 @@
 - Introduced support for PHP 7.4
 - Introduced support for PHP 8.0
 - Bumped minimum PHP Version to 7.3
-- Introduced github actions
+- Introduced GitHub actions
 
 ## 1.0.1
 
@@ -29,5 +41,3 @@
 ## 0.1.0
 
 - Initial Release
-
-

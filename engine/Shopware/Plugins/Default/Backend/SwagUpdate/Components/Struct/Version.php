@@ -75,9 +75,4 @@ class Version extends Struct
      * @var string
      */
     public $sha256;
-
-    /**
-     * @var bool
-     */
-    public $signature_verified;
 }

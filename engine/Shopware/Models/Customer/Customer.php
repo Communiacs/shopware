@@ -449,10 +449,9 @@ class Customer extends LazyFetchModelEntity
      * @var string|null
      *
      * @Assert\NotBlank()
-     *
      * @ORM\Column(name="salutation", type="text", nullable=true)
      */
-    private $salutation;
+    private $salutation = 'not_defined';
 
     /**
      * @var string|null
@@ -834,9 +833,9 @@ class Customer extends LazyFetchModelEntity
     }
 
     /**
-     * Setter function for the affiliate column property, which is a flag whether the customer is a shop partner.
+     * Setter function for the affiliate column property, which indicates if the customer is a shop partner.
      * 0 => Customer isn't a shop partner
-     * 1 => Customer is a shop partner
+     * Other than 0 => ID of @see \Shopware\Models\Partner\Partner model
      *
      * @param int $affiliate
      *
@@ -850,9 +849,9 @@ class Customer extends LazyFetchModelEntity
     }
 
     /**
-     * Getter function for the affiliate column property, which is a flag whether the customer is a shop partner.
+     * Getter function for the affiliate column property, which indicates if the customer is a shop partner.
      * 0 => Customer isn't a shop partner
-     * 1 => Customer is a shop partner
+     * Other than 0 => ID of @see \Shopware\Models\Partner\Partner model
      *
      * @return int
      */

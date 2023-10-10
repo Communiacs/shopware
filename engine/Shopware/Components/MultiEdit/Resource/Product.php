@@ -33,6 +33,7 @@ use Shopware\Components\MultiEdit\Resource\Product\Grammar;
 use Shopware\Components\MultiEdit\Resource\Product\Queue;
 use Shopware\Components\MultiEdit\Resource\Product\Value;
 use Shopware\Models\Article\Detail;
+use Shopware\Models\Article\Price;
 
 /**
  * The main product resource will delegate the controller requests to the corresponding classes
@@ -168,7 +169,7 @@ class Product implements ResourceInterface
             $entity = $this->dqlHelper->getEntityForPrefix($prefix);
 
             // All models except price
-            if ($prefix !== 'price') {
+            if ($entity !== Price::class) {
                 $model = $entityManager->find($entity, $primaryIdentifiers[$prefix]);
                 if ($model === null) {
                     continue;
@@ -187,7 +188,7 @@ class Product implements ResourceInterface
                     $model->$setter($field['value']);
                 }
                 $entityManager->persist($model);
-            // price_model
+                // price_model
             } else {
                 $detailModel = $entityManager->find(Detail::class, $primaryIdentifiers['detail']);
                 // store net prices

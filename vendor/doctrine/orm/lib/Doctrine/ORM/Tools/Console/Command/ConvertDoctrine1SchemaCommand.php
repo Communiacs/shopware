@@ -40,9 +40,7 @@ class ConvertDoctrine1SchemaCommand extends Command
     /** @var ClassMetadataExporter|null */
     private $metadataExporter = null;
 
-    /**
-     * @return EntityGenerator
-     */
+    /** @return EntityGenerator */
     public function getEntityGenerator()
     {
         if ($this->entityGenerator === null) {
@@ -52,17 +50,13 @@ class ConvertDoctrine1SchemaCommand extends Command
         return $this->entityGenerator;
     }
 
-    /**
-     * @return void
-     */
+    /** @return void */
     public function setEntityGenerator(EntityGenerator $entityGenerator)
     {
         $this->entityGenerator = $entityGenerator;
     }
 
-    /**
-     * @return ClassMetadataExporter
-     */
+    /** @return ClassMetadataExporter */
     public function getMetadataExporter()
     {
         if ($this->metadataExporter === null) {
@@ -72,17 +66,13 @@ class ConvertDoctrine1SchemaCommand extends Command
         return $this->metadataExporter;
     }
 
-    /**
-     * @return void
-     */
+    /** @return void */
     public function setMetadataExporter(ClassMetadataExporter $metadataExporter)
     {
         $this->metadataExporter = $metadataExporter;
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    /** @return void */
     protected function configure()
     {
         $this->setName('orm:convert-d1-schema')
@@ -98,14 +88,14 @@ class ConvertDoctrine1SchemaCommand extends Command
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      *
      * @return int
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $ui = new SymfonyStyle($input, $output);
-        $ui->warning('Command ' . $this->getName() . ' is deprecated and will be removed in Doctrine ORM 3.0.');
+        $ui->getErrorStyle()->warning('Command ' . $this->getName() . ' is deprecated and will be removed in Doctrine ORM 3.0.');
 
         // Process source directories
         $fromPaths = array_merge([$input->getArgument('from-path')], $input->getOption('from'));

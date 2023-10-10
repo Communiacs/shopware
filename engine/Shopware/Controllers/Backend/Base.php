@@ -37,7 +37,6 @@ use Shopware\Models\Article\Article;
 use Shopware\Models\Article\Supplier;
 use Shopware\Models\Blog\Blog;
 use Shopware\Models\Category\Category;
-use Shopware\Models\Category\Repository;
 use Shopware\Models\Config\Element;
 use Shopware\Models\Country\Area;
 use Shopware\Models\Country\Country;
@@ -74,6 +73,8 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_ExtJs implements CSRFWhitelistAware
 {
+    private const AS_STRING = ' as ';
+
     /**
      * Initials the script renderer and handles the json request.
      * If the internal customer repository isn't initialed the
@@ -580,7 +581,7 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
         $total = $paginator->count();
 
         // Select all shop as array
-        $data = $paginator->getIterator()->getArrayCopy();
+        $data = iterator_to_array($paginator);
 
         // Return the data and total count
         $this->View()->assign(['success' => true, 'data' => $data, 'total' => $total]);
@@ -619,12 +620,17 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
             'supplier.name as supplierName',
             'supplier.id as supplierId',
             'details.additionalText',
+            'prices.price',
+            'taxes.tax',
         ];
 
         $builder->select($fields);
         $builder->from('s_articles_details', 'details');
         $builder->innerJoin('details', 's_articles', 'articles', 'details.articleID = articles.id');
+        $builder->innerJoin('articles', 's_core_tax', 'taxes', 'articles.taxID = taxes.id');
         $builder->innerJoin('articles', 's_articles_supplier', 'supplier', 'supplier.id = articles.supplierID');
+        $builder->innerJoin('details', 's_articles_prices', 'prices', 'details.id = prices.articledetailsID');
+        $builder->where('prices.pricegroup = "EK"');
 
         $filters = $this->Request()->getParam('filter', []);
         foreach ($filters as $filter) {
@@ -648,13 +654,18 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
         }
 
         $builder->setFirstResult($this->Request()->getParam('start'))
-            ->setMaxResults($this->Request()->getParam('limit'));
+            ->setMaxResults($this->Request()->getParam('limit'))
+            ->orderBy('details.id', 'ASC');
 
         $result = $builder->execute()->fetchAll(PDO::FETCH_ASSOC);
 
         $total = (int) $builder->getConnection()->fetchColumn('SELECT FOUND_ROWS()');
 
         $result = $this->addAdditionalTextForVariant($result);
+
+        foreach ($result as $index => $variant) {
+            $result[$index]['price'] = round($variant['price'] / 100 * (100 + $variant['tax']), 2);
+        }
 
         $this->View()->assign(['success' => true, 'data' => $result, 'total' => $total]);
     }
@@ -1172,61 +1183,11 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
     }
 
     /**
-     * Add the table alias to the passed filter and sort parameters.
-     *
-     * @return array
-     */
-    private function prepareParam(array $properties, array $fields)
-    {
-        if (empty($properties)) {
-            return $properties;
-        }
-
-        foreach ($properties as $key => $property) {
-            if (\array_key_exists($property['property'], $fields)) {
-                $property['property'] = $fields[$property['property']];
-            }
-            $properties[$key] = $property;
-        }
-
-        return $properties;
-    }
-
-    /**
-     * Prepares the sort params for the variant search
-     *
-     * @return array
-     */
-    private function prepareVariantParam(array $properties, array $fields)
-    {
-        // Maps the fields to the correct table
-        foreach ($properties as $key => $property) {
-            foreach ($fields as $field) {
-                $asStr = ' as ';
-                $dotPos = strpos($field, '.');
-                $asPos = strpos($field, $asStr, 1);
-
-                if ($asPos) {
-                    $fieldName = substr($field, $asPos + \strlen($asStr));
-                } else {
-                    $fieldName = substr($field, $dotPos + 1);
-                }
-
-                if ($fieldName == $property['property']) {
-                    $properties[$key]['property'] = $field;
-                }
-            }
-        }
-
-        return $properties;
-    }
-
-    /**
      * Adds the additional text for variants
      *
      * @param array $data
      */
-    private function addAdditionalTextForVariant($data)
+    protected function addAdditionalTextForVariant($data)
     {
         $variantIds = [];
         $tmpVariant = [];
@@ -1263,26 +1224,66 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
         $builder->where('details.id IN (:detailsId)');
         $builder->setParameter('detailsId', $variantIds, Connection::PARAM_INT_ARRAY);
 
-        $statement = $builder->execute();
-        $result = $statement->fetchAll(PDO::FETCH_ASSOC);
+        $result = $builder->execute()->fetchAllAssociative();
 
         $tmpVariant = $this->buildDynamicText($tmpVariant, $result);
 
-        // Maps the associative data array back to an normal indexed array
-        $data = [];
-        foreach ($tmpVariant as $variant) {
-            $data[] = $variant;
+        // Maps the associative data array back to a normal indexed array
+        return array_values($tmpVariant);
+    }
+
+    /**
+     * Prepares the sort params for the variant search
+     */
+    private function prepareVariantParam(array $properties, array $fields): array
+    {
+        // Maps the fields to the correct table
+        foreach ($properties as $key => $property) {
+            foreach ($fields as $field) {
+                $asStr = self::AS_STRING;
+                $dotPos = strpos($field, '.');
+                $asPos = strpos($field, $asStr, 1);
+
+                if ($asPos) {
+                    $fieldName = substr($field, $asPos + \strlen($asStr));
+                } else {
+                    $fieldName = substr($field, $dotPos + 1);
+                }
+
+                if ($fieldName == $property['property']) {
+                    $properties[$key]['property'] = $field;
+                }
+            }
         }
 
-        return $data;
+        return $properties;
+    }
+
+    /**
+     * Add the table alias to the passed filter and sort parameters.
+     *
+     * @return array
+     */
+    private function prepareParam(array $properties, array $fields)
+    {
+        if (empty($properties)) {
+            return $properties;
+        }
+
+        foreach ($properties as $key => $property) {
+            if (\array_key_exists($property['property'], $fields)) {
+                $property['property'] = $fields[$property['property']];
+            }
+            $properties[$key] = $property;
+        }
+
+        return $properties;
     }
 
     /**
      * Helper function to generate the additional text dynamically
-     *
-     * @return array
      */
-    private function buildDynamicText(array $data, array $variantsWithoutAdditionalText)
+    private function buildDynamicText(array $data, array $variantsWithoutAdditionalText): array
     {
         foreach ($variantsWithoutAdditionalText as $variantWithoutAdditionalText) {
             $variantData = &$data[$variantWithoutAdditionalText['id']];
@@ -1299,10 +1300,7 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
         return $data;
     }
 
-    /**
-     * @return array
-     */
-    private function getAvailableSalutationKeys()
+    private function getAvailableSalutationKeys(): array
     {
         $builder = Shopware()->Container()->get(ModelManager::class)->createQueryBuilder();
         $builder->select(['element', 'values'])
@@ -1321,19 +1319,16 @@ class Shopware_Controllers_Backend_Base extends Shopware_Controllers_Backend_Ext
         foreach ($data['values'] as $shopValue) {
             $value = array_merge($value, explode(',', $shopValue['value']));
         }
-        $value = array_unique(array_filter($value));
 
-        return $value;
+        return array_unique(array_filter($value));
     }
 
     /**
      * Replaces the locales with the snippets data
      *
-     * @param array $data
-     *
      * @return array $data
      */
-    private function getSnippetsForLocales($data)
+    private function getSnippetsForLocales(array $data): array
     {
         $snippets = $this->container->get('snippets');
         foreach ($data as &$locale) {

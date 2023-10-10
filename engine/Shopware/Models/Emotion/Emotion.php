@@ -225,7 +225,7 @@ class Emotion extends ModelEntity
     /**
      * @var string
      *
-     * @ORM\Column(name="seo_description", type="string", length=255, nullable=false)
+     * @ORM\Column(name="seo_description", type="text", nullable=false)
      */
     private $seoDescription;
 
@@ -339,6 +339,7 @@ class Emotion extends ModelEntity
      * only_listing => only displayed in category listing page
      *
      * @var string
+     *
      * @ORM\Column(name="listing_visibility", type="string", nullable=false)
      */
     private $listingVisibility = self::LISTING_VISIBILITY_ONLY_START;
@@ -742,7 +743,7 @@ class Emotion extends ModelEntity
     /**
      * @param Template $template
      */
-    public function setTemplate(Template $template = null)
+    public function setTemplate(?Template $template = null)
     {
         $this->template = $template;
     }

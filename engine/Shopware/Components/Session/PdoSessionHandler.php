@@ -29,6 +29,7 @@ use InvalidArgumentException;
 use PDO;
 use PDOException;
 use PDOStatement;
+use ReturnTypeWillChange;
 use SessionHandlerInterface;
 
 /**
@@ -277,7 +278,10 @@ class PdoSessionHandler implements SessionHandlerInterface
 
     /**
      * {@inheritdoc}
+     *
+     * @deprecated - Native return and parameter type will be added with Shopware 5.8
      */
+    #[ReturnTypeWillChange]
     public function open($savePath, $sessionName)
     {
         if ($this->pdo === null) {
@@ -289,7 +293,10 @@ class PdoSessionHandler implements SessionHandlerInterface
 
     /**
      * {@inheritdoc}
+     *
+     * @deprecated - Native return and parameter type will be added with Shopware 5.8
      */
+    #[ReturnTypeWillChange]
     public function read($sessionId)
     {
         try {
@@ -303,7 +310,10 @@ class PdoSessionHandler implements SessionHandlerInterface
 
     /**
      * {@inheritdoc}
+     *
+     * @deprecated - Native return and parameter type will be added with Shopware 5.8
      */
+    #[ReturnTypeWillChange]
     public function gc($maxlifetime)
     {
         // We delay gc() to close() so that it is executed outside the transactional and blocking read-write process.
@@ -315,7 +325,10 @@ class PdoSessionHandler implements SessionHandlerInterface
 
     /**
      * {@inheritdoc}
+     *
+     * @deprecated - Native return and parameter type will be added with Shopware 5.8
      */
+    #[ReturnTypeWillChange]
     public function destroy($sessionId)
     {
         // delete the record associated with this id
@@ -336,7 +349,10 @@ class PdoSessionHandler implements SessionHandlerInterface
 
     /**
      * {@inheritdoc}
+     *
+     * @deprecated - Native return and parameter type will be added with Shopware 5.8
      */
+    #[ReturnTypeWillChange]
     public function write($sessionId, $data)
     {
         $maxlifetime = (int) \ini_get('session.gc_maxlifetime');
@@ -394,7 +410,10 @@ class PdoSessionHandler implements SessionHandlerInterface
 
     /**
      * {@inheritdoc}
+     *
+     * @deprecated - Native return and parameter type will be added with Shopware 5.8
      */
+    #[ReturnTypeWillChange]
     public function close()
     {
         $this->commit();

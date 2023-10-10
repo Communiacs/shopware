@@ -25,14 +25,13 @@
 namespace Shopware\Models\Dispatch;
 
 use Doctrine\DBAL\Connection;
-use Doctrine\ORM\AbstractQuery;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\Query\Expr\Join;
-use Doctrine\ORM\Query\Expr\OrderBy;
 use Shopware\Components\Model\ModelRepository;
 use Shopware\Components\Model\QueryBuilder;
 use Shopware\Models\Country\Country;
 use Shopware\Models\Payment\Payment;
+use Shopware\Models\Shop\Shop;
 
 /**
  * Repository for the customer model (Shopware\Models\Dispatch\Dispatch).
@@ -49,7 +48,7 @@ class Repository extends ModelRepository
      * @param int|null          $offset
      * @param int|null          $limit
      *
-     * @return Query
+     * @return Query<Dispatch>
      */
     public function getDispatchesQuery($filter = null, $order = null, $offset = null, $limit = null)
     {
@@ -69,7 +68,7 @@ class Repository extends ModelRepository
      * @param array<string, string>|array<array{property: string, value: mixed, expression?: string}>|null $filter
      * @param string|array<array{property: string, direction: string}>|null                                $order
      *
-     * @return \Doctrine\ORM\QueryBuilder
+     * @return QueryBuilder
      */
     public function getDispatchesQueryBuilder($filter = null, $order = null)
     {
@@ -99,7 +98,7 @@ class Repository extends ModelRepository
      * @param int|null    $limit      - Reduce the number of returned data sets
      * @param int|null    $offset     - Start the output based on that offset
      *
-     * @return Query
+     * @return Query<Dispatch>
      */
     public function getShippingCostsQuery($dispatchId = null, $filter = null, $order = [], $limit = null, $offset = null)
     {
@@ -123,7 +122,7 @@ class Repository extends ModelRepository
      * @param int|null    $limit  - Reduce the number of returned data sets
      * @param int|null    $offset - Start the output based on that offset
      *
-     * @return Query
+     * @return Query<Dispatch>
      */
     public function getListQuery($filter = null, $order = [], $limit = null, $offset = null)
     {
@@ -147,7 +146,7 @@ class Repository extends ModelRepository
      * @param string|null $filter     - Used to search in the name and description of the dispatch data set
      * @param array       $order      - Name of the field which should considered as sorting field
      *
-     * @return \Doctrine\ORM\QueryBuilder
+     * @return QueryBuilder
      */
     public function getShippingCostsQueryBuilder($dispatchId = null, $filter = null, $order = [])
     {
@@ -184,7 +183,7 @@ class Repository extends ModelRepository
      * @param string|null $filter - Used to search in the name and description of the dispatch data set
      * @param array       $order  - Name of the field which should considered as sorting field
      *
-     * @return \Doctrine\ORM\QueryBuilder
+     * @return QueryBuilder
      */
     public function getListQueryBuilder($filter = null, $order = [])
     {
@@ -214,7 +213,7 @@ class Repository extends ModelRepository
      * @param int|null    $limit      Count of the selected data
      * @param int|null    $offset     Start index of the selected data
      *
-     * @return Query
+     * @return Query<ShippingCost>
      */
     public function getShippingCostsMatrixQuery($dispatchId = null, $filter = null, $limit = null, $offset = null)
     {
@@ -230,7 +229,7 @@ class Repository extends ModelRepository
      *
      * @param int $dispatchId - If this parameter is given, only one data set will be returned
      *
-     * @return \Doctrine\ORM\QueryBuilder
+     * @return QueryBuilder
      */
     public function getShippingCostsMatrixQueryBuilder($dispatchId = null)
     {
@@ -253,7 +252,7 @@ class Repository extends ModelRepository
      *
      * @param int $dispatchId
      *
-     * @return AbstractQuery
+     * @return Query<void, void>
      */
     public function getPurgeShippingCostsMatrixQuery($dispatchId = null)
     {
@@ -270,7 +269,7 @@ class Repository extends ModelRepository
      * @param int|null   $limit
      * @param int|null   $offset
      *
-     * @return Query
+     * @return Query<Payment>
      */
     public function getPaymentQuery($filter = null, $order = null, $limit = null, $offset = null)
     {
@@ -292,7 +291,7 @@ class Repository extends ModelRepository
      * @param array|null $filter
      * @param array|null $order
      *
-     * @return \Doctrine\ORM\QueryBuilder
+     * @return QueryBuilder
      */
     public function getPaymentQueryBuilder($filter = null, $order = null)
     {
@@ -327,7 +326,7 @@ class Repository extends ModelRepository
      * @param int|null   $limit
      * @param int|null   $offset
      *
-     * @return Query
+     * @return Query<Country>
      */
     public function getCountryQuery($filter = null, $order = null, $limit = null, $offset = null)
     {
@@ -349,7 +348,7 @@ class Repository extends ModelRepository
      * @param array|null $filter
      * @param array|null $order
      *
-     * @return \Doctrine\ORM\QueryBuilder
+     * @return QueryBuilder
      */
     public function getCountryQueryBuilder($filter = null, $order = null)
     {
@@ -390,7 +389,7 @@ class Repository extends ModelRepository
      * @param int|null   $limit
      * @param int|null   $offset
      *
-     * @return Query
+     * @return Query<Holiday>
      */
     public function getHolidayQuery($filter = null, $order = null, $limit = null, $offset = null)
     {
@@ -411,7 +410,7 @@ class Repository extends ModelRepository
      * @param array|null $filter
      * @param array|null $order
      *
-     * @return \Doctrine\ORM\QueryBuilder
+     * @return QueryBuilder
      */
     public function getHolidayQueryBuilder($filter = null, $order = null)
     {
@@ -435,15 +434,15 @@ class Repository extends ModelRepository
     /**
      * Selects all shipping costs with a deleted shop
      *
-     * @return Query
+     * @return Query<Dispatch>
      */
     public function getDispatchWithDeletedShopsQuery()
     {
         $builder = $this->getEntityManager()->createQueryBuilder();
 
         $builder->select('dispatch')
-            ->from('Shopware\Models\Dispatch\Dispatch', 'dispatch')
-            ->leftJoin('Shopware\Models\Shop\Shop', 'shop', Join::WITH, 'dispatch.multiShopId = shop.id')
+            ->from(Dispatch::class, 'dispatch')
+            ->leftJoin(Shop::class, 'shop', Join::WITH, 'dispatch.multiShopId = shop.id')
             ->andWhere('dispatch.multiShopId IS NOT NULL')
             ->andWhere('shop.id IS NULL');
 
@@ -456,9 +455,9 @@ class Repository extends ModelRepository
      * @param string     $modelPrefix
      * @param array|null $orderBy
      *
-     * @return \Doctrine\ORM\QueryBuilder
+     * @return QueryBuilder
      */
-    protected function sortOrderQuery(\Doctrine\ORM\QueryBuilder $builder, $modelPrefix, $orderBy)
+    protected function sortOrderQuery(QueryBuilder $builder, $modelPrefix, $orderBy)
     {
         // order the query with the passed orderBy parameter
         if (!empty($orderBy)) {

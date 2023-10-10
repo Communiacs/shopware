@@ -24,125 +24,149 @@
 
 namespace ShopwarePlugins\SwagUpdate\Components;
 
-use Exception;
-use Shopware\Components\OpenSSLVerifier;
-use Shopware\Components\ShopwareReleaseStruct;
+use ShopwarePlugins\SwagUpdate\Components\Exception\ApiLimitExceededException;
+use ShopwarePlugins\SwagUpdate\Components\Exception\ReleasePackageNotFoundException;
+use ShopwarePlugins\SwagUpdate\Components\Exception\UpdatePackageNotFoundException;
 use ShopwarePlugins\SwagUpdate\Components\Struct\Version;
+use Symfony\Component\HttpFoundation\Response;
 use Zend_Http_Client;
-use Zend_Http_Client_Exception;
 use Zend_Json;
+use Zend_Json_Exception;
 
 class UpdateCheck
 {
-    /**
-     * @var string
-     */
-    private $apiEndpoint;
+    public const SECURITY_IDENTIFIER = '[SECURITY_RELEASE]';
 
-    /**
-     * @var string
-     */
-    private $channel;
+    private Zend_Http_Client $client;
 
-    /**
-     * @var bool
-     */
-    private $verifySignature;
+    private bool $preRelease;
 
-    /**
-     * @var OpenSSLVerifier
-     */
-    private $verificator;
+    private bool $draft;
 
-    /**
-     * @var ShopwareReleaseStruct
-     */
-    private $release;
-
-    /**
-     * @param string $apiEndpoint
-     * @param string $channel
-     * @param bool   $verifySignature
-     */
-    public function __construct($apiEndpoint, $channel, $verifySignature, OpenSSLVerifier $verificator, ShopwareReleaseStruct $release)
+    public function __construct(Zend_Http_Client $client, bool $draft, bool $preRelease)
     {
-        $this->apiEndpoint = rtrim($apiEndpoint, '/');
-        $this->channel = $channel;
-        $this->verifySignature = $verifySignature;
-        $this->verificator = $verificator;
-        $this->release = $release;
+        $this->client = $client;
+        $this->draft = $draft;
+        $this->preRelease = $preRelease;
     }
 
     /**
-     * @param bool $verify
-     */
-    public function setVerifyResponseSignature($verify = true)
-    {
-        $this->verifySignature = $verify;
-    }
-
-    /**
-     * @param string $shopwareVersion
+     * @deprecated Additional Parameter `$params` will be removed with Shopware 5.8, as it is not used anymore
+     *
+     * @param string               $shopwareVersion
+     * @param array<string, mixed> $params
      *
      * @return Version|null
      */
     public function checkUpdate($shopwareVersion, array $params = [])
     {
-        $url = $this->apiEndpoint . '/release/update';
+        if ($shopwareVersion === '___VERSION___') {
+            return null;
+        }
 
-        $client = new Zend_Http_Client($url, [
-            'timeout' => 5,
-            'useragent' => 'Shopware/' . $this->release->getVersion(),
-        ]);
+        $response = $this->client->request();
 
-        $client->setParameterGet('shopware_version', $shopwareVersion);
-        $client->setParameterGet('channel', $this->channel);
-        $client->setParameterGet($params);
+        if ($response->getStatus() === Response::HTTP_FORBIDDEN) {
+            throw new ApiLimitExceededException();
+        }
 
-        try {
-            $response = $client->request();
-        } catch (Zend_Http_Client_Exception $e) {
-            // Do not show exception to user if request times out
+        if ($response->getStatus() === Response::HTTP_NOT_FOUND) {
             return null;
         }
 
         $body = $response->getBody();
 
-        $verified = false;
-        if ($this->verifySignature) {
-            $signature = $response->getHeader('X-Shopware-Signature');
-            $this->verifyBody($signature, $body);
-            $verified = true;
-        }
-
-        if ($body != '') {
-            $json = Zend_Json::decode($body, true);
-        } else {
-            $json = null;
-        }
-        $json['signagure_verified'] = $verified;
-
-        if ($response->getStatus() == '404') {
+        if (!\is_string($body)) {
             return null;
         }
 
-        return new Version($json);
+        if ($body === '') {
+            return null;
+        }
+
+        try {
+            $json = Zend_Json::decode($body);
+        } catch (Zend_Json_Exception $e) {
+            return null;
+        }
+
+        try {
+            return $this->createVersionFromGithubResponse($shopwareVersion, $json);
+        } catch (ReleasePackageNotFoundException|UpdatePackageNotFoundException $exception) {
+            return null;
+        }
     }
 
     /**
-     * @param string $signature
-     * @param string $body
+     * @param array<string, mixed> $releaseInformation
      *
-     * @throws Exception
+     * @throws UpdatePackageNotFoundException
+     * @throws ReleasePackageNotFoundException
      */
-    private function verifyBody($signature, $body)
+    private function createVersionFromGithubResponse(string $shopwareVersion, array $releaseInformation): Version
     {
-        if (!$this->verificator->isSystemSupported()) {
-            throw new ExtensionMissingException('openssl');
+        $latestRelease = $this->getRelease($shopwareVersion, $releaseInformation);
+
+        $installPackage = $this->getUpdatePackage($latestRelease['assets']);
+
+        $parts = explode('_', $installPackage['name']);
+        $sha1 = array_pop($parts);
+
+        return new Version([
+            'version' => $latestRelease['tag_name'],
+            'release_date' => $latestRelease['created_at'],
+            'size' => $installPackage['size'],
+            'uri' => $installPackage['browser_download_url'],
+            'changelog' => $latestRelease['html_url'],
+            'isNewer' => true,
+            'security_update' => str_contains(self::SECURITY_IDENTIFIER, $latestRelease['body']),
+            'sha1' => str_replace('.zip', '', $sha1),
+        ]);
+    }
+
+    /**
+     * @param array<string, mixed> $releaseInformation
+     *
+     * @throws ReleasePackageNotFoundException
+     *
+     * @return array<string, mixed>
+     */
+    private function getRelease(string $shopwareVersion, array $releaseInformation): array
+    {
+        foreach ($releaseInformation as $release) {
+            if (version_compare($shopwareVersion, $release['tag_name'], '>=')) {
+                continue;
+            }
+
+            if ((bool) $release['draft'] !== $this->draft) {
+                continue;
+            }
+
+            if ((bool) $release['prerelease'] !== $this->preRelease) {
+                continue;
+            }
+
+            return $release;
         }
 
-        if (!$this->verificator->isValid($body, $signature)) {
-            throw new Exception('Signature is not valid. Try downloading again');
+        throw new ReleasePackageNotFoundException();
+    }
+
+    /**
+     * @param array<string, mixed> $assets
+     *
+     * @throws UpdatePackageNotFoundException
+     *
+     * @return array<string, mixed>
+     */
+    private function getUpdatePackage(array $assets): array
+    {
+        foreach ($assets as $asset) {
+            if (str_contains($asset['name'], 'update_')) {
+                return $asset;
+            }
         }
+
+        throw new UpdatePackageNotFoundException();
     }
 }

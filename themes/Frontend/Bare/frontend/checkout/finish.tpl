@@ -144,7 +144,9 @@
                                                             <br />
                                                         {/if}
 
-                                                        <span class="address--salutation">{$sAddresses.billing.salutation|salutation}</span>
+                                                        {if {config name="shopSalutationRequired"} && {$sAddresses.billing.salutation !== 'not_defined'}}
+                                                            <span class="address--salutation">{$sAddresses.billing.salutation|salutation}</span>
+                                                        {/if}
                                                         {if {config name="displayprofiletitle"}}
                                                             <span class="address--title">{$sAddresses.billing.title|escapeHtml}</span><br/>
                                                         {/if}
@@ -178,7 +180,7 @@
                                     <div class="panel has--border block information--panel billing--panel finish--billing">
 
                                         {* Headline *}
-                                        {block name='frontend_checkout_confirm_information_addresses_billing_panel_title'}
+                                        {block name='frontend_checkout_finish_information_addresses_billing_panel_title'}
                                             <div class="panel--title is--underline">
                                                 {s name="ConfirmHeaderBilling" namespace="frontend/checkout/confirm"}{/s}
                                             </div>
@@ -192,7 +194,10 @@
                                                     <br />
                                                 {/if}
 
-                                                <span class="address--salutation">{$sAddresses.billing.salutation|salutation}</span>
+                                                {if {config name="shopSalutationRequired"} && {$sAddresses.billing.salutation !== 'not_defined'}}
+                                                    <span class="address--salutation">{$sAddresses.billing.salutation|salutation}</span>
+                                                {/if}
+
                                                 {if {config name="displayprofiletitle"}}
                                                     <span class="address--title">{$sAddresses.billing.title|escapeHtml}</span><br/>
                                                 {/if}
@@ -234,7 +239,11 @@
                                                     <br />
                                                 {/if}
 
-                                                <span class="address--salutation">{$sAddresses.shipping.salutation|salutation}</span>
+
+                                                {if {config name="shopSalutationRequired"} && {$sAddresses.shipping.salutation !== 'not_defined'}}
+                                                    <span class="address--salutation">{$sAddresses.shipping.salutation|salutation}</span>
+                                                {/if}
+
                                                 {if {config name="displayprofiletitle"}}
                                                     <span class="address--title">{$sAddresses.shipping.title|escapeHtml}</span><br/>
                                                 {/if}

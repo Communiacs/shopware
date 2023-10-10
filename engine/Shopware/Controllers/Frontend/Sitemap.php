@@ -344,7 +344,7 @@ class Shopware_Controllers_Frontend_Sitemap extends Enlight_Controller_Action
      * Helper function to filter emotion campaigns
      * Returns false, if the campaign starts later or is outdated
      */
-    private function filterCampaign(DateTimeInterface $from = null, DateTimeInterface $to = null): bool
+    private function filterCampaign(?DateTimeInterface $from = null, ?DateTimeInterface $to = null): bool
     {
         $now = new DateTime();
 
@@ -385,7 +385,7 @@ class Shopware_Controllers_Frontend_Sitemap extends Enlight_Controller_Action
             $userParamsArray = array_merge($userParamsArray, $link);
         }
 
-        $link = $this->Front()->Router()->assemble($userParamsArray);
+        $link = $this->Front()->ensureRouter()->assemble($userParamsArray);
 
         return [
             'id' => $id,

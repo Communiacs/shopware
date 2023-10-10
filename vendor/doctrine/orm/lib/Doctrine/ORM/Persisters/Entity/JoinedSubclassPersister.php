@@ -41,7 +41,7 @@ class JoinedSubclassPersister extends AbstractEntityInheritancePersister
     private $quotedTableMap = [];
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     protected function getDiscriminatorColumnTableName()
     {
@@ -73,8 +73,6 @@ class JoinedSubclassPersister extends AbstractEntityInheritancePersister
      * @param string $fieldName
      *
      * @return string
-     *
-     * @override
      */
     public function getOwningTable($fieldName)
     {
@@ -106,7 +104,7 @@ class JoinedSubclassPersister extends AbstractEntityInheritancePersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function executeInserts()
     {
@@ -201,7 +199,7 @@ class JoinedSubclassPersister extends AbstractEntityInheritancePersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function update($entity)
     {
@@ -239,7 +237,7 @@ class JoinedSubclassPersister extends AbstractEntityInheritancePersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function delete($entity)
     {
@@ -277,7 +275,7 @@ class JoinedSubclassPersister extends AbstractEntityInheritancePersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function getSelectSQL($criteria, $assoc = null, $lockMode = null, $limit = null, $offset = null, ?array $orderBy = null)
     {
@@ -371,7 +369,7 @@ class JoinedSubclassPersister extends AbstractEntityInheritancePersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     protected function getLockTablesSql($lockMode)
     {
@@ -500,7 +498,7 @@ class JoinedSubclassPersister extends AbstractEntityInheritancePersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     protected function getInsertColumnList()
     {
@@ -545,7 +543,7 @@ class JoinedSubclassPersister extends AbstractEntityInheritancePersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     protected function assignDefaultVersionAndUpsertableValues($entity, array $id)
     {

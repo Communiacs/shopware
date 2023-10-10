@@ -27,7 +27,6 @@ use Shopware\Components\CSRFWhitelistAware;
 use Shopware\Components\Model\Exception\ModelNotFoundException;
 use Shopware\Components\OptinServiceInterface;
 use Shopware\Components\ShopRegistrationServiceInterface;
-use Shopware\Components\Theme;
 use Shopware\Components\Theme\Installer;
 use Shopware\Components\Theme\PathResolver;
 use Shopware\Components\Theme\Service;
@@ -112,7 +111,7 @@ class Shopware_Controllers_Backend_Theme extends Shopware_Controllers_Backend_Ap
                 'sessionValue' => $session->get('sessionId'),
             ]);
 
-            $url = $this->Front()->Router()->assemble([
+            $url = $this->Front()->ensureRouter()->assemble([
                 'module' => 'frontend',
                 'controller' => 'index',
                 'themeHash' => $hash,

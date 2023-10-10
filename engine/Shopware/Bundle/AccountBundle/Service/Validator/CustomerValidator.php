@@ -64,7 +64,12 @@ class CustomerValidator implements CustomerValidatorInterface
 
         $this->validateField('firstname', $customer->getFirstname(), [new NotBlank()]);
         $this->validateField('lastname', $customer->getLastname(), [new NotBlank()]);
-        $this->validateField('salutation', $customer->getSalutation(), $this->getSalutationConstraints());
+
+        $salutationRequired = $this->config->get('shopsalutationrequired');
+        if ($salutationRequired) {
+            $this->validateField('salutation', $customer->getSalutation(), $this->getSalutationConstraints());
+        }
+
         $this->validateField('email', $customer->getEmail(), [
             new CustomerEmail([
                 'shop' => $this->context->getShopContext()->getShop(),
@@ -107,6 +112,6 @@ class CustomerValidator implements CustomerValidatorInterface
     {
         $salutations = explode(',', $this->config->get('shopsalutations'));
 
-        return [new NotBlank(), new Choice(['choices' => $salutations])];
+        return [new Choice(['choices' => $salutations])];
     }
 }

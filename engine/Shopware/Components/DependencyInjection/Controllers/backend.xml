@@ -40,6 +40,10 @@
             <tag name="shopware.controller" module="backend" controller="base"/>
         </service>
 
+        <service id="Shopware\Controllers\Backend\OrderProductSearch">
+            <tag name="shopware.controller" module="backend" controller="orderproductsearch"/>
+        </service>
+
         <service id="shopware_controllers_backend_blog" class="Shopware_Controllers_Backend_Blog">
             <tag name="shopware.controller" module="backend" controller="blog"/>
         </service>
@@ -122,10 +126,6 @@
 
         <service id="shopware_controllers_backend_extjs" class="Shopware_Controllers_Backend_ExtJs">
             <tag name="shopware.controller" module="backend" controller="extjs"/>
-        </service>
-
-        <service id="shopware_controllers_backend_feedback" class="Shopware_Controllers_Backend_Feedback">
-            <tag name="shopware.controller" module="backend" controller="feedback"/>
         </service>
 
         <service id="shopware_controllers_backend_firstrunwizard" class="Shopware_Controllers_Backend_FirstRunWizard">

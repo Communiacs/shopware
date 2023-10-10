@@ -80,7 +80,7 @@ class ServerParams
      */
     public function getNormalizedIniPostMaxSize()
     {
-        return strtoupper(trim(ini_get('post_max_size')));
+        return strtoupper(trim(\ini_get('post_max_size')));
     }
 
     /**

@@ -53,7 +53,7 @@ class Category extends Resource
      */
     private $translationComponent;
 
-    public function __construct(TranslationComponent $translationComponent = null)
+    public function __construct(?TranslationComponent $translationComponent = null)
     {
         $this->translationComponent = $translationComponent ?: Shopware()->Container()->get(TranslationComponent::class);
     }
@@ -139,7 +139,7 @@ class Category extends Resource
         $totalResult = $paginator->count();
 
         // Returns the category data
-        $categories = $paginator->getIterator()->getArrayCopy();
+        $categories = iterator_to_array($paginator);
 
         return ['data' => $categories, 'total' => $totalResult];
     }

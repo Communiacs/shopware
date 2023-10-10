@@ -32,7 +32,6 @@ use Shopware\Components\Model\ModelRepository;
 use Shopware\Components\Snippet\DatabaseHandler;
 use Shopware\Components\Theme;
 use Shopware\Models\Plugin\Plugin;
-use Shopware\Models\Shop;
 use Shopware\Models\Shop\Template;
 
 /**
@@ -171,7 +170,7 @@ class Installer
      *
      * @return Theme[]
      */
-    private function synchronizeThemeDirectories(DirectoryIterator $directories, Plugin $plugin = null)
+    private function synchronizeThemeDirectories(DirectoryIterator $directories, ?Plugin $plugin = null)
     {
         $themes = [];
 

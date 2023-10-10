@@ -155,16 +155,16 @@ class sBasket implements \Enlight_Hook
      * @throws \Exception
      */
     public function __construct(
-        Enlight_Components_Db_Adapter_Pdo_Mysql $db = null,
-        Enlight_Event_EventManager $eventManager = null,
-        Shopware_Components_Snippet_Manager $snippetManager = null,
-        Shopware_Components_Config $config = null,
-        Enlight_Components_Session_Namespace $session = null,
-        Enlight_Controller_Front $front = null,
-        Shopware_Components_Modules $moduleManager = null,
-        sSystem $systemModule = null,
-        ContextServiceInterface $contextService = null,
-        AdditionalTextServiceInterface $additionalTextService = null
+        ?Enlight_Components_Db_Adapter_Pdo_Mysql $db = null,
+        ?Enlight_Event_EventManager $eventManager = null,
+        ?Shopware_Components_Snippet_Manager $snippetManager = null,
+        ?Shopware_Components_Config $config = null,
+        ?Enlight_Components_Session_Namespace $session = null,
+        ?Enlight_Controller_Front $front = null,
+        ?Shopware_Components_Modules $moduleManager = null,
+        ?sSystem $systemModule = null,
+        ?ContextServiceInterface $contextService = null,
+        ?AdditionalTextServiceInterface $additionalTextService = null
     ) {
         $this->db = $db ?: Shopware()->Db();
         $this->eventManager = $eventManager ?: Shopware()->Events();
@@ -492,6 +492,7 @@ class sBasket implements \Enlight_Hook
             );
 
             $this->db->insert('s_order_basket', $params);
+            $this->db->insert('s_order_basket_attributes', ['basketID' => $this->db->lastInsertId()]);
         }
     }
 
@@ -728,16 +729,19 @@ class sBasket implements \Enlight_Hook
         $voucherCode = strtolower(trim(stripslashes($voucherCode)));
 
         // Load the voucher details
+        $date = new DateTime();
+        $date = $date->format('Y-m-d');
+
         $voucherDetails = $this->db->fetchRow(
             'SELECT *
               FROM s_emarketing_vouchers
               WHERE modus != 1
-              AND LOWER(vouchercode) = ?
+              AND LOWER(vouchercode) = :vouchercode
               AND (
-                (valid_to >= CURDATE() AND valid_from <= CURDATE())
-                OR valid_to IS NULL
+                (valid_to >= :date OR valid_to IS NULL)
+                AND (valid_from <= :date OR valid_from IS NULL)
               )',
-            [$voucherCode]
+            ['vouchercode' => $voucherCode, 'date' => $date]
         ) ?: [];
 
         $individualCode = false;
@@ -751,7 +755,7 @@ class sBasket implements \Enlight_Hook
         }
 
         if ($voucherDetails['id']) {
-            // If we have voucher details, its a reusable code
+            // If we have voucher details, it's a reusable code
             // We need to check how many times it has already been used
             $usedVoucherCount = $this->db->fetchRow(
                 'SELECT COUNT(id) AS vouchers
@@ -761,7 +765,7 @@ class sBasket implements \Enlight_Hook
                 [$voucherDetails['ordercode']]
             ) ?: [];
         } else {
-            // If we don't have voucher details yet, need to check if its a one-time code
+            // If we don't have voucher details yet, need to check if it's a one-time code
             $voucherCodeDetails = $this->db->fetchRow(
                 'SELECT id, voucherID, code as vouchercode FROM s_emarketing_voucher_codes c WHERE c.code = ? AND c.cashed != 1 LIMIT 1;',
                 [$voucherCode]
@@ -772,13 +776,11 @@ class sBasket implements \Enlight_Hook
                     'SELECT description, numberofunits, customergroup, value, restrictarticles,
                     minimumcharge, shippingfree, bindtosupplier, taxconfig, valid_from,
                     valid_to, ordercode, modus, percental, strict, subshopID, customer_stream_ids
-                    FROM s_emarketing_vouchers WHERE modus = 1 AND id = ? AND (
-                      (valid_to >= CURDATE()
-                          AND valid_from <= CURDATE()
-                      )
-                      OR valid_to is NULL
+                    FROM s_emarketing_vouchers
+                    WHERE modus = 1 AND id = :voucherId AND (
+                        (valid_to >= :date OR valid_to IS NULL) AND (valid_from <= :date OR valid_from IS NULL)
                 ) LIMIT 1',
-                    [(int) $voucherCodeDetails['voucherID']]
+                    ['voucherId' => (int) $voucherCodeDetails['voucherID'], 'date' => $date]
                 ) ?: [];
                 unset($voucherCodeDetails['voucherID']);
                 $voucherDetails = array_merge($voucherCodeDetails, $voucherDetails);
@@ -907,7 +909,6 @@ class sBasket implements \Enlight_Hook
 
         if ($this->proportionalTaxCalculation && !$this->session->get('taxFree') && $voucherDetails['taxconfig'] === 'auto') {
             $taxCalculator = Shopware()->Container()->get('shopware.cart.proportional_tax_calculator');
-            $system = Shopware()->Container()->get('system');
             $prices = $this->basketHelper->getPositionPrices(
                 new DiscountContext(
                     $this->session->get('sessionId'),
@@ -978,6 +979,8 @@ class sBasket implements \Enlight_Hook
                 );
 
                 $this->db->query($sql, $params);
+                $insertId = (int) $this->db->lastInsertId('s_order_basket');
+                $this->connection->insert('s_order_basket_attributes', ['basketID' => $insertId]);
             }
 
             return !empty($prices);
@@ -1033,7 +1036,8 @@ class sBasket implements \Enlight_Hook
             return false;
         }
 
-        $insertId = $this->db->lastInsertId('s_order_basket');
+        $insertId = (int) $this->db->lastInsertId('s_order_basket');
+        $this->connection->insert('s_order_basket_attributes', ['basketID' => $insertId]);
 
         $this->eventManager->notify(
             'Shopware_Modules_Basket_AddVoucher_Inserted',
@@ -1204,6 +1208,7 @@ class sBasket implements \Enlight_Hook
             );
         } else {
             $this->db->insert('s_order_basket', $params);
+            $this->db->insert('s_order_basket_attributes', ['basketID' => $this->db->lastInsertId()]);
         }
 
         return null;
@@ -1332,6 +1337,7 @@ class sBasket implements \Enlight_Hook
         }
 
         $this->db->insert('s_order_basket', $params);
+        $this->db->insert('s_order_basket_attributes', ['basketID' => $this->db->lastInsertId()]);
 
         return null;
     }
@@ -1492,13 +1498,12 @@ class sBasket implements \Enlight_Hook
                 $result[CartKey::POSITIONS][$key]['tax'] = $calcDifference;
             }
         }
-        $result = $this->eventManager->filter(
+
+        return $this->eventManager->filter(
             'Shopware_Modules_Basket_GetBasket_FilterResult',
             $result,
             ['subject' => $this]
         );
-
-        return $result;
     }
 
     /**
@@ -1577,7 +1582,7 @@ class sBasket implements \Enlight_Hook
     {
         $notes = $this->getNoteProducts();
         if (empty($notes)) {
-            return $notes;
+            return [];
         }
 
         $numbers = array_column($notes, 'ordernumber');
@@ -1616,22 +1621,21 @@ class sBasket implements \Enlight_Hook
     {
         $responseCookies = $this->front->Response()->getCookies();
 
-        if (!empty($responseCookies['sUniqueID-/']['value']) && $responseCookies['sUniqueID-/']['value']) {
+        if (!empty($responseCookies['sUniqueID-/']['value'])) {
             $uniqueId = $responseCookies['sUniqueID-/']['value'];
         } else {
             $uniqueId = $this->front->Request()->getCookie('sUniqueID');
         }
 
-        $count = (int) $this->db->fetchOne('
-            SELECT COUNT(*) FROM s_order_notes n, s_articles a
-            WHERE (sUniqueID = ? OR (userID != 0 AND userID = ?))
-            AND a.id = n.articleID AND a.active = 1
-        ', [
-            empty($uniqueId) ? $this->session->get('sessionId') : $uniqueId,
-            $this->session->get('sUserId', 0),
-        ]);
-
-        return $count;
+        return (int) $this->db->fetchOne(
+            'SELECT COUNT(*) FROM s_order_notes n, s_articles a
+             WHERE (sUniqueID = ? OR (userID != 0 AND userID = ?))
+                AND a.id = n.articleID AND a.active = 1',
+            [
+                empty($uniqueId) ? $this->session->get('sessionId') : $uniqueId,
+                $this->session->get('sUserId', 0),
+            ]
+        );
     }
 
     /**
@@ -2532,7 +2536,7 @@ class sBasket implements \Enlight_Hook
             if ($voucherDetails['taxconfig'] === 'default' || empty($voucherDetails['taxconfig'])) {
                 $tax = round($voucherDetails['value'] / (100 + $this->config->get('sVOUCHERTAX')) * 100, 3) * -1;
                 $taxRate = $this->config->get('sVOUCHERTAX');
-            // Pre 3.5.4 behaviour
+                // Pre 3.5.4 behaviour
             } elseif ($voucherDetails['taxconfig'] === 'auto') {
                 // Check max. used tax-rate from basket
                 $tax = $this->getMaxTax();
@@ -2722,12 +2726,12 @@ class sBasket implements \Enlight_Hook
                     }
                 } elseif ($getProducts[$key]['modus'] == CartPositionsMode::CUSTOMER_GROUP_DISCOUNT) {
                     $getProducts[$key]['amountWithTax'] = round(1 * (round($price, 2) / 100 * (100 + $tax)), 2);
-                // Basket discount
+                    // Basket discount
                 } elseif ($getProducts[$key]['modus'] == CartPositionsMode::VOUCHER) {
                     $getProducts[$key]['amountWithTax'] = round(1 * (round($price, 2) / 100 * (100 + $tax)), 2);
 
                     if ($this->sSYSTEM->sUSERGROUPDATA['basketdiscount'] && $this->sCheckForDiscount()) {
-                        $discount += ($getProducts[$key]['amountWithTax'] / 100 * ($this->sSYSTEM->sUSERGROUPDATA['basketdiscount']));
+                        $discount += ($getProducts[$key]['amountWithTax'] / 100 * $this->sSYSTEM->sUSERGROUPDATA['basketdiscount']);
                     }
                 } elseif ($getProducts[$key]['modus'] == CartPositionsMode::PAYMENT_SURCHARGE_OR_DISCOUNT
                                  || $getProducts[$key]['modus'] == CartPositionsMode::SWAG_BUNDLE_DISCOUNT

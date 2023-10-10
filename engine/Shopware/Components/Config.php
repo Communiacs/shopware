@@ -102,6 +102,8 @@ class Shopware_Components_Config implements ArrayAccess
      * Magic getter
      *
      * @param string $name
+     *
+     * @return mixed config value
      */
     public function __get($name)
     {
@@ -156,7 +158,7 @@ class Shopware_Components_Config implements ArrayAccess
      */
     public function formatName($name)
     {
-        if (strpos($name, 's') === 0 && preg_match('#^s[A-Z]#', $name)) {
+        if (str_starts_with($name, 's') && preg_match('#^s[A-Z]#', $name)) {
             $name = substr($name, 1);
         }
 
@@ -175,7 +177,10 @@ class Shopware_Components_Config implements ArrayAccess
     }
 
     /**
-     * @param string $name
+     * @param string     $name
+     * @param mixed|null $default
+     *
+     * @return mixed config value
      */
     public function get($name, $default = null)
     {
@@ -231,7 +236,7 @@ class Shopware_Components_Config implements ArrayAccess
         if (!isset($this->_data[$name])) {
             $baseName = $this->formatName($name);
 
-            return isset($this->_data[$baseName]) && $this->_data[$baseName] !== null;
+            return isset($this->_data[$baseName]);
         }
 
         return true;

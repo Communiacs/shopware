@@ -19,32 +19,26 @@ class OrderByItem extends Node
     /** @var string */
     public $type;
 
-    /**
-     * @param mixed $expression
-     */
+    /** @param mixed $expression */
     public function __construct($expression)
     {
         $this->expression = $expression;
     }
 
-    /**
-     * @return bool
-     */
+    /** @return bool */
     public function isAsc()
     {
         return strtoupper($this->type) === 'ASC';
     }
 
-    /**
-     * @return bool
-     */
+    /** @return bool */
     public function isDesc()
     {
         return strtoupper($this->type) === 'DESC';
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function dispatch($sqlWalker)
     {

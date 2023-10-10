@@ -14,7 +14,7 @@ use function get_class;
 class NonStrictReadWriteCachedEntityPersister extends AbstractEntityPersister
 {
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function afterTransactionComplete()
     {
@@ -48,7 +48,7 @@ class NonStrictReadWriteCachedEntityPersister extends AbstractEntityPersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function afterTransactionRolledBack()
     {
@@ -56,7 +56,7 @@ class NonStrictReadWriteCachedEntityPersister extends AbstractEntityPersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function delete($entity)
     {
@@ -73,7 +73,7 @@ class NonStrictReadWriteCachedEntityPersister extends AbstractEntityPersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function update($entity)
     {
@@ -82,9 +82,7 @@ class NonStrictReadWriteCachedEntityPersister extends AbstractEntityPersister
         $this->queuedCache['update'][] = $entity;
     }
 
-    /**
-     * @param object $entity
-     */
+    /** @param object $entity */
     private function updateCache($entity, bool $isChanged): bool
     {
         $class     = $this->metadataFactory->getMetadataFor(get_class($entity));

@@ -163,7 +163,7 @@ class PluginInstaller
         $this->installResources($pluginBootstrap, $plugin);
 
         // Makes sure the version is updated in the db after a re-installation
-        if ($this->hasInfoNewerVersion($plugin->getUpdateVersion(), $plugin->getVersion())) {
+        if ($plugin->getUpdateVersion() && $this->hasInfoNewerVersion($plugin->getUpdateVersion(), $plugin->getVersion())) {
             $plugin->setVersion($plugin->getUpdateVersion());
         }
 
@@ -352,11 +352,11 @@ class PluginInstaller
                 }
             }
 
-            $info['label'] = isset($info['label']['en']) ? $info['label']['en'] : $plugin->getName();
-            $info['description'] = isset($info['description']['en']) ? $info['description']['en'] : null;
-            $info['version'] = isset($info['version']) ? $info['version'] : '0.0.1';
-            $info['author'] = isset($info['author']) ? $info['author'] : null;
-            $info['link'] = isset($info['link']) ? $info['link'] : null;
+            $info['label'] = $info['label']['en'] ?? $plugin->getName();
+            $info['description'] = $info['description']['en'] ?? null;
+            $info['version'] = $info['version'] ?? '0.0.1';
+            $info['author'] = $info['author'] ?? null;
+            $info['link'] = $info['link'] ?? null;
 
             $data = [
                 'namespace' => $plugin->getPluginNamespace(),
@@ -365,14 +365,14 @@ class PluginInstaller
                 'name' => $plugin->getName(),
                 'link' => $info['link'],
                 'label' => $info['label'],
-                'description' => $info['description'],
-                'capability_update' => true,
-                'capability_install' => true,
-                'capability_enable' => true,
-                'capability_secure_uninstall' => true,
+                'description' => $info['description'] ? (string) $info['description'] : null,
+                'capability_update' => 1,
+                'capability_install' => 1,
+                'capability_enable' => 1,
+                'capability_secure_uninstall' => 1,
                 'refresh_date' => $refreshDate,
                 'translations' => $translations ? json_encode($translations) : null,
-                'changes' => isset($info['changelog']) ? json_encode($info['changelog']) : null,
+                'changes' => isset($info['changelog']) ? json_encode($info['changelog'], JSON_THROW_ON_ERROR) : null,
             ];
 
             if ($currentPluginInfo) {
@@ -641,6 +641,9 @@ SQL;
         $this->connection->executeStatement($sql, [':pluginId' => $pluginId]);
     }
 
+    /**
+     * @param AbstractPluginMigration::MODUS_* $mode
+     */
     private function applyMigrations(PluginComponent $plugin, string $mode, bool $keepUserData = false): void
     {
         $manager = new PluginMigrationManager($this->pdo, $plugin, $this->logger);

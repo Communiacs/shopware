@@ -9,9 +9,9 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\LockMode;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
+use Doctrine\Deprecations\Deprecation;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
-use Doctrine\ORM\Mapping\ClassMetadataInfo;
 use Doctrine\ORM\Mapping\QuoteStrategy;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\Query;
@@ -41,8 +41,7 @@ use function strtoupper;
 use function trim;
 
 /**
- * The SqlWalker is a TreeWalker that walks over a DQL AST and constructs
- * the corresponding SQL.
+ * The SqlWalker walks over a DQL AST and constructs the corresponding SQL.
  *
  * @psalm-import-type QueryComponent from Parser
  * @psalm-consistent-constructor
@@ -243,7 +242,9 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Returns internal queryComponents array.
+     *
+     * @return array<string, QueryComponent>
      */
     public function getQueryComponents()
     {
@@ -251,7 +252,14 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Sets or overrides a query component for a given dql alias.
+     *
+     * @param string $dqlAlias The DQL alias.
+     * @psalm-param QueryComponent $queryComponent
+     *
+     * @return void
+     *
+     * @not-deprecated
      */
     public function setQueryComponent($dqlAlias, array $queryComponent)
     {
@@ -265,7 +273,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Gets an executor that can be used to execute the result of this walker.
+     *
+     * @param AST\DeleteStatement|AST\UpdateStatement|AST\SelectStatement $AST
+     *
+     * @return Exec\AbstractSqlExecutor
+     *
+     * @not-deprecated
      */
     public function getExecutor($AST)
     {
@@ -526,7 +540,9 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a SelectStatement AST node, thereby generating the appropriate SQL.
+     *
+     * @return string
      */
     public function walkSelectStatement(AST\SelectStatement $AST)
     {
@@ -554,9 +570,7 @@ class SqlWalker implements TreeWalker
             $sql .= ' ORDER BY ' . $orderBySql;
         }
 
-        if ($limit !== null || $offset !== null) {
-            $sql = $this->platform->modifyLimitQuery($sql, $limit, $offset ?? 0);
-        }
+        $sql = $this->platform->modifyLimitQuery($sql, $limit, $offset);
 
         if ($lockMode === LockMode::NONE) {
             return $sql;
@@ -584,7 +598,9 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down an UpdateStatement AST node, thereby generating the appropriate SQL.
+     *
+     * @return string
      */
     public function walkUpdateStatement(AST\UpdateStatement $AST)
     {
@@ -596,7 +612,9 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a DeleteStatement AST node, thereby generating the appropriate SQL.
+     *
+     * @return string
      */
     public function walkDeleteStatement(AST\DeleteStatement $AST)
     {
@@ -614,6 +632,8 @@ class SqlWalker implements TreeWalker
      * @param string $identVariable
      *
      * @return string
+     *
+     * @not-deprecated
      */
     public function walkEntityIdentificationVariable($identVariable)
     {
@@ -635,6 +655,8 @@ class SqlWalker implements TreeWalker
      * @param string $fieldName
      *
      * @return string The SQL.
+     *
+     * @not-deprecated
      */
     public function walkIdentificationVariable($identificationVariable, $fieldName = null)
     {
@@ -651,7 +673,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a PathExpression AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\PathExpression $pathExpr
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkPathExpression($pathExpr)
     {
@@ -708,7 +736,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a SelectClause AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\SelectClause $selectClause
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkSelectClause($selectClause)
     {
@@ -753,6 +787,9 @@ class SqlWalker implements TreeWalker
 
                 $this->rsm->setDiscriminatorColumn($dqlAlias, $columnAlias);
                 $this->rsm->addMetaResult($dqlAlias, $columnAlias, $discrColumn['fieldName'], false, $discrColumn['type']);
+                if (! empty($discrColumn['enumType'])) {
+                    $this->rsm->addEnumResult($columnAlias, $discrColumn['enumType']);
+                }
             }
 
             // Add foreign key columns to SQL, if necessary
@@ -824,7 +861,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a FromClause AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\FromClause $fromClause
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkFromClause($fromClause)
     {
@@ -844,6 +887,8 @@ class SqlWalker implements TreeWalker
      * @param AST\IdentificationVariableDeclaration $identificationVariableDecl
      *
      * @return string
+     *
+     * @not-deprecated
      */
     public function walkIdentificationVariableDeclaration($identificationVariableDecl)
     {
@@ -866,6 +911,8 @@ class SqlWalker implements TreeWalker
      * @param AST\IndexBy $indexBy
      *
      * @return void
+     *
+     * @not-deprecated
      */
     public function walkIndexBy($indexBy)
     {
@@ -919,6 +966,8 @@ class SqlWalker implements TreeWalker
      * @param AST\RangeVariableDeclaration $rangeVariableDeclaration
      *
      * @return string
+     *
+     * @not-deprecated
      */
     public function walkRangeVariableDeclaration($rangeVariableDeclaration)
     {
@@ -969,6 +1018,8 @@ class SqlWalker implements TreeWalker
      * @return string
      *
      * @throws QueryException
+     *
+     * @not-deprecated
      */
     public function walkJoinAssociationDeclaration($joinAssociationDeclaration, $joinType = AST\Join::JOIN_TYPE_INNER, $condExpr = null)
     {
@@ -1128,7 +1179,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a FunctionNode AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\Functions\FunctionNode $function
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkFunction($function)
     {
@@ -1136,7 +1193,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down an OrderByClause AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\OrderByClause $orderByClause
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkOrderByClause($orderByClause)
     {
@@ -1151,7 +1214,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down an OrderByItem AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\OrderByItem $orderByItem
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkOrderByItem($orderByItem)
     {
@@ -1159,7 +1228,7 @@ class SqlWalker implements TreeWalker
         $expr = $orderByItem->expression;
         $sql  = $expr instanceof AST\Node
             ? $expr->dispatch($this)
-            : $this->walkResultVariable($this->queryComponents[$expr]['token']['value']);
+            : $this->walkResultVariable($this->queryComponents[$expr]['token']->value);
 
         $this->orderedColumnsMap[$sql] = $type;
 
@@ -1171,7 +1240,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a HavingClause AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\HavingClause $havingClause
+     *
+     * @return string The SQL.
+     *
+     * @not-deprecated
      */
     public function walkHavingClause($havingClause)
     {
@@ -1179,7 +1254,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a Join AST node and creates the corresponding SQL.
+     *
+     * @param AST\Join $join
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkJoin($join)
     {
@@ -1242,6 +1323,8 @@ class SqlWalker implements TreeWalker
      * @param AST\CoalesceExpression $coalesceExpression
      *
      * @return string The SQL.
+     *
+     * @not-deprecated
      */
     public function walkCoalesceExpression($coalesceExpression)
     {
@@ -1262,6 +1345,8 @@ class SqlWalker implements TreeWalker
      * @param AST\NullIfExpression $nullIfExpression
      *
      * @return string The SQL.
+     *
+     * @not-deprecated
      */
     public function walkNullIfExpression($nullIfExpression)
     {
@@ -1280,6 +1365,8 @@ class SqlWalker implements TreeWalker
      * Walks down a GeneralCaseExpression AST node and generates the corresponding SQL.
      *
      * @return string The SQL.
+     *
+     * @not-deprecated
      */
     public function walkGeneralCaseExpression(AST\GeneralCaseExpression $generalCaseExpression)
     {
@@ -1301,6 +1388,8 @@ class SqlWalker implements TreeWalker
      * @param AST\SimpleCaseExpression $simpleCaseExpression
      *
      * @return string The SQL.
+     *
+     * @not-deprecated
      */
     public function walkSimpleCaseExpression($simpleCaseExpression)
     {
@@ -1317,7 +1406,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a SelectExpression AST node and generates the corresponding SQL.
+     *
+     * @param AST\SelectExpression $selectExpression
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkSelectExpression($selectExpression)
     {
@@ -1397,7 +1492,7 @@ class SqlWalker implements TreeWalker
                     break;
                 }
 
-                $this->rsm->addScalarResult($columnAlias, $resultAlias, $expr->getReturnType()->getName());
+                $this->rsm->addScalarResult($columnAlias, $resultAlias, Type::getTypeRegistry()->lookupName($expr->getReturnType()));
 
                 break;
 
@@ -1471,6 +1566,10 @@ class SqlWalker implements TreeWalker
                     $this->scalarResultAliasMap[$resultAlias][] = $columnAlias;
 
                     $this->rsm->addFieldResult($dqlAlias, $columnAlias, $fieldName, $class->name);
+
+                    if (! empty($mapping['enumType'])) {
+                        $this->rsm->addEnumResult($columnAlias, $mapping['enumType']);
+                    }
                 }
 
                 // Add any additional fields of subclasses (excluding inherited fields)
@@ -1513,7 +1612,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a QuantifiedExpression AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\QuantifiedExpression $qExpr
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkQuantifiedExpression($qExpr)
     {
@@ -1521,7 +1626,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a Subselect AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\Subselect $subselect
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkSubselect($subselect)
     {
@@ -1546,7 +1657,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a SubselectFromClause AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\SubselectFromClause $subselectFromClause
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkSubselectFromClause($subselectFromClause)
     {
@@ -1561,7 +1678,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a SimpleSelectClause AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\SimpleSelectClause $simpleSelectClause
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkSimpleSelectClause($simpleSelectClause)
     {
@@ -1569,9 +1692,7 @@ class SqlWalker implements TreeWalker
             . $this->walkSimpleSelectExpression($simpleSelectClause->simpleSelectExpression);
     }
 
-    /**
-     * @return string
-     */
+    /** @return string */
     public function walkParenthesisExpression(AST\ParenthesisExpression $parenthesisExpression)
     {
         return sprintf('(%s)', $parenthesisExpression->expression->dispatch($this));
@@ -1617,6 +1738,11 @@ class SqlWalker implements TreeWalker
                     }
 
                     $sqlSelectExpressions[] = $col . ' AS ' . $columnAlias;
+
+                    if (! empty($fieldMapping['enumType'])) {
+                        $this->rsm->addEnumResult($columnAlias, $fieldMapping['enumType']);
+                    }
+
                     break;
 
                 case $e instanceof AST\Literal:
@@ -1652,7 +1778,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a SimpleSelectExpression AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\SimpleSelectExpression $simpleSelectExpression
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkSimpleSelectExpression($simpleSelectExpression)
     {
@@ -1703,7 +1835,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down an AggregateExpression AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\AggregateExpression $aggExpression
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkAggregateExpression($aggExpression)
     {
@@ -1712,7 +1850,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a GroupByClause AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\GroupByClause $groupByClause
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkGroupByClause($groupByClause)
     {
@@ -1726,7 +1870,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a GroupByItem AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\PathExpression|string $groupByItem
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkGroupByItem($groupByItem)
     {
@@ -1761,7 +1911,7 @@ class SqlWalker implements TreeWalker
         }
 
         foreach ($this->getMetadataForDqlAlias($groupByItem)->associationMappings as $mapping) {
-            if ($mapping['isOwningSide'] && $mapping['type'] & ClassMetadataInfo::TO_ONE) {
+            if ($mapping['isOwningSide'] && $mapping['type'] & ClassMetadata::TO_ONE) {
                 $item       = new AST\PathExpression(AST\PathExpression::TYPE_SINGLE_VALUED_ASSOCIATION, $groupByItem, $mapping['fieldName']);
                 $item->type = AST\PathExpression::TYPE_SINGLE_VALUED_ASSOCIATION;
 
@@ -1773,7 +1923,11 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a DeleteClause AST node, thereby generating the appropriate SQL.
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkDeleteClause(AST\DeleteClause $deleteClause)
     {
@@ -1788,7 +1942,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down an UpdateClause AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\UpdateClause $updateClause
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkUpdateClause($updateClause)
     {
@@ -1803,7 +1963,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down an UpdateItem AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\UpdateItem $updateItem
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkUpdateItem($updateItem)
     {
@@ -1833,7 +1999,14 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a WhereClause AST node, thereby generating the appropriate SQL.
+     * WhereClause or not, the appropriate discriminator sql is added.
+     *
+     * @param AST\WhereClause $whereClause
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkWhereClause($whereClause)
     {
@@ -1873,7 +2046,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walk down a ConditionalExpression AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\ConditionalExpression $condExpr
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkConditionalExpression($condExpr)
     {
@@ -1887,7 +2066,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a ConditionalTerm AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\ConditionalTerm $condTerm
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkConditionalTerm($condTerm)
     {
@@ -1901,7 +2086,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a ConditionalFactor AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\ConditionalFactor $factor
+     *
+     * @return string The SQL.
+     *
+     * @not-deprecated
      */
     public function walkConditionalFactor($factor)
     {
@@ -1913,7 +2104,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a ConditionalPrimary AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\ConditionalPrimary $primary
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkConditionalPrimary($primary)
     {
@@ -1929,7 +2126,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down an ExistsExpression AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\ExistsExpression $existsExpr
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkExistsExpression($existsExpr)
     {
@@ -1941,7 +2144,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a CollectionMemberExpression AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\CollectionMemberExpression $collMemberExpr
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkCollectionMemberExpression($collMemberExpr)
     {
@@ -2038,7 +2247,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down an EmptyCollectionComparisonExpression AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\EmptyCollectionComparisonExpression $emptyCollCompExpr
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkEmptyCollectionComparisonExpression($emptyCollCompExpr)
     {
@@ -2049,7 +2264,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a NullComparisonExpression AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\NullComparisonExpression $nullCompExpr
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkNullComparisonExpression($nullCompExpr)
     {
@@ -2070,10 +2291,31 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down an InExpression AST node, thereby generating the appropriate SQL.
+     *
+     * @deprecated Use {@see walkInListExpression()} or {@see walkInSubselectExpression()} instead.
+     *
+     * @param AST\InExpression $inExpr
+     *
+     * @return string
      */
     public function walkInExpression($inExpr)
     {
+        Deprecation::triggerIfCalledFromOutside(
+            'doctrine/orm',
+            'https://github.com/doctrine/orm/pull/10267',
+            '%s() is deprecated, call walkInListExpression() or walkInSubselectExpression() instead.',
+            __METHOD__
+        );
+
+        if ($inExpr instanceof AST\InListExpression) {
+            return $this->walkInListExpression($inExpr);
+        }
+
+        if ($inExpr instanceof AST\InSubselectExpression) {
+            return $this->walkInSubselectExpression($inExpr);
+        }
+
         $sql = $this->walkArithmeticExpression($inExpr->expression) . ($inExpr->not ? ' NOT' : '') . ' IN (';
 
         $sql .= $inExpr->subselect
@@ -2086,9 +2328,37 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down an InExpression AST node, thereby generating the appropriate SQL.
+     */
+    public function walkInListExpression(AST\InListExpression $inExpr): string
+    {
+        return $this->walkArithmeticExpression($inExpr->expression)
+            . ($inExpr->not ? ' NOT' : '') . ' IN ('
+            . implode(', ', array_map([$this, 'walkInParameter'], $inExpr->literals))
+            . ')';
+    }
+
+    /**
+     * Walks down an InExpression AST node, thereby generating the appropriate SQL.
+     */
+    public function walkInSubselectExpression(AST\InSubselectExpression $inExpr): string
+    {
+        return $this->walkArithmeticExpression($inExpr->expression)
+            . ($inExpr->not ? ' NOT' : '') . ' IN ('
+            . $this->walkSubselect($inExpr->subselect)
+            . ')';
+    }
+
+    /**
+     * Walks down an InstanceOfExpression AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\InstanceOfExpression $instanceOfExpr
+     *
+     * @return string
      *
      * @throws QueryException
+     *
+     * @not-deprecated
      */
     public function walkInstanceOfExpression($instanceOfExpr)
     {
@@ -2115,6 +2385,8 @@ class SqlWalker implements TreeWalker
      * @param mixed $inParam
      *
      * @return string
+     *
+     * @not-deprecated
      */
     public function walkInParameter($inParam)
     {
@@ -2124,7 +2396,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a literal that represents an AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\Literal $literal
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkLiteral($literal)
     {
@@ -2144,7 +2422,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a BetweenExpression AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\BetweenExpression $betweenExpr
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkBetweenExpression($betweenExpr)
     {
@@ -2161,7 +2445,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a LikeExpression AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\LikeExpression $likeExpr
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkLikeExpression($likeExpr)
     {
@@ -2196,7 +2486,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a StateFieldPathExpression AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\PathExpression $stateFieldPathExpression
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkStateFieldPathExpression($stateFieldPathExpression)
     {
@@ -2204,7 +2500,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a ComparisonExpression AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\ComparisonExpression $compExpr
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkComparisonExpression($compExpr)
     {
@@ -2226,7 +2528,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down an InputParameter AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\InputParameter $inputParam
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkInputParameter($inputParam)
     {
@@ -2245,7 +2553,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down an ArithmeticExpression AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\ArithmeticExpression $arithmeticExpr
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkArithmeticExpression($arithmeticExpr)
     {
@@ -2255,7 +2569,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down an SimpleArithmeticExpression AST node, thereby generating the appropriate SQL.
+     *
+     * @param AST\SimpleArithmeticExpression $simpleArithmeticExpr
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkSimpleArithmeticExpression($simpleArithmeticExpr)
     {
@@ -2267,13 +2587,19 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down an ArithmeticTerm AST node, thereby generating the appropriate SQL.
+     *
+     * @param mixed $term
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkArithmeticTerm($term)
     {
         if (is_string($term)) {
             return isset($this->queryComponents[$term])
-                ? $this->walkResultVariable($this->queryComponents[$term]['token']['value'])
+                ? $this->walkResultVariable($this->queryComponents[$term]['token']->value)
                 : $term;
         }
 
@@ -2287,13 +2613,19 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down an ArithmeticFactor that represents an AST node, thereby generating the appropriate SQL.
+     *
+     * @param mixed $factor
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkArithmeticFactor($factor)
     {
         if (is_string($factor)) {
             return isset($this->queryComponents[$factor])
-                ? $this->walkResultVariable($this->queryComponents[$factor]['token']['value'])
+                ? $this->walkResultVariable($this->queryComponents[$factor]['token']->value)
                 : $factor;
         }
 
@@ -2314,6 +2646,8 @@ class SqlWalker implements TreeWalker
      * @param mixed $primary
      *
      * @return string The SQL.
+     *
+     * @not-deprecated
      */
     public function walkArithmeticPrimary($primary)
     {
@@ -2329,7 +2663,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a StringPrimary that represents an AST node, thereby generating the appropriate SQL.
+     *
+     * @param mixed $stringPrimary
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkStringPrimary($stringPrimary)
     {
@@ -2339,7 +2679,13 @@ class SqlWalker implements TreeWalker
     }
 
     /**
-     * {@inheritdoc}
+     * Walks down a ResultVariable that represents an AST node, thereby generating the appropriate SQL.
+     *
+     * @param string $resultVariable
+     *
+     * @return string
+     *
+     * @not-deprecated
      */
     public function walkResultVariable($resultVariable)
     {
@@ -2362,7 +2708,7 @@ class SqlWalker implements TreeWalker
      * @throws QueryException
      */
     private function getChildDiscriminatorsFromClassMetadata(
-        ClassMetadataInfo $rootClass,
+        ClassMetadata $rootClass,
         AST\InstanceOfExpression $instanceOfExpr
     ): string {
         $sqlParameterList = [];

@@ -2,6 +2,6 @@ Git information
 ===============
 
 URL: https://github.com/unicode-org/icu.git
-Revision: c205e7ee49a7086a28b9c275fcfdac9ca3dc815d
-Author: yumaoka
-Date: 2022-03-30T14:47:46-04:00
+Revision: 5861e1fd52f1d7673eee38bc3c965aa18b336062
+Author: Peter Edberg
+Date: 2023-04-11T10:32:35-07:00

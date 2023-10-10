@@ -22,6 +22,8 @@ use function sprintf;
 
 /**
  * Contains exception messages for all invalid lifecycle state exceptions inside UnitOfWork
+ *
+ * @psalm-import-type AssociationMapping from ClassMetadata
  */
 class ORMInvalidArgumentException extends InvalidArgumentException
 {
@@ -80,8 +82,8 @@ class ORMInvalidArgumentException extends InvalidArgumentException
     }
 
     /**
-     * @param array[][]|object[][] $newEntitiesWithAssociations non-empty an array
-     *                                                              of [array $associationMapping, object $entity] pairs
+     * @psalm-param non-empty-list<array{AssociationMapping, object}> $newEntitiesWithAssociations non-empty an array
+     *                                                                of [array $associationMapping, object $entity] pairs
      *
      * @return ORMInvalidArgumentException
      */
@@ -109,7 +111,7 @@ class ORMInvalidArgumentException extends InvalidArgumentException
 
     /**
      * @param object $entry
-     * @psalm-param array<string, string> $associationMapping
+     * @psalm-param AssociationMapping $associationMapping
      *
      * @return ORMInvalidArgumentException
      */
@@ -120,7 +122,7 @@ class ORMInvalidArgumentException extends InvalidArgumentException
 
     /**
      * @param object $entry
-     * @psalm-param array<string, string> $assoc
+     * @psalm-param AssociationMapping $assoc
      *
      * @return ORMInvalidArgumentException
      */
@@ -188,18 +190,14 @@ class ORMInvalidArgumentException extends InvalidArgumentException
             ' to be an entity object, ' . gettype($given) . ' given.');
     }
 
-    /**
-     * @return ORMInvalidArgumentException
-     */
+    /** @return ORMInvalidArgumentException */
     public static function invalidCompositeIdentifier()
     {
         return new self('Binding an entity with a composite primary key to a query is not supported. ' .
             'You should split the parameter into the explicit fields and bind them separately.');
     }
 
-    /**
-     * @return ORMInvalidArgumentException
-     */
+    /** @return ORMInvalidArgumentException */
     public static function invalidIdentifierBindingEntity(/* string $class */)
     {
         if (func_num_args() === 0) {
@@ -224,8 +222,8 @@ EXCEPTION
     }
 
     /**
-     * @param mixed[] $assoc
-     * @param mixed   $actualValue
+     * @param AssociationMapping $assoc
+     * @param mixed              $actualValue
      *
      * @return self
      */
@@ -275,7 +273,7 @@ EXCEPTION
 
     /**
      * @param object $entity
-     * @psalm-param array<string,string> $associationMapping
+     * @psalm-param AssociationMapping $associationMapping
      */
     private static function newEntityFoundThroughRelationshipMessage(array $associationMapping, $entity): string
     {

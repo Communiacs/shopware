@@ -396,7 +396,7 @@ return [
         ],
         'GBP' => [
             0 => '£',
-            1 => 'Brits pond',
+            1 => 'Britse pond',
         ],
         'GEK' => [
             0 => 'GEK',
@@ -898,9 +898,13 @@ return [
             0 => 'SKK',
             1 => 'Slowaakse koruna',
         ],
+        'SLE' => [
+            0 => 'SLE',
+            1 => 'Sierra Leoonse leone',
+        ],
         'SLL' => [
             0 => 'SLL',
-            1 => 'Sierraleoonse leone',
+            1 => 'Sierraleoonse leone (1964—2022)',
         ],
         'SOS' => [
             0 => 'SOS',
@@ -1045,6 +1049,10 @@ return [
         'VEB' => [
             0 => 'VEB',
             1 => 'Venezolaanse bolivar (1871–2008)',
+        ],
+        'VED' => [
+            0 => 'VED',
+            1 => 'Bolívar Soberano',
         ],
         'VEF' => [
             0 => 'VEF',

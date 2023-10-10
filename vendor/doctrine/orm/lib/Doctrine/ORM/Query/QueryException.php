@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Doctrine\ORM\Query;
 
 use Doctrine\ORM\Exception\ORMException;
+use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Query\AST\PathExpression;
 use Exception;
 use Stringable;
 
+/** @psalm-import-type AssociationMapping from ClassMetadata */
 class QueryException extends ORMException
 {
     /**
@@ -43,9 +45,7 @@ class QueryException extends ORMException
         return new self('[Semantical Error] ' . $message, 0, $previous);
     }
 
-    /**
-     * @return QueryException
-     */
+    /** @return QueryException */
     public static function invalidLockMode()
     {
         return new self('Invalid lock mode hint provided.');
@@ -114,9 +114,7 @@ class QueryException extends ORMException
         return new self('Invalid parameter: token ' . $key . ' is not defined in the query.');
     }
 
-    /**
-     * @return QueryException
-     */
+    /** @return QueryException */
     public static function parameterTypeMismatch()
     {
         return new self('DQL Query parameter and type numbers mismatch, but have to be exactly equal.');
@@ -146,7 +144,7 @@ class QueryException extends ORMException
 
     /**
      * @param string[] $assoc
-     * @psalm-param array<string, string> $assoc
+     * @psalm-param AssociationMapping $assoc
      *
      * @return QueryException
      */
@@ -158,9 +156,7 @@ class QueryException extends ORMException
         );
     }
 
-    /**
-     * @return QueryException
-     */
+    /** @return QueryException */
     public static function partialObjectsAreDangerous()
     {
         return new self(
@@ -185,9 +181,7 @@ class QueryException extends ORMException
         );
     }
 
-    /**
-     * @return QueryException
-     */
+    /** @return QueryException */
     public static function associationPathInverseSideNotSupported(PathExpression $pathExpr)
     {
         return new self(
@@ -198,7 +192,7 @@ class QueryException extends ORMException
 
     /**
      * @param string[] $assoc
-     * @psalm-param array<string, string> $assoc
+     * @psalm-param AssociationMapping $assoc
      *
      * @return QueryException
      */
@@ -215,9 +209,7 @@ class QueryException extends ORMException
         return new self('Iterating a query with mixed results (using scalars) is not supported.');
     }
 
-    /**
-     * @return QueryException
-     */
+    /** @return QueryException */
     public static function associationPathCompositeKeyNotSupported()
     {
         return new self(

@@ -59,27 +59,21 @@ class TreeWalkerChainIterator implements Iterator, ArrayAccess
         return reset($this->walkers);
     }
 
-    /**
-     * @return TreeWalker|null
-     */
+    /** @return TreeWalker|null */
     #[ReturnTypeWillChange]
     public function current()
     {
         return $this->offsetGet(key($this->walkers));
     }
 
-    /**
-     * @return int
-     */
+    /** @return int */
     #[ReturnTypeWillChange]
     public function key()
     {
         return key($this->walkers);
     }
 
-    /**
-     * @return TreeWalker|null
-     */
+    /** @return TreeWalker|null */
     #[ReturnTypeWillChange]
     public function next()
     {
@@ -89,7 +83,7 @@ class TreeWalkerChainIterator implements Iterator, ArrayAccess
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      *
      * @return bool
      */
@@ -132,7 +126,7 @@ class TreeWalkerChainIterator implements Iterator, ArrayAccess
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      *
      * @param string $value
      * @psalm-param array-key|null $offset

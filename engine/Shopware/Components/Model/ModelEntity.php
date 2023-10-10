@@ -25,10 +25,13 @@
 namespace Shopware\Components\Model;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\ORM\Mapping as ORM;
 use InvalidArgumentException;
 
 /**
  * Abstract class for shopware standard models.
+ *
+ * @ORM\MappedSuperclass()
  */
 abstract class ModelEntity
 {
@@ -202,7 +205,7 @@ abstract class ModelEntity
         // Iterate all passed items
         foreach ($data as $item) {
             // To get the right collection item use the internal helper function
-            if (\is_array($item) && isset($item['id']) && $item['id'] !== null) {
+            if (\is_array($item) && isset($item['id'])) {
                 $attribute = $this->getArrayCollectionElementById($this->$getterFunction(), $item['id']);
                 if (!$attribute instanceof $model) {
                     $attribute = new $model();
@@ -210,7 +213,7 @@ abstract class ModelEntity
                 // If the item is an array without an id, create a new model.
             } elseif (\is_array($item)) {
                 $attribute = new $model();
-            // If the item is no array, it could be an instance of the expected object.
+                // If the item is no array, it could be an instance of the expected object.
             } else {
                 $attribute = $item;
             }

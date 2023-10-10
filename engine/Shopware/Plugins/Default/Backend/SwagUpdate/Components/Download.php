@@ -25,6 +25,7 @@
 namespace ShopwarePlugins\SwagUpdate\Components;
 
 use Exception;
+use RuntimeException;
 use SplFileObject;
 
 class Download
@@ -91,7 +92,12 @@ class Download
      */
     public function downloadFile($sourceUri, $destinationUri, $totalSize, $hash)
     {
-        if (($destination = fopen($destinationUri, 'a+')) === false) {
+        if (!\is_string($sourceUri) || $sourceUri === '') {
+            throw new RuntimeException('Invalid sourceUri given');
+        }
+
+        $destination = fopen($destinationUri, 'a+');
+        if (!\is_resource($destination)) {
             throw new Exception(sprintf('Destination "%s" is invalid.', $destinationUri));
         }
 
@@ -179,16 +185,12 @@ class Download
             // close local file connections before move for windows
             $partFilePath = $partFile->getPathname();
 
-            if (\is_resource($destination)) {
-                fclose($destination);
-            }
+            fclose($destination);
 
             unset($partFile);
             $this->moveFile($partFilePath, $destinationUri);
-        }
-
-        // close local file
-        if (\is_resource($destination)) {
+        } else {
+            // close local file
             fclose($destination);
         }
 

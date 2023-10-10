@@ -7,18 +7,19 @@ use Mpdf\File\StreamWrapperChecker;
 use Mpdf\Http\ClientInterface;
 use Mpdf\Http\Request;
 use Mpdf\Log\Context as LogContext;
+use Mpdf\PsrLogAwareTrait\PsrLogAwareTrait;
 use Psr\Log\LoggerInterface;
 
 class AssetFetcher implements \Psr\Log\LoggerAwareInterface
 {
+
+	use PsrLogAwareTrait;
 
 	private $mpdf;
 
 	private $contentLoader;
 
 	private $http;
-
-	private $logger;
 
 	public function __construct(Mpdf $mpdf, LocalContentLoaderInterface $contentLoader, ClientInterface $http, LoggerInterface $logger)
 	{
@@ -47,7 +48,7 @@ class AssetFetcher implements \Psr\Log\LoggerAwareInterface
 
 		$this->mpdf->GetFullPath($path);
 
-		return $this->isPathLocal($path)
+		return $this->isPathLocal($path) || ($originalSrc !== null && $this->isPathLocal($originalSrc))
 			? $this->fetchLocalContent($path, $originalSrc)
 			: $this->fetchRemoteContent($path);
 	}
@@ -102,7 +103,7 @@ class AssetFetcher implements \Psr\Log\LoggerAwareInterface
 		} catch (\InvalidArgumentException $e) {
 			$message = sprintf('Unable to fetch remote content "%s" because of an error "%s"', $path, $e->getMessage());
 			if ($this->mpdf->debug) {
-				throw new \Mpdf\MpdfException($message, 0, $e);
+				throw new \Mpdf\MpdfException($message, 0, E_ERROR, null, null, $e);
 			}
 
 			$this->logger->warning($message);
@@ -114,11 +115,6 @@ class AssetFetcher implements \Psr\Log\LoggerAwareInterface
 	public function isPathLocal($path)
 	{
 		return strpos($path, '://') === false; // @todo More robust implementation
-	}
-
-	public function setLogger(LoggerInterface $logger)
-	{
-		$this->logger = $logger;
 	}
 
 }

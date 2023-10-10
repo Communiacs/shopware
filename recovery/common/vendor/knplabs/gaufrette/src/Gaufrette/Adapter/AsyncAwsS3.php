@@ -2,6 +2,7 @@
 
 namespace Gaufrette\Adapter;
 
+use AsyncAws\Core\Configuration;
 use AsyncAws\SimpleS3\SimpleS3Client;
 use Gaufrette\Adapter;
 use Gaufrette\Util;
@@ -71,7 +72,7 @@ class AsyncAwsS3 implements Adapter, MetadataSupporter, ListKeysAware, SizeCalcu
      */
     public function getMetadata($key)
     {
-        return isset($this->metadata[$key]) ? $this->metadata[$key] : [];
+        return $this->metadata[$key] ?? [];
     }
 
     /**
@@ -276,9 +277,11 @@ class AsyncAwsS3 implements Adapter, MetadataSupporter, ListKeysAware, SizeCalcu
                 $this->bucket
             ));
         }
-
         $this->service->createBucket([
             'Bucket' => $this->bucket,
+            'CreateBucketConfiguration' => [
+                'LocationConstraint' => $this->service->getConfiguration()->get(Configuration::OPTION_REGION),
+            ],
         ]);
         $this->bucketExists = true;
 

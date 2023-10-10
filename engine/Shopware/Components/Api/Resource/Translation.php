@@ -83,7 +83,7 @@ class Translation extends Resource implements BatchInterface
      */
     private $translationComponent;
 
-    public function __construct(Shopware_Components_Translation $translationComponent = null)
+    public function __construct(?Shopware_Components_Translation $translationComponent = null)
     {
         $this->translationComponent = $translationComponent ?: Shopware()->Container()->get(Shopware_Components_Translation::class);
     }
@@ -136,11 +136,12 @@ class Translation extends Resource implements BatchInterface
     ) {
         $this->checkPrivilege('read');
 
+        /** @var Query<array<string, mixed>> $query */
         $query = $this->getListQuery($offset, $limit, $criteria, $orderBy)->getQuery();
-        $query->setHydrationMode($this->getResultMode());
+        $query->setHydrationMode(self::HYDRATE_ARRAY);
         $paginator = $this->getManager()->createPaginator($query);
 
-        $translations = $paginator->getIterator()->getArrayCopy();
+        $translations = iterator_to_array($paginator);
 
         foreach ($translations as &$translation) {
             unset($translation['id']);

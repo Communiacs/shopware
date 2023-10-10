@@ -59,7 +59,7 @@ class AppCache extends HttpCache
     protected $cacheDir;
 
     /**
-     * @var array
+     * @var array<string, mixed>
      */
     protected $options = [
         'purge_allowed_ips' => ['127.0.0.1', '::1'],
@@ -68,8 +68,8 @@ class AppCache extends HttpCache
     ];
 
     /**
-     * @param HttpKernelInterface $kernel  An HttpKernelInterface instance
-     * @param array               $options
+     * @param HttpKernelInterface  $kernel  An HttpKernelInterface instance
+     * @param array<string, mixed> $options
      */
     public function __construct(HttpKernelInterface $kernel, $options)
     {
@@ -118,6 +118,10 @@ class AppCache extends HttpCache
 
         $response->headers->remove('cache-control');
         $response->headers->addCacheControlDirective('no-cache');
+
+        if (str_starts_with($request->getPathInfo(), '/account')) {
+            $response->headers->addCacheControlDirective('no-store');
+        }
 
         $response = $this->handleCookies($request, $response);
 
@@ -256,7 +260,7 @@ class AppCache extends HttpCache
      *
      * @return Response A Response instance
      */
-    protected function forward(Request $request, $raw = false, Response $entry = null)
+    protected function forward(Request $request, $raw = false, ?Response $entry = null)
     {
         $this->getKernel()->boot();
 
@@ -343,10 +347,7 @@ class AppCache extends HttpCache
             return;
         }
 
-        $noCache = $request->cookies->get('nocache');
-        if (!\is_string($noCache)) {
-            return;
-        }
+        $noCache = $request->cookies->get('nocache', '');
 
         $noCache = array_filter(explode(', ', $noCache));
         if (\in_array('slt', $noCache, true)) {

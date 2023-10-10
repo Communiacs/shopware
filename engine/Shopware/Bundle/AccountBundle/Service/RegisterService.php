@@ -106,7 +106,7 @@ class RegisterService implements RegisterServiceInterface
         ShopStruct $shop,
         Customer $customer,
         Address $billing,
-        Address $shipping = null
+        ?Address $shipping = null
     ) {
         $this->modelManager->beginTransaction();
         try {
@@ -234,7 +234,7 @@ class RegisterService implements RegisterServiceInterface
     private function doubleOptInVerificationMail(ShopStruct $shop, Customer $customer, string $hash): void
     {
         $container = Shopware()->Container();
-        $router = Shopware()->Front()->Router();
+        $router = Shopware()->Front()->ensureRouter();
 
         $shopModel = $this->modelManager->getRepository(ShopModel::class)->getById($shop->getId());
         if ($shopModel === null) {

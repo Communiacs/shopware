@@ -31,24 +31,20 @@ class ArithmeticFactor extends Node
         $this->sign              = $sign;
     }
 
-    /**
-     * @return bool
-     */
+    /** @return bool */
     public function isPositiveSigned()
     {
         return $this->sign === true;
     }
 
-    /**
-     * @return bool
-     */
+    /** @return bool */
     public function isNegativeSigned()
     {
         return $this->sign === false;
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function dispatch($sqlWalker)
     {

@@ -22,10 +22,7 @@ class BitAndFunction extends FunctionNode
     /** @var Node */
     public $secondArithmetic;
 
-    /**
-     * @override
-     * @inheritdoc
-     */
+    /** @inheritDoc */
     public function getSql(SqlWalker $sqlWalker)
     {
         $platform = $sqlWalker->getConnection()->getDatabasePlatform();
@@ -36,10 +33,7 @@ class BitAndFunction extends FunctionNode
         );
     }
 
-    /**
-     * @override
-     * @inheritdoc
-     */
+    /** @inheritDoc */
     public function parse(Parser $parser)
     {
         $parser->match(Lexer::T_IDENTIFIER);

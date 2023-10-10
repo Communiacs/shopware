@@ -14,16 +14,14 @@ class ConditionalTerm extends Node
     /** @var mixed[] */
     public $conditionalFactors = [];
 
-    /**
-     * @param mixed[] $conditionalFactors
-     */
+    /** @param mixed[] $conditionalFactors */
     public function __construct(array $conditionalFactors)
     {
         $this->conditionalFactors = $conditionalFactors;
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function dispatch($sqlWalker)
     {

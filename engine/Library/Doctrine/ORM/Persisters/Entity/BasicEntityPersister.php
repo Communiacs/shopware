@@ -87,6 +87,8 @@ use function trim;
  *
  * Subclasses can be created to provide custom persisting and querying strategies,
  * i.e. spanning multiple tables.
+ *
+ * @psalm-import-type AssociationMapping from ClassMetadata
  */
 class BasicEntityPersister implements EntityPersister
 {
@@ -217,7 +219,7 @@ class BasicEntityPersister implements EntityPersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function getClassMetadata()
     {
@@ -225,7 +227,7 @@ class BasicEntityPersister implements EntityPersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function getResultSetMapping()
     {
@@ -233,7 +235,7 @@ class BasicEntityPersister implements EntityPersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function addInsert($entity)
     {
@@ -241,7 +243,7 @@ class BasicEntityPersister implements EntityPersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function getInserts()
     {
@@ -249,7 +251,7 @@ class BasicEntityPersister implements EntityPersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function executeInserts()
     {
@@ -271,6 +273,10 @@ class BasicEntityPersister implements EntityPersister
                 $paramIndex = 1;
 
                 foreach ($insertData[$tableName] as $column => $value) {
+                    if ($value instanceof BackedEnum) {
+                        $value = $value->value;
+                    }
+
                     $stmt->bindValue($paramIndex++, $value, $this->columnTypes[$column]);
                 }
             }
@@ -386,7 +392,7 @@ class BasicEntityPersister implements EntityPersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function update($entity)
     {
@@ -487,14 +493,15 @@ class BasicEntityPersister implements EntityPersister
             $targetType    = PersisterHelper::getTypeOfField($targetMapping->identifier[0], $targetMapping, $this->em);
 
             if ($targetType === []) {
-                throw UnrecognizedField::byName($targetMapping->identifier[0]);
+                throw UnrecognizedField::byFullyQualifiedName($this->class->name, $targetMapping->identifier[0]);
             }
 
             $types[] = reset($targetType);
         }
 
         if ($versioned) {
-            $versionField     = $this->class->versionField;
+            $versionField = $this->class->versionField;
+            assert($versionField !== null);
             $versionFieldType = $this->class->fieldMappings[$versionField]['type'];
             $versionColumn    = $this->quoteStrategy->getColumnName($versionField, $this->class, $this->platform);
 
@@ -586,7 +593,7 @@ class BasicEntityPersister implements EntityPersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function delete($entity)
     {
@@ -776,7 +783,7 @@ class BasicEntityPersister implements EntityPersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function getOwningTable($fieldName)
     {
@@ -784,7 +791,7 @@ class BasicEntityPersister implements EntityPersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function load(array $criteria, $entity = null, $assoc = null, array $hints = [], $lockMode = null, $limit = null, ?array $orderBy = null)
     {
@@ -806,7 +813,7 @@ class BasicEntityPersister implements EntityPersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function loadById(array $identifier, $entity = null)
     {
@@ -814,7 +821,7 @@ class BasicEntityPersister implements EntityPersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function loadOneToOneEntity(array $assoc, $sourceEntity, array $identifier = [])
     {
@@ -874,7 +881,7 @@ class BasicEntityPersister implements EntityPersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function refresh(array $id, $entity, $lockMode = null)
     {
@@ -901,7 +908,7 @@ class BasicEntityPersister implements EntityPersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function loadCriteria(Criteria $criteria)
     {
@@ -919,7 +926,7 @@ class BasicEntityPersister implements EntityPersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function expandCriteriaParameters(Criteria $criteria)
     {
@@ -935,22 +942,24 @@ class BasicEntityPersister implements EntityPersister
 
         $valueVisitor->dispatch($expression);
 
-        [$params, $types] = $valueVisitor->getParamsAndTypes();
-
-        foreach ($params as $param) {
-            $sqlParams = array_merge($sqlParams, $this->getValues($param));
-        }
+        [, $types] = $valueVisitor->getParamsAndTypes();
 
         foreach ($types as $type) {
-            [$field, $value] = $type;
-            $sqlTypes        = array_merge($sqlTypes, $this->getTypes($field, $value, $this->class));
+            [$field, $value, $operator] = $type;
+
+            if ($value === null && ($operator === Comparison::EQ || $operator === Comparison::NEQ)) {
+                continue;
+            }
+
+            $sqlParams = array_merge($sqlParams, $this->getValues($value));
+            $sqlTypes  = array_merge($sqlTypes, $this->getTypes($field, $value, $this->class));
         }
 
         return [$sqlParams, $sqlTypes];
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function loadAll(array $criteria = [], ?array $orderBy = null, $limit = null, $offset = null)
     {
@@ -966,7 +975,7 @@ class BasicEntityPersister implements EntityPersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function getManyToManyCollection(array $assoc, $sourceEntity, $offset = null, $limit = null)
     {
@@ -1024,7 +1033,7 @@ class BasicEntityPersister implements EntityPersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function loadManyToManyCollection(array $assoc, $sourceEntity, PersistentCollection $collection)
     {
@@ -1110,7 +1119,7 @@ class BasicEntityPersister implements EntityPersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function getSelectSQL($criteria, $assoc = null, $lockMode = null, $limit = null, $offset = null, ?array $orderBy = null)
     {
@@ -1244,7 +1253,7 @@ class BasicEntityPersister implements EntityPersister
                 continue;
             }
 
-            throw UnrecognizedField::byName($fieldName);
+            throw UnrecognizedField::byFullyQualifiedName($this->class->name, $fieldName);
         }
 
         return ' ORDER BY ' . implode(', ', $orderByList);
@@ -1377,9 +1386,9 @@ class BasicEntityPersister implements EntityPersister
     /**
      * Gets the SQL join fragment used when selecting entities from an association.
      *
-     * @param string  $field
-     * @param mixed[] $assoc
-     * @param string  $alias
+     * @param string             $field
+     * @param AssociationMapping $assoc
+     * @param string             $alias
      *
      * @return string
      */
@@ -1411,7 +1420,7 @@ class BasicEntityPersister implements EntityPersister
      * Gets the SQL join fragment used when selecting entities from a
      * many-to-many association.
      *
-     * @psalm-param array<string, mixed> $manyToMany
+     * @psalm-param AssociationMapping $manyToMany
      *
      * @return string
      */
@@ -1441,7 +1450,7 @@ class BasicEntityPersister implements EntityPersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function getInsertSQL()
     {
@@ -1551,6 +1560,9 @@ class BasicEntityPersister implements EntityPersister
         $columnAlias  = $this->getSQLColumnAlias($fieldMapping['columnName']);
 
         $this->currentPersisterContext->rsm->addFieldResult($alias, $columnAlias, $field);
+        if (! empty($fieldMapping['enumType'])) {
+            $this->currentPersisterContext->rsm->addEnumResult($columnAlias, $fieldMapping['enumType']);
+        }
 
         if (isset($fieldMapping['requireSQLConversion'])) {
             $type = Type::getType($fieldMapping['type']);
@@ -1588,7 +1600,7 @@ class BasicEntityPersister implements EntityPersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function lock(array $criteria, $lockMode)
     {
@@ -1665,7 +1677,7 @@ class BasicEntityPersister implements EntityPersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function getSelectConditionStatementSQL($field, $value, $assoc = null, $comparison = null)
     {
@@ -1736,7 +1748,7 @@ class BasicEntityPersister implements EntityPersister
     /**
      * Builds the left-hand-side of a where condition statement.
      *
-     * @psalm-param array<string, mixed>|null $assoc
+     * @psalm-param AssociationMapping|null $assoc
      *
      * @return string[]
      * @psalm-return list<string>
@@ -1799,7 +1811,7 @@ class BasicEntityPersister implements EntityPersister
             return [$field];
         }
 
-        throw UnrecognizedField::byName($field);
+        throw UnrecognizedField::byFullyQualifiedName($this->class->name, $field);
     }
 
     /**
@@ -1809,7 +1821,7 @@ class BasicEntityPersister implements EntityPersister
      * Subclasses are supposed to override this method if they intend to change
      * or alter the criteria by which entities are selected.
      *
-     * @param mixed[]|null $assoc
+     * @param AssociationMapping|null $assoc
      * @psalm-param array<string, mixed> $criteria
      * @psalm-param array<string, mixed>|null $assoc
      *
@@ -1827,7 +1839,7 @@ class BasicEntityPersister implements EntityPersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function getOneToManyCollection(array $assoc, $sourceEntity, $offset = null, $limit = null)
     {
@@ -1839,7 +1851,7 @@ class BasicEntityPersister implements EntityPersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function loadOneToManyCollection(array $assoc, $sourceEntity, PersistentCollection $collection)
     {
@@ -1852,7 +1864,7 @@ class BasicEntityPersister implements EntityPersister
      * Builds criteria and execute SQL statement to fetch the one to many entities from.
      *
      * @param object $sourceEntity
-     * @psalm-param array<string, mixed> $assoc
+     * @psalm-param AssociationMapping $assoc
      */
     private function getOneToManyStatement(
         array $assoc,
@@ -1906,7 +1918,7 @@ class BasicEntityPersister implements EntityPersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function expandParameters($criteria)
     {
@@ -2069,7 +2081,7 @@ class BasicEntityPersister implements EntityPersister
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function exists($entity, ?Criteria $extraConditions = null)
     {

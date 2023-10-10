@@ -32,7 +32,7 @@ class DefaultPreFilter implements PreFilterInterface
     /**
      * {@inheritdoc}
      */
-    public function preFilter($params, Context $context = null)
+    public function preFilter($params, ?Context $context = null)
     {
         // Add support for "shopware.php?sViewport,cat&sCategory=3"
         if (\is_string($params)) {
@@ -73,10 +73,14 @@ class DefaultPreFilter implements PreFilterInterface
             $params['module'] = 'frontend';
         }
         $params = array_merge($globalParams, $params);
+        $newParams = [];
+        foreach ($params as $key => $param) {
+            $newParams[(string) $key] = $param;
+        }
         if ($context) {
-            $context->setParams($params);
+            $context->setParams($newParams);
         }
 
-        return $params;
+        return $newParams;
     }
 }

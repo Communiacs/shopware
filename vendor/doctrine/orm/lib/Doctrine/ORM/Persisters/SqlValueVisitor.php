@@ -23,44 +23,40 @@ class SqlValueVisitor extends ExpressionVisitor
     /**
      * Converts a comparison expression into the target query language output.
      *
-     * @return void
+     * {@inheritDoc}
      */
     public function walkComparison(Comparison $comparison)
     {
-        $value    = $this->getValueFromComparison($comparison);
-        $field    = $comparison->getField();
-        $operator = $comparison->getOperator();
-
-        if (($operator === Comparison::EQ || $operator === Comparison::IS) && $value === null) {
-            return;
-        } elseif ($operator === Comparison::NEQ && $value === null) {
-            return;
-        }
+        $value = $this->getValueFromComparison($comparison);
 
         $this->values[] = $value;
-        $this->types[]  = [$field, $value, $operator];
+        $this->types[]  = [$comparison->getField(), $value, $comparison->getOperator()];
+
+        return null;
     }
 
     /**
      * Converts a composite expression into the target query language output.
      *
-     * @return void
+     * {@inheritDoc}
      */
     public function walkCompositeExpression(CompositeExpression $expr)
     {
         foreach ($expr->getExpressionList() as $child) {
             $this->dispatch($child);
         }
+
+        return null;
     }
 
     /**
      * Converts a value expression into the target query language part.
      *
-     * @return void
+     * {@inheritDoc}
      */
     public function walkValue(Value $value)
     {
-        return;
+        return null;
     }
 
     /**

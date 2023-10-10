@@ -24,6 +24,7 @@
 
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\AbstractQuery;
+use Doctrine\ORM\Query;
 use Shopware\Bundle\MediaBundle\Exception\MediaFileExtensionIsBlacklistedException;
 use Shopware\Bundle\MediaBundle\MediaServiceInterface;
 use Shopware\Bundle\StoreFrontBundle\Service\AdditionalTextServiceInterface;
@@ -425,6 +426,9 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
         ]);
     }
 
+    /**
+     * @return void
+     */
     public function saveMediaMappingAction()
     {
         $imageId = (int) $this->Request()->getParam('id');
@@ -438,6 +442,10 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
 
         $query = $this->getRepository()->getArticleImageDataQuery($imageId);
         $image = $query->getOneOrNullResult(AbstractQuery::HYDRATE_OBJECT);
+        if (!$image instanceof Image) {
+            throw new ModelNotFoundException(Image::class, $imageId);
+        }
+
         $imageData = $query->getOneOrNullResult(AbstractQuery::HYDRATE_ARRAY);
         $this->getRepository()->getDeleteImageChildrenQuery($imageId)->execute();
 
@@ -946,8 +954,6 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
      */
     public function getArticleImages($articleId)
     {
-        trigger_error(sprintf('%s:%s is deprecated since Shopware 5.6 and will be private with 5.8.', __CLASS__, __METHOD__), E_USER_DEPRECATED);
-
         $mediaService = Shopware()->Container()->get(MediaServiceInterface::class);
 
         $thumbnailManager = Shopware()->Container()->get(Manager::class);
@@ -968,6 +974,9 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
         $result = $builder->getQuery()->getArrayResult();
 
         foreach ($result as &$item) {
+            if (empty($item['media'])) {
+                continue;
+            }
             $thumbnails = $thumbnailManager->getMediaThumbnails(
                 $item['media']['name'],
                 $item['media']['type'],
@@ -1325,6 +1334,9 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
         $detailData = $this->setDetailDataReferences($detailData, $product);
 
         $configuratorSet = $product->getConfiguratorSet();
+        if (!$configuratorSet instanceof Set) {
+            throw new Exception(sprintf('Should not happen. The product with the given ID "%s" must be a variant product at this point.', $productId));
+        }
         $dependencies = $this->getRepository()->getConfiguratorDependenciesQuery($configuratorSet->getId())->getArrayResult();
         $priceVariations = $this->getRepository()->getConfiguratorPriceVariationsQuery($configuratorSet->getId())->getArrayResult();
 
@@ -1503,6 +1515,16 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
             }
             if ($model->getId() !== $product->getMainDetail()->getId()) {
                 $this->get('models')->remove($model);
+
+                $configuratorSet = $product->getConfiguratorSet();
+                if (!$configuratorSet instanceof Set) {
+                    continue;
+                }
+                $setId = $configuratorSet->getId();
+                foreach ($detail['configuratorOptions'] as $option) {
+                    $sql = 'DELETE FROM s_article_configurator_set_option_relations WHERE set_id = :setId AND option_id = :optionId;';
+                    $this->container->get(Connection::class)->executeQuery($sql, ['setId' => $setId, 'optionId' => $option['id']]);
+                }
             }
         }
         $this->get('models')->flush();
@@ -1599,7 +1621,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
             $totalResult = $paginator->count();
 
             // returns the customer data
-            $result = $paginator->getIterator()->getArrayCopy();
+            $result = iterator_to_array($paginator);
 
             $products = $this->buildListProducts($result);
             $products = $this->getAdditionalTexts($products);
@@ -1630,7 +1652,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
         $totalResult = $paginator->count();
 
         // returns the customer data
-        $result = $paginator->getIterator()->getArrayCopy();
+        $result = iterator_to_array($paginator);
 
         // inserts esd attributes into the result
         $result = $this->getEsdListingAttributes($result);
@@ -1664,7 +1686,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
         $totalResult = $paginator->count();
 
         // returns the customer data
-        $result = $paginator->getIterator()->getArrayCopy();
+        $result = iterator_to_array($paginator);
 
         $this->View()->assign([
             'data' => $result,
@@ -2141,10 +2163,11 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
         $commands = $this->prepareNumberSyntax($syntax);
 
         $builder = $this->getVariantsWithOptionsBuilder($productId, $offset, $limit);
+        /** @var Query<ProductVariant> $query */
         $query = $builder->getQuery();
         $query->setHydrationMode(AbstractQuery::HYDRATE_OBJECT);
         $paginator = $this->getModelManager()->createPaginator($query);
-        $details = $paginator->getIterator()->getArrayCopy();
+        $details = iterator_to_array($paginator);
 
         $counter = $offset;
         if ($offset == 0) {
@@ -2256,7 +2279,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
 
         Shopware()->Session()->set('Admin', true);
 
-        $url = $this->Front()->Router()->assemble(
+        $url = $this->Front()->ensureRouter()->assemble(
             [
                 'module' => 'frontend',
                 'controller' => 'detail',
@@ -3023,8 +3046,11 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
             ->getQuery()
             ->execute();
 
-        $sql = 'DELETE FROM s_article_configurator_option_relations WHERE article_id IN (?)';
-        Shopware()->Db()->query($sql, [implode(',', $detailIds)]);
+        $this->get(Connection::class)->createQueryBuilder()
+            ->delete('s_article_configurator_option_relations')
+            ->where('article_id IN (:detailIds)')
+            ->setParameter('detailIds', $detailIds, Connection::PARAM_INT_ARRAY)
+            ->execute();
 
         $builder = $this->get('models')->createQueryBuilder();
         $builder->delete(Price::class, 'prices')
@@ -3362,6 +3388,9 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
     protected function deleteVariantsForAllDeactivatedOptions($article, $selectedOptions)
     {
         $configuratorSet = $article->getConfiguratorSet();
+        if (!$configuratorSet instanceof Set) {
+            return;
+        }
         $oldOptions = $configuratorSet->getOptions();
         $ids = [];
         foreach ($oldOptions as $oldOption) {
@@ -3761,17 +3790,18 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
      */
     protected function prepareConfiguratorAssociatedData($data, $article)
     {
+        $modelManger = $this->get('models');
         if (!empty($data['configuratorSetId'])) {
-            $data['configuratorSet'] = $this->get('models')->find(Set::class, $data['configuratorSetId']);
+            $data['configuratorSet'] = $modelManger->find(Set::class, $data['configuratorSetId']);
         } elseif ($data['isConfigurator']) {
             $set = new Set();
             $set->setName('Set-' . $data['mainDetail']['number']);
             $set->setPublic(false);
             $data['configuratorSet'] = $set;
         } else {
-            // If the product has an configurator set, we have to remove this set if it isn't used for other products
+            // If the product has a configurator set, we have to remove this set if it isn't used for other products
             if ($article->getConfiguratorSet() && $article->getConfiguratorSet()->getId()) {
-                $builder = $this->get('models')->createQueryBuilder();
+                $builder = $modelManger->createQueryBuilder();
                 $products = $builder->select(['articles'])
                     ->from(Product::class, 'articles')
                     ->where('articles.configuratorSetId = ?1')
@@ -3780,8 +3810,17 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
                     ->getArrayResult();
 
                 if (\count($products) <= 1) {
-                    $set = $this->get('models')->find(Set::class, $article->getConfiguratorSet()->getId());
-                    $this->get('models')->remove($set);
+                    $set = $modelManger->find(Set::class, $article->getConfiguratorSet()->getId());
+                    $modelManger->remove($set);
+                }
+
+                $variant = $article->getMainDetail();
+                if ($variant instanceof ProductVariant && $variant->getConfiguratorOptions()->count() > 0) {
+                    $modelManger->getConnection()->delete('s_article_configurator_option_relations', [
+                        'article_id' => $variant->getId(),
+                    ]);
+
+                    $data['mainDetail']['additionalText'] = '';
                 }
             }
             $data['configuratorSet'] = null;
@@ -4286,7 +4325,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
      * @param int|null $offset
      * @param int|null $limit
      *
-     * @return \Doctrine\ORM\QueryBuilder|QueryBuilder
+     * @return QueryBuilder
      */
     protected function getVariantsWithOptionsBuilder($articleId, $offset = null, $limit = null)
     {
@@ -4374,7 +4413,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
 
             return implode('.', $results);
 
-        // If the result of the current command on the cursor is an object
+            // If the result of the current command on the cursor is an object
         } elseif ($result instanceof Product || $result instanceof ProductVariant) {
             // We have to execute the next command on the result
             return $this->recursiveInterpreter($result, $index, $commands);
@@ -4430,7 +4469,7 @@ class Shopware_Controllers_Backend_Article extends Shopware_Controllers_Backend_
                 $cursor = 'detail';
                 $paths[0] = 'configuratorOptions';
                 break;
-            // all other commands will rout to the product
+                // all other commands will rout to the product
             default:
                 $cursor = 'article';
         }

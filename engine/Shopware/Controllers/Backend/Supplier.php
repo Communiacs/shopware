@@ -23,21 +23,21 @@
  */
 
 use Shopware\Bundle\MediaBundle\MediaServiceInterface;
+use Shopware\Models\Article\Article;
 use Shopware\Models\Article\Repository;
 use Shopware\Models\Article\Supplier;
 
 class Shopware_Controllers_Backend_Supplier extends Shopware_Controllers_Backend_ExtJs
 {
-    /**
-     * @var Repository
-     */
-    private $repository;
+    private ?Repository $repository = null;
 
     /**
      * Deletes a Supplier from the database
      * Feeds the view with an json encoded array containing
      * - success : boolean Set to true if everything went well otherwise it is set to false
      * - data    : int  Id of the deleted supplier
+     *
+     * @return void
      */
     public function deleteSupplierAction()
     {
@@ -48,7 +48,7 @@ class Shopware_Controllers_Backend_Supplier extends Shopware_Controllers_Backend
         }
 
         $id = (int) $this->Request()->get('id');
-        $supplierModel = $this->get('models')->find('Shopware\Models\Article\Supplier', $id);
+        $supplierModel = $this->get('models')->find(Supplier::class, $id);
 
         $this->get('models')->remove($supplierModel);
         $this->get('models')->flush();
@@ -67,6 +67,8 @@ class Shopware_Controllers_Backend_Supplier extends Shopware_Controllers_Backend
      *          - link : String
      *          - articleCounter : Int
      *          - description : String
+     *
+     * @return void
      */
     public function getSuppliersAction()
     {
@@ -104,7 +106,7 @@ class Shopware_Controllers_Backend_Supplier extends Shopware_Controllers_Backend
         unset($supplier);
 
         $this->View()->assign([
-            'success' => !empty($suppliers),
+            'success' => true,
             'data' => $suppliers,
             'total' => $total,
         ]);
@@ -114,6 +116,8 @@ class Shopware_Controllers_Backend_Supplier extends Shopware_Controllers_Backend
      * This method is called if a new supplier should be written to the database.
      * It works as a wrapper around the saveSupplier method to use ACL
      * ACL configuration is done in initAcl()
+     *
+     * @return void
      */
     public function createSupplierAction()
     {
@@ -124,6 +128,8 @@ class Shopware_Controllers_Backend_Supplier extends Shopware_Controllers_Backend
      * This method is called if a supplier should be updated.
      * It works as a wrapper around the saveSupplier method to use ACL
      * ACL configuration is done in initAcl()
+     *
+     * @return void
      */
     public function updateSupplierAction()
     {
@@ -143,6 +149,8 @@ class Shopware_Controllers_Backend_Supplier extends Shopware_Controllers_Backend
      *          - articleCounter : Int
      *          - description : String
      * [-errorMsg] : String containing the error message
+     *
+     * @return void
      */
     public function saveSuppliers()
     {
@@ -151,11 +159,9 @@ class Shopware_Controllers_Backend_Supplier extends Shopware_Controllers_Backend
 
             return;
         }
-        /** @var Supplier $supplierModel */
-        $supplierModel = null;
         $id = (int) $this->Request()->get('id');
         if ($id > 0) {
-            $supplierModel = $this->get('models')->find('Shopware\Models\Article\Supplier', $id);
+            $supplierModel = $this->get('models')->find(Supplier::class, $id);
         } else {
             $supplierModel = new Supplier();
         }
@@ -167,7 +173,7 @@ class Shopware_Controllers_Backend_Supplier extends Shopware_Controllers_Backend
         $supplierModel->setChanged();
 
         $mediaData = $this->Request()->get('media-manager-selection');
-        if (!empty($mediaData) && $mediaData !== null) {
+        if (!empty($mediaData)) {
             $supplierModel->setImage($this->Request()->get('media-manager-selection'));
         }
 
@@ -222,6 +228,8 @@ class Shopware_Controllers_Backend_Supplier extends Shopware_Controllers_Backend
      * Gets a single supplier
      *
      * @param int $id
+     *
+     * @return void
      */
     protected function getSingleSupplier($id)
     {
@@ -255,13 +263,11 @@ class Shopware_Controllers_Backend_Supplier extends Shopware_Controllers_Backend
 
     /**
      * Internal helper function to get access to the form repository.
-     *
-     * @return Repository
      */
-    private function getRepository()
+    private function getRepository(): Repository
     {
         if ($this->repository === null) {
-            $this->repository = $this->get('models')->getRepository('Shopware\Models\Article\Article');
+            $this->repository = $this->get('models')->getRepository(Article::class);
         }
 
         return $this->repository;

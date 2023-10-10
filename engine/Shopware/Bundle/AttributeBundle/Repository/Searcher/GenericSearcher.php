@@ -25,6 +25,7 @@
 namespace Shopware\Bundle\AttributeBundle\Repository\Searcher;
 
 use Doctrine\ORM\AbstractQuery;
+use Doctrine\ORM\Query;
 use Shopware\Bundle\AttributeBundle\Repository\SearchCriteria;
 use Shopware\Components\Model\ModelEntity;
 use Shopware\Components\Model\ModelManager;
@@ -52,7 +53,7 @@ class GenericSearcher implements SearcherInterface
      * @param class-string<ModelEntity> $entity
      * @param SearchBuilder             $searchBuilder
      */
-    public function __construct($entity, ModelManager $entityManager, SearchBuilder $searchBuilder = null)
+    public function __construct($entity, ModelManager $entityManager, ?SearchBuilder $searchBuilder = null)
     {
         $this->entity = $entity;
         $this->entityManager = $entityManager;
@@ -120,10 +121,11 @@ class GenericSearcher implements SearcherInterface
      */
     protected function createResult(QueryBuilder $builder)
     {
+        /** @var Query<array<string, mixed>> $query */
         $query = $builder->getQuery();
         $query->setHydrationMode(AbstractQuery::HYDRATE_ARRAY);
         $paginator = $this->entityManager->createPaginator($query);
-        $result = $paginator->getIterator()->getArrayCopy();
+        $result = iterator_to_array($paginator);
 
         $field = $this->getIdentifierField();
         $field = explode('.', $field);

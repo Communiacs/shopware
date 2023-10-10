@@ -11,6 +11,8 @@
 
 namespace Symfony\Component\Serializer\Normalizer;
 
+use Symfony\Component\Serializer\Annotation\Ignore;
+
 /**
  * Converts between objects with getter and setter methods and arrays.
  *
@@ -81,17 +83,12 @@ class GetSetMethodNormalizer extends AbstractObjectNormalizer
      */
     private function isGetMethod(\ReflectionMethod $method): bool
     {
-        $methodLength = \strlen($method->name);
-
-        return
-            !$method->isStatic() &&
-            (
-                ((str_starts_with($method->name, 'get') && 3 < $methodLength) ||
-                (str_starts_with($method->name, 'is') && 2 < $methodLength) ||
-                (str_starts_with($method->name, 'has') && 3 < $methodLength)) &&
-                0 === $method->getNumberOfRequiredParameters()
-            )
-        ;
+        return !$method->isStatic()
+            && (\PHP_VERSION_ID < 80000 || !$method->getAttributes(Ignore::class))
+            && !$method->getNumberOfRequiredParameters()
+            && ((2 < ($methodLength = \strlen($method->name)) && str_starts_with($method->name, 'is'))
+                || (3 < $methodLength && (str_starts_with($method->name, 'has') || str_starts_with($method->name, 'get')))
+            );
     }
 
     /**
@@ -126,17 +123,17 @@ class GetSetMethodNormalizer extends AbstractObjectNormalizer
         $ucfirsted = ucfirst($attribute);
 
         $getter = 'get'.$ucfirsted;
-        if (\is_callable([$object, $getter])) {
+        if (method_exists($object, $getter) && \is_callable([$object, $getter])) {
             return $object->$getter();
         }
 
         $isser = 'is'.$ucfirsted;
-        if (\is_callable([$object, $isser])) {
+        if (method_exists($object, $isser) && \is_callable([$object, $isser])) {
             return $object->$isser();
         }
 
         $haser = 'has'.$ucfirsted;
-        if (\is_callable([$object, $haser])) {
+        if (method_exists($object, $haser) && \is_callable([$object, $haser])) {
             return $object->$haser();
         }
 
@@ -152,7 +149,7 @@ class GetSetMethodNormalizer extends AbstractObjectNormalizer
         $key = \get_class($object).':'.$setter;
 
         if (!isset(self::$setterAccessibleCache[$key])) {
-            self::$setterAccessibleCache[$key] = \is_callable([$object, $setter]) && !(new \ReflectionMethod($object, $setter))->isStatic();
+            self::$setterAccessibleCache[$key] = method_exists($object, $setter) && \is_callable([$object, $setter]) && !(new \ReflectionMethod($object, $setter))->isStatic();
         }
 
         if (self::$setterAccessibleCache[$key]) {

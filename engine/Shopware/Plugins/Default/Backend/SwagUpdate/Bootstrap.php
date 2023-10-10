@@ -22,10 +22,6 @@
  * our trademarks remain entirely with us.
  */
 
-use Shopware\Components\OpenSSLVerifier;
-use Shopware\Models\Config\Form;
-use ShopwarePlugins\SwagUpdate\Components\UpdateCheck;
-
 class Shopware_Plugins_Backend_SwagUpdate_Bootstrap extends Shopware_Components_Plugin_Bootstrap
 {
     public function getVersion()
@@ -49,13 +45,6 @@ class Shopware_Plugins_Backend_SwagUpdate_Bootstrap extends Shopware_Components_
             'Enlight_Controller_Dispatcher_ControllerPath_Backend_SwagUpdate',
             'onGetSwagUpdateControllerPath'
         );
-
-        $this->subscribeEvent(
-            'Enlight_Bootstrap_InitResource_SwagUpdateUpdateCheck',
-            'onInitUpdateCheck'
-        );
-
-        $this->installForm($this->Form());
 
         $this->createMenuItem([
             'label' => 'SwagUpdate',
@@ -113,92 +102,5 @@ class Shopware_Plugins_Backend_SwagUpdate_Bootstrap extends Shopware_Components_
         );
 
         return __DIR__ . '/Controllers/Backend/SwagUpdate.php';
-    }
-
-    /**
-     * Returns an instance of the UpdateCheck component
-     */
-    public function onInitUpdateCheck()
-    {
-        return new UpdateCheck(
-            $this->Config()->get('update-api-endpoint'),
-            $this->Config()->get('update-channel'),
-            $this->Config()->get('update-verify-signature'),
-            Shopware()->Container()->get(OpenSSLVerifier::class),
-            Shopware()->Container()->get('shopware.release')
-        );
-    }
-
-    protected function installForm(Form $form)
-    {
-        $form->setElement(
-            'select',
-            'update-channel',
-            [
-                'label' => 'Channel',
-                'value' => 'stable',
-                'store' => [
-                    ['stable', 'stable'],
-                    ['beta',   'beta'],
-                    ['rc',     'rc'],
-                    ['dev',    'dev'],
-                ],
-            ]
-        );
-
-        $form->setElement('text', 'update-api-endpoint', [
-            'label' => 'API Endpoint',
-            'required' => true,
-            'value' => 'http://update-api.shopware.com/v1/',
-            'hidden' => true,
-        ]);
-
-        $form->setElement('text', 'update-fake-version', [
-            'label' => 'Fake Version',
-            'hidden' => true,
-        ]);
-
-        $form->setElement('text', 'update-code', [
-            'label' => 'Code',
-            'value' => '',
-        ]);
-
-        $form->setElement('boolean', 'update-verify-signature', [
-            'label' => 'Verify Signature',
-            'hidden' => true,
-            'value' => true,
-        ]);
-
-        $form->setElement('text', 'update-feedback-api-endpoint', [
-            'label' => 'Feedback API Endpoint',
-            'required' => true,
-            'value' => 'http://feedback.update-api.shopware.com/v1/',
-            'hidden' => true,
-        ]);
-
-        $form->setElement('boolean', 'update-send-feedback', [
-            'label' => 'Send feedback',
-            'value' => true,
-        ]);
-
-        $form->setElement('text', 'update-unique-id', [
-            'label' => 'Unique identifier',
-            'value' => '', // value will be populated on first access
-            'hidden' => true,
-        ]);
-
-        $this->addFormTranslations(
-            ['de_DE' => [
-                'update-code' => [
-                    'label' => 'Aktionscode',
-                ],
-                'update-send-feedback' => [
-                    'label' => 'Feedback senden',
-                ],
-                'update-channel' => [
-                    'label' => 'Update Kanal',
-                ],
-            ]]
-        );
     }
 }

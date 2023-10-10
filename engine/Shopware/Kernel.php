@@ -33,8 +33,6 @@ use Shopware;
 use Shopware\Bundle\AccountBundle\AccountBundle;
 use Shopware\Bundle\AttributeBundle\AttributeBundle;
 use Shopware\Bundle\AttributeBundle\DependencyInjection\Compiler\StaticResourcesCompilerPass;
-use Shopware\Bundle\BenchmarkBundle\BenchmarkBundle;
-use Shopware\Bundle\BenchmarkBundle\DependencyInjection\Compiler\MatcherCompilerPass;
 use Shopware\Bundle\ContentTypeBundle\ContentTypeBundle;
 use Shopware\Bundle\ContentTypeBundle\DependencyInjection\RegisterDynamicController;
 use Shopware\Bundle\ContentTypeBundle\DependencyInjection\RegisterFieldsCompilerPass;
@@ -107,9 +105,9 @@ class Kernel extends SymfonyKernel
      * Is available in the DIC as parameter 'shopware.release.*' or a Struct containing all the parameters below.
      */
     protected $release = [
-        'version' => '5.7.15',
+        'version' => '5.7.18',
         'version_text' => '',
-        'revision' => '202209081146',
+        'revision' => '202306271137',
     ];
 
     /**
@@ -460,7 +458,6 @@ class Kernel extends SymfonyKernel
         return [
             new AccountBundle(),
             new AttributeBundle(),
-            new BenchmarkBundle(),
             new CookieBundle(),
             new ContentTypeBundle(),
             new ControllerBundle(),
@@ -673,7 +670,6 @@ class Kernel extends SymfonyKernel
         $container->addCompilerPass(new StaticResourcesCompilerPass());
         $container->addCompilerPass(new AddConsoleCommandPass());
         $container->addCompilerPass(new ConfigureContainerAwareCommands());
-        $container->addCompilerPass(new MatcherCompilerPass());
         $container->addCompilerPass(new LegacyApiResourcesPass());
         $container->addCompilerPass(new ConfigureApiResourcesPass(), PassConfig::TYPE_OPTIMIZE, -500);
         $container->addCompilerPass(new RegisterFieldsCompilerPass(), PassConfig::TYPE_BEFORE_OPTIMIZATION, 500);

@@ -245,7 +245,7 @@ class sOrder implements Enlight_Hook
      * @throws Exception
      */
     public function __construct(
-        ContextServiceInterface $contextService = null
+        ?ContextServiceInterface $contextService = null
     ) {
         $container = Shopware()->Container();
 
@@ -294,7 +294,7 @@ class sOrder implements Enlight_Hook
         // Check if current order number is an esd variant.
         $esdProduct = $this->getVariantEsd($basketRow['ordernumber']);
 
-        if (!$esdProduct['id']) {
+        if (!$esdProduct || !$esdProduct['id']) {
             return $basketRow;
         }
 
@@ -359,6 +359,8 @@ class sOrder implements Enlight_Hook
 
     /**
      * Delete temporary created order
+     *
+     * @return void
      */
     public function sDeleteTemporaryOrder()
     {
@@ -388,6 +390,8 @@ class sOrder implements Enlight_Hook
      * Create temporary order (for order cancellation reports)
      *
      * @throws Enlight_Exception
+     *
+     * @return void
      */
     public function sCreateTemporaryOrder()
     {
@@ -532,6 +536,8 @@ class sOrder implements Enlight_Hook
 
     /**
      * Finally save order and send order confirmation to customer
+     *
+     * @return string|false
      */
     public function sSaveOrder()
     {
@@ -955,7 +961,16 @@ class sOrder implements Enlight_Hook
         }
 
         if (!($mail instanceof Zend_Mail)) {
-            $mail = Shopware()->TemplateMail()->createMail('sORDER', $context);
+            $overrideConfig = $this->eventManager->filter(
+                'Shopware_Modules_Order_SendMail_CreateMail_FilterOverrideConfig',
+                [],
+                [
+                    'subject' => $this,
+                    'context' => $context,
+                    'variables' => $variables,
+                ]
+            );
+            $mail = Shopware()->TemplateMail()->createMail('sORDER', $context, null, $overrideConfig);
         }
 
         $mail->addTo($this->sUserData['additional']['user']['email']);
@@ -1297,19 +1312,27 @@ class sOrder implements Enlight_Hook
     {
         $statusId = (int) $statusId;
         $orderId = (int) $orderId;
-        $dispatch = null;
 
         if (empty($templateName)) {
             $templateName = 'sORDERSTATEMAIL' . $statusId;
         }
 
-        if (empty($orderId) || !is_numeric($statusId)) {
+        if ($orderId === 0) {
+            return null;
+        }
+
+        $mailModel = $this->modelManager->getRepository(Mail::class)->findOneBy(
+            ['name' => $templateName]
+        );
+
+        if (!$mailModel instanceof Mail) {
             return null;
         }
 
         $order = $this->getOrderForStatusMail($orderId);
         $orderDetails = $this->getOrderDetailsForStatusMail($orderId);
 
+        $dispatch = null;
         if (!empty($order['dispatchID'])) {
             $dispatch = $this->db->fetchRow('
                 SELECT id, name, description FROM s_premium_dispatch
@@ -1346,14 +1369,6 @@ class sOrder implements Enlight_Hook
 
         if (!empty($payment['description'])) {
             $order['payment_description'] = $payment['description'];
-        }
-
-        $mailModel = $this->modelManager->getRepository(Mail::class)->findOneBy(
-            ['name' => $templateName]
-        );
-
-        if (!$mailModel) {
-            return null;
         }
 
         $context = [
@@ -1455,7 +1470,7 @@ class sOrder implements Enlight_Hook
     }
 
     /**
-     * Set payment status by order id
+     * Set order status by order id
      *
      * @param int         $orderId
      * @param int         $orderStatusId

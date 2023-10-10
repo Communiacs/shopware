@@ -24,13 +24,15 @@
 
 namespace Shopware\Bundle\ESIndexingBundle;
 
+use Shopware\Bundle\ESIndexingBundle\Struct\Backlog;
+
 interface BacklogReaderInterface
 {
     /**
      * @param int $lastId
      * @param int $limit
      *
-     * @return Struct\Backlog[]
+     * @return list<Backlog>
      */
     public function read($lastId, $limit);
 
@@ -41,6 +43,8 @@ interface BacklogReaderInterface
 
     /**
      * @param int $lastId
+     *
+     * @return void
      */
     public function setLastBacklogId($lastId);
 }

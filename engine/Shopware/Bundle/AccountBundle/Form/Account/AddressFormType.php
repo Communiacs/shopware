@@ -45,6 +45,9 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Constraints\NotBlank;
 
+/**
+ * @extends AbstractType<Address>
+ */
 class AddressFormType extends AbstractType
 {
     /**
@@ -89,9 +92,11 @@ class AddressFormType extends AbstractType
             $event->setData($data);
         });
 
-        $builder->add('salutation', SalutationType::class, [
-            'constraints' => [new NotBlank(['message' => null])],
-        ]);
+        if ($this->config->get('shopSalutationRequired')) {
+            $builder->add('salutation', SalutationType::class, [
+                'constraints' => [new NotBlank(['message' => null])],
+            ]);
+        }
 
         $builder->add('firstname', TextType::class, [
             'constraints' => [new NotBlank(['message' => null])],

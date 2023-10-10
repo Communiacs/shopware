@@ -33,8 +33,6 @@ final class NativeQuery extends AbstractQuery
 
     /**
      * Gets the SQL query.
-     *
-     * @override
      */
     public function getSQL(): string
     {
@@ -42,7 +40,7 @@ final class NativeQuery extends AbstractQuery
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     protected function _doExecute()
     {

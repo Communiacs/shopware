@@ -30,6 +30,7 @@ use Shopware\Components\OrderNumberValidator\OrderNumberValidatorInterface;
 use Shopware\Components\Privacy\IpAnonymizerInterface;
 use Shopware\Components\Random;
 use Shopware\Components\Validator\EmailValidator;
+use Shopware\Components\Validator\NoUrlValidator;
 use Shopware\Models\Form\Form;
 
 /**
@@ -230,7 +231,7 @@ class Shopware_Controllers_Frontend_Forms extends Enlight_Controller_Action
                                     $text .= sprintf(
                                         "\n%s x %s (%s) - %s %s",
                                         $basketRow['quantity'],
-                                            $basketRow['articlename'],
+                                        $basketRow['articlename'],
                                         $basketRow['ordernumber'],
                                         $basketRow['price'],
                                         Shopware()->System()->sCurrency['currency']
@@ -297,7 +298,7 @@ class Shopware_Controllers_Frontend_Forms extends Enlight_Controller_Action
         if ($element['typ'] === 'text2') {
             $output .= str_replace(';', '/', (string) $element['label']);
         } else {
-            $output .= (string) ($element['label']);
+            $output .= (string) $element['label'];
         }
         if ((bool) $element['required'] === true) {
             $output .= '*';
@@ -310,7 +311,7 @@ class Shopware_Controllers_Frontend_Forms extends Enlight_Controller_Action
     /**
      * Create input element method
      *
-     * @param string|null $post
+     * @param array<string>|string|null $post
      *
      * @return string
      */
@@ -334,7 +335,11 @@ class Shopware_Controllers_Frontend_Forms extends Enlight_Controller_Action
             case 'email':
             case 'text':
             case 'textarea':
+            case 'alphanumeric':
             case 'file':
+                if (\is_array($post)) {
+                    break;
+                }
                 $post = $this->_filterInput($post);
                 if (empty($post) && !empty($element['value'])) {
                     $post = $element['value'];
@@ -346,6 +351,9 @@ class Shopware_Controllers_Frontend_Forms extends Enlight_Controller_Action
                 break;
 
             case 'text2':
+                if (!\is_array($post)) {
+                    break;
+                }
                 $post[0] = $this->_filterInput($post[0]);
                 if (empty($post[0]) && !empty($element['value'][0])) {
                     $post[0] = $element['value'][0];
@@ -372,6 +380,20 @@ class Shopware_Controllers_Frontend_Forms extends Enlight_Controller_Action
                 $output .= sprintf(
                     "<input type=\"%s\" class=\"%s %s\" %s value=\"%s\" id=\"%s\" %s name=\"%s\"/>\r\n",
                     $element['typ'],
+                    $element['class'],
+                    $requiredField,
+                    $requiredFieldAria,
+                    $post,
+                    $element['name'],
+                    $placeholder,
+                    $element['name']
+                );
+                break;
+
+            case 'nourl':
+                $output .= sprintf(
+                    "<input type=\"%s\" class=\"%s %s\" %s value=\"%s\" id=\"%s\" %s name=\"%s\"/>\r\n",
+                    'text',
                     $element['class'],
                     $requiredField,
                     $requiredFieldAria,
@@ -525,14 +547,21 @@ class Shopware_Controllers_Frontend_Forms extends Enlight_Controller_Action
     }
 
     /**
-     * @param string $input
+     * @param string|null $input
      *
      * @return string
      */
     protected function _filterInput($input)
     {
+        if (!\is_string($input)) {
+            return '';
+        }
+
         // Remove all control characters, unassigned, private use, formatting and surrogate code points
         $input = preg_replace('#[^\PC\s]#u', '', $input);
+        if (!\is_string($input)) {
+            return '';
+        }
 
         $temp = str_replace('"', '', $input);
         if (preg_match('#{\s*/*literal\s*}#i', $temp) > 0) {
@@ -556,6 +585,7 @@ class Shopware_Controllers_Frontend_Forms extends Enlight_Controller_Action
         $errors = [];
 
         $emailValidator = $this->container->get(EmailValidator::class);
+        $noUrlValidator = $this->container->get(NoUrlValidator::class);
 
         foreach ($elements as $element) {
             $valid = true;
@@ -625,6 +655,14 @@ class Shopware_Controllers_Frontend_Forms extends Enlight_Controller_Action
                         }
                         break;
 
+                    case 'nourl':
+                        if (!$noUrlValidator->isValid($value)) {
+                            unset($value);
+                            $valid = false;
+                            break;
+                        }
+                        break;
+
                     default:
                         $value = trim(strip_tags($value));
                         if (empty($value)) {
@@ -679,7 +717,10 @@ class Shopware_Controllers_Frontend_Forms extends Enlight_Controller_Action
                 $data = [];
 
                 foreach ($translation as $key => $value) {
-                    $data[str_replace('__attribute_', '', $key)] = $value;
+                    $newKey = str_replace('__attribute_', '', $key);
+                    if (\is_string($newKey)) {
+                        $data[$newKey] = $value;
+                    }
                 }
 
                 $form->getAttribute()->fromArray($data);

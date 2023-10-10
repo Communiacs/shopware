@@ -246,6 +246,11 @@ return array_replace_recursive([
     'mail' => [
         'charset' => 'utf-8',
     ],
+    'update' => [
+        'url' => 'https://raw.githubusercontent.com/shopware5/shopware-release-cache/main/releases.json',
+        'draft' => false,
+        'prerelease' => false,
+    ],
     'httpcache' => [
         'enabled' => true,
         'lookup_optimization' => true,
@@ -290,12 +295,6 @@ return array_replace_recursive([
             'siteurl',
             '_ga',
             'fbclid',         // Facebook
-        ],
-    ],
-    'bi' => [
-        'endpoint' => [
-            'benchmark' => 'https://bi.shopware.com/benchmark',
-            'statistics' => 'https://bi.shopware.com/statistics',
         ],
     ],
     'session' => [

@@ -85,21 +85,21 @@ class Rule extends ModelEntity
      *
      * @ORM\Column(name="areaID", type="integer", nullable=true)
      */
-    private $areaId = null;
+    private $areaId;
 
     /**
      * @var int|null
      *
      * @ORM\Column(name="countryID", type="integer", nullable=true)
      */
-    private $countryId = null;
+    private $countryId;
 
     /**
      * @var int|null
      *
      * @ORM\Column(name="stateID", type="integer", nullable=true)
      */
-    private $stateId = null;
+    private $stateId;
 
     /**
      * @var int
@@ -142,6 +142,7 @@ class Rule extends ModelEntity
      * The association is joined over the tax rule stateID field and the id field of the state.
      *
      * @var State|null
+     *
      * @ORM\OneToOne(targetEntity="\Shopware\Models\Country\State")
      * @ORM\JoinColumn(name="stateID", referencedColumnName="id")
      */

@@ -37,9 +37,21 @@
         <service id="topseller" class="Shopware_Components_TopSeller" synthetic="true"/>
         <service id="backendsession" class="Enlight_Components_Session_Namespace" synthetic="true"/>
         <service id="httpcache" class="Shopware\Components\HttpCache\AppCache" synthetic="true"/>
-        <service id="swagupdateupdatecheck" class="ShopwarePlugins\SwagUpdate\Components\UpdateCheck" synthetic="true"/>
         <service id="shop" class="Shopware\Models\Shop\Shop" synthetic="true"/>
         <service id="auth" class="Shopware_Components_Auth" synthetic="true"/>
+
+        <service id="swagupdateupdatecheck" class="ShopwarePlugins\SwagUpdate\Components\UpdateCheck">
+            <argument type="service" id="update_api_client"/>
+            <argument>%shopware.update.draft%</argument>
+            <argument>%shopware.update.prerelease%</argument>
+        </service>
+
+        <service id="update_api_client" class="\Zend_Http_Client">
+            <argument>%shopware.update.url%</argument>
+            <argument type="collection">
+                <argument key="timeout">5</argument>
+            </argument>
+        </service>
 
         <service id="shopware.release" class="Shopware\Components\ShopwareReleaseStruct">
             <argument>%shopware.release.version%</argument>
@@ -79,7 +91,7 @@
 
         <service id="template_factory" class="Shopware\Components\DependencyInjection\Bridge\Template"/>
         <service id="Template" alias="template">
-            <deprecated>The "%alias_id%" service is deprecated. Use "template" instead</deprecated>
+            <deprecated>The "%service_id%" service is deprecated. Use "%alias_id%" instead</deprecated>
         </service>
         <service id="template" class="Enlight_Template_Manager">
             <factory service="template_factory" method="factory"/>
@@ -178,7 +190,7 @@
         </service>
 
         <service id="Loader" alias="loader">
-            <deprecated>The "%alias_id%" service is deprecated. Use "loader" instead</deprecated>
+            <deprecated>The "%service_id%" service is deprecated. Use "%alias_id%" instead</deprecated>
         </service>
         <service id="loader" class="Enlight_Loader"/>
         <service id="shopware.loader" alias="loader"/>
@@ -500,6 +512,7 @@
 
         <service id="validator.email" class="Shopware\Components\Validator\EmailValidator"/>
         <service id="validator.user_name" class="Shopware\Components\Validator\UserNameValidator"/>
+        <service id="Shopware\Components\Validator\NoUrlValidator"/>
 
         <service id="sitemapxml.repository" class="Shopware\Components\SitemapXMLRepository">
             <argument type="service" id="Shopware\Bundle\SearchBundle\ProductNumberSearchInterface"/>
@@ -644,7 +657,7 @@
         <service id="shopware.plugin_xml_plugin_reader" class="Shopware\Components\Plugin\XmlReader\XmlPluginReader"/>
 
         <service id="shopware.plugin_xml_plugin_info_reader" alias="shopware.plugin_xml_plugin_reader">
-            <deprecated>The "%alias_id%" service id is deprecated since 5.6.0, use "shopware.plugin_xml_plugin_reader" instead.</deprecated>
+            <deprecated>The "%service_id%" service id is deprecated since 5.6.0, use "%alias_id%" instead.</deprecated>
         </service>
 
         <service id="shopware.plugin_requirement_validator" class="Shopware\Components\Plugin\RequirementValidator">
@@ -929,6 +942,13 @@
             <argument type="service" id="Shopware\Components\Validator\UserNameValidator"/>
 
             <tag name="validator.constraint_validator" alias="UserNameValidator"/>
+        </service>
+
+        <service id="Shopware\Components\Auth\Constraint\NoUrlValidator">
+            <argument type="service" id="Shopware_Components_Snippet_Manager"/>
+            <argument type="service" id="Shopware\Components\Validator\NoUrlValidator"/>
+
+            <tag name="validator.constraint_validator" alias="NoUrlValidator"/>
         </service>
 
         <service id="shopware.components.privacy.privacy_cleanup_cron_subscriber" class="Shopware\Components\Privacy\PrivacyCleanupCronSubscriber">

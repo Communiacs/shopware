@@ -1,3 +1,30 @@
+v0.11.1
+=======
+
+## Added
+
+- gitattributes file to avoid download too much files on install with composer in #679
+
+## Fixed
+
+- Azure integraton with stream was not working properly, it has been fixed in #683
+
+v0.11.0
+=======
+
+## Added
+
+- Google Cloud Storage: options to automatically create bucket if not exists
+- Support for PHP 8.0+
+- Support for doctrine/dbal 3.x
+
+## Updated
+
+- Azure seems to have break compatibility, phpstan detected it and it's now fixed (#674)
+
+## Removed
+
+- Adapter for OpenCloud (#669)
 
 v0.10.0
 =======

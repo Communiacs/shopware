@@ -65,9 +65,7 @@ class EntityRepository implements ObjectRepository, Selectable
     /** @var Inflector|null */
     private static $inflector;
 
-    /**
-     * @psalm-param ClassMetadata<T> $class
-     */
+    /** @psalm-param ClassMetadata<T> $class */
     public function __construct(EntityManagerInterface $em, ClassMetadata $class)
     {
         $this->_entityName = $class->name;
@@ -299,16 +297,14 @@ class EntityRepository implements ObjectRepository, Selectable
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function getClassName()
     {
         return $this->getEntityName();
     }
 
-    /**
-     * @return EntityManagerInterface
-     */
+    /** @return EntityManagerInterface */
     protected function getEntityManager()
     {
         return $this->_em;

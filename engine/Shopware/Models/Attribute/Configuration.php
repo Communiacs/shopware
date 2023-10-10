@@ -88,6 +88,7 @@ class Configuration extends ModelEntity
 
     /**
      * @var bool
+     *
      * @ORM\Column(name="readonly", type="boolean", nullable=false)
      */
     private $readonly = false;
@@ -139,7 +140,7 @@ class Configuration extends ModelEntity
      *
      * @ORM\Column(name="array_store", type="text", nullable=true)
      */
-    private $arrayStore = null;
+    private $arrayStore;
 
     /**
      * @return int

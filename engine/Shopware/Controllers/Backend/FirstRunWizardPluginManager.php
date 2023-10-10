@@ -22,19 +22,23 @@
  * our trademarks remain entirely with us.
  */
 
-use Shopware\Bundle\PluginInstallerBundle\Service\AccountManagerService;
 use Shopware\Bundle\PluginInstallerBundle\Service\FirstRunWizardPluginStoreService;
+use Shopware\Bundle\PluginInstallerBundle\StoreClient;
 use Shopware\Bundle\PluginInstallerBundle\Struct\LocaleStruct;
-use Shopware\Bundle\PluginInstallerBundle\Struct\PluginStruct;
+use SwagPaymentPayPalUnified\Setup\FirstRunWizardInstaller;
 
 class Shopware_Controllers_Backend_FirstRunWizardPluginManager extends Shopware_Controllers_Backend_ExtJs
 {
+    /**
+     * @var array<string, LocaleStruct>
+     */
+    public static array $locales = [];
+
     /**
      * Loads integrated plugins from SBP
      */
     public function getIntegratedPluginsAction()
     {
-        /** @var FirstRunWizardPluginStoreService $firstRunWizardPluginStore */
         $firstRunWizardPluginStore = $this->container->get(FirstRunWizardPluginStoreService::class);
 
         $isoFromRequest = $this->Request()->get('iso');
@@ -44,7 +48,6 @@ class Shopware_Controllers_Backend_FirstRunWizardPluginManager extends Shopware_
         $isoCode = substr($isoCode, -2);
 
         try {
-            /** @var PluginStruct[] $plugins */
             $plugins = $firstRunWizardPluginStore->getIntegratedPlugins($isoCode, $this->getVersion());
         } catch (Exception $e) {
             $this->View()->assign([
@@ -66,11 +69,9 @@ class Shopware_Controllers_Backend_FirstRunWizardPluginManager extends Shopware_
      */
     public function getRecommendedPluginsAction()
     {
-        /** @var FirstRunWizardPluginStoreService $firstRunWizardPluginStore */
         $firstRunWizardPluginStore = $this->container->get(FirstRunWizardPluginStoreService::class);
 
         try {
-            /** @var PluginStruct[] $plugins */
             $plugins = $firstRunWizardPluginStore->getRecommendedPlugins($this->getCurrentLocale(), $this->getVersion());
         } catch (Exception $e) {
             $this->View()->assign([
@@ -92,11 +93,9 @@ class Shopware_Controllers_Backend_FirstRunWizardPluginManager extends Shopware_
      */
     public function getDemoDataPluginsAction()
     {
-        /** @var FirstRunWizardPluginStoreService $firstRunWizardPluginStore */
         $firstRunWizardPluginStore = $this->container->get(FirstRunWizardPluginStoreService::class);
 
         try {
-            /** @var PluginStruct[] $plugins */
             $plugins = $firstRunWizardPluginStore->getDemoDataPlugins($this->getCurrentLocale(), $this->getVersion());
         } catch (Exception $e) {
             $this->View()->assign([
@@ -120,11 +119,9 @@ class Shopware_Controllers_Backend_FirstRunWizardPluginManager extends Shopware_
     {
         $localization = $this->Request()->get('localeId');
 
-        /** @var FirstRunWizardPluginStoreService $firstRunWizardPluginStore */
         $firstRunWizardPluginStore = $this->container->get(FirstRunWizardPluginStoreService::class);
 
         try {
-            /** @var PluginStruct[] $plugins */
             $plugins = $firstRunWizardPluginStore->getLocalizationPlugins($localization, $this->getCurrentLocale(), $this->getVersion());
         } catch (Exception $e) {
             $this->View()->assign([
@@ -146,11 +143,9 @@ class Shopware_Controllers_Backend_FirstRunWizardPluginManager extends Shopware_
      */
     public function getLocalizationsAction()
     {
-        /** @var FirstRunWizardPluginStoreService $firstRunWizardPluginStore */
         $firstRunWizardPluginStore = $this->container->get(FirstRunWizardPluginStoreService::class);
 
         try {
-            /** @var LocaleStruct[] $localizations */
             $localizations = $firstRunWizardPluginStore->getLocalizations($this->getCurrentLocale(), $this->getVersion());
         } catch (Exception $e) {
             $this->View()->assign([
@@ -172,7 +167,6 @@ class Shopware_Controllers_Backend_FirstRunWizardPluginManager extends Shopware_
      */
     public function getIntegratedPluginsCountriesAction()
     {
-        /** @var FirstRunWizardPluginStoreService $firstRunWizardPluginStore */
         $firstRunWizardPluginStore = $this->container->get(FirstRunWizardPluginStoreService::class);
 
         try {
@@ -197,11 +191,9 @@ class Shopware_Controllers_Backend_FirstRunWizardPluginManager extends Shopware_
      */
     public function getAvailableLocalizationsAction()
     {
-        /** @var FirstRunWizardPluginStoreService $firstRunWizardPluginStore */
         $firstRunWizardPluginStore = $this->container->get(FirstRunWizardPluginStoreService::class);
 
         try {
-            /** @var LocaleStruct[] $localizations */
             $localizations = $firstRunWizardPluginStore->getAvailableLocalizations($this->getCurrentLocale(), $this->getVersion());
         } catch (Exception $e) {
             $this->View()->assign([
@@ -212,8 +204,7 @@ class Shopware_Controllers_Backend_FirstRunWizardPluginManager extends Shopware_
             return;
         }
 
-        /** @var \Shopware\Bundle\PluginInstallerBundle\StoreClient $storeClient */
-        $storeClient = $this->container->get(\Shopware\Bundle\PluginInstallerBundle\StoreClient::class);
+        $storeClient = $this->container->get(StoreClient::class);
         $storeClient->doTrackEvent('First Run Wizard started');
 
         $this->View()->assign([
@@ -230,11 +221,10 @@ class Shopware_Controllers_Backend_FirstRunWizardPluginManager extends Shopware_
         $payPalPlusEnabled = (bool) $this->Request()->getParam('payPalPlus');
 
         if (!class_exists('\SwagPaymentPayPalUnified\Setup\FirstRunWizardInstaller')) {
-            throw new \Exception(sprintf('Class %s does not exist.', '\SwagPaymentPayPalUnified\Setup\FirstRunWizardInstaller'));
+            throw new Exception(sprintf('Class %s does not exist.', '\SwagPaymentPayPalUnified\Setup\FirstRunWizardInstaller'));
         }
 
-        /** @var \SwagPaymentPayPalUnified\Setup\FirstRunWizardInstaller $payPalInstaller */
-        $payPalInstaller = new \SwagPaymentPayPalUnified\Setup\FirstRunWizardInstaller();
+        $payPalInstaller = new FirstRunWizardInstaller();
         $payPalInstaller->saveConfiguration($this->get('dbal_connection'), [
             'clientId' => $clientId,
             'clientSecret' => $clientSecret,
@@ -252,7 +242,7 @@ class Shopware_Controllers_Backend_FirstRunWizardPluginManager extends Shopware_
         $version = $this->container->getParameter('shopware.release.version');
 
         if (!\is_string($version)) {
-            throw new \RuntimeException('Parameter shopware.release.version has to be an string');
+            throw new RuntimeException('Parameter shopware.release.version has to be an string');
         }
 
         return $version;
@@ -264,34 +254,25 @@ class Shopware_Controllers_Backend_FirstRunWizardPluginManager extends Shopware_
      *
      * @return LocaleStruct|null Information about the current locale
      */
-    private function getCurrentLocale()
+    private function getCurrentLocale(): ?LocaleStruct
     {
-        static $locales;
-
-        if (empty($locales)) {
-            /** @var AccountManagerService $accountManagerService */
+        if (empty(self::$locales)) {
             $accountManagerService = $this->container->get('shopware_plugininstaller.account_manager_service');
 
-            /** @var LocaleStruct[] $serverLocales */
-            $serverLocales = $accountManagerService->getLocales();
-
-            foreach ($serverLocales as $serverLocale) {
-                $locales[$serverLocale->getName()] = $serverLocale;
+            foreach ($accountManagerService->getLocales() as $serverLocale) {
+                self::$locales[$serverLocale->getName()] = $serverLocale;
             }
         }
 
-        $user = Shopware()->Container()->get('auth')->getIdentity();
-        /** @var \Shopware\Models\Shop\Locale $locale */
-        $locale = $user->locale;
-        $localeCode = $locale->getLocale();
+        $localeCode = $this->container->get('auth')->getIdentity()->locale->getLocale();
 
-        if (\array_key_exists($localeCode, $locales)) {
-            return $locales[$localeCode];
+        if (\array_key_exists($localeCode, self::$locales)) {
+            return self::$locales[$localeCode];
         }
 
         // Fallback to english locale when available
-        if (\array_key_exists('en_GB', $locales)) {
-            return $locales['en_GB'];
+        if (\array_key_exists('en_GB', self::$locales)) {
+            return self::$locales['en_GB'];
         }
 
         return null;

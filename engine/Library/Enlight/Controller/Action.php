@@ -20,7 +20,8 @@
 use Shopware\Components\DependencyInjection\Container;
 use Shopware\Components\DependencyInjection\ContainerAwareInterface;
 use Shopware\Components\Model\ModelManager;
-use Symfony\Component\Form\Form;
+use Symfony\Component\Form\FormInterface;
+use Symfony\Component\Form\FormTypeInterface;
 
 /**
  * Basic class for each Enlight controller action.
@@ -102,8 +103,9 @@ abstract class Enlight_Controller_Action extends Enlight_Class implements Enligh
      * @throws Enlight_Exception
      * @throws Enlight_Event_Exception
      */
-    public function initController(Enlight_Controller_Request_RequestHttp $request,
-                                Enlight_Controller_Response_ResponseHttp $response
+    public function initController(
+        Enlight_Controller_Request_RequestHttp $request,
+        Enlight_Controller_Response_ResponseHttp $response
     ) {
         $this->setRequest($request)->setResponse($response);
 
@@ -238,7 +240,7 @@ abstract class Enlight_Controller_Action extends Enlight_Class implements Enligh
      * @param string $module
      * @param array  $params
      */
-    public function forward($action, $controller = null, $module = null, array $params = null)
+    public function forward($action, $controller = null, $module = null, ?array $params = null)
     {
         $request = $this->Request();
 
@@ -261,11 +263,13 @@ abstract class Enlight_Controller_Action extends Enlight_Class implements Enligh
      * @param string|array $url
      *
      * @throws Exception
+     *
+     * @return void
      */
     public function redirect($url, array $options = [])
     {
         if (\is_array($url)) {
-            $url = $this->Front()->Router()->assemble($url);
+            $url = $this->Front()->ensureRouter()->assemble($url);
         }
         if (!preg_match('#^(https?|ftp)://#', $url)) {
             if (!str_starts_with($url, '/')) {
@@ -293,7 +297,7 @@ abstract class Enlight_Controller_Action extends Enlight_Class implements Enligh
     /**
      * @param Container $loader
      */
-    public function setContainer(Container $loader = null)
+    public function setContainer(?Container $loader = null)
     {
         $this->container = $loader;
     }
@@ -307,7 +311,7 @@ abstract class Enlight_Controller_Action extends Enlight_Class implements Enligh
      *
      * @return Enlight_Controller_Action
      */
-    public function setFront(Enlight_Controller_Front $front = null)
+    public function setFront(?Enlight_Controller_Front $front = null)
     {
         if ($front === null) {
             $front = Shopware()->Container()->get('front');
@@ -412,13 +416,13 @@ abstract class Enlight_Controller_Action extends Enlight_Class implements Enligh
     /**
      * Creates and returns a Form instance from the type of the form.
      *
-     * @param string $type    The fully qualified class name of the form type
-     * @param mixed  $data    The initial data for the form
-     * @param array  $options Options for the form
+     * @param class-string<FormTypeInterface> $type    The fully qualified class name of the form type
+     * @param mixed                           $data    The initial data for the form
+     * @param array                           $options Options for the form
      *
      * @throws Exception
      *
-     * @return Form
+     * @return FormInterface
      */
     protected function createForm($type, $data = null, array $options = [])
     {

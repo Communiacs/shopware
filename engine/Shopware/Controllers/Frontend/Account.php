@@ -101,6 +101,9 @@ class Shopware_Controllers_Frontend_Account extends Enlight_Controller_Action
             return;
         }
 
+        $this->response->headers->addCacheControlDirective('no-store');
+        $this->response->headers->addCacheControlDirective('no-cache');
+
         $activeBillingAddressId = $customerData['additional']['user']['default_billing_address_id'];
         $activeShippingAddressId = $customerData['additional']['user']['default_shipping_address_id'];
 
@@ -513,8 +516,8 @@ class Shopware_Controllers_Frontend_Account extends Enlight_Controller_Action
         $hash = Random::getAlphanumericString(32);
 
         $context = [
-            'sUrlReset' => $this->Front()->Router()->assemble(['controller' => 'account', 'action' => 'resetPassword', 'hash' => $hash]),
-            'sUrl' => $this->Front()->Router()->assemble(['controller' => 'account', 'action' => 'resetPassword']),
+            'sUrlReset' => $this->Front()->ensureRouter()->assemble(['controller' => 'account', 'action' => 'resetPassword', 'hash' => $hash]),
+            'sUrl' => $this->Front()->ensureRouter()->assemble(['controller' => 'account', 'action' => 'resetPassword']),
             'sKey' => $hash,
         ];
 
@@ -556,17 +559,7 @@ class Shopware_Controllers_Frontend_Account extends Enlight_Controller_Action
         $mail->addTo($email);
         $mail->send();
 
-        // Invalidate existing hashes
-        $connection->update(
-            's_core_optin',
-            [
-                'datum' => (new DateTimeImmutable('-1 day'))->format(DATE_ATOM),
-            ],
-            [
-                'type' => 'swPassword',
-                'data' => $customerId,
-            ]
-        );
+        $this->invalidateExistingPasswordLinkHashes($customerId);
 
         // Add the hash to the optin table
         $sql = "INSERT INTO `s_core_optin` (`type`, `datum`, `hash`, `data`) VALUES ('swPassword', NOW(), ?, ?)";
@@ -732,6 +725,7 @@ class Shopware_Controllers_Frontend_Account extends Enlight_Controller_Action
 
         if ($form->isSubmitted() && $form->isValid()) {
             $this->customerService->update($customer);
+            $this->invalidateExistingPasswordLinkHashes($customer->getId());
             $this->get('session')->offsetSet('sUserMail', $customer->getEmail());
             $this->get('session')->offsetSet('userInfo', null);
             $this->redirect(['controller' => 'account', 'action' => 'profile', 'success' => true, 'section' => 'email']);
@@ -824,6 +818,22 @@ class Shopware_Controllers_Frontend_Account extends Enlight_Controller_Action
         $regEx = '/(\{\$offerPosition.trackingcode\})/';
 
         return preg_replace($regEx, $trackingCode, $link);
+    }
+
+    private function invalidateExistingPasswordLinkHashes(int $customerId): void
+    {
+        /* @var Connection $connection */
+        $connection = $this->get(Connection::class);
+        $connection->update(
+            's_core_optin',
+            [
+                'datum' => (new DateTimeImmutable('-1 day'))->format(DATE_ATOM),
+            ],
+            [
+                'type' => 'swPassword',
+                'data' => $customerId,
+            ]
+        );
     }
 
     /**

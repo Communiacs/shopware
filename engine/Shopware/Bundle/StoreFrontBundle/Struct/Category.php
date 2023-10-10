@@ -121,7 +121,7 @@ class Category extends Extendable
     /**
      * @var string|null
      */
-    protected $productBoxLayout = null;
+    protected $productBoxLayout;
 
     /**
      * @var ProductStream|null
@@ -151,6 +151,7 @@ class Category extends Extendable
             $path = rtrim($path, '|');
 
             $path = explode('|', $path);
+            $path = array_map('\intval', $path);
 
             $struct->setPath(array_reverse($path));
         }
@@ -470,7 +471,7 @@ class Category extends Extendable
         return $this->productStream;
     }
 
-    public function setProductStream(ProductStream $productStream = null)
+    public function setProductStream(?ProductStream $productStream = null)
     {
         $this->productStream = $productStream;
     }

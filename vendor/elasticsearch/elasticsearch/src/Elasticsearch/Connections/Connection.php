@@ -99,7 +99,7 @@ class Connection implements ConnectionInterface
     /**
      * @var bool
      */
-    protected $isAlive = false;
+    protected $isAlive = true;
 
     /**
      * @var float
@@ -372,7 +372,7 @@ class Connection implements ConnectionInterface
             $uri = $this->path . $uri;
         }
 
-        return $uri ?? '';
+        return $uri;
     }
 
     public function getHeaders(): array

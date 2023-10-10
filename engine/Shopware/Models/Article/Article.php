@@ -29,6 +29,7 @@ use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Shopware\Components\Model\ModelEntity;
+use Shopware\Models\Article\Configurator\Set;
 use Shopware\Models\Article\Configurator\Template\Template;
 use Shopware\Models\Category\Category as ProductCategory;
 use Shopware\Models\Customer\Group as CustomerGroup;
@@ -55,7 +56,6 @@ class Article extends ModelEntity
      *
      * @Assert\NotBlank()
      * @Assert\Valid()
-     *
      * @ORM\OneToOne(targetEntity="Shopware\Models\Tax\Tax")
      * @ORM\JoinColumn(name="taxID", referencedColumnName="id")
      */
@@ -179,7 +179,6 @@ class Article extends ModelEntity
      * @var Supplier|null
      *
      * @Assert\Valid()
-     *
      * @ORM\ManyToOne(targetEntity="Shopware\Models\Article\Supplier", inversedBy="articles", cascade={"persist"})
      * @ORM\JoinColumn(name="supplierID", referencedColumnName="id")
      */
@@ -191,7 +190,6 @@ class Article extends ModelEntity
      * @var ArrayCollection<Detail>
      *
      * @Assert\Valid()
-     *
      * @ORM\OneToMany(targetEntity="Shopware\Models\Article\Detail", mappedBy="article", cascade={"persist"})
      * @ORM\OrderBy({"position" = "ASC"})
      */
@@ -204,7 +202,6 @@ class Article extends ModelEntity
      *
      * @Assert\NotBlank()
      * @Assert\Valid()
-     *
      * @ORM\OneToOne(targetEntity="Shopware\Models\Article\Detail", cascade={"persist", "remove"})
      * @ORM\JoinColumn(name="main_detail_id", referencedColumnName="id")
      */
@@ -216,7 +213,6 @@ class Article extends ModelEntity
      * @var ArrayCollection<Link>
      *
      * @Assert\Valid()
-     *
      * @ORM\OneToMany(targetEntity="Shopware\Models\Article\Link", mappedBy="article", orphanRemoval=true, cascade={"persist"})
      */
     protected $links;
@@ -227,7 +223,6 @@ class Article extends ModelEntity
      * @var ArrayCollection<array-key, Download>
      *
      * @Assert\Valid()
-     *
      * @ORM\OneToMany(targetEntity="Shopware\Models\Article\Download", mappedBy="article", orphanRemoval=true, cascade={"persist"})
      */
     protected $downloads;
@@ -238,7 +233,6 @@ class Article extends ModelEntity
      * @var ArrayCollection<array-key, Image>
      *
      * @Assert\Valid()
-     *
      * @ORM\OneToMany(targetEntity="Shopware\Models\Article\Image", mappedBy="article", orphanRemoval=true, cascade={"persist"})
      * @ORM\OrderBy({"position" = "ASC"})
      */
@@ -266,7 +260,7 @@ class Article extends ModelEntity
     /**
      * OWNING SIDE
      *
-     * @var Configurator\Set|null
+     * @var Set|null
      *
      * @ORM\ManyToOne(targetEntity="Shopware\Models\Article\Configurator\Set", inversedBy="articles", cascade={"persist"})
      * @ORM\JoinColumn(name="configurator_set_id", referencedColumnName="id")
@@ -361,7 +355,6 @@ class Article extends ModelEntity
      * @var string
      *
      * @Assert\NotBlank()
-     *
      * @ORM\Column(name="name", type="string", length=100, nullable=false)
      */
     private $name;
@@ -384,7 +377,6 @@ class Article extends ModelEntity
      * @var DateTimeInterface|null
      *
      * @Assert\DateTime()
-     *
      * @ORM\Column(name="datum", type="date", nullable=true)
      */
     private $added;
@@ -413,7 +405,7 @@ class Article extends ModelEntity
     /**
      * @var string|null
      *
-     * @ORM\Column(name="keywords", type="string", length=255, nullable=true)
+     * @ORM\Column(name="keywords", type="text", nullable=true)
      */
     private $keywords;
 
@@ -442,6 +434,7 @@ class Article extends ModelEntity
      * @var bool|null
      *
      * @deprecated 5.6 will be removed in 5.8
+     *
      * @ORM\Column(name="laststock", type="boolean", nullable=true)
      */
     private $lastStock = false;
@@ -1198,7 +1191,7 @@ class Article extends ModelEntity
     }
 
     /**
-     * @return Configurator\Set|null
+     * @return Set|null
      */
     public function getConfiguratorSet()
     {
@@ -1206,13 +1199,13 @@ class Article extends ModelEntity
     }
 
     /**
-     * @param Configurator\Set|null $configuratorSet
+     * @param Set|null $configuratorSet
      *
      * @return Article
      */
     public function setConfiguratorSet($configuratorSet)
     {
-        $this->setManyToOne($configuratorSet, Configurator\Set::class, 'configuratorSet');
+        $this->setManyToOne($configuratorSet, Set::class, 'configuratorSet');
 
         return $this;
     }

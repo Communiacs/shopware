@@ -23,7 +23,6 @@
  */
 
 use Doctrine\Common\EventArgs;
-use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Proxy\Proxy;
 use Enlight_Controller_Request_Request as Request;
 use Enlight_Controller_Response_ResponseHttp as Response;
@@ -307,7 +306,7 @@ class Shopware_Plugins_Core_HttpCache_Bootstrap extends Shopware_Components_Plug
      *
      * @return string|null
      */
-    public function getProxyUrl(Request $request = null)
+    public function getProxyUrl(?Request $request = null)
     {
         $proxyUrl = trim($this->Config()->get('proxy'));
         if (!empty($proxyUrl)) {
@@ -689,7 +688,6 @@ class Shopware_Plugins_Core_HttpCache_Bootstrap extends Shopware_Components_Plug
             $this->cacheInvalidationBuffer[$cacheId] = true;
         }
 
-        /** @var EntityManager $entityManager */
         $entityManager = Shopware()->Container()->get(ModelManager::class);
         $entityManager->getEventManager()->addEventListener(['postFlush'], $this);
     }

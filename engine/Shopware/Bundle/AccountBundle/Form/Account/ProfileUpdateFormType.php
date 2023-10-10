@@ -40,6 +40,8 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 
 /**
  * Form reflects the needed fields for changing the email address in the account
+ *
+ * @extends AbstractType<Customer>
  */
 class ProfileUpdateFormType extends AbstractType
 {
@@ -79,9 +81,11 @@ class ProfileUpdateFormType extends AbstractType
             $event->setData($data);
         });
 
-        $builder->add('salutation', SalutationType::class, [
-            'constraints' => [new NotBlank(['message' => null])],
-        ]);
+        if ($this->config->get('shopSalutationRequired')) {
+            $builder->add('salutation', SalutationType::class, [
+                'constraints' => [new NotBlank(['message' => null])],
+            ]);
+        }
 
         $builder->add('title', TextType::class);
 
